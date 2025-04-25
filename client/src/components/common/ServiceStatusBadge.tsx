@@ -16,25 +16,25 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
           label: "Pendente",
           variant: "bg-blue-100 text-blue-800",
         };
-      case "scheduled":
-        return {
-          label: "Agendado",
-          variant: "bg-blue-100 text-blue-800",
-        };
-      case "in_progress":
-        return {
-          label: "Em andamento",
-          variant: "bg-yellow-100 text-yellow-800",
-        };
       case "completed":
         return {
-          label: "Concluído",
+          label: "Concluída",
           variant: "bg-green-100 text-green-800",
         };
-      case "cancelled":
+      case "aguardando_aprovacao":
         return {
-          label: "Cancelado",
-          variant: "bg-red-100 text-red-800",
+          label: "Aguardando Aprovação",
+          variant: "bg-yellow-100 text-yellow-800",
+        };
+      case "faturado":
+        return {
+          label: "Faturado",
+          variant: "bg-purple-100 text-purple-800",
+        };
+      case "pago":
+        return {
+          label: "Pago",
+          variant: "bg-teal-100 text-teal-800",
         };
       default:
         return {

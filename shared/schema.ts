@@ -71,7 +71,7 @@ export const insertServiceTypeSchema = createInsertSchema(serviceTypes).omit({
   id: true
 });
 
-// Service status: "pending", "scheduled", "in_progress", "completed", "cancelled"
+// Service status: "pending", "completed", "aguardando_aprovacao", "faturado", "pago"
 export const services = pgTable("services", {
   id: serial("id").primaryKey(),
   client_id: integer("client_id").notNull().references(() => clients.id),
