@@ -63,14 +63,23 @@ const formSchema = insertServiceSchema.extend({
   }),
   scheduled_date: z.date({
     required_error: "A data é obrigatória"
-  }),
+  }).or(z.string()),  // Permitir tanto Date quanto string
   scheduled_time: z.string().optional(),
+  status: z.string().default("pending"),
+  price: z.number().optional().nullable(),
+  displacement_fee: z.number().optional().nullable().default(0),
   photos: z.any().refine(val => {
     // Verificar se há pelo menos uma foto selecionada
     return val && val.length > 0;
   }, {
     message: "Pelo menos uma foto do dano é obrigatória"
   }),
+  // Garantir que campos opcionais não causem problemas
+  address: z.string().optional().nullable(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
+  description: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -114,6 +123,10 @@ export default function NewService() {
       price: 0,
       displacement_fee: 0,
       photos: undefined,
+      address: "",
+      latitude: null,
+      longitude: null,
+      notes: "",
     },
   });
   
@@ -161,9 +174,15 @@ export default function NewService() {
       }
       
       // Calculate total
-      if (formattedData.price !== undefined) {
-        formattedData.total = formattedData.price + (formattedData.displacement_fee || 0);
-      }
+      const price = formattedData.price !== undefined && formattedData.price !== null 
+        ? formattedData.price 
+        : 0;
+      
+      const displacementFee = formattedData.displacement_fee !== undefined && formattedData.displacement_fee !== null 
+        ? formattedData.displacement_fee 
+        : 0;
+      
+      formattedData.total = price + displacementFee;
       
       // Remove campos que não fazem parte do schema
       const { scheduled_time, photos, ...serviceData } = formattedData;
@@ -470,15 +489,15 @@ export default function NewService() {
                     <LocationSelector
                       value={{
                         locationType: field.value as "client_location" | "workshop",
-                        address: form.getValues().address,
-                        latitude: form.getValues().latitude,
-                        longitude: form.getValues().longitude,
+                        address: form.getValues().address || '',
+                        latitude: form.getValues().latitude || undefined,
+                        longitude: form.getValues().longitude || undefined,
                       }}
                       onChange={(value) => {
                         form.setValue("location_type", value.locationType);
-                        form.setValue("address", value.address);
-                        form.setValue("latitude", value.latitude);
-                        form.setValue("longitude", value.longitude);
+                        form.setValue("address", value.address || '');
+                        form.setValue("latitude", value.latitude || null);
+                        form.setValue("longitude", value.longitude || null);
                       }}
                     />
                     <FormMessage />
