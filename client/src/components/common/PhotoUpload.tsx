@@ -113,7 +113,7 @@ export function PhotoUpload({
           {previewUrls.length > 0 ? (
             <div className="mb-4 grid grid-cols-5 gap-2">
               {previewUrls.map((url, index) => (
-                <div key={index} className="relative">
+                <div key={index} className="relative group">
                   <img 
                     src={url} 
                     alt={`Foto ${index + 1}`} 
@@ -122,6 +122,35 @@ export function PhotoUpload({
                   <span className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-1 rounded-bl rounded-tr">
                     {index + 1}/{previewUrls.length}
                   </span>
+                  <button
+                    type="button"
+                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const newUrls = [...previewUrls];
+                      newUrls.splice(index, 1);
+                      previewUrls.forEach(url => URL.revokeObjectURL(url));
+                      setPreviewUrls(newUrls);
+                      // Simular uma mudança nos arquivos selecionados
+                      if (selectedFiles) {
+                        const dataTransfer = new DataTransfer();
+                        Array.from(selectedFiles).forEach((file, i) => {
+                          if (i !== index) {
+                            dataTransfer.items.add(file);
+                          }
+                        });
+                        const newFileList = dataTransfer.files;
+                        setSelectedFiles(newFileList);
+                        onChange(newFileList);
+                      }
+                    }}
+                    title="Remover foto"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
                 </div>
               ))}
               {/* Mostrar slots vazios para completar até 5 */}
