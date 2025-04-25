@@ -49,6 +49,18 @@ import { insertServiceSchema } from "@shared/schema";
 
 // Extend the schema with more validations
 const formSchema = insertServiceSchema.extend({
+  client_id: z.number({
+    required_error: "O cliente é obrigatório"
+  }),
+  vehicle_id: z.number({
+    required_error: "O veículo é obrigatório"
+  }),
+  service_type_id: z.number({
+    required_error: "O tipo de serviço é obrigatório"
+  }),
+  location_type: z.enum(["client_location", "workshop"], {
+    required_error: "A localização é obrigatória"
+  }),
   scheduled_date: z.date({
     required_error: "A data é obrigatória"
   }),
@@ -121,11 +133,20 @@ export default function NewService() {
       // Format the datetime properly
       let formattedData = { ...data };
       
-      if (data.scheduled_date && data.scheduled_time) {
-        const [hours, minutes] = data.scheduled_time.split(':');
-        const scheduledDate = new Date(data.scheduled_date);
-        scheduledDate.setHours(parseInt(hours), parseInt(minutes));
-        formattedData.scheduled_date = scheduledDate.toISOString();
+      if (data.scheduled_date) {
+        // Se tiver uma data agendada
+        if (data.scheduled_time) {
+          // Se tiver horário específico, ajusta
+          const [hours, minutes] = data.scheduled_time.split(':');
+          const scheduledDate = new Date(data.scheduled_date);
+          scheduledDate.setHours(parseInt(hours), parseInt(minutes));
+          formattedData.scheduled_date = scheduledDate.toISOString();
+        } else {
+          // Se não tiver horário, mantém a data mas define para meio-dia
+          const scheduledDate = new Date(data.scheduled_date);
+          scheduledDate.setHours(12, 0, 0); // Meio-dia
+          formattedData.scheduled_date = scheduledDate.toISOString();
+        }
       }
       
       // Calculate total
@@ -133,11 +154,19 @@ export default function NewService() {
         formattedData.total = formattedData.price + (formattedData.displacement_fee || 0);
       }
       
-      // Remove scheduled_time as it's not part of the schema
-      const { scheduled_time, ...serviceData } = formattedData;
+      // Remove campos que não fazem parte do schema
+      const { scheduled_time, photos, ...serviceData } = formattedData;
       
-      const res = await apiRequest('POST', '/api/services', serviceData);
-      return res.json();
+      // Log de depuração
+      console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
+      
+      try {
+        const res = await apiRequest('POST', '/api/services', serviceData);
+        return res.json();
+      } catch (error) {
+        console.error("Erro detalhado:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/services'] });
