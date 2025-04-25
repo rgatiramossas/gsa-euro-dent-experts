@@ -10,7 +10,7 @@ import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { MobileNavigation } from "@/components/layout/MobileNavigation";
+import { BottomNavigation } from "@/components/layout/BottomNavigation";
 
 // Import service related pages
 import ServicesList from "@/pages/services/index";
@@ -76,21 +76,21 @@ function MainLayout({ children }: { children: React.ReactNode }) {
           />
         )}
         
-        {/* Sidebar - mobile version is absolute positioned */}
-        <div className={`md:static md:block fixed z-30 h-full transition-transform duration-300 ${
+        {/* Sidebar - hidden for all screens */}
+        <div className={`fixed z-30 h-full transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0`}>
+        }`}>
           <Sidebar />
         </div>
         
         {/* Main Content */}
-        <main className="flex-1 overflow-auto pb-16 md:pb-0">
+        <main className="flex-1 overflow-auto pb-16">
           {children}
         </main>
       </div>
       
-      {/* Mobile Navigation */}
-      <MobileNavigation />
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 }
