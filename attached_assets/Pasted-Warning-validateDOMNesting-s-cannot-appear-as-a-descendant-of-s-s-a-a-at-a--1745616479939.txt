@@ -1,0 +1,26 @@
+Warning: validateDOMNesting(...): %s cannot appear as a descendant of <%s>.%s <a> a 
+    at a
+    at a
+    at https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4a4c86be:337:18
+    at div
+    at _c3 (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/src/components/ui/card.tsx:45:12)
+    at div
+    at _c (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at RecentServicesTable (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/src/components/dashboard/RecentServicesTable.tsx:27:39)
+    at div
+    at div
+    at div
+    at Dashboard (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/src/pages/dashboard.tsx:29:7)
+    at main
+    at div
+    at div
+    at MainLayout (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/src/App.tsx?v=Xu7clqiJOJjY__cyi7TuX:74:23)
+    at RequireAuth (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/src/App.tsx?v=Xu7clqiJOJjY__cyi7TuX:41:24)
+    at Route (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4a4c86be:323:16)
+    at Switch (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4a4c86be:379:17)
+    at AppRoutes
+    at Provider (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=4a4c86be:38:15)
+    at TooltipProvider (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4a4c86be:62:5)
+    at AuthProvider (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/src/contexts/AuthContext.tsx:22:32)
+    at QueryClientProvider (https://d8197bf9-d7bf-433c-8802-f331b8e02008-00-2afq0obd365xp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=4a4c86be:2805:3)
+    at App

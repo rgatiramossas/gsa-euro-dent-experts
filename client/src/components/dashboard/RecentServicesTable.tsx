@@ -55,10 +55,8 @@ export function RecentServicesTable({ services, isLoading = false }: RecentServi
     <Card>
       <CardHeader className="pb-2 flex items-center justify-between">
         <CardTitle className="text-lg font-medium">Serviços Recentes</CardTitle>
-        <Link href="/services">
-          <a className="text-sm font-medium text-primary hover:text-primary/80">
-            Ver todos
-          </a>
+        <Link href="/services" className="text-sm font-medium text-primary hover:text-primary/80">
+          Ver todos
         </Link>
       </CardHeader>
       <CardContent className="p-0 overflow-x-auto">
@@ -83,10 +81,8 @@ export function RecentServicesTable({ services, isLoading = false }: RecentServi
               services.map((service) => (
                 <TableRow key={service.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium">
-                    <Link href={`/services/${service.id}`}>
-                      <a className="hover:text-primary">
-                        {service.client.name}
-                      </a>
+                    <Link href={`/services/${service.id}`} className="hover:text-primary">
+                      {service.client.name}
                     </Link>
                   </TableCell>
                   <TableCell>
