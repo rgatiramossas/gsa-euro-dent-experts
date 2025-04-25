@@ -84,7 +84,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
         </div>
         
         {/* Main Content */}
-        <main className="flex-1 overflow-auto pb-16 md:pb-0">
+        <main className="flex-1 overflow-auto pb-20 md:pb-0">
           {children}
         </main>
       </div>
