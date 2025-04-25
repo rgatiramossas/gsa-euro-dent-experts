@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,8 +28,9 @@ import { insertClientSchema } from "@shared/schema";
 
 // Extend the schema with more validations
 const formSchema = insertClientSchema.extend({
-  email: z.string().email("Email inválido"),
-  phone: z.string().min(10, "Telefone deve ter no mínimo 10 dígitos"),
+  name: z.string().min(1, "O nome é obrigatório"),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -38,6 +39,8 @@ export default function NewClient() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   
   // Form definition
   const form = useForm<FormData>({
@@ -77,6 +80,54 @@ export default function NewClient() {
       });
     }
   });
+  
+  // Função para obter a localização atual
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    setLocationError(null);
+
+    if (!navigator.geolocation) {
+      setLocationError("Geolocalização não é suportada pelo seu navegador");
+      setIsGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        // Para uma implementação real, usaríamos uma API de geocodificação reversa aqui
+        // Como estamos simplificando, vamos apenas adicionar as coordenadas ao endereço
+        const locationString = `Localização atual (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`;
+        
+        form.setValue("address", locationString);
+        toast({
+          title: "Localização obtida",
+          description: "Endereço atualizado com suas coordenadas atuais",
+        });
+        
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        let errorMessage;
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Permissão para geolocalização negada pelo usuário";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Informações de localização indisponíveis";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Tempo esgotado para obter localização";
+            break;
+          default:
+            errorMessage = "Erro desconhecido ao obter localização";
+        }
+        setLocationError(errorMessage);
+        setIsGettingLocation(false);
+      }
+    );
+  };
   
   const onSubmit = (data: FormData) => {
     createClientMutation.mutate(data);
@@ -158,15 +209,35 @@ export default function NewClient() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Endereço</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Rua, número, complemento" />
-                    </FormControl>
+                    <div className="flex space-x-2">
+                      <div className="flex-1">
+                        <FormControl>
+                          <Input {...field} placeholder="Rua, número, complemento" />
+                        </FormControl>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-shrink-0"
+                        onClick={getCurrentLocation}
+                        disabled={isGettingLocation}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {isGettingLocation ? "Obtendo..." : "Localização Atual"}
+                      </Button>
+                    </div>
+                    {locationError && (
+                      <p className="text-sm text-red-500 mt-1">{locationError}</p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="city"
@@ -175,34 +246,6 @@ export default function NewClient() {
                       <FormLabel>Cidade</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Cidade" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="state"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estado</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Estado" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="zip"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CEP</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="00000-000" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
