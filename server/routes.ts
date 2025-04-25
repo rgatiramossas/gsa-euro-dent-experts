@@ -1,12 +1,13 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import path from "path";
 import fs from "fs";
+import multer from "multer";
 import { fileURLToPath } from "url";
-import { insertUserSchema, insertClientSchema, insertVehicleSchema, insertServiceSchema } from "@shared/schema";
+import { insertUserSchema, insertClientSchema, insertVehicleSchema, insertServiceSchema, insertServicePhotoSchema } from "@shared/schema";
 import { z } from "zod";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,8 +21,14 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 // Create subdirectories for service photos
 const beforeDir = path.join(UPLOADS_DIR, "before");
 const afterDir = path.join(UPLOADS_DIR, "after");
-if (!fs.existsSync(beforeDir)) fs.mkdirSync(beforeDir, { recursive: true });
-if (!fs.existsSync(afterDir)) fs.mkdirSync(afterDir, { recursive: true });
+
+// Ensure directories exist
+if (!fs.existsSync(beforeDir)) {
+  fs.mkdirSync(beforeDir, { recursive: true });
+}
+if (!fs.existsSync(afterDir)) {
+  fs.mkdirSync(afterDir, { recursive: true });
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session middleware
@@ -409,8 +416,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Service photo upload endpoint would go here
-  // Note: This would need to handle file uploads
+  // Configure multer for file storage
+  const storage_config = multer.diskStorage({
+    destination: function (req, file, cb) {
+      // Determine photo type based on URL parameter
+      const photoType = req.body.photo_type || 'before';
+      const destDir = photoType === 'after' ? afterDir : beforeDir;
+      cb(null, destDir);
+    },
+    filename: function (req, file, cb) {
+      // Create unique filename
+      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+      cb(null, uniqueName);
+    }
+  });
+
+  const upload = multer({
+    storage: storage_config,
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Accept only images
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    }
+  });
+
+  // Service photo endpoints
+  app.post("/api/services/:id/photos", requireAuth, upload.array('photos', 5), async (req, res) => {
+    try {
+      const serviceId = parseInt(req.params.id);
+      const photoType = req.body.photo_type || 'before';
+      
+      // Validate service exists
+      const service = await storage.getService(serviceId);
+      if (!service) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+      
+      const uploadedFiles = req.files as Express.Multer.File[];
+      
+      if (!uploadedFiles || uploadedFiles.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+      
+      // Add all photos to the service
+      const photoPromises = uploadedFiles.map(async (file) => {
+        const photoUrl = `/uploads/${photoType}/${file.filename}`;
+        return await storage.addServicePhoto({
+          service_id: serviceId,
+          photo_type: photoType as 'before' | 'after',
+          photo_url: photoUrl
+        });
+      });
+      
+      const photos = await Promise.all(photoPromises);
+      
+      res.status(201).json({
+        message: `${photos.length} photos uploaded successfully`,
+        photos: photos
+      });
+    } catch (error) {
+      console.error("Error uploading service photos:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get photos for a service
+  app.get("/api/services/:id/photos", requireAuth, async (req, res) => {
+    try {
+      const serviceId = parseInt(req.params.id);
+      const photoType = req.query.type as string | undefined;
+      
+      const photos = await storage.getServicePhotos(serviceId, photoType);
+      
+      res.json(photos);
+    } catch (error) {
+      console.error("Error fetching service photos:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
