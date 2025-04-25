@@ -1,4 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
@@ -40,6 +41,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       cookie: { secure: process.env.NODE_ENV === "production" },
     })
   );
+  
+  // Servir arquivos estáticos de uploads
+  app.use('/uploads', express.static(UPLOADS_DIR));
 
   // Auth middleware
   const requireAuth = (req: Request, res: Response, next: any) => {

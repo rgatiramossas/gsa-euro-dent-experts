@@ -204,17 +204,52 @@ export default function NewService() {
       
       formattedData.total = price + displacementFee;
       
-      // Remove campos que não fazem parte do schema
+      // Separar fotos do resto dos dados
       const { scheduled_time, photos, ...serviceData } = formattedData;
       
       // Log de depuração
       console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
       
       try {
+        // 1. Criar serviço
         const res = await apiRequest('POST', '/api/services', serviceData);
-        const data = await res.json();
-        console.log("Resposta do servidor:", data);
-        return data;
+        const createdService = await res.json();
+        console.log("Resposta do servidor:", createdService);
+        
+        // 2. Se tiver fotos, fazer upload das fotos
+        if (photos && photos.length > 0) {
+          const serviceId = createdService.id;
+          
+          // Criar FormData para upload das fotos
+          const formData = new FormData();
+          
+          // Adicionar tipo de foto (sempre 'before' para fotos iniciais)
+          formData.append('photo_type', 'before');
+          
+          // Adicionar cada foto ao FormData
+          for (let i = 0; i < photos.length; i++) {
+            formData.append('photos', photos[i]);
+          }
+          
+          console.log("Enviando fotos para o serviço:", serviceId);
+          
+          // Fazer o upload das fotos
+          const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
+            method: 'POST',
+            body: formData,
+            // Não definir Content-Type, pois o browser vai definir automaticamente com o boundary correto
+          });
+          
+          if (!uploadRes.ok) {
+            console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
+            throw new Error("Erro ao enviar fotos");
+          }
+          
+          const uploadData = await uploadRes.json();
+          console.log("Resposta do upload:", uploadData);
+        }
+        
+        return createdService;
       } catch (error: any) {
         // Tentar obter os detalhes do erro
         console.error("Detalhes do erro:", error);
