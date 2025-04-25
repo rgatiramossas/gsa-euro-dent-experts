@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
-import { DollarSign, CalendarClock, Bell } from "lucide-react";
+import { DollarSign, CalendarClock, Bell, Settings } from "lucide-react";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -44,15 +44,6 @@ export function Header({ onMenuToggle }: HeaderProps) {
     <header className="bg-primary text-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          <button 
-            onClick={onMenuToggle}
-            className="mr-3 md:hidden" 
-            aria-label="Menu"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
           <div className="flex items-center">
             <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center mr-2">
               <svg 
@@ -91,6 +82,16 @@ export function Header({ onMenuToggle }: HeaderProps) {
               className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
             >
               <CalendarClock className="h-6 w-6" />
+            </button>
+          </div>
+          
+          {/* Ícone Configurações */}
+          <div>
+            <button 
+              onClick={() => setLocation("/settings")}
+              className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
+            >
+              <Settings className="h-6 w-6" />
             </button>
           </div>
           
