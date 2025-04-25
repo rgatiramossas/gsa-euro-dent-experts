@@ -152,10 +152,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">Pendente</SelectItem>
-                        <SelectItem value="scheduled">Agendado</SelectItem>
-                        <SelectItem value="in_progress">Em andamento</SelectItem>
-                        <SelectItem value="completed">Concluído</SelectItem>
-                        <SelectItem value="cancelled">Cancelado</SelectItem>
+                        <SelectItem value="completed">Concluída</SelectItem>
+                        <SelectItem value="aguardando_aprovacao">Aguardando Aprovação</SelectItem>
+                        <SelectItem value="faturado">Faturado</SelectItem>
+                        <SelectItem value="pago">Pago</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

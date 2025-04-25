@@ -97,10 +97,10 @@ export default function ServicesList() {
                     <SelectLabel>Status do Serviço</SelectLabel>
                     <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="pending">Pendentes</SelectItem>
-                    <SelectItem value="scheduled">Agendados</SelectItem>
-                    <SelectItem value="in_progress">Em Andamento</SelectItem>
                     <SelectItem value="completed">Concluídos</SelectItem>
-                    <SelectItem value="cancelled">Cancelados</SelectItem>
+                    <SelectItem value="aguardando_aprovacao">Aguardando Aprovação</SelectItem>
+                    <SelectItem value="faturado">Faturados</SelectItem>
+                    <SelectItem value="pago">Pagos</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
