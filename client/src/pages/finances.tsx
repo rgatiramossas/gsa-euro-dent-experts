@@ -238,21 +238,22 @@ export default function Finances() {
       />
       
       <div className="mt-6 mb-6">
-        <Select
-          value={period}
-          onValueChange={setPeriod}
-          className="w-full max-w-xs"
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o período" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="week">Últimos 7 dias</SelectItem>
-            <SelectItem value="month">Último mês</SelectItem>
-            <SelectItem value="year">Este ano</SelectItem>
-            <SelectItem value="all">Todo o período</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="w-full max-w-xs">
+          <Select
+            value={period}
+            onValueChange={setPeriod}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">Últimos 7 dias</SelectItem>
+              <SelectItem value="month">Último mês</SelectItem>
+              <SelectItem value="year">Este ano</SelectItem>
+              <SelectItem value="all">Todo o período</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
