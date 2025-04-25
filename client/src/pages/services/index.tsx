@@ -72,20 +72,20 @@ export default function ServicesList() {
       
       <Card className="mt-6">
         <div className="p-4 border-b border-gray-200">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex flex-col gap-4">
             <Input
               placeholder="Buscar por cliente, veículo ou placa..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
+              className="w-full"
             />
             
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as ServiceStatus | "all")}
-              className="w-full sm:w-auto"
+              className="w-full"
             >
-              <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full">
+              <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1">
                 <TabsTrigger value="all">Todos</TabsTrigger>
                 <TabsTrigger value="pending">Pendentes</TabsTrigger>
                 <TabsTrigger value="scheduled">Agendados</TabsTrigger>
