@@ -15,16 +15,19 @@ import {
   Card, 
   CardContent 
 } from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/utils";
 import { ServiceStatusBadge } from "@/components/common/ServiceStatusBadge";
 import { ServiceListItem, ServiceStatus } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ServicesList() {
   const [_, setLocation] = useLocation();
@@ -80,20 +83,28 @@ export default function ServicesList() {
               className="w-full"
             />
             
-            <Tabs
-              value={activeTab}
-              onValueChange={(value) => setActiveTab(value as ServiceStatus | "all")}
-              className="w-full"
-            >
-              <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1">
-                <TabsTrigger value="all">Todos</TabsTrigger>
-                <TabsTrigger value="pending">Pendentes</TabsTrigger>
-                <TabsTrigger value="scheduled">Agendados</TabsTrigger>
-                <TabsTrigger value="in_progress">Em Andamento</TabsTrigger>
-                <TabsTrigger value="completed">Concluídos</TabsTrigger>
-                <TabsTrigger value="cancelled">Cancelados</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+              <div className="text-sm font-medium">Status:</div>
+              <Select 
+                value={activeTab} 
+                onValueChange={(value) => setActiveTab(value as ServiceStatus | "all")}
+              >
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Selecione um status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Status do Serviço</SelectLabel>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pending">Pendentes</SelectItem>
+                    <SelectItem value="scheduled">Agendados</SelectItem>
+                    <SelectItem value="in_progress">Em Andamento</SelectItem>
+                    <SelectItem value="completed">Concluídos</SelectItem>
+                    <SelectItem value="cancelled">Cancelados</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         
