@@ -194,7 +194,7 @@ export default function NewService() {
                 name="client_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cliente</FormLabel>
+                    <FormLabel>Cliente <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => handleClientChange(value)}
                       defaultValue={field.value?.toString()}
@@ -233,7 +233,7 @@ export default function NewService() {
                 name="vehicle_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Veículo</FormLabel>
+                    <FormLabel>Veículo <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => form.setValue('vehicle_id', parseInt(value))}
                       defaultValue={field.value?.toString()}
@@ -284,7 +284,7 @@ export default function NewService() {
                 name="service_type_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo de Serviço</FormLabel>
+                    <FormLabel>Tipo de Serviço <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => form.setValue('service_type_id', parseInt(value))}
                       defaultValue={field.value?.toString()}
@@ -366,7 +366,7 @@ export default function NewService() {
                   name="scheduled_date"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Data</FormLabel>
+                      <FormLabel>Data <span className="text-red-500">*</span></FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -415,6 +415,7 @@ export default function NewService() {
                 name="location_type"
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel>Localização <span className="text-red-500">*</span></FormLabel>
                     <LocationSelector
                       value={{
                         locationType: field.value as "client_location" | "workshop",
