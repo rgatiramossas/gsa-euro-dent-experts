@@ -51,9 +51,6 @@ export default function NewClient() {
       phone: "",
       address: "",
       city: "",
-      state: "",
-      zip: "",
-      notes: "",
     },
   });
   
@@ -252,31 +249,6 @@ export default function NewClient() {
                   )}
                 />
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Observações</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observações</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Observações adicionais sobre o cliente"
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
           
