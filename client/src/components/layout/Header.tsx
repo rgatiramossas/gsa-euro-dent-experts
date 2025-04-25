@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { DollarSign, CalendarClock, Bell, Settings } from "lucide-react";
 
@@ -96,7 +96,11 @@ export function Header() {
               <DropdownMenuTrigger className="flex items-center focus:outline-none">
                 <div className="flex items-center">
                   <Avatar className="h-8 w-8 bg-red-200 text-red-800">
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    {user.profile_image ? (
+                      <AvatarImage src={user.profile_image} alt={user.name} />
+                    ) : (
+                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    )}
                   </Avatar>
                   <span className="ml-2 hidden md:block text-sm font-medium">
                     {user.name}

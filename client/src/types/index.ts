@@ -18,6 +18,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
+  profile_image?: string;
 }
 
 // Client types
