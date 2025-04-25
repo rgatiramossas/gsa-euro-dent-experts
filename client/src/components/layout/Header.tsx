@@ -42,18 +42,20 @@ export function Header() {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
           <div className="flex items-center">
-            <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center mr-2">
+            <div className="flex items-center justify-center mr-2">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
-                className="h-5 w-5 text-primary" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
+                width="36" 
+                height="36" 
+                viewBox="0 0 110 110"
+                className="fill-current"
               >
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                <path d="M54.5 14.7s-4.1 10.5-10.7 11c-9.7.7-20.2-7.7-20.2-7.7L16 28s11.1 9 11.2 19-8.7 19.8-8.7 19.8l9.1 5.2s9.5-9.7 20-9c8.2.5 10.8 9.8 10.8 9.8l10.5-3.3s-5.4-12.5 1.5-21.3c5.3-6.7 15.8-5.6 15.8-5.6l1.7-10.2s-13.4-3.3-19.2-11c-5.2-7-3.9-17.7-3.9-17.7h-10.3z" fill="#ff3e33"/>
+                <path d="M28 19.3c-2 1.1-4 2.3-5.9 3.7-12.4 9.1-17.9 25-13.6 39.9 4.3 14.9 17.8 25 33.1 25 4 0 8-.7 11.8-2" fill="none" stroke="#000" strokeWidth="2" strokeMiterlimit="10"/>
+                <path d="M28 19.3C36.1 14.5 46 13 55.2 16.1c17.8 6 27.6 25.1 22 42.9-5.7 17.8-24.7 27.6-42.4 21.7-3.8-1.3-7.3-3.2-10.3-5.5" fill="none" stroke="#000" strokeWidth="2" strokeMiterlimit="10"/>
+                <path d="M48.3 33.5c-1.7 3.3-5.8 4.6-9.1 2.9-3.3-1.7-4.6-5.8-2.9-9.1 1.7-3.3 5.8-4.6 9.1-2.9 3.3 1.7 4.6 5.8 2.9 9.1zM28.2 53.4c-1.7 3.3-5.8 4.6-9.1 2.9-3.3-1.7-4.6-5.8-2.9-9.1 1.7-3.3 5.8-4.6 9.1-2.9 3.3 1.7 4.6 5.8 2.9 9.1z" fill="#ff3e33"/>
+                <path d="M75.9 39.2c-1.7 3.3-5.8 4.6-9.1 2.9-3.3-1.7-4.6-5.8-2.9-9.1 1.7-3.3 5.8-4.6 9.1-2.9 3.3 1.7 4.6 5.8 2.9 9.1zM55.7 59.1c-1.7 3.3-5.8 4.6-9.1 2.9-3.3-1.7-4.6-5.8-2.9-9.1 1.7-3.3 5.8-4.6 9.1-2.9 3.3 1.7 4.6 5.8 2.9 9.1z" fill="#ff3e33"/>
+                <path d="M69.4 59.7c-1.7 3.3-5.8 4.6-9.1 2.9-3.3-1.7-4.6-5.8-2.9-9.1 1.7-3.3 5.8-4.6 9.1-2.9 3.3 1.7 4.6 5.8 2.9 9.1z" fill="#ff3e33"/>
               </svg>
             </div>
             <span className="font-semibold text-lg hidden sm:block">Euro Dent Experts</span>
