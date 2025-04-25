@@ -40,10 +40,8 @@ export function TechnicianPerformance({ technicians, isLoading = false }: Techni
     <Card>
       <CardHeader className="pb-2 flex items-center justify-between">
         <CardTitle className="text-lg font-medium">Desempenho da Equipe</CardTitle>
-        <Link href="/technicians">
-          <a className="text-sm font-medium text-primary hover:text-primary/80">
-            Ver detalhes
-          </a>
+        <Link href="/technicians" className="text-sm font-medium text-primary hover:text-primary/80">
+          Ver detalhes
         </Link>
       </CardHeader>
       <CardContent>
