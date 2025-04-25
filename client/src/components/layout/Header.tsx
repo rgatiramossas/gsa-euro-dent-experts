@@ -75,7 +75,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         
         <div className="flex items-center space-x-3">
           {/* Ícone Financeiro */}
-          <div className="hidden md:block">
+          <div>
             <button 
               onClick={() => setLocation("/finances")}
               className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
@@ -85,7 +85,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           </div>
           
           {/* Ícone Agenda */}
-          <div className="hidden md:block">
+          <div>
             <button 
               onClick={() => setLocation("/schedule")}
               className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
