@@ -337,21 +337,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/services", requireAuth, async (req, res) => {
     try {
-      const serviceInput = insertServiceSchema.parse(req.body);
+      // Log para depuração
+      console.log("Dados recebidos:", JSON.stringify(req.body, null, 2));
       
-      // Calculate total
-      const total = (serviceInput.price || 0) + (serviceInput.displacement_fee || 0);
-      const service = await storage.createService({
-        ...serviceInput,
-        total
-      });
-      
-      res.status(201).json(service);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      // Verificar se os campos obrigatórios estão presentes
+      if (!req.body.client_id) {
+        return res.status(400).json({ message: "Client ID is required" });
       }
-      console.error("Error creating service:", error);
+      if (!req.body.vehicle_id) {
+        return res.status(400).json({ message: "Vehicle ID is required" });
+      }
+      if (!req.body.service_type_id) {
+        return res.status(400).json({ message: "Service Type ID is required" });
+      }
+      if (!req.body.location_type) {
+        return res.status(400).json({ message: "Location Type is required" });
+      }
+      
+      try {
+        const serviceInput = insertServiceSchema.parse(req.body);
+        
+        // Calculate total
+        const total = (serviceInput.price || 0) + (serviceInput.displacement_fee || 0);
+        const service = await storage.createService({
+          ...serviceInput,
+          total
+        });
+        
+        res.status(201).json(service);
+      } catch (validationError) {
+        if (validationError instanceof z.ZodError) {
+          console.error("Erro de validação Zod:", JSON.stringify(validationError.errors, null, 2));
+          return res.status(400).json({ message: "Invalid input", errors: validationError.errors });
+        }
+        throw validationError;
+      }
+    } catch (error) {
+      console.error("Erro ao criar serviço:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

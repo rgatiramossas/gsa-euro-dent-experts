@@ -146,31 +146,51 @@ export default function NewService() {
       // Format the datetime properly
       let formattedData = { ...data };
       
-      // A propriedade scheduled_date está em formato Date, precisamos converter para ISO string
+      // Tratamento especial para a data agendada
       if (formattedData.scheduled_date) {
         try {
-          // Se já for string, deixa como está
+          let dateToUse: Date;
+          
+          // Se já for string, converte para Date para manipular
           if (typeof formattedData.scheduled_date === 'string') {
-            // Não faz nada, já está no formato esperado
-          } 
-          // Se for objeto Date, converte para string
-          else if (formattedData.scheduled_date instanceof Date) {
-            // Se tiver horário específico, ajusta
-            if (data.scheduled_time) {
-              const [hours, minutes] = data.scheduled_time.split(':');
-              formattedData.scheduled_date.setHours(parseInt(hours), parseInt(minutes));
-            } else {
-              // Se não tiver horário, define para meio-dia
-              formattedData.scheduled_date.setHours(12, 0, 0);
+            try {
+              dateToUse = new Date(formattedData.scheduled_date);
+            } catch (e) {
+              // Se não conseguir converter a string, usa a data atual
+              console.error("Erro ao converter string de data:", e);
+              dateToUse = new Date();
             }
-            // Converte para ISO string
-            formattedData.scheduled_date = formattedData.scheduled_date.toISOString();
+          } 
+          // Se já for Date, usa diretamente
+          else if (formattedData.scheduled_date instanceof Date) {
+            dateToUse = formattedData.scheduled_date;
           }
+          // Caso não seja nem string nem Date, usa a data atual
+          else {
+            dateToUse = new Date();
+          }
+          
+          // Define meio-dia como horário padrão
+          dateToUse.setHours(12, 0, 0, 0);
+          
+          // Se tiver horário específico, ajusta
+          if (data.scheduled_time) {
+            const [hours, minutes] = data.scheduled_time.split(':');
+            dateToUse.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          }
+          
+          // Converte para ISO string para enviar ao servidor
+          formattedData.scheduled_date = dateToUse.toISOString();
+          
+          console.log("Data formatada:", formattedData.scheduled_date);
         } catch (error) {
-          console.error("Erro ao converter data:", error);
-          // Em caso de erro, usa a data atual
+          console.error("Erro ao processar data:", error);
+          // Em caso de erro fatal, usa a data atual
           formattedData.scheduled_date = new Date().toISOString();
         }
+      } else {
+        // Se não tiver data, usa a data atual
+        formattedData.scheduled_date = new Date().toISOString();
       }
       
       // Calculate total
