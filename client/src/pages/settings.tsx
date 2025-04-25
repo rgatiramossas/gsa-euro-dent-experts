@@ -222,6 +222,9 @@ export default function Settings() {
             <TabsTrigger value="password">Senha</TabsTrigger>
             <TabsTrigger value="appearance">Aparência</TabsTrigger>
             <TabsTrigger value="notifications">Notificações</TabsTrigger>
+            {user?.role === "admin" && (
+              <TabsTrigger value="technicians">Técnicos</TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="profile">
@@ -532,6 +535,112 @@ export default function Settings() {
               </CardFooter>
             </Card>
           </TabsContent>
+          
+          {user?.role === "admin" && (
+            <TabsContent value="technicians">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gestão de Técnicos</CardTitle>
+                  <CardDescription>
+                    Gerencie os técnicos da sua equipe
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-6 flex justify-between items-center">
+                    <h3 className="text-lg font-medium">Técnicos Ativos</h3>
+                    <Button size="sm" className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Adicionar Técnico
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Conteúdo dos técnicos vai aqui quando implementado */}
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                      <div className="grid grid-cols-12 gap-4 items-center">
+                        <div className="col-span-1">
+                          <Avatar className="h-10 w-10 bg-red-200 text-red-800">
+                            <AvatarFallback>JD</AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <div className="col-span-3">
+                          <p className="font-medium">João da Silva</p>
+                          <p className="text-sm text-gray-500">joao@eurodent.com</p>
+                        </div>
+                        <div className="col-span-2">
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                            Ativo
+                          </Badge>
+                        </div>
+                        <div className="col-span-3">
+                          <div className="flex items-center">
+                            <div className="mr-2 text-sm font-medium text-gray-700">
+                              15 serviços
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                              <div className="bg-primary h-2.5 rounded-full" style={{ width: '75%' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-span-3 flex justify-end space-x-2">
+                          <Button variant="outline" size="sm">
+                            Editar
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800 hover:bg-red-100">
+                            Desativar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                      <div className="grid grid-cols-12 gap-4 items-center">
+                        <div className="col-span-1">
+                          <Avatar className="h-10 w-10 bg-red-200 text-red-800">
+                            <AvatarFallback>PS</AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <div className="col-span-3">
+                          <p className="font-medium">Pedro Santos</p>
+                          <p className="text-sm text-gray-500">pedro@eurodent.com</p>
+                        </div>
+                        <div className="col-span-2">
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                            Ativo
+                          </Badge>
+                        </div>
+                        <div className="col-span-3">
+                          <div className="flex items-center">
+                            <div className="mr-2 text-sm font-medium text-gray-700">
+                              8 serviços
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                              <div className="bg-primary h-2.5 rounded-full" style={{ width: '60%' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-span-3 flex justify-end space-x-2">
+                          <Button variant="outline" size="sm">
+                            Editar
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800 hover:bg-red-100">
+                            Desativar
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-center border-t pt-6">
+                  <p className="text-sm text-gray-500">
+                    Mostrando 2 técnicos de um total de 2
+                  </p>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
