@@ -49,8 +49,16 @@ import { insertServiceSchema } from "@shared/schema";
 
 // Extend the schema with more validations
 const formSchema = insertServiceSchema.extend({
-  scheduled_date: z.date().optional(),
+  scheduled_date: z.date({
+    required_error: "A data é obrigatória"
+  }),
   scheduled_time: z.string().optional(),
+  photos: z.any().refine(val => {
+    // Verificar se há pelo menos uma foto selecionada
+    return val && val.length > 0;
+  }, {
+    message: "Pelo menos uma foto do dano é obrigatória"
+  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -93,6 +101,7 @@ export default function NewService() {
       location_type: "client_location",
       price: 0,
       displacement_fee: 0,
+      photos: undefined,
     },
   });
   
@@ -434,28 +443,38 @@ export default function NewService() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium mb-2">Fotos do Dano</p>
-                  <PhotoUpload
-                    label="damage-photos"
-                    onChange={(files) => {
-                      if (files.length > 0) {
-                        // Em uma aplicação real, faríamos upload desses arquivos para um servidor
-                        console.log("Arquivos selecionados:", files.length, "fotos");
-                        toast({
-                          title: "Fotos selecionadas com sucesso",
-                          description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
-                          variant: "default",
-                        });
-                      }
-                    }}
-                    multiple
-                    maxFiles={5}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
-                  </p>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="photos"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fotos do Dano <span className="text-red-500">*</span></FormLabel>
+                      <FormControl>
+                        <PhotoUpload
+                          label="damage-photos"
+                          onChange={(files) => {
+                            if (files.length > 0) {
+                              // Em uma aplicação real, faríamos upload desses arquivos para um servidor
+                              console.log("Arquivos selecionados:", files.length, "fotos");
+                              form.setValue("photos", files, { shouldValidate: true });
+                              toast({
+                                title: "Fotos selecionadas com sucesso",
+                                description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
+                                variant: "default",
+                              });
+                            }
+                          }}
+                          multiple
+                          maxFiles={5}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
+                      </p>
+                    </FormItem>
+                  )}
+                />
               </div>
             </CardContent>
           </Card>
