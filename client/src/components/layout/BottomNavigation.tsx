@@ -3,9 +3,9 @@ import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { 
   Home, 
+  Briefcase, 
   Users, 
-  CalendarClock, 
-  DollarSign,  
+  FileText, 
   Settings 
 } from "lucide-react";
 
@@ -19,19 +19,19 @@ export function BottomNavigation() {
       icon: <Home className="h-6 w-6" />,
     },
     {
+      name: "Serviços",
+      path: "/services",
+      icon: <Briefcase className="h-6 w-6" />,
+    },
+    {
       name: "Clientes",
       path: "/clients",
       icon: <Users className="h-6 w-6" />,
     },
     {
-      name: "Agenda",
-      path: "/schedule",
-      icon: <CalendarClock className="h-6 w-6" />,
-    },
-    {
-      name: "Finanças",
-      path: "/finances",
-      icon: <DollarSign className="h-6 w-6" />,
+      name: "Orçamentos",
+      path: "/quotes",
+      icon: <FileText className="h-6 w-6" />,
     },
     {
       name: "Config",
