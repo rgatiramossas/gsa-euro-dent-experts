@@ -58,7 +58,7 @@ export const insertVehicleSchema = createInsertSchema(vehicles).omit({
   created_at: true
 });
 
-// Services
+// Service Types
 export const serviceTypes = pgTable("service_types", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),

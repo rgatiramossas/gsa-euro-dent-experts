@@ -7,6 +7,14 @@ import type {
   Service, InsertService, 
   ServicePhoto, InsertServicePhoto 
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, like, desc, sql } from "drizzle-orm";
+import bcrypt from "bcrypt";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
+
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User methods
@@ -47,276 +55,234 @@ export interface IStorage {
   // Dashboard data
   getDashboardStats(): Promise<any>;
   getTechnicianPerformance(): Promise<any>;
+  
+  // Session store
+  sessionStore: session.SessionStore;
 }
 
-export class MemStorage implements IStorage {
-  private usersData: Map<number, User>;
-  private clientsData: Map<number, Client>;
-  private vehiclesData: Map<number, Vehicle>;
-  private serviceTypesData: Map<number, ServiceType>;
-  private servicesData: Map<number, Service>;
-  private servicePhotosData: Map<number, ServicePhoto>;
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.SessionStore;
   
-  private userCurrentId: number;
-  private clientCurrentId: number;
-  private vehicleCurrentId: number;
-  private serviceTypeCurrentId: number;
-  private serviceCurrentId: number;
-  private servicePhotoCurrentId: number;
-
   constructor() {
-    this.usersData = new Map();
-    this.clientsData = new Map();
-    this.vehiclesData = new Map();
-    this.serviceTypesData = new Map();
-    this.servicesData = new Map();
-    this.servicePhotosData = new Map();
-    
-    this.userCurrentId = 1;
-    this.clientCurrentId = 1;
-    this.vehicleCurrentId = 1;
-    this.serviceTypeCurrentId = 1;
-    this.serviceCurrentId = 1;
-    this.servicePhotoCurrentId = 1;
-    
-    // Initialize with sample data
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true,
+      tableName: 'session' 
+    });
     this.initializeSampleData();
   }
-
-  private initializeSampleData(): void {
-    // Create admin user
-    this.createUser({
-      username: "admin",
-      password: "$2b$12$rWwTdl5Tc9g9XH4.GyZAWehOM3gJWtfzQDzGq.LEeUz3B3G9JHP7S", // "password123"
-      name: "Admin User",
-      email: "admin@eurodent.com",
-      role: "admin",
-      active: true
-    });
-
-    // Create technician users
-    this.createUser({
-      username: "joao",
-      password: "$2b$12$rWwTdl5Tc9g9XH4.GyZAWehOM3gJWtfzQDzGq.LEeUz3B3G9JHP7S",
-      name: "João Pereira",
-      email: "joao@eurodent.com",
-      phone: "(11) 97654-3210",
-      role: "technician",
-      active: true
-    });
-
-    this.createUser({
-      username: "pedro",
-      password: "$2b$12$rWwTdl5Tc9g9XH4.GyZAWehOM3gJWtfzQDzGq.LEeUz3B3G9JHP7S",
-      name: "Pedro Santos",
-      email: "pedro@eurodent.com",
-      phone: "(11) 97654-3210",
-      role: "technician",
-      active: true
-    });
-
-    // Create service types
-    this.createServiceType({
-      name: "Martelinho de Ouro - Pequeno",
-      description: "Reparo de amassados pequenos sem pintura",
-      base_price: 150
-    });
-
-    this.createServiceType({
-      name: "Martelinho de Ouro - Médio",
-      description: "Reparo de amassados médios sem pintura",
-      base_price: 250
-    });
-
-    this.createServiceType({
-      name: "Martelinho de Ouro - Grande",
-      description: "Reparo de amassados grandes sem pintura",
-      base_price: 350
-    });
+  
+  private async initializeSampleData(): Promise<void> {
+    // Check if we already have users
+    const existingUsers = await db.select().from(users);
+    
+    if (existingUsers.length === 0) {
+      console.log("Initializing sample data...");
+      
+      // Create admin user
+      const adminPassword = await bcrypt.hash("password123", 12);
+      await this.createUser({
+        username: "admin",
+        password: adminPassword,
+        name: "Admin User",
+        email: "admin@eurodent.com",
+        role: "admin",
+        active: true
+      });
+      
+      // Create technician users
+      await this.createUser({
+        username: "joao",
+        password: adminPassword,
+        name: "João Pereira",
+        email: "joao@eurodent.com",
+        phone: "(11) 97654-3210",
+        role: "technician",
+        active: true
+      });
+      
+      await this.createUser({
+        username: "pedro",
+        password: adminPassword,
+        name: "Pedro Santos",
+        email: "pedro@eurodent.com",
+        phone: "(11) 97654-3210",
+        role: "technician",
+        active: true
+      });
+      
+      // Create service types
+      await this.createServiceType({
+        name: "Martelinho de Ouro - Pequeno",
+        description: "Reparo de amassados pequenos sem pintura",
+        base_price: 150
+      });
+      
+      await this.createServiceType({
+        name: "Martelinho de Ouro - Médio",
+        description: "Reparo de amassados médios sem pintura",
+        base_price: 250
+      });
+      
+      await this.createServiceType({
+        name: "Martelinho de Ouro - Grande",
+        description: "Reparo de amassados grandes sem pintura",
+        base_price: 350
+      });
+      
+      console.log("Sample data initialized successfully!");
+    }
   }
-
+  
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.usersData.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.usersData.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userCurrentId++;
-    const now = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id,
-      created_at: now
-    };
-    this.usersData.set(id, user);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
-
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+  
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+  
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
-    const user = this.usersData.get(id);
-    if (!user) return undefined;
-
-    const updatedUser = { ...user, ...userData };
-    this.usersData.set(id, updatedUser);
+    const [updatedUser] = await db.update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
     return updatedUser;
   }
-
+  
   async listUsers(role?: string): Promise<User[]> {
-    const users = Array.from(this.usersData.values());
     if (role) {
-      return users.filter(user => user.role === role);
+      return db.select().from(users).where(eq(users.role, role));
     }
-    return users;
+    return db.select().from(users);
   }
-
+  
   // Client methods
   async getClient(id: number): Promise<Client | undefined> {
-    return this.clientsData.get(id);
-  }
-
-  async createClient(insertClient: InsertClient): Promise<Client> {
-    const id = this.clientCurrentId++;
-    const now = new Date();
-    const client: Client = { 
-      ...insertClient, 
-      id,
-      created_at: now
-    };
-    this.clientsData.set(id, client);
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
     return client;
   }
-
+  
+  async createClient(insertClient: InsertClient): Promise<Client> {
+    const [client] = await db.insert(clients).values(insertClient).returning();
+    return client;
+  }
+  
   async updateClient(id: number, clientData: Partial<Client>): Promise<Client | undefined> {
-    const client = this.clientsData.get(id);
-    if (!client) return undefined;
-
-    const updatedClient = { ...client, ...clientData };
-    this.clientsData.set(id, updatedClient);
+    const [updatedClient] = await db.update(clients)
+      .set(clientData)
+      .where(eq(clients.id, id))
+      .returning();
     return updatedClient;
   }
-
+  
   async listClients(): Promise<Client[]> {
-    return Array.from(this.clientsData.values());
+    return db.select().from(clients);
   }
-
+  
   async searchClients(query: string): Promise<Client[]> {
-    const clients = Array.from(this.clientsData.values());
-    if (!query) return clients;
-    
-    const lowerQuery = query.toLowerCase();
-    return clients.filter(client => 
-      client.name.toLowerCase().includes(lowerQuery) ||
-      client.email.toLowerCase().includes(lowerQuery) ||
-      (client.phone && client.phone.includes(query))
+    return db.select().from(clients).where(
+      like(clients.name, `%${query}%`)
     );
   }
-
+  
   // Vehicle methods
   async getVehicle(id: number): Promise<Vehicle | undefined> {
-    return this.vehiclesData.get(id);
-  }
-
-  async createVehicle(insertVehicle: InsertVehicle): Promise<Vehicle> {
-    const id = this.vehicleCurrentId++;
-    const now = new Date();
-    const vehicle: Vehicle = { 
-      ...insertVehicle, 
-      id,
-      created_at: now
-    };
-    this.vehiclesData.set(id, vehicle);
+    const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, id));
     return vehicle;
   }
-
-  async listVehiclesByClient(clientId: number): Promise<Vehicle[]> {
-    const vehicles = Array.from(this.vehiclesData.values());
-    return vehicles.filter(vehicle => vehicle.client_id === clientId);
+  
+  async createVehicle(insertVehicle: InsertVehicle): Promise<Vehicle> {
+    const [vehicle] = await db.insert(vehicles).values(insertVehicle).returning();
+    return vehicle;
   }
-
+  
+  async listVehiclesByClient(clientId: number): Promise<Vehicle[]> {
+    return db.select().from(vehicles).where(eq(vehicles.client_id, clientId));
+  }
+  
   // Service Type methods
   async getServiceType(id: number): Promise<ServiceType | undefined> {
-    return this.serviceTypesData.get(id);
-  }
-
-  async createServiceType(insertServiceType: InsertServiceType): Promise<ServiceType> {
-    const id = this.serviceTypeCurrentId++;
-    const serviceType: ServiceType = { 
-      ...insertServiceType, 
-      id
-    };
-    this.serviceTypesData.set(id, serviceType);
+    const [serviceType] = await db.select().from(serviceTypes).where(eq(serviceTypes.id, id));
     return serviceType;
   }
-
-  async listServiceTypes(): Promise<ServiceType[]> {
-    return Array.from(this.serviceTypesData.values());
+  
+  async createServiceType(insertServiceType: InsertServiceType): Promise<ServiceType> {
+    const [serviceType] = await db.insert(serviceTypes).values(insertServiceType).returning();
+    return serviceType;
   }
-
+  
+  async listServiceTypes(): Promise<ServiceType[]> {
+    return db.select().from(serviceTypes);
+  }
+  
   // Service methods
   async getService(id: number): Promise<Service | undefined> {
-    return this.servicesData.get(id);
-  }
-
-  async createService(insertService: InsertService): Promise<Service> {
-    const id = this.serviceCurrentId++;
-    const now = new Date();
-    const service: Service = { 
-      ...insertService, 
-      id,
-      created_at: now
-    };
-    this.servicesData.set(id, service);
+    const [service] = await db.select().from(services).where(eq(services.id, id));
     return service;
   }
-
+  
+  async createService(insertService: InsertService): Promise<Service> {
+    const [service] = await db.insert(services).values(insertService).returning();
+    return service;
+  }
+  
   async updateService(id: number, serviceData: Partial<Service>): Promise<Service | undefined> {
-    const service = this.servicesData.get(id);
-    if (!service) return undefined;
-
-    const updatedService = { ...service, ...serviceData };
-    this.servicesData.set(id, updatedService);
+    const [updatedService] = await db.update(services)
+      .set(serviceData)
+      .where(eq(services.id, id))
+      .returning();
     return updatedService;
   }
-
+  
   async listServices(filters?: Partial<{ status: string, technicianId: number, clientId: number }>): Promise<Service[]> {
-    let services = Array.from(this.servicesData.values());
+    let query = db.select().from(services);
     
     if (filters) {
       if (filters.status) {
-        services = services.filter(service => service.status === filters.status);
+        query = query.where(eq(services.status, filters.status));
       }
+      
       if (filters.technicianId) {
-        services = services.filter(service => service.technician_id === filters.technicianId);
+        query = query.where(eq(services.technician_id, filters.technicianId));
       }
+      
       if (filters.clientId) {
-        services = services.filter(service => service.client_id === filters.clientId);
+        query = query.where(eq(services.client_id, filters.clientId));
       }
     }
     
-    return services;
+    return query.orderBy(desc(services.created_at));
   }
-
+  
   async getServiceDetails(id: number): Promise<any> {
-    const service = this.servicesData.get(id);
-    if (!service) return null;
-
-    const client = this.clientsData.get(service.client_id);
-    const vehicle = this.vehiclesData.get(service.vehicle_id);
-    const serviceType = this.serviceTypesData.get(service.service_type_id);
-    const technician = service.technician_id ? this.usersData.get(service.technician_id) : null;
+    const service = await this.getService(id);
     
-    const photos = Array.from(this.servicePhotosData.values())
-      .filter(photo => photo.service_id === id);
+    if (!service) {
+      return null;
+    }
     
+    const client = await this.getClient(service.client_id);
+    const vehicle = await this.getVehicle(service.vehicle_id);
+    const serviceType = await this.getServiceType(service.service_type_id);
+    let technician = null;
+    
+    if (service.technician_id) {
+      technician = await this.getUser(service.technician_id);
+    }
+    
+    const photos = await this.getServicePhotos(id);
     const beforePhotos = photos.filter(photo => photo.photo_type === 'before');
     const afterPhotos = photos.filter(photo => photo.photo_type === 'after');
-
+    
     return {
       ...service,
       client,
@@ -329,95 +295,110 @@ export class MemStorage implements IStorage {
       }
     };
   }
-
+  
   // Service Photos methods
   async addServicePhoto(insertPhoto: InsertServicePhoto): Promise<ServicePhoto> {
-    const id = this.servicePhotoCurrentId++;
-    const now = new Date();
-    const photo: ServicePhoto = { 
-      ...insertPhoto, 
-      id,
-      created_at: now
-    };
-    this.servicePhotosData.set(id, photo);
+    const [photo] = await db.insert(servicePhotos).values(insertPhoto).returning();
     return photo;
   }
-
+  
   async getServicePhotos(serviceId: number, type?: string): Promise<ServicePhoto[]> {
-    const photos = Array.from(this.servicePhotosData.values())
-      .filter(photo => photo.service_id === serviceId);
-    
     if (type) {
-      return photos.filter(photo => photo.photo_type === type);
+      return db.select()
+        .from(servicePhotos)
+        .where(
+          and(
+            eq(servicePhotos.service_id, serviceId),
+            eq(servicePhotos.photo_type, type)
+          )
+        );
     }
     
-    return photos;
+    return db.select()
+      .from(servicePhotos)
+      .where(eq(servicePhotos.service_id, serviceId));
   }
-
+  
   // Dashboard data
   async getDashboardStats(): Promise<any> {
-    const services = Array.from(this.servicesData.values());
+    // Count pending services
+    const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
+      .from(services)
+      .where(eq(services.status, 'pending'));
     
-    const pending = services.filter(service => service.status === 'pending').length;
-    const inProgress = services.filter(service => service.status === 'in_progress').length;
+    // Count in-progress services
+    const [inProgressResult] = await db.select({ count: sql<number>`count(*)` })
+      .from(services)
+      .where(eq(services.status, 'in_progress'));
     
-    // Completed today
+    // Count services completed today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const completedToday = services.filter(service => 
-      service.status === 'completed' && 
-      service.completion_date && 
-      new Date(service.completion_date) >= today
-    ).length;
     
-    // Monthly revenue
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const monthlyRevenue = services
-      .filter(service => 
-        service.status === 'completed' && 
-        service.completion_date && 
-        new Date(service.completion_date) >= firstDayOfMonth
+    const [completedTodayResult] = await db.select({ count: sql<number>`count(*)` })
+      .from(services)
+      .where(
+        and(
+          eq(services.status, 'completed'),
+          sql`DATE(${services.completion_date}) = CURRENT_DATE`
+        )
+      );
+    
+    // Calculate monthly revenue (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const [revenueResult] = await db.select({ 
+      sum: sql<number>`COALESCE(SUM(${services.total}), 0)` 
+    })
+    .from(services)
+    .where(
+      and(
+        eq(services.status, 'completed'),
+        sql`${services.completion_date} >= ${thirtyDaysAgo}`
       )
-      .reduce((sum, service) => sum + (service.total || 0), 0);
+    );
     
     return {
-      pendingServices: pending,
-      inProgressServices: inProgress,
-      completedToday,
-      monthlyRevenue
+      pendingServices: pendingResult.count,
+      inProgressServices: inProgressResult.count,
+      completedToday: completedTodayResult.count,
+      monthlyRevenue: revenueResult.sum
     };
   }
-
+  
   async getTechnicianPerformance(): Promise<any> {
-    const technicians = Array.from(this.usersData.values())
-      .filter(user => user.role === 'technician');
+    const technicians = await this.listUsers('technician');
     
-    const services = Array.from(this.servicesData.values());
+    const results = await Promise.all(
+      technicians.map(async (tech) => {
+        // All services assigned to this technician
+        const allServices = await db.select().from(services)
+          .where(eq(services.technician_id, tech.id));
+        
+        // Completed services by this technician
+        const completedServices = allServices.filter(
+          service => service.status === 'completed'
+        );
+        
+        const servicesCount = allServices.length;
+        const completedCount = completedServices.length;
+        const completionRate = servicesCount > 0 
+          ? Math.round((completedCount / servicesCount) * 100) 
+          : 0;
+        
+        return {
+          id: tech.id,
+          name: tech.name,
+          servicesCount,
+          completedCount,
+          completionRate
+        };
+      })
+    );
     
-    const performance = technicians.map(technician => {
-      const technicianServices = services.filter(
-        service => service.technician_id === technician.id
-      );
-      
-      const completed = technicianServices.filter(
-        service => service.status === 'completed'
-      ).length;
-      
-      const total = technicianServices.length || 1; // Avoid division by zero
-      
-      const completionRate = Math.round((completed / total) * 100);
-      
-      return {
-        id: technician.id,
-        name: technician.name,
-        completionRate,
-        servicesCount: total,
-        completedCount: completed
-      };
-    });
-    
-    return performance.sort((a, b) => b.completionRate - a.completionRate);
+    return results;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
