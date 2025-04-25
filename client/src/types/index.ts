@@ -114,6 +114,10 @@ export interface ServiceListItem {
   serviceType: { id: number; name: string };
   technician?: { id: number; name: string };
   scheduled_date?: string;
+  completion_date?: string;
+  price?: number;
+  displacement_fee?: number;
+  total?: number;
   created_at?: string;
 }
 

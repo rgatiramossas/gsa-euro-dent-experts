@@ -76,14 +76,14 @@ export default function Finances() {
     );
   }
   
-  // Filter completed services with total
-  const completedServices = services?.filter(service => 
-    service.status === "completed"
+  // Filter financially relevant services (completed, awaiting approval, invoiced, paid)
+  const financiallyRelevantServices = services?.filter(service => 
+    ["completed", "aguardando_aprovacao", "faturado", "pago"].includes(service.status)
   );
   
   // Calculate stats
   const calculateStats = () => {
-    if (!completedServices || completedServices.length === 0) {
+    if (!financiallyRelevantServices || financiallyRelevantServices.length === 0) {
       return {
         totalRevenue: 0,
         servicesCount: 0,
@@ -92,7 +92,7 @@ export default function Finances() {
     }
     
     const now = new Date();
-    const filteredServices = completedServices.filter(service => {
+    const filteredServices = financiallyRelevantServices.filter(service => {
       const serviceDate = new Date(service.created_at || "");
       if (period === "week") {
         // Last 7 days
@@ -124,7 +124,7 @@ export default function Finances() {
   
   // Prepare chart data
   const prepareChartData = () => {
-    if (!completedServices || completedServices.length === 0) {
+    if (!financiallyRelevantServices || financiallyRelevantServices.length === 0) {
       return [];
     }
     
@@ -141,7 +141,7 @@ export default function Finances() {
         const nextDate = new Date(date);
         nextDate.setDate(date.getDate() + 1);
         
-        const dayTotal = completedServices
+        const dayTotal = financiallyRelevantServices
           .filter(service => {
             const serviceDate = new Date(service.created_at || "");
             return serviceDate >= date && serviceDate < nextDate;
@@ -163,7 +163,7 @@ export default function Finances() {
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 7);
         
-        const weekTotal = completedServices
+        const weekTotal = financiallyRelevantServices
           .filter(service => {
             const serviceDate = new Date(service.created_at || "");
             return serviceDate >= weekStart && serviceDate < weekEnd;
@@ -183,7 +183,7 @@ export default function Finances() {
         const monthStart = new Date(now.getFullYear(), i, 1);
         const monthEnd = new Date(now.getFullYear(), i + 1, 0);
         
-        const monthTotal = completedServices
+        const monthTotal = financiallyRelevantServices
           .filter(service => {
             const serviceDate = new Date(service.created_at || "");
             return serviceDate >= monthStart && serviceDate <= monthEnd;
@@ -202,13 +202,13 @@ export default function Finances() {
   
   // Prepare service type distribution
   const prepareServiceTypeData = () => {
-    if (!completedServices || completedServices.length === 0) {
+    if (!financiallyRelevantServices || financiallyRelevantServices.length === 0) {
       return [];
     }
     
     const serviceTypes: {[key: string]: number} = {};
     
-    completedServices.forEach(service => {
+    financiallyRelevantServices.forEach(service => {
       const typeName = service.serviceType?.name || "Desconhecido";
       if (serviceTypes[typeName]) {
         serviceTypes[typeName]++;
@@ -422,11 +422,11 @@ export default function Finances() {
                         dataKey="value"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
-                        <Cell fill="#3498db" /> {/* Pendentes */}
-                        <Cell fill="#3498db" /> {/* Agendados */}
-                        <Cell fill="#f39c12" /> {/* Em Andamento */}
-                        <Cell fill="#27ae60" /> {/* Concluídos */}
-                        <Cell fill="#e74c3c" /> {/* Cancelados */}
+                        <Cell fill="#1E40AF" /> {/* Pendentes - azul escuro */}
+                        <Cell fill="#15803D" /> {/* Concluídos - verde */}
+                        <Cell fill="#9A3412" /> {/* Aguardando Aprovação - amarelo/laranja */}
+                        <Cell fill="#6D28D9" /> {/* Faturados - roxo */}
+                        <Cell fill="#0E7490" /> {/* Pagos - verde-agua */}
                       </Pie>
                       <Tooltip />
                       <Legend />
@@ -463,14 +463,14 @@ export default function Finances() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ) : completedServices?.length === 0 ? (
+                  ) : financiallyRelevantServices?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                         Nenhuma transação encontrada
                       </TableCell>
                     </TableRow>
                   ) : (
-                    completedServices?.slice(0, 10).map((service) => (
+                    financiallyRelevantServices?.slice(0, 10).map((service) => (
                       <TableRow key={service.id} className="hover:bg-gray-50">
                         <TableCell>{formatDate(service.completion_date || service.created_at)}</TableCell>
                         <TableCell>{service.client.name}</TableCell>
