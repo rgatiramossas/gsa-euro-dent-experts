@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -22,8 +22,15 @@ export function PhotoUpload({
   maxFiles = 5
 }: PhotoUploadProps) {
   const [dragActive, setDragActive] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | undefined>(preview);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  
+  // Limpar URLs de pré-visualização quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
   
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -68,11 +75,23 @@ export function PhotoUpload({
     setSelectedFiles(files);
     onChange(files);
     
-    // Create preview for the first file
-    if (!multiple && files[0]) {
-      const url = URL.createObjectURL(files[0]);
-      setPreviewUrl(url);
+    // Limpar previews antigos
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
+    
+    // Criar URLs de preview para cada arquivo
+    const newPreviewUrls: string[] = [];
+    
+    if (multiple) {
+      // Gerar previews para todos os arquivos no caso de múltiplos arquivos
+      for (let i = 0; i < files.length; i++) {
+        newPreviewUrls.push(URL.createObjectURL(files[i]));
+      }
+    } else if (files[0]) {
+      // Apenas um preview para um único arquivo
+      newPreviewUrls.push(URL.createObjectURL(files[0]));
     }
+    
+    setPreviewUrls(newPreviewUrls);
   };
   
   return (
@@ -87,17 +106,20 @@ export function PhotoUpload({
           dragActive 
             ? "border-primary bg-primary/5" 
             : "border-gray-300 hover:border-primary/50",
-          previewUrl ? "pb-0" : "pb-6"
+          previewUrls.length > 0 ? "pb-0" : "pb-6"
         )}
       >
         <div className="space-y-1 text-center">
-          {previewUrl ? (
-            <div className="mb-4">
-              <img 
-                src={previewUrl} 
-                alt="Preview" 
-                className="mx-auto h-32 object-cover rounded"
-              />
+          {previewUrls.length > 0 ? (
+            <div className="mb-4 grid grid-cols-3 gap-2">
+              {previewUrls.map((url, index) => (
+                <img 
+                  key={index}
+                  src={url} 
+                  alt={`Foto ${index + 1}`} 
+                  className="h-24 w-full object-cover rounded"
+                />
+              ))}
             </div>
           ) : (
             <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
