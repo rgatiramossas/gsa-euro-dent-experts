@@ -13,11 +13,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { DollarSign, CalendarClock, Bell, Settings } from "lucide-react";
 
-interface HeaderProps {
-  onMenuToggle: () => void;
-}
-
-export function Header({ onMenuToggle }: HeaderProps) {
+// Não precisamos mais da interface HeaderProps já que não temos mais o sidebar
+export function Header() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();

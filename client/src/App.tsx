@@ -9,7 +9,7 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import { Header } from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar";
+// Sidebar removido pois não é mais necessário
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 
 // Import service related pages
@@ -57,32 +57,11 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 function MainLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   return (
     <div className="flex flex-col min-h-screen">
-      <Header onMenuToggle={toggleSidebar} />
+      <Header />
       
       <div className="flex flex-1">
-        {/* Mobile sidebar backdrop */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-20 md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-        
-        {/* Sidebar - hidden for all screens */}
-        <div className={`fixed z-30 h-full transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}>
-          <Sidebar />
-        </div>
-        
         {/* Main Content */}
         <main className="flex-1 overflow-auto pb-16">
           {children}
