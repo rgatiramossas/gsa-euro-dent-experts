@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { 
@@ -58,6 +59,7 @@ export default function NewService() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   
   // Queries
@@ -93,6 +95,16 @@ export default function NewService() {
       displacement_fee: 0,
     },
   });
+  
+  // Auto-fill technician based on logged in user (if technician)
+  useEffect(() => {
+    if (user && technicians) {
+      if (user.role === 'technician') {
+        // Auto-assign the current user as technician
+        form.setValue('technician_id', user.id);
+      }
+    }
+  }, [user, technicians, form]);
   
   // Create service mutation
   const createServiceMutation = useMutation({
@@ -274,12 +286,9 @@ export default function NewService() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {serviceTypes?.map((type) => (
-                          <SelectItem key={type.id} value={type.id.toString()}>
-                            {type.name}
-                            {type.base_price && ` - R$ ${type.base_price}`}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="1">Amassado de Rua</SelectItem>
+                        <SelectItem value="2">Granizo</SelectItem>
+                        <SelectItem value="3">Outro</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -311,35 +320,44 @@ export default function NewService() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Técnico Responsável</FormLabel>
-                    <Select
-                      onValueChange={(value) => form.setValue('technician_id', parseInt(value))}
-                      defaultValue={field.value?.toString()}
-                    >
+                    {user?.role === 'technician' ? (
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o técnico" />
-                        </SelectTrigger>
+                        <Input 
+                          value={user?.name || ''}
+                          disabled
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {technicians?.map((tech) => (
-                          <SelectItem key={tech.id} value={tech.id.toString()}>
-                            {tech.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    ) : (
+                      <Select
+                        onValueChange={(value) => form.setValue('technician_id', parseInt(value))}
+                        defaultValue={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o técnico" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {technicians?.map((tech) => (
+                            <SelectItem key={tech.id} value={tech.id.toString()}>
+                              {tech.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <FormField
                   control={form.control}
                   name="scheduled_date"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Data Agendada</FormLabel>
+                      <FormLabel>Data</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -369,23 +387,6 @@ export default function NewService() {
                           />
                         </PopoverContent>
                       </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="scheduled_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Horário</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="time"
-                        />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -444,7 +445,7 @@ export default function NewService() {
                     multiple
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Tire fotos que mostrem claramente o dano para facilitar a avaliação.
+                    Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
                   </p>
                 </div>
               </div>
@@ -454,10 +455,10 @@ export default function NewService() {
           {/* Price */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Orçamento Inicial</CardTitle>
+              <CardTitle>Valores</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className={`grid grid-cols-1 ${user?.role === 'admin' ? 'sm:grid-cols-2' : ''} gap-4`}>
                 <FormField
                   control={form.control}
                   name="price"
@@ -479,26 +480,28 @@ export default function NewService() {
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="displacement_fee"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Taxa de Deslocamento (R$)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0,00"
-                          onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {user?.role === 'admin' && (
+                  <FormField
+                    control={form.control}
+                    name="displacement_fee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor Administrativo (R$)</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0,00"
+                            onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
               
               <FormField

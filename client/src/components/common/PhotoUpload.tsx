@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface PhotoUploadProps {
   label: string;
@@ -8,6 +9,7 @@ interface PhotoUploadProps {
   accept?: string;
   multiple?: boolean;
   preview?: string;
+  maxFiles?: number;
 }
 
 export function PhotoUpload({
@@ -16,10 +18,12 @@ export function PhotoUpload({
   className,
   accept = "image/*",
   multiple = false,
-  preview
+  preview,
+  maxFiles = 5
 }: PhotoUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(preview);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -51,6 +55,17 @@ export function PhotoUpload({
   };
   
   const handleFiles = (files: FileList) => {
+    // Verificar se o número de arquivos excede o limite
+    if (multiple && files.length > maxFiles) {
+      toast({
+        title: "Limite de arquivos excedido",
+        description: `Você pode selecionar no máximo ${maxFiles} fotos.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSelectedFiles(files);
     onChange(files);
     
     // Create preview for the first file

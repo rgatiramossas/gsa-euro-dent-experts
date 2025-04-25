@@ -49,21 +49,44 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         
-        // Call reverse geocoding API (not implemented for this demo)
-        // For a real implementation, use a geocoding service like Google Maps Geocoding API
-        const mockAddress = "Localização atual (coordenadas obtidas)";
-        
-        onChange({
-          ...value,
-          address: mockAddress,
-          latitude,
-          longitude,
-        });
-        
-        setIsGettingLocation(false);
+        try {
+          // Usar Nominatim API para geocodificação reversa (obter endereço a partir das coordenadas)
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'Accept-Language': 'pt-BR',
+                'User-Agent': 'GoldHammerServiceApp'
+              }
+            }
+          );
+          
+          const data = await response.json();
+          
+          // Extrair endereço formatado
+          const address = data.display_name || "Endereço não disponível";
+          
+          onChange({
+            ...value,
+            address: address,
+            latitude,
+            longitude,
+          });
+        } catch (error) {
+          console.error("Erro ao obter endereço:", error);
+          // Se falhar, apenas use as coordenadas
+          onChange({
+            ...value,
+            address: `Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`,
+            latitude,
+            longitude,
+          });
+        } finally {
+          setIsGettingLocation(false);
+        }
       },
       (error) => {
         let errorMessage;
