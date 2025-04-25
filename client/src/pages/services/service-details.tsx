@@ -369,7 +369,136 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           </CardContent>
           <CardFooter className="border-t pt-4">
             <div className="flex w-full">
-              <Button variant="outline">Editar Valores</Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Editar Serviço</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Editar Serviço #{service.id}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Valor do Serviço</label>
+                        <div className="flex items-center">
+                          <span className="mr-2">R$</span>
+                          <input 
+                            type="number" 
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            defaultValue={service.price || 0}
+                            min={0}
+                            step="0.01"
+                          />
+                        </div>
+                      </div>
+                      {currentUser?.role === 'admin' && (
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Valor Administrativo</label>
+                          <div className="flex items-center">
+                            <span className="mr-2">R$</span>
+                            <input 
+                              type="number" 
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              defaultValue={service.displacement_fee || 0}
+                              min={0}
+                              step="0.01"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Descrição do Serviço</label>
+                      <Textarea
+                        defaultValue={service.description || ""}
+                        placeholder="Descreva o serviço a ser realizado"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Fotos Antes</label>
+                        <div className="border border-dashed border-gray-300 rounded-md p-4">
+                          <div className="flex items-center justify-center">
+                            <label className="cursor-pointer bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90">
+                              <span>Adicionar Fotos</span>
+                              <input type="file" accept="image/*" multiple className="hidden" />
+                            </label>
+                          </div>
+                          {service.photos?.before && service.photos.before.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-2 mt-3">
+                              {service.photos.before.map((photo) => (
+                                <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                                  <img 
+                                    src={photo.photo_url} 
+                                    alt="Antes do reparo" 
+                                    className="object-cover w-full h-full"
+                                  />
+                                  <button 
+                                    type="button"
+                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                    title="Remover foto"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Fotos Depois</label>
+                        <div className="border border-dashed border-gray-300 rounded-md p-4">
+                          <div className="flex items-center justify-center">
+                            <label className="cursor-pointer bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90">
+                              <span>Adicionar Fotos</span>
+                              <input type="file" accept="image/*" multiple className="hidden" />
+                            </label>
+                          </div>
+                          {service.photos?.after && service.photos.after.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-2 mt-3">
+                              {service.photos.after.map((photo) => (
+                                <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                                  <img 
+                                    src={photo.photo_url} 
+                                    alt="Depois do reparo" 
+                                    className="object-cover w-full h-full"
+                                  />
+                                  <button 
+                                    type="button"
+                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                    title="Remover foto"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Observações</label>
+                      <Textarea
+                        defaultValue={service.notes || ""}
+                        placeholder="Informações adicionais ou observações"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" type="button">Cancelar</Button>
+                    <Button type="button">Salvar Alterações</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </CardFooter>
         </Card>
