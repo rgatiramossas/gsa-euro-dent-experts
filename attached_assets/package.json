@@ -1,0 +1,31 @@
+{
+  "name": "euro-dent-experts",
+  "version": "1.0.0",
+  "description": "Aplicação Euro Dent Experts para gestão de serviços odontológicos e automotivos",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "verify": "node scripts/initialize-environment.js"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.1.0",
+    "@tanstack/react-query": "^4.29.5",
+    "aws-sdk": "^2.1428.0",
+    "bcrypt": "^5.1.0",
+    "class-variance-authority": "^0.6.0",
+    "clsx": "^1.2.1",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "mysql2": "^3.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.43.9",
+    "wouter": "^2.10.1",
+    "zod": "^3.21.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
