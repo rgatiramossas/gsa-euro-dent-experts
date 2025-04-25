@@ -231,13 +231,47 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createService(insertService: InsertService): Promise<Service> {
-    const [service] = await db.insert(services).values(insertService).returning();
+    // Clone o objeto para não modificar o original
+    const serviceData = { ...insertService };
+    
+    // Converter campos de data de string para Date para o PostgreSQL
+    if (serviceData.scheduled_date && typeof serviceData.scheduled_date === 'string') {
+      serviceData.scheduled_date = new Date(serviceData.scheduled_date);
+    }
+    
+    if (serviceData.start_date && typeof serviceData.start_date === 'string') {
+      serviceData.start_date = new Date(serviceData.start_date);
+    }
+    
+    if (serviceData.completion_date && typeof serviceData.completion_date === 'string') {
+      serviceData.completion_date = new Date(serviceData.completion_date);
+    }
+    
+    console.log("Dados formatados para DB:", serviceData);
+    
+    const [service] = await db.insert(services).values(serviceData).returning();
     return service;
   }
   
   async updateService(id: number, serviceData: Partial<Service>): Promise<Service | undefined> {
+    // Clone o objeto para não modificar o original
+    const updatedData = { ...serviceData };
+    
+    // Converter campos de data de string para Date para o PostgreSQL
+    if (updatedData.scheduled_date && typeof updatedData.scheduled_date === 'string') {
+      updatedData.scheduled_date = new Date(updatedData.scheduled_date);
+    }
+    
+    if (updatedData.start_date && typeof updatedData.start_date === 'string') {
+      updatedData.start_date = new Date(updatedData.start_date);
+    }
+    
+    if (updatedData.completion_date && typeof updatedData.completion_date === 'string') {
+      updatedData.completion_date = new Date(updatedData.completion_date);
+    }
+    
     const [updatedService] = await db.update(services)
-      .set(serviceData)
+      .set(updatedData)
       .where(eq(services.id, id))
       .returning();
     return updatedService;
