@@ -106,7 +106,7 @@ export function PhotoUpload({
           )}
           <div className="flex text-sm text-gray-600 justify-center">
             <label htmlFor={`file-upload-${label}`} className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none">
-              <span>Carregar {multiple ? "fotos" : "foto"}</span>
+              <span className="px-2 py-1 border border-primary rounded">Carregar {multiple ? "fotos" : "foto"}</span>
               <input
                 id={`file-upload-${label}`}
                 name={`file-upload-${label}`}
@@ -117,9 +117,9 @@ export function PhotoUpload({
                 onChange={handleChange}
               />
             </label>
-            <p className="pl-1">ou arraste e solte</p>
+            <p className="pl-1 self-center">ou arraste e solte</p>
           </div>
-          <p className="text-xs text-gray-500">PNG, JPG, JPEG até 5MB</p>
+          <p className="text-xs text-gray-500">PNG, JPG, JPEG até 5MB{multiple ? ` (máximo ${maxFiles} arquivos)` : ""}</p>
         </div>
       </div>
     </div>

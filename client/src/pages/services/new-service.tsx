@@ -439,10 +439,18 @@ export default function NewService() {
                   <PhotoUpload
                     label="damage-photos"
                     onChange={(files) => {
-                      // In a real app, we'd upload these files to a server
-                      console.log("Files selected:", files);
+                      if (files.length > 0) {
+                        // Em uma aplicação real, faríamos upload desses arquivos para um servidor
+                        console.log("Arquivos selecionados:", files.length, "fotos");
+                        toast({
+                          title: "Fotos selecionadas com sucesso",
+                          description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
+                          variant: "default",
+                        });
+                      }
                     }}
                     multiple
+                    maxFiles={5}
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
