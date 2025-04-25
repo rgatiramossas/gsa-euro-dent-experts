@@ -95,7 +95,7 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center focus:outline-none">
                 <div className="flex items-center">
-                  <Avatar className="h-8 w-8 bg-primary-dark text-white">
+                  <Avatar className="h-8 w-8 bg-red-200 text-red-800">
                     <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                   </Avatar>
                   <span className="ml-2 hidden md:block text-sm font-medium">
