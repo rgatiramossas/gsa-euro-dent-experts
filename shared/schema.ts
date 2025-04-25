@@ -94,10 +94,17 @@ export const services = pgTable("services", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-export const insertServiceSchema = createInsertSchema(services).omit({
-  id: true,
-  created_at: true
-});
+export const insertServiceSchema = createInsertSchema(services)
+  .omit({
+    id: true,
+    created_at: true
+  })
+  .extend({
+    // Permitir que a data agendada seja uma string ISO (para compatibilidade com frontend)
+    scheduled_date: z.string().or(z.date()).nullable().optional(),
+    start_date: z.string().or(z.date()).nullable().optional(),
+    completion_date: z.string().or(z.date()).nullable().optional(),
+  });
 
 // Service Photos
 export const servicePhotos = pgTable("service_photos", {
