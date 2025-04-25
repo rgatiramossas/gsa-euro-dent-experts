@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,11 +27,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { insertClientSchema } from "@shared/schema";
 
+// Padrão para telefone internacional
+const phoneRegex = /^\+[1-9]\d{1,14}$/;
+
 // Extend the schema with more validations
 const formSchema = insertClientSchema.extend({
   name: z.string().min(1, "O nome é obrigatório"),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
-  phone: z.string().optional().or(z.literal("")),
+  phone: z.string()
+    .regex(phoneRegex, "Número de telefone deve estar no formato internacional (ex: +5511987654321)")
+    .optional()
+    .or(z.literal("")),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -142,7 +149,7 @@ export default function NewClient() {
           toast({
             title: "Localização obtida parcialmente",
             description: "Não foi possível determinar o endereço completo, usando coordenadas.",
-            variant: "warning"
+            variant: "destructive"
           });
         }
         
@@ -228,8 +235,11 @@ export default function NewClient() {
                     <FormItem>
                       <FormLabel>Telefone</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="(11) 98765-4321" />
+                        <Input {...field} placeholder="+5511987654321" />
                       </FormControl>
+                      <FormDescription className="text-xs">
+                        Formato internacional: código do país + DDD + número (ex: +5511987654321)
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
