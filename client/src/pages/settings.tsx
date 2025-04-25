@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +7,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { PageHeader } from "@/components/common/PageHeader";
 import { apiRequest } from "@/lib/queryClient";
+import { Upload, Camera } from "lucide-react";
+import { motion } from "framer-motion";
 import { 
   Card, 
   CardContent, 
@@ -32,8 +34,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/lib/utils";
 
 // Define schemas for the forms
@@ -83,6 +86,63 @@ export default function Settings() {
       newPassword: "",
       confirmPassword: "",
     },
+  });
+  
+  // Estado para armazenar a imagem de perfil selecionada
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(user?.profile_image || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Handler para upload de imagem
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+      setSelectedImage(file);
+      
+      // Gerar preview da imagem
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  // Update profile photo mutation
+  const updateProfilePhotoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user) throw new Error("Usuário não autenticado");
+      
+      const formData = new FormData();
+      formData.append('photo', file);
+      
+      const res = await fetch(`/api/users/${user.id}/photo`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!res.ok) {
+        throw new Error('Falha ao enviar foto de perfil');
+      }
+      
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: "Foto atualizada",
+        description: "Sua foto de perfil foi atualizada com sucesso",
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating profile photo:', error);
+      toast({
+        title: "Erro ao atualizar foto",
+        description: "Não foi possível atualizar sua foto de perfil",
+        variant: "destructive",
+      });
+    }
   });
   
   // Update profile mutation
@@ -169,9 +229,42 @@ export default function Settings() {
               <Card className="md:col-span-1">
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center">
-                    <Avatar className="h-24 w-24 mb-4 bg-primary text-white">
-                      <AvatarFallback className="text-2xl">{user ? getInitials(user.name) : "?"}</AvatarFallback>
-                    </Avatar>
+                    <div className="relative group">
+                      <Avatar className="h-24 w-24 mb-4 bg-red-200 text-red-800">
+                        {imagePreview ? (
+                          <AvatarImage src={imagePreview} alt={user?.name || "Perfil"} />
+                        ) : (
+                          <AvatarFallback className="text-2xl">{user ? getInitials(user.name) : "?"}</AvatarFallback>
+                        )}
+                      </Avatar>
+                      
+                      <motion.div 
+                        className="absolute inset-0 flex items-center justify-center rounded-full bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        whileHover={{ scale: 1.05 }}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Camera className="w-6 h-6 text-white" />
+                      </motion.div>
+                      
+                      <input 
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        accept="image/*"
+                      />
+                    </div>
+                    
+                    {selectedImage && (
+                      <Button 
+                        onClick={() => updateProfilePhotoMutation.mutate(selectedImage)}
+                        className="mb-4"
+                        size="sm"
+                        disabled={updateProfilePhotoMutation.isPending}
+                      >
+                        {updateProfilePhotoMutation.isPending ? "Enviando..." : "Salvar Foto"}
+                      </Button>
+                    )}
                     <h3 className="font-medium text-lg">{user?.name}</h3>
                     <p className="text-sm text-gray-500">{user?.email}</p>
                     <div className="mt-2">
@@ -445,11 +538,4 @@ export default function Settings() {
   );
 }
 
-// Missing component import
-const Badge = ({ children, className }: { children: React.ReactNode, className?: string }) => {
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${className}`}>
-      {children}
-    </span>
-  );
-};
+
