@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { ServiceWithDetails, ServiceStatus } from "@/types";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { 
@@ -41,6 +42,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
   const [newStatus, setNewStatus] = useState<ServiceStatus | "">("");
   const [statusNotes, setStatusNotes] = useState("");
   const [showStatusDialog, setShowStatusDialog] = useState(false);
@@ -345,7 +347,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         {/* Financial Section */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>Orçamento</CardTitle>
+            <CardTitle>Valores</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="mb-4">
@@ -353,10 +355,12 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 <span className="text-gray-600">Valor do serviço</span>
                 <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-600">Taxa de deslocamento</span>
-                <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
-              </div>
+              {currentUser?.role === 'admin' && (
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Valor administrativo</span>
+                  <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
+                </div>
+              )}
               <div className="flex justify-between py-2 font-medium">
                 <span className="text-gray-700">Total</span>
                 <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
@@ -364,11 +368,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
             </div>
           </CardContent>
           <CardFooter className="border-t pt-4">
-            <div className="flex justify-between w-full">
-              <Button variant="outline">Editar Orçamento</Button>
-              <Button variant="secondary" className="bg-success hover:bg-success/90 text-white">
-                Aprovar Orçamento
-              </Button>
+            <div className="flex w-full">
+              <Button variant="outline">Editar Valores</Button>
             </div>
           </CardFooter>
         </Card>
