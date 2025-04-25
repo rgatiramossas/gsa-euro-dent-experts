@@ -23,14 +23,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Client } from "@/types";
 import { insertVehicleSchema } from "@shared/schema";
 
-// Extend the schema with more validations
-const formSchema = insertVehicleSchema.extend({
-  year: z.coerce.number().min(1900, "Ano inválido").max(new Date().getFullYear() + 1, "Ano inválido"),
-});
+// Use o schema original sem estender com year
+const formSchema = insertVehicleSchema;
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -55,11 +52,9 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
       client_id: parseInt(clientId),
       make: "",
       model: "",
-      year: new Date().getFullYear(),
       color: "",
       license_plate: "",
       vin: "",
-      notes: "",
     },
   });
   
@@ -118,7 +113,7 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
               <CardTitle>Informações do Veículo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="make"
@@ -141,26 +136,6 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
                       <FormLabel>Modelo</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Ex: Civic, Corolla, etc." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="year"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ano</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          type="number" 
-                          min="1900" 
-                          max={new Date().getFullYear() + 1}
-                          onChange={(e) => field.onChange(e.target.value === "" ? "" : parseInt(e.target.value))}
-                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -212,23 +187,7 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
                 />
               </div>
               
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observações</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Observações adicionais sobre o veículo"
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
             </CardContent>
           </Card>
           
