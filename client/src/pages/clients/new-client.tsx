@@ -90,18 +90,61 @@ export default function NewClient() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         
-        // Para uma implementação real, usaríamos uma API de geocodificação reversa aqui
-        // Como estamos simplificando, vamos apenas adicionar as coordenadas ao endereço
-        const locationString = `Localização atual (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`;
-        
-        form.setValue("address", locationString);
-        toast({
-          title: "Localização obtida",
-          description: "Endereço atualizado com suas coordenadas atuais",
-        });
+        try {
+          // Usar a API OpenStreetMap Nominatim para geocodificação reversa
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+                'User-Agent': 'EurodentApp/1.0'
+              }
+            }
+          );
+          
+          if (!response.ok) {
+            throw new Error('Falha ao obter endereço');
+          }
+          
+          const data = await response.json();
+          console.log('Geocode data:', data);
+          
+          // Extrair informações úteis da resposta
+          const address = data.address;
+          const streetAddress = [
+            address.road,
+            address.house_number ? `, ${address.house_number}` : '',
+            address.suburb ? ` - ${address.suburb}` : ''
+          ].join('');
+          
+          const city = address.city || address.town || address.village || address.municipality || '';
+          
+          // Preencher os campos do formulário
+          form.setValue("address", streetAddress || `Próximo a ${data.display_name}`);
+          
+          if (city) {
+            form.setValue("city", city);
+          }
+          
+          toast({
+            title: "Localização obtida",
+            description: "Endereço preenchido automaticamente",
+          });
+        } catch (error) {
+          console.error('Erro ao obter endereço:', error);
+          // Fallback para o formato de coordenadas caso o geocoding falhe
+          const locationString = `Localização atual (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`;
+          form.setValue("address", locationString);
+          
+          toast({
+            title: "Localização obtida parcialmente",
+            description: "Não foi possível determinar o endereço completo, usando coordenadas.",
+            variant: "warning"
+          });
+        }
         
         setIsGettingLocation(false);
       },
