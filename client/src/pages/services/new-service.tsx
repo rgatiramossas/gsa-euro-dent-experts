@@ -92,7 +92,7 @@ export default function NewService() {
       description: "",
       location_type: "client_location",
       price: undefined,
-      displacement_fee: 0,
+      displacement_fee: 0.00,
     },
   });
   
@@ -503,6 +503,7 @@ export default function NewService() {
                             min="0"
                             placeholder="0,00"
                             onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                            value={field.value || 0}
                           />
                         </FormControl>
                         <FormMessage />

@@ -111,14 +111,24 @@ export function PhotoUpload({
       >
         <div className="space-y-1 text-center">
           {previewUrls.length > 0 ? (
-            <div className="mb-4 grid grid-cols-3 gap-2">
+            <div className="mb-4 grid grid-cols-5 gap-2">
               {previewUrls.map((url, index) => (
-                <img 
-                  key={index}
-                  src={url} 
-                  alt={`Foto ${index + 1}`} 
-                  className="h-24 w-full object-cover rounded"
-                />
+                <div key={index} className="relative">
+                  <img 
+                    src={url} 
+                    alt={`Foto ${index + 1}`} 
+                    className="h-20 w-full object-cover rounded"
+                  />
+                  <span className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-1 rounded-bl rounded-tr">
+                    {index + 1}/{previewUrls.length}
+                  </span>
+                </div>
+              ))}
+              {/* Mostrar slots vazios para completar até 5 */}
+              {[...Array(Math.max(0, 5 - previewUrls.length))].map((_, index) => (
+                <div key={`empty-${index}`} className="h-20 border border-dashed border-gray-300 rounded flex items-center justify-center">
+                  <span className="text-gray-400 text-xs">Vazio</span>
+                </div>
               ))}
             </div>
           ) : (
