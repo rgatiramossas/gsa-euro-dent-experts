@@ -1,0 +1,546 @@
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/common/PageHeader";
+import { Button } from "@/components/ui/button";
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { 
+  Card, 
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import { LocationSelector } from "@/components/common/LocationSelector";
+import { PhotoUpload } from "@/components/common/PhotoUpload";
+import { Client, ServiceType, User, Vehicle } from "@/types";
+import { insertServiceSchema } from "@shared/schema";
+
+// Extend the schema with more validations
+const formSchema = insertServiceSchema.extend({
+  scheduled_date: z.date().optional(),
+  scheduled_time: z.string().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+export default function NewService() {
+  const [_, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  
+  // Queries
+  const { data: clients } = useQuery<Client[]>({
+    queryKey: ['/api/clients'],
+  });
+  
+  const { data: vehicles } = useQuery<Vehicle[]>({
+    queryKey: [selectedClientId ? `/api/clients/${selectedClientId}/vehicles` : null],
+    enabled: !!selectedClientId,
+  });
+  
+  const { data: serviceTypes } = useQuery<ServiceType[]>({
+    queryKey: ['/api/service-types'],
+  });
+  
+  const { data: technicians } = useQuery<User[]>({
+    queryKey: ['/api/users?role=technician'],
+  });
+
+  // Form definition
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      client_id: undefined,
+      vehicle_id: undefined,
+      service_type_id: undefined,
+      technician_id: undefined,
+      status: "pending",
+      description: "",
+      location_type: "client_location",
+      price: undefined,
+      displacement_fee: 0,
+    },
+  });
+  
+  // Create service mutation
+  const createServiceMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      // Format the datetime properly
+      let formattedData = { ...data };
+      
+      if (data.scheduled_date && data.scheduled_time) {
+        const [hours, minutes] = data.scheduled_time.split(':');
+        const scheduledDate = new Date(data.scheduled_date);
+        scheduledDate.setHours(parseInt(hours), parseInt(minutes));
+        formattedData.scheduled_date = scheduledDate.toISOString();
+      }
+      
+      // Calculate total
+      if (formattedData.price !== undefined) {
+        formattedData.total = formattedData.price + (formattedData.displacement_fee || 0);
+      }
+      
+      // Remove scheduled_time as it's not part of the schema
+      const { scheduled_time, ...serviceData } = formattedData;
+      
+      const res = await apiRequest('POST', '/api/services', serviceData);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      toast({
+        title: "Serviço criado",
+        description: "O serviço foi criado com sucesso",
+      });
+      setLocation('/services');
+    },
+    onError: (error) => {
+      console.error('Error creating service:', error);
+      toast({
+        title: "Erro ao criar serviço",
+        description: "Ocorreu um erro ao criar o serviço. Verifique os dados e tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const onSubmit = (data: FormData) => {
+    createServiceMutation.mutate(data);
+  };
+  
+  const handleClientChange = (clientId: string) => {
+    const id = parseInt(clientId);
+    setSelectedClientId(id);
+    form.setValue("client_id", id);
+    form.setValue("vehicle_id", undefined);
+  };
+  
+  return (
+    <div className="py-6 px-4 sm:px-6 lg:px-8">
+      <PageHeader
+        title="Novo Serviço"
+        description="Cadastre um novo serviço de martelinho de ouro"
+        actions={
+          <Button variant="outline" onClick={() => setLocation('/services')}>
+            Cancelar
+          </Button>
+        }
+      />
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+          {/* Client and Vehicle Information */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Informações do Cliente</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="client_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cliente</FormLabel>
+                    <Select
+                      onValueChange={(value) => handleClientChange(value)}
+                      defaultValue={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o cliente" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {clients?.map((client) => (
+                          <SelectItem key={client.id} value={client.id.toString()}>
+                            {client.name} - {client.phone}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="px-0 text-sm"
+                      onClick={() => setLocation('/clients/new')}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Cadastrar novo cliente
+                    </Button>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="vehicle_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Veículo</FormLabel>
+                    <Select
+                      onValueChange={(value) => form.setValue('vehicle_id', parseInt(value))}
+                      defaultValue={field.value?.toString()}
+                      disabled={!selectedClientId}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={selectedClientId ? "Selecione o veículo" : "Selecione um cliente primeiro"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {vehicles?.map((vehicle) => (
+                          <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
+                            {vehicle.make} {vehicle.model} {vehicle.year}
+                            {vehicle.license_plate && ` - ${vehicle.license_plate}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    {selectedClientId && (
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="px-0 text-sm"
+                        onClick={() => setLocation(`/clients/${selectedClientId}/vehicle/new`)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Cadastrar novo veículo
+                      </Button>
+                    )}
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Service Information */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Informações do Serviço</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="service_type_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Serviço</FormLabel>
+                    <Select
+                      onValueChange={(value) => form.setValue('service_type_id', parseInt(value))}
+                      defaultValue={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo de serviço" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {serviceTypes?.map((type) => (
+                          <SelectItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                            {type.base_price && ` - R$ ${type.base_price}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição do Problema</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Descreva o problema em detalhes..."
+                        rows={3}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="technician_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Técnico Responsável</FormLabel>
+                    <Select
+                      onValueChange={(value) => form.setValue('technician_id', parseInt(value))}
+                      defaultValue={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o técnico" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {technicians?.map((tech) => (
+                          <SelectItem key={tech.id} value={tech.id.toString()}>
+                            {tech.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="scheduled_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data Agendada</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                              ) : (
+                                <span>Selecione a data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                            locale={ptBR}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="scheduled_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Horário</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="time"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Location */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Localização</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="location_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <LocationSelector
+                      value={{
+                        locationType: field.value as "client_location" | "workshop",
+                        address: form.getValues().address,
+                        latitude: form.getValues().latitude,
+                        longitude: form.getValues().longitude,
+                      }}
+                      onChange={(value) => {
+                        form.setValue("location_type", value.locationType);
+                        form.setValue("address", value.address);
+                        form.setValue("latitude", value.latitude);
+                        form.setValue("longitude", value.longitude);
+                      }}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Photos */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Registro Fotográfico</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium mb-2">Fotos do Dano</p>
+                  <PhotoUpload
+                    label="damage-photos"
+                    onChange={(files) => {
+                      // In a real app, we'd upload these files to a server
+                      console.log("Files selected:", files);
+                    }}
+                    multiple
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Tire fotos que mostrem claramente o dano para facilitar a avaliação.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Price */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Orçamento Inicial</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor do Serviço (R$)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0,00"
+                          onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="displacement_fee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Taxa de Deslocamento (R$)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0,00"
+                          onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem className="mt-4">
+                    <FormLabel>Observações Adicionais</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Observações sobre o orçamento..."
+                        rows={2}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Submit Buttons */}
+          <div className="flex space-x-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => setLocation('/services')}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              className="flex-1"
+              disabled={createServiceMutation.isPending}
+            >
+              {createServiceMutation.isPending ? "Salvando..." : "Salvar Serviço"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+}
