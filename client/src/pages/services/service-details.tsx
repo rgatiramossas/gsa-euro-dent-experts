@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
+import { PhotoUpload } from "@/components/common/PhotoUpload";
 import { 
   Card, 
   CardContent,
@@ -418,70 +419,20 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Fotos Antes</label>
-                        <div className="border border-dashed border-gray-300 rounded-md p-4">
-                          <div className="flex items-center justify-center">
-                            <label className="cursor-pointer bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90">
-                              <span>Adicionar Fotos</span>
-                              <input type="file" accept="image/*" multiple className="hidden" />
-                            </label>
-                          </div>
-                          {service.photos?.before && service.photos.before.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-2 mt-3">
-                              {service.photos.before.map((photo) => (
-                                <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
-                                  <img 
-                                    src={photo.photo_url} 
-                                    alt="Antes do reparo" 
-                                    className="object-cover w-full h-full"
-                                  />
-                                  <button 
-                                    type="button"
-                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                                    title="Remover foto"
-                                  >
-                                    &times;
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Fotos Depois</label>
-                        <div className="border border-dashed border-gray-300 rounded-md p-4">
-                          <div className="flex items-center justify-center">
-                            <label className="cursor-pointer bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90">
-                              <span>Adicionar Fotos</span>
-                              <input type="file" accept="image/*" multiple className="hidden" />
-                            </label>
-                          </div>
-                          {service.photos?.after && service.photos.after.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-2 mt-3">
-                              {service.photos.after.map((photo) => (
-                                <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
-                                  <img 
-                                    src={photo.photo_url} 
-                                    alt="Depois do reparo" 
-                                    className="object-cover w-full h-full"
-                                  />
-                                  <button 
-                                    type="button"
-                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                                    title="Remover foto"
-                                  >
-                                    &times;
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Fotos <span className="text-red-500">*</span></label>
+                      <PhotoUpload
+                        label="edit-photos"
+                        onChange={(files) => {
+                          console.log("Fotos selecionadas:", files.length);
+                          // Aqui implementaríamos a lógica para atualizar as fotos
+                        }}
+                        multiple
+                        maxFiles={5}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
+                      </p>
                     </div>
 
                     <div>
