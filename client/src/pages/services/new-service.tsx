@@ -464,7 +464,7 @@ export default function NewService() {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valor do Serviço (R$)</FormLabel>
+                      <FormLabel>Valor do Serviço (€)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -486,7 +486,7 @@ export default function NewService() {
                     name="displacement_fee"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Valor Administrativo (R$)</FormLabel>
+                        <FormLabel>Valor Administrativo (€)</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
