@@ -32,9 +32,11 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
   };
 
   const handleAddressChange = (address: string) => {
+    // Preserva as coordenadas existentes ao alterar manualmente o endereço
     onChange({
       ...value,
       address,
+      // Mantém latitude e longitude existentes se já foram definidos
     });
   };
 
@@ -121,6 +123,11 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
           placeholder="Digite o endereço completo"
           className="mt-1"
         />
+        {value.latitude && value.longitude && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Coordenadas detectadas: Você pode modificar o endereço mantendo as coordenadas
+          </p>
+        )}
       </div>
       
       <div>
