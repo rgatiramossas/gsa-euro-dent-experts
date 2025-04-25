@@ -409,10 +409,10 @@ export default function Finances() {
                       <Pie
                         data={[
                           { name: "Pendentes", value: services?.filter(s => s.status === "pending").length || 0 },
-                          { name: "Agendados", value: services?.filter(s => s.status === "scheduled").length || 0 },
-                          { name: "Em Andamento", value: services?.filter(s => s.status === "in_progress").length || 0 },
                           { name: "Concluídos", value: services?.filter(s => s.status === "completed").length || 0 },
-                          { name: "Cancelados", value: services?.filter(s => s.status === "cancelled").length || 0 },
+                          { name: "Aguardando Aprovação", value: services?.filter(s => s.status === "aguardando_aprovacao").length || 0 },
+                          { name: "Faturados", value: services?.filter(s => s.status === "faturado").length || 0 },
+                          { name: "Pagos", value: services?.filter(s => s.status === "pago").length || 0 },
                         ]}
                         cx="50%"
                         cy="50%"
