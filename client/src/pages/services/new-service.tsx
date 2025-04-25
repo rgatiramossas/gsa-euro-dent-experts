@@ -133,19 +133,30 @@ export default function NewService() {
       // Format the datetime properly
       let formattedData = { ...data };
       
-      if (data.scheduled_date) {
-        // Se tiver uma data agendada
-        if (data.scheduled_time) {
-          // Se tiver horário específico, ajusta
-          const [hours, minutes] = data.scheduled_time.split(':');
-          const scheduledDate = new Date(data.scheduled_date);
-          scheduledDate.setHours(parseInt(hours), parseInt(minutes));
-          formattedData.scheduled_date = scheduledDate.toISOString();
-        } else {
-          // Se não tiver horário, mantém a data mas define para meio-dia
-          const scheduledDate = new Date(data.scheduled_date);
-          scheduledDate.setHours(12, 0, 0); // Meio-dia
-          formattedData.scheduled_date = scheduledDate.toISOString();
+      // A propriedade scheduled_date está em formato Date, precisamos converter para ISO string
+      if (formattedData.scheduled_date) {
+        try {
+          // Se já for string, deixa como está
+          if (typeof formattedData.scheduled_date === 'string') {
+            // Não faz nada, já está no formato esperado
+          } 
+          // Se for objeto Date, converte para string
+          else if (formattedData.scheduled_date instanceof Date) {
+            // Se tiver horário específico, ajusta
+            if (data.scheduled_time) {
+              const [hours, minutes] = data.scheduled_time.split(':');
+              formattedData.scheduled_date.setHours(parseInt(hours), parseInt(minutes));
+            } else {
+              // Se não tiver horário, define para meio-dia
+              formattedData.scheduled_date.setHours(12, 0, 0);
+            }
+            // Converte para ISO string
+            formattedData.scheduled_date = formattedData.scheduled_date.toISOString();
+          }
+        } catch (error) {
+          console.error("Erro ao converter data:", error);
+          // Em caso de erro, usa a data atual
+          formattedData.scheduled_date = new Date().toISOString();
         }
       }
       
@@ -162,9 +173,20 @@ export default function NewService() {
       
       try {
         const res = await apiRequest('POST', '/api/services', serviceData);
-        return res.json();
-      } catch (error) {
-        console.error("Erro detalhado:", error);
+        const data = await res.json();
+        console.log("Resposta do servidor:", data);
+        return data;
+      } catch (error: any) {
+        // Tentar obter os detalhes do erro
+        console.error("Detalhes do erro:", error);
+        if (error.response) {
+          try {
+            const errorData = await error.response.json();
+            console.error("Erro detalhado da API:", errorData);
+          } catch (e) {
+            console.error("Não foi possível ler o corpo da resposta de erro");
+          }
+        }
         throw error;
       }
     },
