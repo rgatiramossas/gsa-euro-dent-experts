@@ -91,8 +91,8 @@ export default function NewService() {
       status: "pending",
       description: "",
       location_type: "client_location",
-      price: undefined,
-      displacement_fee: 0.00,
+      price: 0,
+      displacement_fee: 0,
     },
   });
   
@@ -481,6 +481,7 @@ export default function NewService() {
                           min="0"
                           placeholder="0,00"
                           onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseFloat(e.target.value))}
+                          value={field.value !== undefined ? field.value?.toFixed(2) : '0.00'}
                         />
                       </FormControl>
                       <FormMessage />
@@ -503,7 +504,7 @@ export default function NewService() {
                             min="0"
                             placeholder="0,00"
                             onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                            value={field.value || 0}
+                            value={field.value !== undefined ? field.value?.toFixed(2) : '0.00'}
                           />
                         </FormControl>
                         <FormMessage />
