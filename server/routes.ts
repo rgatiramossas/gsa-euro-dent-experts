@@ -407,9 +407,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updates.total = price + displacementFee;
       }
       
-      // Update completion_date if status is being set to completed
+      // Update completion_date if status is being set to completed or outras etapas de faturamento
       if (updates.status === "completed" && service.status !== "completed") {
         updates.completion_date = new Date();
+      }
+      
+      // Tratamento especial para outras mudanças de status
+      if (updates.status === "aguardando_aprovacao" && service.status !== "aguardando_aprovacao") {
+        if (!service.completion_date) {
+          updates.completion_date = new Date();
+        }
       }
       
       const updatedService = await storage.updateService(id, updates);
