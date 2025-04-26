@@ -87,6 +87,8 @@ export default function Budget() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(false);
+  const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [selectedClient, setSelectedClient] = useState<number | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<number | null>(null);
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -346,10 +348,65 @@ export default function Budget() {
   };
   
   const handleViewBudget = (budgetId: number) => {
-    toast({
-      title: "Visualizar orçamento",
-      description: `Visualizando detalhes do orçamento #${budgetId}.`,
-    });
+    if (!budgets) return;
+    
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget) {
+      toast({
+        title: "Erro",
+        description: `Orçamento #${budgetId} não encontrado.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Resetar o formulário primeiro
+    setSelectedClient(null);
+    setSelectedVehicle(null);
+    setIsManualVehicle(true);
+    setManualVehicleInfo(budget.vehicle_info || "");
+    setDate(budget.date || new Date().toISOString().split('T')[0]);
+    setNote(budget.note || "");
+    setTotalAw(budget.total_aw || 0);
+    setTotalValue(budget.total_value || 0);
+    setPhotoUrl(budget.photo_url || null);
+    
+    // Resetar todas as peças para não selecionadas
+    const initialPartDamages: Record<string, PartDamage> = {
+      paraLamaEsquerdo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      capo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      paraLamaDireito: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      colunaEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      teto: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false }, 
+      colunaDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      portaDianteiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      portaDianteiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      portaTraseiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      portaMalasSuperior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      portaTraseiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      lateralEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      portaMalasInferior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+      lateralDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false }
+    };
+    
+    // Marcar as peças danificadas
+    if (budget.damaged_parts && budget.damaged_parts.length > 0) {
+      budget.damaged_parts.forEach(part => {
+        if (initialPartDamages[part]) {
+          initialPartDamages[part].selected = true;
+          
+          // Se tivermos dados mais detalhados em uma implementação real, poderíamos
+          // adicionar valores para os diâmetros e opções aqui
+        }
+      });
+    }
+    
+    setPartDamages(initialPartDamages);
+    
+    // Definir o orçamento selecionado e modo de visualização
+    setSelectedBudget(budget);
+    setIsViewMode(true);
+    setShowDialog(true);
   };
   
   // Estado para armazenar a informação do último input modificado
@@ -631,7 +688,14 @@ export default function Budget() {
         title="Orçamentos"
         description="Gerencie orçamentos para seus clientes"
         actions={
-          <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <Dialog open={showDialog} onOpenChange={(open) => {
+              // Ao fechar o diálogo, resetar o modo de visualização
+              if (!open) {
+                setIsViewMode(false);
+                setSelectedBudget(null);
+              }
+              setShowDialog(open);
+            }}>
             <DialogTrigger asChild>
               <Button>
                 <PlusIcon className="h-4 w-4 mr-2" />
@@ -640,9 +704,13 @@ export default function Budget() {
             </DialogTrigger>
             <DialogContent className="max-w-3xl">
               <DialogHeader>
-                <DialogTitle>Criar Novo Orçamento</DialogTitle>
+                <DialogTitle>
+                  {isViewMode ? `Visualizar Orçamento #${selectedBudget?.id}` : 'Criar Novo Orçamento'}
+                </DialogTitle>
                 <DialogDescription>
-                  Preencha os detalhes para criar um novo orçamento para o cliente.
+                  {isViewMode 
+                    ? `Detalhes do orçamento para ${selectedBudget?.client_name}.`
+                    : 'Preencha os detalhes para criar um novo orçamento para o cliente.'}
                 </DialogDescription>
               </DialogHeader>
               
@@ -657,6 +725,8 @@ export default function Budget() {
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
+                        readOnly={isViewMode}
+                        disabled={isViewMode}
                       />
                     </div>
                     
@@ -665,12 +735,13 @@ export default function Budget() {
                       <Select 
                         value={selectedClient?.toString() || ""} 
                         onValueChange={(value) => {
-                          if (value) {
+                          if (!isViewMode && value) {
                             setSelectedClient(parseInt(value));
-                          } else {
+                          } else if (!isViewMode) {
                             setSelectedClient(null);
                           }
                         }}
+                        disabled={isViewMode}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione um cliente" />
@@ -694,6 +765,8 @@ export default function Budget() {
                         placeholder="Ex: BMW X5 2022"
                         value={manualVehicleInfo}
                         onChange={(e) => setManualVehicleInfo(e.target.value)}
+                        readOnly={isViewMode}
+                        disabled={isViewMode}
                       />
                     </div>
                     
@@ -704,6 +777,8 @@ export default function Budget() {
                         placeholder="Ex: ABC-1234"
                         value={licensePlate}
                         onChange={(e) => setLicensePlate(e.target.value)}
+                        readOnly={isViewMode}
+                        disabled={isViewMode}
                       />
                     </div>
                     
@@ -714,6 +789,8 @@ export default function Budget() {
                         placeholder="Ex: 9BW11111111111111"
                         value={chassisNumber}
                         onChange={(e) => setChassisNumber(e.target.value)}
+                        readOnly={isViewMode}
+                        disabled={isViewMode}
                       />
                     </div>
                   </div>
@@ -774,6 +851,8 @@ export default function Budget() {
                       onChange={(e) => setTotalAw(Number(e.target.value))}
                       onFocus={(e) => e.target.select()}
                       autoComplete="off"
+                      readOnly={isViewMode}
+                      disabled={isViewMode}
                     />
                   </div>
                   
@@ -803,15 +882,32 @@ export default function Budget() {
               </div>
               
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleCreateBudget} 
-                  disabled={createBudgetMutation.isPending}
-                >
-                  {createBudgetMutation.isPending ? "Criando..." : "Criar Orçamento"}
-                </Button>
+                {isViewMode ? (
+                  <>
+                    <Button variant="outline" onClick={() => setShowDialog(false)}>
+                      Fechar
+                    </Button>
+                    <Button 
+                      variant="default"
+                      onClick={() => handlePrintBudget(selectedBudget?.id || 0)}
+                    >
+                      <PrinterIcon className="h-4 w-4 mr-2" />
+                      Imprimir
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" onClick={() => setShowDialog(false)}>
+                      Cancelar
+                    </Button>
+                    <Button 
+                      onClick={handleCreateBudget} 
+                      disabled={createBudgetMutation.isPending}
+                    >
+                      {createBudgetMutation.isPending ? "Criando..." : "Criar Orçamento"}
+                    </Button>
+                  </>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
