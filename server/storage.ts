@@ -55,6 +55,7 @@ export interface IStorage {
   // Service Photos methods
   addServicePhoto(photo: InsertServicePhoto): Promise<ServicePhoto>;
   getServicePhotos(serviceId: number, type?: string): Promise<ServicePhoto[]>;
+  removeServicePhoto(photoId: number): Promise<boolean>;
 
   // Dashboard data
   getDashboardStats(): Promise<any>;
@@ -459,6 +460,49 @@ export class DatabaseStorage implements IStorage {
     return db.select()
       .from(servicePhotos)
       .where(eq(servicePhotos.service_id, serviceId));
+  }
+  
+  async removeServicePhoto(photoId: number): Promise<boolean> {
+    try {
+      // Primeiro, obtenha as informações da foto para poder remover o arquivo do sistema de arquivos
+      const [photo] = await db.select().from(servicePhotos).where(eq(servicePhotos.id, photoId));
+      
+      if (!photo) {
+        console.log(`Foto com ID ${photoId} não encontrada`);
+        return false;
+      }
+      
+      console.log(`Removendo foto ${photoId} do banco de dados: ${photo.photo_url}`);
+      
+      // Remove do banco de dados
+      const result = await db.delete(servicePhotos).where(eq(servicePhotos.id, photoId)).returning();
+      
+      // Se a remoção no banco de dados for bem-sucedida, tente remover o arquivo físico
+      if (result.length > 0) {
+        try {
+          // Opcional: remover o arquivo físico do sistema de arquivos
+          // Isso requer o módulo 'fs' e o caminho base do projeto
+          // É complicado porque o caminho armazenado no BD (/uploads/...) não é o caminho absoluto do arquivo
+          // Seria necessário converter para o caminho absoluto real
+          // const fs = require('fs');
+          // const path = require('path');
+          // const filePath = path.join(process.cwd(), photo.photo_url);
+          // if (fs.existsSync(filePath)) {
+          //   fs.unlinkSync(filePath);
+          // }
+        } catch (fileError) {
+          console.error(`Erro ao remover arquivo físico para a foto ${photoId}:`, fileError);
+          // Mesmo com erro para remover o arquivo, consideramos a operação bem sucedida
+          // porque o registro foi removido do banco de dados
+        }
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error(`Erro ao remover foto ${photoId}:`, error);
+      return false;
+    }
   }
   
   // Dashboard data

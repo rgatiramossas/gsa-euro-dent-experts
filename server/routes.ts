@@ -547,8 +547,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Se o content type for multipart/form-data, a forma como os dados são recebidos é diferente
       if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
-        // Apenas para debug
+        // Verificar se temos arquivos de fotos
+        const hasServicePhotos = req.files && 
+                              (req.files as any)['photos_service'] && 
+                              (req.files as any)['photos_service'].length > 0;
+        
+        const hasBeforePhotos = req.files && 
+                            (req.files as any)['photos_before'] && 
+                            (req.files as any)['photos_before'].length > 0;
+                            
+        const hasAfterPhotos = req.files && 
+                           (req.files as any)['photos_after'] && 
+                           (req.files as any)['photos_after'].length > 0;
+        
+        const hasPhotosToRemove = updates.photos_to_remove;
+        
+        const hasPhotoChanges = updates.has_photo_changes === 'true' || 
+                             hasServicePhotos || 
+                             hasBeforePhotos || 
+                             hasAfterPhotos || 
+                             hasPhotosToRemove;
+        
+        // Log para debug
         console.log("Recebido como multipart/form-data. Campos:", Object.keys(updates));
+        console.log("Arquivos:", req.files ? Object.keys(req.files) : 'Nenhum');
+        console.log("Tem fotos?", { 
+          hasServicePhotos, 
+          hasBeforePhotos, 
+          hasAfterPhotos, 
+          hasPhotosToRemove,
+          hasPhotoChanges
+        });
+        
+        // Se houver fotos sendo enviadas ou removidas, marcar isso no objeto de atualização
+        if (hasPhotoChanges) {
+          console.log("Marcando que há alterações de fotos");
+          updates._hasPhotoChanges = true;
+        }
         
         // Converter strings para números onde necessário
         if (updates.price) {
@@ -557,12 +592,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (updates.displacement_fee) {
           updates.displacement_fee = Number(updates.displacement_fee);
         }
+        
+        // Processar fotos aqui
+        if (hasServicePhotos || hasBeforePhotos || hasAfterPhotos) {
+          // Processar fotos de serviço (nova abordagem)
+          if (hasServicePhotos) {
+            const files = (req.files as any)['photos_service'];
+            console.log(`Processando ${files.length} fotos de serviço`);
+            
+            // Adicionar cada foto ao banco de dados
+            for (const file of files) {
+              const photoUrl = `/uploads/service/${file.filename}`;
+              await storage.addServicePhoto({
+                service_id: id,
+                photo_type: 'service',
+                photo_url: photoUrl
+              });
+            }
+          }
+          
+          // Processar fotos "antes" (abordagem anterior)
+          if (hasBeforePhotos) {
+            const files = (req.files as any)['photos_before'];
+            console.log(`Processando ${files.length} fotos "antes"`);
+            
+            for (const file of files) {
+              const photoUrl = `/uploads/before/${file.filename}`;
+              await storage.addServicePhoto({
+                service_id: id,
+                photo_type: 'before',
+                photo_url: photoUrl
+              });
+            }
+          }
+          
+          // Processar fotos "depois" (abordagem anterior)
+          if (hasAfterPhotos) {
+            const files = (req.files as any)['photos_after'];
+            console.log(`Processando ${files.length} fotos "depois"`);
+            
+            for (const file of files) {
+              const photoUrl = `/uploads/after/${file.filename}`;
+              await storage.addServicePhoto({
+                service_id: id,
+                photo_type: 'after',
+                photo_url: photoUrl
+              });
+            }
+          }
+        }
+        
+        // Remover fotos se necessário
+        if (hasPhotosToRemove) {
+          try {
+            const photoIdsToRemove = JSON.parse(updates.photos_to_remove);
+            console.log(`Removendo ${photoIdsToRemove.length} fotos:`, photoIdsToRemove);
+            
+            // Usar a função de remoção implementada no storage
+            for (const photoId of photoIdsToRemove) {
+              console.log(`Removendo foto ID ${photoId}`);
+              const removed = await storage.removeServicePhoto(photoId);
+              if (removed) {
+                console.log(`Foto ID ${photoId} removida com sucesso`);
+              } else {
+                console.error(`Falha ao remover foto ID ${photoId}`);
+              }
+            }
+          } catch (error) {
+            console.error("Erro ao processar IDs de fotos para remover:", error);
+          }
+        }
       }
       
       // Verificação para garantir que temos dados para atualizar
-      if (Object.keys(updates).length === 0) {
-        console.log("Nenhum dado de atualização fornecido, retornando o serviço atual");
-        return res.json(service);
+      if (Object.keys(updates).length === 0 || (Object.keys(updates).length === 1 && updates._hasPhotoChanges)) {
+        // Se não há dados além de _hasPhotoChanges, ainda precisamos enviar algo para o serviço atualizado
+        if (updates._hasPhotoChanges) {
+          console.log("Apenas alterações de fotos foram feitas, atualizando apenas essa informação");
+          return res.json({
+            ...service,
+            message: "Fotos atualizadas com sucesso"
+          });
+        } else {
+          console.log("Nenhum dado de atualização fornecido, retornando o serviço atual");
+          return res.json(service);
+        }
       }
       
       console.log("Atualizando serviço com dados:", updates);
@@ -806,8 +920,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Continua mesmo com falha na exclusão do arquivo físico
       }
       
-      // Excluir o registro da foto do banco de dados
-      const deleted = await db.delete('service_photos').where({ id: photoId }).returning();
+      // Excluir o registro da foto do banco de dados usando nossa função
+      const deleted = await storage.removeServicePhoto(photoId);
       
       res.json({
         message: "Photo deleted successfully",
