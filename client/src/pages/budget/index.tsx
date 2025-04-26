@@ -47,7 +47,8 @@ import {
   PlusIcon, 
   PrinterIcon, 
   Trash2Icon,
-  CameraIcon
+  CameraIcon,
+  PencilIcon
 } from "lucide-react";
 
 // Tipos para orçamento
@@ -911,6 +912,14 @@ export default function Budget() {
                   <>
                     <Button variant="outline" onClick={() => setShowDialog(false)}>
                       Fechar
+                    </Button>
+                    <Button 
+                      variant="secondary"
+                      onClick={() => setIsViewMode(false)}
+                      className="mr-2"
+                    >
+                      <PencilIcon className="h-4 w-4 mr-2" />
+                      Editar
                     </Button>
                     <Button 
                       variant="default"
