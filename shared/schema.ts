@@ -110,7 +110,7 @@ export const insertServiceSchema = createInsertSchema(services)
 export const servicePhotos = pgTable("service_photos", {
   id: serial("id").primaryKey(),
   service_id: integer("service_id").notNull().references(() => services.id),
-  photo_type: text("photo_type").notNull(), // "before" or "after"
+  photo_type: text("photo_type").notNull(), // "before", "after", or "service"
   photo_url: text("photo_url").notNull(),
   created_at: timestamp("created_at").defaultNow(),
 });
@@ -118,6 +118,8 @@ export const servicePhotos = pgTable("service_photos", {
 export const insertServicePhotoSchema = createInsertSchema(servicePhotos).omit({
   id: true,
   created_at: true
+}).extend({
+  photo_type: z.enum(['before', 'after', 'service'])
 });
 
 // Types
