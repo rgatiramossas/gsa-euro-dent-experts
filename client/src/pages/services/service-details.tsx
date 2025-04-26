@@ -530,7 +530,28 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const handleServicePhotoChange = (files: FileList) => {
     if (files.length === 0) return;
     
-    setServicePhotos(files);
+    // Combinar as novas fotos com as existentes, se houver
+    const existingFiles = servicePhotos ? Array.from(servicePhotos) : [];
+    const newFiles = Array.from(files);
+    
+    // Criar um novo objeto FileList com todas as fotos
+    const combinedFiles = new DataTransfer();
+    
+    // Adicionar arquivos existentes
+    existingFiles.forEach(file => {
+      combinedFiles.items.add(file);
+    });
+    
+    // Adicionar novos arquivos
+    newFiles.forEach(file => {
+      combinedFiles.items.add(file);
+    });
+    
+    // Obter o novo FileList combinado
+    const combinedFileList = combinedFiles.files;
+    
+    // Atualizar o estado com a lista combinada
+    setServicePhotos(combinedFileList);
     
     // Limpar previews antigos
     if (servicePhotoPreview) {
@@ -539,12 +560,12 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     
     // Criar previews para mostrar ao usuário
     const previewUrls: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      previewUrls.push(URL.createObjectURL(files[i]));
+    for (let i = 0; i < combinedFileList.length; i++) {
+      previewUrls.push(URL.createObjectURL(combinedFileList[i]));
     }
     setServicePhotoPreview(previewUrls.join(','));
     
-    console.log(`${files.length} fotos de serviço selecionadas`);
+    console.log(`Total de ${combinedFileList.length} fotos de serviço selecionadas (${files.length} novas adicionadas)`);
   };
   
   // Função para marcar uma foto para remoção
@@ -1102,8 +1123,20 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               label="fotos-servico"
                               onChange={(files) => {
                                 if (files.length > 0) {
-                                  editForm.setValue("photos", files, { shouldValidate: true });
+                                  // Combinar as novas fotos com as existentes para o form também
+                                  const existingFiles = servicePhotos ? Array.from(servicePhotos) : [];
+                                  const newFiles = Array.from(files);
+                                  
+                                  // Manipular as fotos através da função específica para garantir a coerência
                                   handleServicePhotoChange(files);
+                                  
+                                  // Atualizar o valor do formulário com as fotos combinadas
+                                  const combinedFiles = new DataTransfer();
+                                  existingFiles.forEach(file => combinedFiles.items.add(file));
+                                  newFiles.forEach(file => combinedFiles.items.add(file));
+                                  
+                                  editForm.setValue("photos", combinedFiles.files, { shouldValidate: true });
+                                  
                                   toast({
                                     title: "Fotos selecionadas com sucesso",
                                     description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
