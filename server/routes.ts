@@ -8,6 +8,8 @@ import path from "path";
 import fs from "fs";
 import multer from "multer";
 import { fileURLToPath } from "url";
+import { db } from "./db";
+import { desc } from "drizzle-orm";
 import { 
   insertUserSchema, 
   insertClientSchema, 
@@ -15,7 +17,8 @@ import {
   insertServiceSchema, 
   insertServicePhotoSchema,
   insertEventTypeSchema,
-  insertEventSchema 
+  insertEventSchema,
+  expenses
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -133,6 +136,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Rota para listar despesas
+  app.get("/api/expenses", requireAuth, async (req, res) => {
+    try {
+      if (req.session.userRole !== "admin") {
+        return res.status(403).json({ message: "Apenas administradores podem acessar despesas" });
+      }
+      
+      // Selecionar todas as despesas no banco de dados
+      const expensesList = await db
+        .select()
+        .from(expenses)
+        .orderBy(desc(expenses.date));
+        
+      res.json(expensesList);
+    } catch (error) {
+      console.error("Erro ao buscar despesas:", error);
+      res.status(500).json({ message: "Erro ao buscar despesas" });
+    }
+  });
+  
   // Dashboard routes
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {

@@ -8,7 +8,8 @@ import type {
   ServicePhoto, InsertServicePhoto,
   EventType, InsertEventType,
   Event, InsertEvent,
-  PaymentRequest, PaymentRequestItem
+  PaymentRequest, PaymentRequestItem,
+  Expense, InsertExpense
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, desc, or, sql } from "drizzle-orm";
