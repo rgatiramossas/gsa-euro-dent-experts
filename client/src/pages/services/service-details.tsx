@@ -820,7 +820,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             <Badge className="absolute top-1 left-1 bg-orange-500 text-white">
                               Antes
                             </Badge>
-                            {isEditMode && (
+                            {isEditing && (
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(photo.id)}
@@ -844,7 +844,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             <Badge className="absolute top-1 left-1 bg-green-500 text-white">
                               Depois
                             </Badge>
-                            {isEditMode && (
+                            {isEditing && (
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(photo.id)}
