@@ -589,8 +589,9 @@ export default function Budget() {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Encontrar o elemento do diálogo de visualização
-      const dialogContent = document.querySelector('[role="dialog"]') as HTMLElement;
+      // Encontrar o elemento do diálogo de visualização 
+      // É melhor usar um elemento mais específico que contém apenas o conteúdo
+      const dialogContent = document.querySelector('[role="dialog"] [class*="DialogContent"] > div') as HTMLElement;
       if (!dialogContent) {
         toast({
           title: "Erro ao gerar PDF",
@@ -607,16 +608,29 @@ export default function Budget() {
       // Antes de capturar, ocultar elementos que não devem aparecer no PDF
       const printMode = document.createElement('style');
       printMode.innerHTML = `
+        /* Ocultar totais */
         [id="totalAw"], [id="totalValue"], 
         label[for="totalAw"], label[for="totalValue"],
+        .grid.grid-cols-2.gap-4:last-of-type,
+        
+        /* Ocultar botões na parte inferior */
         [class*="DialogFooter"],
-        button[variant="destructive"],
-        [class*="DialogClose"] {
+        
+        /* Ocultar botão de fechar e outros controles */
+        [class*="DialogClose"],
+        button[variant="destructive"] {
           display: none !important;
         }
+        
+        /* Remover bordas e sombras */
         [class*="DialogContent"] {
           border: none !important;
           box-shadow: none !important;
+        }
+        
+        /* Adicionar espaço para o rodapé do PDF */
+        [class*="DialogContent"] > div {
+          padding-bottom: 50px !important;
         }
       `;
       document.head.appendChild(printMode);
