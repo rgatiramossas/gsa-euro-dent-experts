@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/common/PageHeader";
-import { ServiceStatusBadge } from "@/components/common/ServiceStatusBadge";
+import { Badge } from "@/components/ui/badge";
 import { 
   Card, 
   CardContent, 
@@ -45,12 +45,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
+  CheckIcon,
+  ClockIcon,
   EuroIcon, 
   FileTextIcon,
   PlusIcon, 
   PrinterIcon, 
-  SendIcon 
+  SendIcon,
+  TimerIcon 
 } from "lucide-react";
+
+// Tipos para orçamentos
+interface Budget {
+  id: number;
+  service_id: number;
+  client_name: string;
+  vehicle_info: string;
+  total_value: number;
+  discount: number;
+  final_value: number;
+  status: 'draft' | 'sent' | 'approved' | 'rejected';
+  validity_days: number;
+  expiry_date: string;
+  created_at: string;
+  note?: string;
+}
 
 export default function Budget() {
   const [_, setLocation] = useLocation();
@@ -62,8 +81,8 @@ export default function Budget() {
   const [validityDays, setValidityDays] = useState("30");
   const [discount, setDiscount] = useState("0");
 
-  // Filtrar serviços apenas com status "pending" ou "aguardando_aprovacao"
-  const { data: services, isLoading } = useQuery<ServiceListItem[]>({
+  // Serviços disponíveis para criar orçamentos
+  const { data: services, isLoading: servicesLoading } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services'],
     select: (data) => {
       return data.filter(service => 
@@ -73,6 +92,60 @@ export default function Budget() {
     }
   });
 
+  // Simulação de dados de orçamentos (normalmente viriam de uma API)
+  const { data: budgets, isLoading: budgetsLoading } = useQuery<Budget[]>({
+    queryKey: ['/api/budgets'],
+    queryFn: async () => {
+      // Em uma implementação real, faríamos uma chamada à API
+      // const response = await apiRequest('GET', '/api/budgets');
+      // return response.json();
+      
+      // Simulando dados de orçamentos para demonstração
+      return [
+        {
+          id: 1001,
+          service_id: 2,
+          client_name: "Alexsandro Figueiredo",
+          vehicle_info: "BMW X5 2022 (ABC-1234)",
+          total_value: 350.00,
+          discount: 10,
+          final_value: 315.00,
+          status: 'sent',
+          validity_days: 30,
+          expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+          note: "Orçamento para reparo de amassado na porta dianteira"
+        },
+        {
+          id: 1002,
+          service_id: 3,
+          client_name: "Maria Silva",
+          vehicle_info: "Mercedes C180 2021 (XYZ-4567)",
+          total_value: 420.00,
+          discount: 0,
+          final_value: 420.00,
+          status: 'draft',
+          validity_days: 15,
+          expiry_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 1003,
+          service_id: 4,
+          client_name: "João Pereira",
+          vehicle_info: "Audi A3 2020 (DEF-7890)",
+          total_value: 280.00,
+          discount: 5,
+          final_value: 266.00,
+          status: 'approved',
+          validity_days: 30,
+          expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
+    },
+  });
+
   const createBudgetMutation = useMutation({
     mutationFn: async (data: { 
       service_id: number; 
@@ -80,25 +153,31 @@ export default function Budget() {
       validity_days: number;
       discount: number;
     }) => {
-      // Simular criação de orçamento - na implementação real, isso chamaria a API
+      // Em uma implementação real, faríamos uma chamada à API
       // const response = await apiRequest('POST', '/api/budgets', data);
       // return response.json();
       
-      // Por enquanto, apenas simulamos sucesso após um pequeno delay
-      return new Promise(resolve => {
-        setTimeout(() => {
-          resolve({
-            id: Math.floor(Math.random() * 10000),
-            service_id: data.service_id,
-            created_at: new Date().toISOString(),
-            status: 'created'
-          });
-        }, 1000);
-      });
+      // Simulando a criação de um orçamento
+      const service = services?.find(s => s.id === data.service_id);
+      
+      return {
+        id: Math.floor(Math.random() * 10000) + 1000,
+        service_id: data.service_id,
+        client_name: service?.client.name || "Cliente",
+        vehicle_info: service ? `${service.vehicle.make} ${service.vehicle.model} ${service.vehicle.year}` : "Veículo",
+        total_value: service?.total || service?.price || 0,
+        discount: data.discount,
+        final_value: (service?.total || service?.price || 0) * (1 - data.discount / 100),
+        status: 'draft' as const,
+        validity_days: data.validity_days,
+        expiry_date: new Date(Date.now() + data.validity_days * 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        note: data.note
+      };
     },
     onSuccess: () => {
       // Invalidar cache para atualizar a lista
-      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/budgets'] });
       
       toast({
         title: "Orçamento criado",
@@ -140,21 +219,44 @@ export default function Budget() {
     });
   };
 
-  const handlePrintBudget = (serviceId: number) => {
+  const handlePrintBudget = (budgetId: number) => {
     toast({
       title: "Função em desenvolvimento",
       description: "A impressão de orçamentos será implementada em breve.",
     });
   };
 
-  const handleSendBudget = (serviceId: number) => {
+  const handleSendBudget = (budgetId: number) => {
     toast({
       title: "Função em desenvolvimento",
       description: "O envio de orçamentos por e-mail será implementado em breve.",
     });
   };
+  
+  const handleViewBudget = (budgetId: number) => {
+    toast({
+      title: "Visualizar orçamento",
+      description: `Visualizando detalhes do orçamento #${budgetId}.`,
+    });
+  };
 
-  if (isLoading) {
+  // Status do orçamento com cores
+  const getStatusBadge = (status: Budget['status']) => {
+    switch (status) {
+      case 'draft':
+        return <Badge variant="outline" className="bg-gray-100">Rascunho</Badge>;
+      case 'sent':
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Enviado</Badge>;
+      case 'approved':
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Aprovado</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-100 text-red-800">Rejeitado</Badge>;
+      default:
+        return <Badge variant="outline">Desconhecido</Badge>;
+    }
+  };
+
+  if (budgetsLoading) {
     return (
       <div className="py-6 px-4 sm:px-6 lg:px-8 flex justify-center items-center min-h-[300px]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -166,7 +268,7 @@ export default function Budget() {
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
         title="Orçamentos"
-        description="Gerencie os orçamentos de serviços"
+        description="Gerencie orçamentos para seus clientes"
         actions={
           <Dialog open={showDialog} onOpenChange={setShowDialog}>
             <DialogTrigger asChild>
@@ -185,7 +287,7 @@ export default function Budget() {
               
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="service">Serviço</Label>
+                  <Label htmlFor="service">Selecione o Serviço</Label>
                   <Select 
                     value={selectedService?.toString() || ""} 
                     onValueChange={(value) => setSelectedService(parseInt(value))}
@@ -262,9 +364,9 @@ export default function Budget() {
       <div className="grid gap-6 mt-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>Orçamentos Recentes</CardTitle>
+            <CardTitle>Orçamentos</CardTitle>
             <CardDescription>
-              Serviços pendentes e aguardando aprovação
+              Todos os orçamentos criados para clientes
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -274,32 +376,32 @@ export default function Budget() {
                   <TableHead>ID</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Veículo</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead>Data</TableHead>
+                  <TableHead>Desconto</TableHead>
+                  <TableHead>Final</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Validade</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {services && services.length > 0 ? (
-                  services.map((service) => (
-                    <TableRow key={service.id}>
-                      <TableCell className="font-medium">{service.id}</TableCell>
-                      <TableCell>{service.client.name}</TableCell>
-                      <TableCell>
-                        {service.vehicle.make} {service.vehicle.model} {service.vehicle.license_plate ? `(${service.vehicle.license_plate})` : ""}
-                      </TableCell>
-                      <TableCell>
-                        <ServiceStatusBadge status={service.status} />
-                      </TableCell>
-                      <TableCell>{formatCurrency(service.total || service.price || 0)}</TableCell>
-                      <TableCell>{formatDate(service.created_at)}</TableCell>
+                {budgets && budgets.length > 0 ? (
+                  budgets.map((budget) => (
+                    <TableRow key={budget.id}>
+                      <TableCell className="font-medium">{budget.id}</TableCell>
+                      <TableCell>{budget.client_name}</TableCell>
+                      <TableCell>{budget.vehicle_info}</TableCell>
+                      <TableCell>{formatCurrency(budget.total_value)}</TableCell>
+                      <TableCell>{budget.discount}%</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(budget.final_value)}</TableCell>
+                      <TableCell>{getStatusBadge(budget.status)}</TableCell>
+                      <TableCell>{formatDate(budget.expiry_date)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button 
                             variant="outline" 
                             size="icon"
-                            onClick={() => setLocation(`/services/${service.id}`)}
+                            onClick={() => handleViewBudget(budget.id)}
                             title="Ver detalhes"
                           >
                             <FileTextIcon className="h-4 w-4" />
@@ -307,7 +409,7 @@ export default function Budget() {
                           <Button 
                             variant="outline" 
                             size="icon"
-                            onClick={() => handlePrintBudget(service.id)}
+                            onClick={() => handlePrintBudget(budget.id)}
                             title="Imprimir orçamento"
                           >
                             <PrinterIcon className="h-4 w-4" />
@@ -315,7 +417,7 @@ export default function Budget() {
                           <Button 
                             variant="outline" 
                             size="icon"
-                            onClick={() => handleSendBudget(service.id)}
+                            onClick={() => handleSendBudget(budget.id)}
                             title="Enviar por e-mail"
                           >
                             <SendIcon className="h-4 w-4" />
@@ -326,8 +428,8 @@ export default function Budget() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-gray-500 italic">
-                      Nenhum serviço pendente ou aguardando aprovação foi encontrado.
+                    <TableCell colSpan={9} className="text-center py-6 text-gray-500 italic">
+                      Nenhum orçamento encontrado. Crie um novo orçamento para começar.
                     </TableCell>
                   </TableRow>
                 )}
@@ -339,13 +441,13 @@ export default function Budget() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Orçamentos Pendentes</CardTitle>
+              <CardTitle className="text-lg">Rascunhos</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold">{services?.filter(s => s.status === 'pending').length || 0}</span>
-                <div className="p-2 bg-yellow-100 rounded-full">
-                  <FileTextIcon className="h-6 w-6 text-yellow-600" />
+                <span className="text-3xl font-bold">{budgets?.filter(b => b.status === 'draft').length || 0}</span>
+                <div className="p-2 bg-gray-100 rounded-full">
+                  <FileTextIcon className="h-6 w-6 text-gray-600" />
                 </div>
               </div>
             </CardContent>
@@ -353,13 +455,13 @@ export default function Budget() {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Aguardando Aprovação</CardTitle>
+              <CardTitle className="text-lg">Enviados</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold">{services?.filter(s => s.status === 'aguardando_aprovacao').length || 0}</span>
+                <span className="text-3xl font-bold">{budgets?.filter(b => b.status === 'sent').length || 0}</span>
                 <div className="p-2 bg-blue-100 rounded-full">
-                  <FileTextIcon className="h-6 w-6 text-blue-600" />
+                  <SendIcon className="h-6 w-6 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -367,19 +469,13 @@ export default function Budget() {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Valor Pendente</CardTitle>
+              <CardTitle className="text-lg">Aprovados</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold">
-                  {formatCurrency(
-                    services
-                      ?.filter(s => s.status === 'pending')
-                      .reduce((acc, service) => acc + (service.total || service.price || 0), 0) || 0
-                  )}
-                </span>
+                <span className="text-3xl font-bold">{budgets?.filter(b => b.status === 'approved').length || 0}</span>
                 <div className="p-2 bg-green-100 rounded-full">
-                  <EuroIcon className="h-6 w-6 text-green-600" />
+                  <CheckIcon className="h-6 w-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
@@ -387,15 +483,13 @@ export default function Budget() {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Valor em Aprovação</CardTitle>
+              <CardTitle className="text-lg">Valor Total</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <span className="text-3xl font-bold">
                   {formatCurrency(
-                    services
-                      ?.filter(s => s.status === 'aguardando_aprovacao')
-                      .reduce((acc, service) => acc + (service.total || service.price || 0), 0) || 0
+                    budgets?.reduce((acc, budget) => acc + budget.final_value, 0) || 0
                   )}
                 </span>
                 <div className="p-2 bg-purple-100 rounded-full">
