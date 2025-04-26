@@ -330,6 +330,57 @@ export default function Budget() {
       description: "A impressão de orçamentos será implementada em breve.",
     });
   };
+  
+  // Função para atualizar um orçamento existente
+  const handleUpdateBudget = () => {
+    if (!selectedBudget) return;
+    
+    // Validar formulário
+    if (!manualVehicleInfo) {
+      toast({
+        title: "Erro ao atualizar orçamento",
+        description: "Os dados do veículo não podem ficar em branco.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Obter peças danificadas selecionadas
+    const damagedParts = Object.entries(partDamages)
+      .filter(([_, damage]) => damage.selected)
+      .map(([part]) => part);
+    
+    // Em uma implementação real, enviaríamos uma requisição PUT para atualizar o orçamento
+    
+    // Atualizar o orçamento selecionado com os valores atuais
+    const updatedBudget = {
+      ...selectedBudget,
+      date,
+      vehicle_info: manualVehicleInfo,
+      total_aw: totalAw,
+      total_value: totalValue,
+      note,
+      damaged_parts: damagedParts
+    };
+    
+    // Atualizar a lista de orçamentos
+    if (budgets) {
+      const updatedBudgets = budgets.map(b => 
+        b.id === selectedBudget.id ? updatedBudget : b
+      );
+      
+      // Atualizar o cache do React Query
+      queryClient.setQueryData(['/api/budgets'], updatedBudgets);
+    }
+    
+    toast({
+      title: "Orçamento atualizado",
+      description: `O orçamento #${selectedBudget.id} foi atualizado com sucesso.`,
+    });
+    
+    // Voltar para o modo de visualização
+    setIsViewMode(true);
+  };
 
   const handleDeleteBudget = (budgetId: number) => {
     if (window.confirm(`Tem certeza que deseja excluir o orçamento #${budgetId}?`)) {
@@ -929,7 +980,20 @@ export default function Budget() {
                       Imprimir
                     </Button>
                   </>
+                ) : selectedBudget ? (
+                  // Se temos um orçamento selecionado, estamos editando (não criando)
+                  <>
+                    <Button variant="outline" onClick={() => setIsViewMode(true)}>
+                      Cancelar
+                    </Button>
+                    <Button 
+                      onClick={handleUpdateBudget}
+                    >
+                      Salvar Alterações
+                    </Button>
+                  </>
                 ) : (
+                  // Caso contrário, estamos criando um novo orçamento
                   <>
                     <Button variant="outline" onClick={() => setShowDialog(false)}>
                       Cancelar
