@@ -1,4 +1,4 @@
-import { users, clients, vehicles, serviceTypes, services, servicePhotos, eventTypes, events, paymentRequests, paymentRequestItems } from "@shared/schema";
+import { users, clients, vehicles, serviceTypes, services, servicePhotos, eventTypes, events, paymentRequests, paymentRequestItems, expenses } from "@shared/schema";
 import type { 
   User, InsertUser, 
   Client, InsertClient, 
