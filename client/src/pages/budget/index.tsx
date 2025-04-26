@@ -828,15 +828,16 @@ export default function Budget() {
           
           const label = document.createElement('span');
           label.textContent = option;
-          label.style.fontSize = '8px';
+          label.style.fontSize = '7px'; // Reduzido para 7px
           label.style.fontWeight = 'bold';
           label.style.color = '#333';
           label.style.position = 'absolute';
-          label.style.top = '4px'; // Ajuste para posicionar no centro vertical do box
+          label.style.top = '50%'; // Centralizar verticalmente
           label.style.left = '0';
           label.style.right = '0';
           label.style.textAlign = 'center';
-          label.style.lineHeight = '6px';
+          label.style.transform = 'translateY(-50%)'; // Ajuste para centralização perfeita
+          label.style.display = 'block';
           
           colorBox.appendChild(label);
           optionGroup.appendChild(checkbox);
@@ -986,12 +987,14 @@ export default function Budget() {
         codeCircle.style.backgroundColor = material.color;
         codeCircle.style.color = '#333';
         codeCircle.style.fontWeight = 'bold';
-        codeCircle.style.fontSize = '9px';
+        codeCircle.style.fontSize = '8px'; // Reduzido de 9px para 8px
         codeCircle.style.display = 'flex';
         codeCircle.style.justifyContent = 'center';
         codeCircle.style.alignItems = 'center';
         codeCircle.style.marginRight = '5px';
         codeCircle.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+        codeCircle.style.textAlign = 'center';
+        codeCircle.style.lineHeight = '16px'; // Adicionado para centralizar verticalmente
         
         const descText = document.createElement('span');
         descText.textContent = material.desc;
