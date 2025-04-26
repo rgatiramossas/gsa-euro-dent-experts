@@ -535,11 +535,146 @@ export default function Budget() {
     });
   };
 
-  const handlePrintBudget = (budgetId: number) => {
-    toast({
-      title: "Função em desenvolvimento",
-      description: "A impressão de orçamentos será implementada em breve.",
-    });
+  const handlePrintBudget = async (budgetId: number) => {
+    try {
+      // Buscar o orçamento selecionado se não estivermos no modo de visualização
+      let targetBudget = selectedBudget;
+      
+      if (!targetBudget && budgets) {
+        const foundBudget = budgets.find(b => b.id === budgetId);
+        if (foundBudget) {
+          targetBudget = foundBudget;
+        }
+      }
+      
+      if (!targetBudget) {
+        toast({
+          title: "Erro ao gerar PDF",
+          description: "Orçamento não encontrado.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Se não estivermos visualizando o orçamento, abri-lo para visualização antes de imprimir
+      if (!showDialog || !isViewMode || selectedBudget?.id !== budgetId) {
+        setShowDialog(true);
+        setIsViewMode(true);
+        setSelectedBudget(targetBudget);
+        
+        // Aguardar o diálogo ser aberto antes de continuar
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Preencher campos com dados do orçamento
+        setDate(targetBudget.date || new Date().toISOString().split('T')[0]);
+        setManualVehicleInfo(targetBudget.vehicle_info || "");
+        setNote(targetBudget.note || "");
+        setTotalAw(targetBudget.total_aw || 0);
+        setTotalValue(targetBudget.total_value || 0);
+        
+        // Preencher peças danificadas
+        const newPartDamages = { ...partDamages };
+        Object.keys(newPartDamages).forEach(key => {
+          newPartDamages[key] = {
+            ...newPartDamages[key],
+            selected: targetBudget.damaged_parts?.includes(key) || false
+          };
+        });
+        setPartDamages(newPartDamages);
+        
+        // Se tem foto, preencher
+        setPhotoUrl(targetBudget.photo_url || null);
+        
+        // Aguardar a renderização completa
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // Encontrar o elemento do diálogo de visualização
+      const dialogContent = document.querySelector('[role="dialog"]') as HTMLElement;
+      if (!dialogContent) {
+        toast({
+          title: "Erro ao gerar PDF",
+          description: "Elemento de diálogo não encontrado.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Importar as bibliotecas necessárias
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+      
+      // Antes de capturar, ocultar elementos que não devem aparecer no PDF
+      const printMode = document.createElement('style');
+      printMode.innerHTML = `
+        [id="totalAw"], [id="totalValue"], 
+        label[for="totalAw"], label[for="totalValue"],
+        [class*="DialogFooter"],
+        button[variant="destructive"],
+        [class*="DialogClose"] {
+          display: none !important;
+        }
+        [class*="DialogContent"] {
+          border: none !important;
+          box-shadow: none !important;
+        }
+      `;
+      document.head.appendChild(printMode);
+      
+      toast({
+        title: "Gerando PDF",
+        description: "Aguarde enquanto o orçamento é preparado...",
+      });
+      
+      try {
+        // Capturar o conteúdo do diálogo como imagem
+        const canvas = await html2canvas(dialogContent, {
+          scale: 2, // Melhor qualidade
+          useCORS: true, // Permitir imagens de outros domínios
+          allowTaint: true,
+          backgroundColor: "#fff",
+          logging: false,
+        });
+        
+        // Criar PDF no formato A4
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+        });
+        
+        // Calcular dimensões para ajustar ao A4
+        const imgWidth = 210; // A4 tem 210mm de largura
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Adicionar imagem ao PDF
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        
+        // Adicionar rodapé
+        pdf.setFontSize(10);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Orçamento #${targetBudget.id} - Euro Dent Experts - Gerado em ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' });
+        
+        // Salvar o PDF
+        pdf.save(`orcamento_${targetBudget.id}_${targetBudget.client_name.replace(/\s+/g, '_')}.pdf`);
+        
+        toast({
+          title: "PDF gerado com sucesso",
+          description: "O orçamento foi exportado para PDF.",
+        });
+      } finally {
+        // Remover os estilos adicionados para impressão
+        document.head.removeChild(printMode);
+      }
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um erro ao gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Função para atualizar um orçamento existente
