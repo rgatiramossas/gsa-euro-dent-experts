@@ -69,6 +69,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     { id: 2, name: "João Silva" }
   ];
   
+  const { data: service, isLoading, error } = useQuery<ServiceWithDetails>({
+    queryKey: [`/api/services/${id}`],
+  });
+  
   // Criar um formulário para edição com valores padrão
   const editForm = useForm({
     defaultValues: {
@@ -78,7 +82,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       notes: "",
       price: 0,
       displacement_fee: 0,
-      location_type: "workshop" as LocationType,
+      location_type: "workshop" as "client_location" | "workshop",
       address: "",
       latitude: 0,
       longitude: 0,
@@ -96,7 +100,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         notes: service.notes || "",
         price: service.price || 0,
         displacement_fee: service.displacement_fee || 0,
-        location_type: service.location_type as LocationType,
+        location_type: service.location_type as "client_location" | "workshop",
         address: service.address || "",
         latitude: service.latitude || 0,
         longitude: service.longitude || 0,
@@ -104,10 +108,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       });
     }
   }, [service]);
-
-  const { data: service, isLoading, error } = useQuery<ServiceWithDetails>({
-    queryKey: [`/api/services/${id}`],
-  });
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data: { status: ServiceStatus; notes?: string }) => {
