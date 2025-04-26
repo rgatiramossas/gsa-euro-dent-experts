@@ -483,7 +483,9 @@ export class DatabaseStorage implements IStorage {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
     // Para técnicos, somamos apenas o preço do serviço (sem deslocamento)
-    // Para admin, somamos o valor total
+    // Para admin, somamos o valor total incluindo taxas administrativas
+    // Debugar para confirmar que technicianId está sendo processado corretamente
+    console.log('Calculando faturamento para:', technicianId ? `Técnico ID ${technicianId}` : 'Admin');
     const valueField = technicianId ? services.price : services.total;
     
     const [revenueResult] = await db.select({ 
@@ -663,19 +665,38 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
     
-    const requestItems = await db
+    // Buscar os IDs dos serviços associados a este pedido
+    const itemsData = await db
       .select({
         id: paymentRequestItems.id,
         service_id: paymentRequestItems.service_id,
-        service: services,
-        client: clients,
-        serviceType: serviceTypes,
       })
       .from(paymentRequestItems)
-      .where(eq(paymentRequestItems.payment_request_id, id))
-      .leftJoin(services, eq(paymentRequestItems.service_id, services.id))
-      .leftJoin(clients, eq(services.client_id, clients.id))
-      .leftJoin(serviceTypes, eq(services.service_type_id, serviceTypes.id));
+      .where(eq(paymentRequestItems.payment_request_id, id));
+    
+    // Buscar detalhes completos de cada serviço
+    const serviceIds = itemsData.map(item => item.service_id);
+    const servicesDetails = [];
+    
+    for (const serviceId of serviceIds) {
+      const service = await this.getService(serviceId);
+      if (service) {
+        const client = await this.getClient(service.client_id);
+        const serviceType = await this.getServiceType(service.service_type_id);
+        
+        servicesDetails.push({
+          ...service,
+          client: {
+            id: client?.id,
+            name: client?.name
+          },
+          serviceType: {
+            id: serviceType?.id,
+            name: serviceType?.name
+          }
+        });
+      }
+    }
     
     const technician = await db
       .select()
@@ -683,18 +704,17 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, paymentRequest[0].technician_id))
       .limit(1);
     
-    // No método getPaymentRequest, a visualização técnico/admin será determinada no frontend 
-    // baseada no papel do usuário atual, então vamos enviar ambos os valores
-    const serviceTotalValue = requestItems.reduce((sum, item) => 
-      sum + (item.service?.total || 0), 0);
+    // Calcular valores totais
+    const serviceTotalValue = servicesDetails.reduce((sum, service) => 
+      sum + (service.total || 0), 0);
     
-    const technicianTotalValue = requestItems.reduce((sum, item) => 
-      sum + (item.service?.price || 0), 0);
+    const technicianTotalValue = servicesDetails.reduce((sum, service) => 
+      sum + (service.price || 0), 0);
     
     return {
       ...paymentRequest[0],
       technician: technician[0] || null,
-      items: requestItems,
+      services: servicesDetails,
       totalValue: serviceTotalValue, // Valor total para admin
       technicianValue: technicianTotalValue // Valor para o técnico
     };
@@ -720,38 +740,50 @@ export class DatabaseStorage implements IStorage {
     
     // Add the associated services to each payment request
     for (const req of results) {
-      const items = await db
+      // Buscar os IDs dos serviços associados a este pedido
+      const itemsData = await db
         .select({
           id: paymentRequestItems.id,
           service_id: paymentRequestItems.service_id,
-          service: services,
-          client: clients,
-          serviceType: serviceTypes,
         })
         .from(paymentRequestItems)
-        .where(eq(paymentRequestItems.payment_request_id, req.id))
-        .leftJoin(services, eq(paymentRequestItems.service_id, services.id))
-        .leftJoin(clients, eq(services.client_id, clients.id))
-        .leftJoin(serviceTypes, eq(services.service_type_id, serviceTypes.id));
+        .where(eq(paymentRequestItems.payment_request_id, req.id));
       
-      req.items = items;
+      // Buscar detalhes completos de cada serviço
+      const serviceIds = itemsData.map(item => item.service_id);
+      const servicesDetails = [];
       
-      // Calcular ambos os valores (para técnico e para admin)
-      const serviceTotalValue = items.reduce((sum, item) => 
-        sum + (item.service?.total || 0), 0);
-      
-      const technicianTotalValue = items.reduce((sum, item) => 
-        sum + (item.service?.price || 0), 0);
-      
-      // Se technicianId estiver definido, significa que é um técnico visualizando seus próprios pedidos
-      if (technicianId) {
-        req.totalValue = technicianTotalValue; // Valor para o técnico
-      } else {
-        req.totalValue = serviceTotalValue; // Valor total para admin
+      for (const serviceId of serviceIds) {
+        const service = await this.getService(serviceId);
+        if (service) {
+          const client = await this.getClient(service.client_id);
+          const serviceType = await this.getServiceType(service.service_type_id);
+          
+          servicesDetails.push({
+            ...service,
+            client: {
+              id: client?.id,
+              name: client?.name
+            },
+            serviceType: {
+              id: serviceType?.id,
+              name: serviceType?.name
+            }
+          });
+        }
       }
       
-      // Armazenar ambos os valores para flexibilidade no frontend
-      req.serviceTotalValue = serviceTotalValue; // Valor total
+      req.services = servicesDetails;
+      
+      // Calcular valores totais
+      const serviceTotalValue = servicesDetails.reduce((sum, service) => 
+        sum + (service.total || 0), 0);
+      
+      const technicianTotalValue = servicesDetails.reduce((sum, service) => 
+        sum + (service.price || 0), 0);
+      
+      req.totalValue = technicianId ? technicianTotalValue : serviceTotalValue;
+      req.serviceTotalValue = serviceTotalValue; // Valor total (admin)
       req.technicianValue = technicianTotalValue; // Valor do técnico
     }
     
