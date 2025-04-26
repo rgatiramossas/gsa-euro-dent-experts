@@ -809,13 +809,44 @@ export default function Budget() {
       
       // Rodapé com legenda
       const footer = document.createElement('div');
-      footer.style.marginTop = '10px';
+      footer.style.marginTop = '15px';
       footer.style.borderTop = '1px solid #ddd';
-      footer.style.paddingTop = '5px';
+      footer.style.paddingTop = '10px';
       
-      const legendText = document.createElement('p');
-      legendText.innerHTML = '<strong style="font-size: 9px;">Materiais Especiais:</strong> <span style="font-size: 8px;">A = ALUMÍNIO   K = COLA   P = PINTURA</span>';
-      footer.appendChild(legendText);
+      const legendTitle = document.createElement('div');
+      legendTitle.textContent = 'Materiais Especiais:';
+      legendTitle.style.fontWeight = 'bold';
+      legendTitle.style.fontSize = '10px';
+      legendTitle.style.marginBottom = '6px';
+      footer.appendChild(legendTitle);
+      
+      // Criar caixas destacadas para cada material
+      const materialsContainer = document.createElement('div');
+      materialsContainer.style.display = 'flex';
+      materialsContainer.style.justifyContent = 'space-around';
+      materialsContainer.style.width = '100%';
+      
+      const materials = [
+        { code: 'A', desc: 'ALUMÍNIO' },
+        { code: 'K', desc: 'COLA' },
+        { code: 'P', desc: 'PINTURA' }
+      ];
+      
+      materials.forEach(material => {
+        const materialBox = document.createElement('div');
+        materialBox.style.padding = '4px 8px';
+        materialBox.style.backgroundColor = '#f0f0f0';
+        materialBox.style.border = '1px solid #ddd';
+        materialBox.style.borderRadius = '4px';
+        materialBox.style.fontWeight = 'bold';
+        materialBox.style.fontSize = '9px';
+        materialBox.style.display = 'inline-block';
+        materialBox.style.margin = '0 5px';
+        materialBox.textContent = `${material.code} = ${material.desc}`;
+        materialsContainer.appendChild(materialBox);
+      });
+      
+      footer.appendChild(materialsContainer);
       printContainer.appendChild(footer);
       
       // Observações removidas conforme solicitado
