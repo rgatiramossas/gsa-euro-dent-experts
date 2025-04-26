@@ -223,8 +223,8 @@ export default function NewService() {
             // Criar FormData para upload das fotos
             const formData = new FormData();
             
-            // Adicionar tipo de foto (sempre 'before' para fotos iniciais)
-            formData.append('photo_type', 'before');
+            // Foto sem classificação específica
+            formData.append('photo_type', 'service');
             
             // Adicionar cada foto ao FormData
             for (let i = 0; i < photos.length; i++) {
@@ -593,7 +593,7 @@ export default function NewService() {
           {/* Photos Upload */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Registro Fotográfico</CardTitle>
+              <CardTitle>Fotos</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -602,10 +602,10 @@ export default function NewService() {
                   name="photos"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fotos do serviço (até 4 fotos)</FormLabel>
+                      <FormLabel>Fotos do veículo (até 4 fotos)</FormLabel>
                       <FormControl>
                         <PhotoUpload
-                          label="fotos-servico"
+                          label="fotos-veiculo"
                           multiple={true}
                           maxFiles={4}
                           onChange={(files) => {
@@ -615,7 +615,7 @@ export default function NewService() {
                         />
                       </FormControl>
                       <FormDescription>
-                        Adicione fotos mostrando o dano para facilitar a análise do serviço.
+                        Adicione fotos para documentar o estado do veículo
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

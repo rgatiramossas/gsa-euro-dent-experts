@@ -693,40 +693,47 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
               <CardContent>
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Antes do Serviço</h3>
-                    {service.photos?.before && service.photos.before.length > 0 ? (
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos do Veículo</h3>
+                    {/* Combinamos todas as fotos em uma única visualização */}
+                    {((service.photos?.before && service.photos.before.length > 0) || 
+                      (service.photos?.after && service.photos.after.length > 0) ||
+                      (service.photos?.service && service.photos.service.length > 0)) ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                        {service.photos.before.map((photo) => (
+                        {/* Fotos de tipo 'service' */}
+                        {service.photos?.service && service.photos.service.map((photo) => (
                           <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
                             <img 
                               src={photo.photo_url} 
-                              alt="Foto do dano" 
+                              alt="Foto do veículo" 
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+                        ))}
+                        
+                        {/* Fotos de tipo 'before' (retrocompatibilidade) */}
+                        {service.photos?.before && service.photos.before.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                            <img 
+                              src={photo.photo_url} 
+                              alt="Foto do veículo" 
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+                        ))}
+                        
+                        {/* Fotos de tipo 'after' (retrocompatibilidade) */}
+                        {service.photos?.after && service.photos.after.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                            <img 
+                              src={photo.photo_url} 
+                              alt="Foto do veículo" 
                               className="object-cover w-full h-full"
                             />
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-500 italic">Nenhuma foto do dano disponível</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Após Serviço</h3>
-                    {service.photos?.after && service.photos.after.length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                        {service.photos.after.map((photo) => (
-                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
-                            <img 
-                              src={photo.photo_url} 
-                              alt="Foto após reparo" 
-                              className="object-cover w-full h-full"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 italic">Nenhuma foto após serviço disponível</p>
+                      <p className="text-gray-500 italic">Nenhuma foto disponível</p>
                     )}
                   </div>
                 </div>
@@ -955,7 +962,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
               {/* Photos */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle>Registro Fotográfico</CardTitle>
+                  <CardTitle>Fotos</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -964,10 +971,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       name="photos"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Fotos do Dano <span className="text-red-500">*</span></FormLabel>
+                          <FormLabel>Fotos do Veículo</FormLabel>
                           <FormControl>
                             <PhotoUpload
-                              label="damage-photos"
+                              label="fotos-veiculo"
                               onChange={(files) => {
                                 if (files.length > 0) {
                                   editForm.setValue("photos", files, { shouldValidate: true });
@@ -980,13 +987,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                                 }
                               }}
                               multiple
-                              maxFiles={5}
+                              maxFiles={4}
                               preview={beforePhotoPreview || undefined}
                             />
                           </FormControl>
                           <FormMessage />
                           <p className="text-xs text-gray-500 mt-1">
-                            Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
+                            Adicione até 4 fotos para documentar o estado do veículo.
                           </p>
                         </FormItem>
                       )}
@@ -994,17 +1001,18 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   </div>
 
                   {/* Exibição das fotos existentes */}
-                  {(service.photos?.before && service.photos.before.length > 0) || 
-                   (service.photos?.after && service.photos.after.length > 0) ? (
+                  {((service.photos?.before && service.photos.before.length > 0) || 
+                    (service.photos?.after && service.photos.after.length > 0) ||
+                    (service.photos?.service && service.photos.service.length > 0)) ? (
                     <div className="mt-6">
                       <h3 className="text-sm font-medium mb-2">Fotos existentes</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                        {/* Fotos Antes */}
-                        {service.photos?.before && service.photos.before.map((photo) => (
+                        {/* Fotos de tipo 'service' */}
+                        {service.photos?.service && service.photos.service.map((photo) => (
                           <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                             <img 
                               src={photo.photo_url} 
-                              alt="Foto do dano" 
+                              alt="Foto do veículo" 
                               className="object-cover w-full h-full"
                             />
                             <button
@@ -1017,17 +1025,32 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                           </div>
                         ))}
                         
-                        {/* Fotos Depois */}
+                        {/* Fotos de tipo 'before' (retrocompatibilidade) */}
+                        {service.photos?.before && service.photos.before.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
+                            <img 
+                              src={photo.photo_url} 
+                              alt="Foto do veículo" 
+                              className="object-cover w-full h-full"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePhoto(photo.id)}
+                              className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                            >
+                              <Trash2 className="h-6 w-6 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                        
+                        {/* Fotos de tipo 'after' (retrocompatibilidade) */}
                         {service.photos?.after && service.photos.after.map((photo) => (
                           <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                             <img 
                               src={photo.photo_url} 
-                              alt="Foto após reparo" 
+                              alt="Foto do veículo" 
                               className="object-cover w-full h-full"
                             />
-                            <div className="absolute top-0 right-0 bg-green-500 text-white text-xs px-1 py-0.5">
-                              Após
-                            </div>
                             <button
                               type="button"
                               onClick={() => handleRemovePhoto(photo.id)}
