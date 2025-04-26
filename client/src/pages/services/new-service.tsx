@@ -211,38 +211,47 @@ export default function NewService() {
         const createdService = await res.json();
         console.log("Resposta do servidor:", createdService);
         
-        // 2. Se tiver fotos, fazer upload das fotos
+        // Retornar o serviço criado sem preocupações com fotos
+        console.log("Serviço criado com sucesso, pulando upload de fotos");
+        /* Desabilitando temporariamente o upload de fotos para depuração
         if (photos && photos.length > 0) {
-          const serviceId = createdService.id;
-          
-          // Criar FormData para upload das fotos
-          const formData = new FormData();
-          
-          // Adicionar tipo de foto (sempre 'before' para fotos iniciais)
-          formData.append('photo_type', 'before');
-          
-          // Adicionar cada foto ao FormData
-          for (let i = 0; i < photos.length; i++) {
-            formData.append('photos', photos[i]);
+          try {
+            const serviceId = createdService.id;
+            
+            // Criar FormData para upload das fotos
+            const formData = new FormData();
+            
+            // Adicionar tipo de foto (sempre 'before' para fotos iniciais)
+            formData.append('photo_type', 'before');
+            
+            // Adicionar cada foto ao FormData
+            for (let i = 0; i < photos.length; i++) {
+              formData.append('photos', photos[i]);
+            }
+            
+            console.log("Enviando fotos para o serviço:", serviceId);
+            
+            // Fazer o upload das fotos
+            const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
+              method: 'POST',
+              body: formData,
+              // Não definir Content-Type, pois o browser vai definir automaticamente com o boundary correto
+            });
+            
+            if (!uploadRes.ok) {
+              console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
+              // Não lança erro para não impedir a criação do serviço
+              console.warn("Prosseguindo apesar do erro no upload de fotos");
+            } else {
+              const uploadData = await uploadRes.json();
+              console.log("Resposta do upload:", uploadData);
+            }
+          } catch (photoError) {
+            console.error("Erro ao processar fotos:", photoError);
+            // Não lança erro para não impedir a criação do serviço
           }
-          
-          console.log("Enviando fotos para o serviço:", serviceId);
-          
-          // Fazer o upload das fotos
-          const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
-            method: 'POST',
-            body: formData,
-            // Não definir Content-Type, pois o browser vai definir automaticamente com o boundary correto
-          });
-          
-          if (!uploadRes.ok) {
-            console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
-            throw new Error("Erro ao enviar fotos");
-          }
-          
-          const uploadData = await uploadRes.json();
-          console.log("Resposta do upload:", uploadData);
         }
+        */
         
         return createdService;
       } catch (error: any) {
@@ -571,15 +580,14 @@ export default function NewService() {
                   name="photos"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fotos do Dano <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>Fotos do Dano</FormLabel>
                       <FormControl>
                         <PhotoUpload
                           label="damage-photos"
                           onChange={(files) => {
+                            console.log("Arquivos selecionados:", files.length, "fotos");
+                            form.setValue("photos", files, { shouldValidate: true });
                             if (files.length > 0) {
-                              // Em uma aplicação real, faríamos upload desses arquivos para um servidor
-                              console.log("Arquivos selecionados:", files.length, "fotos");
-                              form.setValue("photos", files, { shouldValidate: true });
                               toast({
                                 title: "Fotos selecionadas com sucesso",
                                 description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
