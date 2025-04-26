@@ -11,6 +11,9 @@ import Dashboard from "@/pages/dashboard";
 import { Header } from "@/components/layout/Header";
 // Sidebar removido pois não é mais necessário
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
+// Componentes de autorização
+import { RequireAdmin } from "@/components/auth/RequireAdmin";
+import { RequireTechnician } from "@/components/auth/RequireTechnician";
 
 // Import service related pages
 import ServicesList from "@/pages/services/index";
@@ -92,34 +95,40 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      {/* Services routes */}
+      {/* Services routes - técnicos e administradores podem acessar */}
       <Route path="/services">
         <RequireAuth>
-          <MainLayout>
-            <ServicesList />
-          </MainLayout>
+          <RequireTechnician>
+            <MainLayout>
+              <ServicesList />
+            </MainLayout>
+          </RequireTechnician>
         </RequireAuth>
       </Route>
       
       <Route path="/services/new">
         <RequireAuth>
-          <MainLayout>
-            <NewService />
-          </MainLayout>
+          <RequireTechnician>
+            <MainLayout>
+              <NewService />
+            </MainLayout>
+          </RequireTechnician>
         </RequireAuth>
       </Route>
       
       <Route path="/services/:id">
         {(params) => (
           <RequireAuth>
-            <MainLayout>
-              <ServiceDetails id={params.id} />
-            </MainLayout>
+            <RequireTechnician>
+              <MainLayout>
+                <ServiceDetails id={params.id} />
+              </MainLayout>
+            </RequireTechnician>
           </RequireAuth>
         )}
       </Route>
       
-      {/* Clients routes */}
+      {/* Clients routes - apenas administradores podem criar novos clientes */}
       <Route path="/clients">
         <RequireAuth>
           <MainLayout>
@@ -130,36 +139,44 @@ function AppRoutes() {
       
       <Route path="/clients/new">
         <RequireAuth>
-          <MainLayout>
-            <NewClient />
-          </MainLayout>
+          <RequireAdmin>
+            <MainLayout>
+              <NewClient />
+            </MainLayout>
+          </RequireAdmin>
         </RequireAuth>
       </Route>
       
       <Route path="/clients/:id/vehicle/new">
         {(params) => (
           <RequireAuth>
-            <MainLayout>
-              <NewVehicle clientId={params.id} />
-            </MainLayout>
+            <RequireAdmin>
+              <MainLayout>
+                <NewVehicle clientId={params.id} />
+              </MainLayout>
+            </RequireAdmin>
           </RequireAuth>
         )}
       </Route>
       
-      {/* Technicians routes */}
+      {/* Technicians routes - apenas administradores podem gerenciar técnicos */}
       <Route path="/technicians">
         <RequireAuth>
-          <MainLayout>
-            <TechniciansList />
-          </MainLayout>
+          <RequireAdmin>
+            <MainLayout>
+              <TechniciansList />
+            </MainLayout>
+          </RequireAdmin>
         </RequireAuth>
       </Route>
       
       <Route path="/technicians/new">
         <RequireAuth>
-          <MainLayout>
-            <NewTechnician />
-          </MainLayout>
+          <RequireAdmin>
+            <MainLayout>
+              <NewTechnician />
+            </MainLayout>
+          </RequireAdmin>
         </RequireAuth>
       </Route>
       
@@ -190,9 +207,11 @@ function AppRoutes() {
       
       <Route path="/settings">
         <RequireAuth>
-          <MainLayout>
-            <Settings />
-          </MainLayout>
+          <RequireAdmin>
+            <MainLayout>
+              <Settings />
+            </MainLayout>
+          </RequireAdmin>
         </RequireAuth>
       </Route>
       
