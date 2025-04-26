@@ -498,7 +498,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           </CardContent>
           <CardFooter className="border-t pt-4">
             <div className="flex gap-2">
-              <Dialog>
+              <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
                 <DialogTrigger asChild>
                   <Button variant="outline">Editar Serviço</Button>
                 </DialogTrigger>
@@ -511,7 +511,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   </DialogHeader>
                   
                   <Form {...editForm}>
-                    <form onSubmit={editForm.handleSubmit(() => console.log("Formulário enviado"))} className="space-y-6">
+                    <form onSubmit={editForm.handleSubmit((data) => updateServiceMutation.mutate(data))} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Tipo de Serviço */}
                         <FormField
@@ -662,10 +662,19 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       />
                       
                       <div className="flex justify-end space-x-2 pt-4">
-                        <Button variant="outline" type="button" onClick={() => document.querySelector('.DialogClose')?.dispatchEvent(new MouseEvent('click'))}>
+                        <Button 
+                          variant="outline" 
+                          type="button" 
+                          onClick={() => setShowEditDialog(false)}
+                        >
                           Cancelar
                         </Button>
-                        <Button type="submit">Salvar Alterações</Button>
+                        <Button 
+                          type="submit"
+                          disabled={updateServiceMutation.isPending}
+                        >
+                          {updateServiceMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                        </Button>
                       </div>
                     </form>
                   </Form>
