@@ -288,6 +288,25 @@ export default function NewService() {
   });
   
   const onSubmit = (data: FormData) => {
+    console.log("Formulário enviado com os dados:", data);
+    
+    // Garantir que o service_type_id seja um dos valores válidos
+    if (serviceTypes && !serviceTypes.some(type => type.id === data.service_type_id)) {
+      toast({
+        title: "Erro de validação",
+        description: `Tipo de serviço inválido. Valores disponíveis: ${serviceTypes.map(t => `${t.name} (${t.id})`).join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Log detalhado para depuração
+    console.log("Enviando para criação, detalhes:", {
+      client: clients?.find(c => c.id === data.client_id)?.name,
+      vehicle: vehicles?.find(v => v.id === data.vehicle_id)?.make,
+      serviceType: serviceTypes?.find(t => t.id === data.service_type_id)?.name,
+    });
+    
     createServiceMutation.mutate(data);
   };
   
@@ -426,7 +445,7 @@ export default function NewService() {
                       <SelectContent>
                         {serviceTypes?.map((type) => (
                           <SelectItem key={type.id} value={type.id.toString()}>
-                            {type.name}
+                            {type.name} (ID: {type.id})
                           </SelectItem>
                         ))}
                       </SelectContent>
