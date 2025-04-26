@@ -100,12 +100,27 @@ const expenseFormSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Esquema para o formulário de pagamento
+const paymentFormSchema = z.object({
+  payment_method: z.string().min(1, {
+    message: "Método de pagamento é obrigatório",
+  }),
+  payment_date: z.string().refine(val => !isNaN(Date.parse(val)), {
+    message: "Data inválida",
+  }),
+  transaction_id: z.string().optional(),
+  payment_notes: z.string().optional(),
+});
+
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
+type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
 export default function Finances() {
   const [period, setPeriod] = useState("month");
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [paymentRequestDialogOpen, setPaymentRequestDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedPaymentRequest, setSelectedPaymentRequest] = useState<PaymentRequest | null>(null);
   const [selectedServices, setSelectedServices] = useState<number[]>([]);
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "admin";
@@ -124,6 +139,17 @@ export default function Finances() {
     }
   });
   
+  // Formulário de pagamento
+  const paymentForm = useForm<PaymentFormValues>({
+    resolver: zodResolver(paymentFormSchema),
+    defaultValues: {
+      payment_method: "",
+      payment_date: new Date().toISOString().split('T')[0],
+      transaction_id: "",
+      payment_notes: ""
+    }
+  });
+  
   // Get all services for financial data
   const { data: services, isLoading } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services'],
@@ -133,6 +159,8 @@ export default function Finances() {
     id: number;
     created_at: string;
     status: string;
+    payment_date?: string;
+    payment_details?: string;
     technician_id: number;
     technician?: {
       id: number;
@@ -228,12 +256,64 @@ export default function Finances() {
     }
   });
 
+  // Mutation para registrar pagamento de um pedido
+  const registerPaymentMutation = useMutation({
+    mutationFn: async ({ requestId, paymentData }: { requestId: number, paymentData: PaymentFormValues }) => {
+      return await apiRequest(`/api/payment-requests/${requestId}/pay`, 'PATCH', { 
+        status: "pago",
+        payment_date: paymentData.payment_date,
+        payment_details: {
+          payment_method: paymentData.payment_method,
+          transaction_id: paymentData.transaction_id,
+          payment_notes: paymentData.payment_notes
+        }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/payment-requests'] });
+      setPaymentDialogOpen(false);
+      setSelectedPaymentRequest(null);
+      paymentForm.reset({
+        payment_method: "",
+        payment_date: new Date().toISOString().split('T')[0],
+        transaction_id: "",
+        payment_notes: ""
+      });
+      toast({
+        title: "Pagamento registrado",
+        description: "O pagamento foi registrado com sucesso e uma despesa foi criada.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao registrar pagamento",
+        description: `Ocorreu um erro: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleApprovePaymentRequest = (requestId: number) => {
     updatePaymentRequestMutation.mutate({ requestId, status: "aprovado" });
   };
 
   const handleRejectPaymentRequest = (requestId: number) => {
     updatePaymentRequestMutation.mutate({ requestId, status: "rejeitado" });
+  };
+  
+  const handleOpenPaymentDialog = (paymentRequest: PaymentRequest) => {
+    setSelectedPaymentRequest(paymentRequest);
+    setPaymentDialogOpen(true);
+  };
+  
+  const handleSubmitPayment = (data: PaymentFormValues) => {
+    if (!selectedPaymentRequest) return;
+    
+    registerPaymentMutation.mutate({ 
+      requestId: selectedPaymentRequest.id, 
+      paymentData: data 
+    });
   };
 
   const handleCreatePaymentRequest = () => {
