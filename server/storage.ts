@@ -475,20 +475,17 @@ export class DatabaseStorage implements IStorage {
       console.log('Administrador visualizando estatísticas de todos os técnicos');
     }
     
-    // Count pending services (incluindo aguardando_aprovacao, que são serviços pendentes de aprovação)
+    // 1. Total de OS pendentes
     const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)
       .where(
         and(
-          or(
-            eq(services.status, 'pending'),
-            eq(services.status, 'aguardando_aprovacao')
-          ),
+          eq(services.status, 'pending'),
           ...baseConditions
         )
       );
     
-    // Count in-progress services
+    // 2. Total de OS em andamento
     const [inProgressResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)
       .where(
@@ -498,31 +495,26 @@ export class DatabaseStorage implements IStorage {
         )
       );
     
-    // Count services completed today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const [completedTodayResult] = await db.select({ count: sql<number>`count(*)` })
+    // 3. Total de OS concluídas (todas, em qualquer período)
+    const [completedResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)
       .where(
         and(
-          eq(services.status, 'completed'),
-          sql`DATE(${services.completion_date}) = CURRENT_DATE`,
+          or(
+            eq(services.status, 'completed'),
+            eq(services.status, 'aguardando_aprovacao'),
+            eq(services.status, 'faturado'),
+            eq(services.status, 'pago')
+          ),
           ...baseConditions
         )
       );
     
-    // Calculate monthly revenue (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    // Para técnicos, somamos apenas o preço do serviço (sem deslocamento)
-    // Para admin, somamos o valor total incluindo taxas administrativas
-    // Debugar para confirmar que technicianId está sendo processado corretamente
+    // 4. Faturamento total (todas as OS concluídas, em qualquer período)
+    // Admin vê valor total, técnico vê apenas seu valor
     console.log('Calculando faturamento para:', technicianId ? `Técnico ID ${technicianId}` : 'Admin');
     const valueField = technicianId ? services.price : services.total;
     
-    // Considerar todos os serviços com faturamento (completed, aguardando_aprovacao, faturado)
     const [revenueResult] = await db.select({ 
       sum: sql<number>`COALESCE(SUM(${valueField}), 0)` 
     })
@@ -530,35 +522,35 @@ export class DatabaseStorage implements IStorage {
     .where(
       and(
         or(
-          eq(services.status, 'completed'), 
+          eq(services.status, 'completed'),
           eq(services.status, 'aguardando_aprovacao'),
-          eq(services.status, 'faturado')
+          eq(services.status, 'faturado'),
+          eq(services.status, 'pago')
         ),
-        sql`${services.completion_date} >= ${thirtyDaysAgo}`,
         ...baseConditions
       )
     );
     
     // Converter para o formato esperado pelo frontend
-    const pendingServices = typeof pendingResult.count === 'string' 
+    const totalPendingServices = typeof pendingResult.count === 'string' 
       ? parseInt(pendingResult.count) 
       : (pendingResult.count || 0);
     
-    const inProgressServices = typeof inProgressResult.count === 'string' 
+    const totalInProgressServices = typeof inProgressResult.count === 'string' 
       ? parseInt(inProgressResult.count) 
       : (inProgressResult.count || 0);
     
-    const completedToday = typeof completedTodayResult.count === 'string' 
-      ? parseInt(completedTodayResult.count) 
-      : (completedTodayResult.count || 0);
+    const totalCompletedServices = typeof completedResult.count === 'string' 
+      ? parseInt(completedResult.count) 
+      : (completedResult.count || 0);
     
-    const monthlyRevenue = revenueResult.sum || 0;
+    const totalRevenue = revenueResult.sum || 0;
     
     const stats = {
-      pendingServices,
-      inProgressServices,
-      completedToday,
-      monthlyRevenue
+      totalPendingServices,
+      totalInProgressServices,
+      totalCompletedServices,
+      totalRevenue
     };
     
     console.log('Stats formatados para envio:', stats);

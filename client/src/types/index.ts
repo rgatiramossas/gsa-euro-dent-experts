@@ -123,10 +123,10 @@ export interface ServiceListItem {
 
 // Dashboard types
 export interface DashboardStats {
-  pendingServices: number;
-  inProgressServices: number;
-  completedToday: number;
-  monthlyRevenue: number;
+  totalPendingServices: number;   // Total de OS pendentes
+  totalInProgressServices: number; // Total de OS em andamento
+  totalCompletedServices: number;  // Total de OS concluídas (todas)
+  totalRevenue: number;           // Faturamento total (todas as OS concluídas em €)
 }
 
 export interface TechnicianPerformance {
