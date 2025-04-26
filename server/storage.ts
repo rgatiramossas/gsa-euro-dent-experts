@@ -54,7 +54,7 @@ export interface IStorage {
   getService(id: number): Promise<Service | undefined>;
   createService(service: InsertService): Promise<Service>;
   updateService(id: number, serviceData: Partial<Service>): Promise<Service | undefined>;
-  listServices(filters?: Partial<{ status: string, technicianId: number, clientId: number }>): Promise<Service[]>;
+  listServices(filters?: Partial<{ status: string, technicianId: number, clientId: number, clientIds?: number[] }>): Promise<Service[]>;
   getServiceDetails(id: number): Promise<any>; // Returns service with related entities
 
   // Service Photos methods
@@ -63,7 +63,8 @@ export interface IStorage {
   removeServicePhoto(photoId: number): Promise<boolean>;
 
   // Dashboard data
-  getDashboardStats(): Promise<any>;
+  getDashboardStats(technicianId?: number): Promise<any>;
+  getDashboardStatsForManager(clientIds: number[]): Promise<any>;
   getTechnicianPerformance(): Promise<any>;
   
   // Event Type methods
@@ -625,6 +626,87 @@ export class DatabaseStorage implements IStorage {
     };
     
     console.log('Stats formatados para envio:', stats);
+    return stats;
+  }
+  
+  // Método específico para obter estatísticas para gestores
+  async getDashboardStatsForManager(clientIds: number[]): Promise<any> {
+    if (!clientIds || clientIds.length === 0) {
+      return {
+        totalPendingServices: 0,
+        totalInProgressServices: 0,
+        totalCompletedServices: 0,
+        totalRevenue: 0
+      };
+    }
+    
+    console.log('Obtendo estatísticas para gestor com clientes:', clientIds);
+    
+    // Condições base para todos os filtros (excluir serviços deletados)
+    const baseConditions = [
+      sql`${services.status} != 'deleted'`,
+      sql`${services.client_id} IN (${clientIds.join(',')})`
+    ];
+    
+    // 1. Total de OS pendentes dos clientes do gestor
+    const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
+      .from(services)
+      .where(
+        and(
+          eq(services.status, 'pending'),
+          ...baseConditions
+        )
+      );
+    
+    // 2. Total de OS Faturadas dos clientes do gestor
+    const [faturadoResult] = await db.select({ count: sql<number>`count(*)` })
+      .from(services)
+      .where(
+        and(
+          eq(services.status, 'faturado'),
+          ...baseConditions
+        )
+      );
+    
+    // 3. Total de OS concluídas dos clientes do gestor
+    const [completedResult] = await db.select({ count: sql<number>`count(*)` })
+      .from(services)
+      .where(
+        and(
+          or(
+            eq(services.status, 'completed'),
+            eq(services.status, 'aguardando_aprovacao'),
+            eq(services.status, 'faturado'),
+            eq(services.status, 'pago')
+          ),
+          ...baseConditions
+        )
+      );
+    
+    // 4. Faturamento total (não será mostrado para o gestor, mas calculamos para manter a estrutura de dados)
+    let totalRevenue = 0;
+    
+    // Converter para o formato esperado pelo frontend
+    const totalPendingServices = typeof pendingResult.count === 'string' 
+      ? parseInt(pendingResult.count) 
+      : (pendingResult.count || 0);
+    
+    const totalFaturadoServices = typeof faturadoResult.count === 'string' 
+      ? parseInt(faturadoResult.count) 
+      : (faturadoResult.count || 0);
+    
+    const totalCompletedServices = typeof completedResult.count === 'string' 
+      ? parseInt(completedResult.count) 
+      : (completedResult.count || 0);
+    
+    const stats = {
+      totalPendingServices,
+      totalInProgressServices: totalFaturadoServices,
+      totalCompletedServices,
+      totalRevenue: totalRevenue // Será removido na rota antes de enviar para o frontend
+    };
+    
+    console.log('Stats do gestor formatados para envio:', stats);
     return stats;
   }
   

@@ -292,6 +292,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para obter os clientes do gestor atual (útil para o frontend)
+  app.get("/api/my-clients", requireAuth, async (req, res) => {
+    try {
+      const userRole = req.session.userRole;
+      const userId = req.session.userId;
+      
+      // Verificar se o usuário é um gestor
+      if (userRole !== "gestor") {
+        return res.status(403).json({ message: "Apenas gestores podem acessar esta rota" });
+      }
+      
+      // Obter clientes do gestor atual
+      const clients = await storage.getManagerClients(Number(userId));
+      
+      res.status(200).json(clients);
+    } catch (error) {
+      console.error("Erro ao obter clientes do gestor atual:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+  
   // Rota para criar despesa
   app.post("/api/expenses", requireAuth, async (req, res) => {
     try {
@@ -326,18 +347,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard routes
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {
-      // Se for um técnico, passe o ID para filtrar os resultados
+      // Verificar papel do usuário para filtrar os resultados
       const userRole = req.session.userRole;
       const userId = req.session.userId;
       
       console.log('Dashboard Stats Request - Role:', userRole, 'User ID:', userId);
       
+      // Se for um gestor, retornar estatísticas baseadas nos clientes associados
+      if (userRole === "gestor") {
+        // Obter clientes do gestor
+        const clientesGestor = await storage.getManagerClients(Number(userId));
+        
+        if (clientesGestor.length === 0) {
+          // Se não tiver clientes atribuídos, retornar estatísticas vazias
+          return res.json({
+            totalPendingServices: 0,
+            totalInProgressServices: 0,
+            totalCompletedServices: 0,
+            // Não enviamos totalRevenue para gestores
+          });
+        }
+        
+        // Obter IDs dos clientes
+        const clientIds = clientesGestor.map(c => c.id);
+        
+        // Obter estatísticas para esses clientes
+        const stats = await storage.getDashboardStatsForManager(clientIds);
+        
+        // Remover informações financeiras
+        const { totalRevenue, ...filteredStats } = stats;
+        
+        console.log('Stats do gestor:', filteredStats);
+        return res.json(filteredStats);
+      }
+      
+      // Para técnicos, filtrar por ID
       let technicianId: number | undefined = undefined;
       if (userRole === "technician") {
         technicianId = Number(userId);
         console.log('Filtrando stats do dashboard para o técnico ID:', technicianId);
       }
       
+      // Para admin ou técnico
       const stats = await storage.getDashboardStats(technicianId);
       console.log('Stats retornados:', stats);
       res.json(stats);
@@ -349,11 +400,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/dashboard/technician-performance", requireAuth, async (req, res) => {
     try {
-      // Verifica se o usuário é um administrador
+      // Verifica o papel do usuário
       const userRole = req.session.userRole;
       
-      if (userRole === "technician") {
-        // Se for técnico, retorna um array vazio para esconder a seção no frontend
+      // Apenas admins veem o relatório completo de desempenho
+      if (userRole !== "admin") {
+        // Se não for admin, retorna um array vazio para esconder a seção no frontend
         return res.json([]);
       }
       
