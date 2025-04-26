@@ -113,8 +113,6 @@ const hailCalculation = (
   needsHohlraum = false,
   hourlyRate = 28 // Taxa horária padrão de 28€
 ) => {
-  // Log para debug
-  console.log(`hailCalculation: tamanho=${size}mm, amassados=${dents}, vertical=${isVertical}`);
   
   const baseData: OrientationTable = {
     horizontal: {
@@ -183,18 +181,14 @@ const hailCalculation = (
     // Se o tamanho não estiver entre os valores padrão, usar o mais próximo
     if (size < 25) {
       sizeTable = awTable[20];
-      console.log(`Tamanho ${size}mm não encontrado na tabela. Usando 20mm.`);
     } else if (size < 35) {
       sizeTable = awTable[30];
-      console.log(`Tamanho ${size}mm não encontrado na tabela. Usando 30mm.`);
     } else {
       sizeTable = awTable[40];
-      console.log(`Tamanho ${size}mm não encontrado na tabela. Usando 40mm.`);
     }
   }
   // Verificar se o tamanho existe na tabela
   if (!sizeTable) {
-    console.warn(`Tamanho ${size}mm não encontrado na tabela.`);
     return { aw: 0, hours: 0, cost: "0.00" };
   }
   
@@ -204,7 +198,6 @@ const hailCalculation = (
   // 1. Se o valor existe diretamente na tabela, usamos ele
   if (sizeTable[dents] !== undefined) {
     aw = sizeTable[dents];
-    console.log(`Valor exato encontrado na tabela: ${dents} amassados = ${aw} AW`);
   } 
   // 2. Se não existe, usamos a regra de interpolação conforme explicado
   else {
@@ -234,31 +227,24 @@ const hailCalculation = (
       // Calcular o ponto médio entre os valores de referência
       const middlePoint = (lowerKey + higherKey) / 2;
       
-      console.log(`Calculando entre ${lowerKey}(${lowerAW} AW) e ${higherKey}(${higherAW} AW), diferença=${awDifference} AW, metade=${halfDifference} AW`);
-      console.log(`Ponto médio: ${middlePoint}, dents: ${dents}`);
-      
       // Decisão baseada na proximidade
       if (dents >= middlePoint) {
         // Está no meio ou mais próximo do valor posterior
         aw = higherAW + halfDifference;
-        console.log(`No meio ou próximo do valor posterior: ${higherAW} + ${halfDifference} = ${aw} AW`);
       } 
       else {
         // Está mais próximo do valor anterior
         aw = lowerAW + halfDifference;
-        console.log(`Mais próximo do valor anterior: ${lowerAW} + ${halfDifference} = ${aw} AW`);
       }
     } 
     // Casos onde só temos um valor de referência
     else if (lowerKey === undefined && higherKey !== undefined) {
       // Só temos valor posterior
       aw = sizeTable[higherKey] - 1; // Valor posterior menos 1 AW
-      console.log(`Caso limite inferior: ${dents} amassados - usando ${higherKey} (${sizeTable[higherKey]} AW) - 1 = ${aw} AW`);
     } 
     else if (higherKey === undefined && lowerKey !== undefined) {
       // Só temos valor anterior  
       aw = sizeTable[lowerKey] + 1; // Valor anterior mais 1 AW
-      console.log(`Caso limite superior: ${dents} amassados - usando ${lowerKey} (${sizeTable[lowerKey]} AW) + 1 = ${aw} AW`);
     }
   }
   
