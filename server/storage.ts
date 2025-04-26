@@ -425,6 +425,7 @@ export class DatabaseStorage implements IStorage {
     const photos = await this.getServicePhotos(id);
     const beforePhotos = photos.filter(photo => photo.photo_type === 'before');
     const afterPhotos = photos.filter(photo => photo.photo_type === 'after');
+    const servicePhotos = photos.filter(photo => photo.photo_type === 'service');
     
     return {
       ...service,
@@ -434,7 +435,8 @@ export class DatabaseStorage implements IStorage {
       technician,
       photos: {
         before: beforePhotos,
-        after: afterPhotos
+        after: afterPhotos,
+        service: servicePhotos
       }
     };
   }
