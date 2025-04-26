@@ -818,28 +818,7 @@ export default function Budget() {
       footer.appendChild(legendText);
       printContainer.appendChild(footer);
       
-      // Observações
-      if (targetBudget.note) {
-        const notesSection = document.createElement('div');
-        notesSection.style.marginTop = '8px';
-        
-        const notesTitle = document.createElement('p');
-        notesTitle.textContent = 'Observações:';
-        notesTitle.style.fontWeight = 'bold';
-        notesTitle.style.marginBottom = '2px';
-        notesTitle.style.fontSize = '9px';
-        
-        const notesContent = document.createElement('p');
-        notesContent.textContent = targetBudget.note;
-        notesContent.style.fontSize = '8px';
-        notesContent.style.padding = '4px';
-        notesContent.style.border = '1px solid #ddd';
-        notesContent.style.borderRadius = '3px';
-        
-        notesSection.appendChild(notesTitle);
-        notesSection.appendChild(notesContent);
-        printContainer.appendChild(notesSection);
-      }
+      // Observações removidas conforme solicitado
       
       // Adicionar o container à página
       document.body.appendChild(printContainer);
