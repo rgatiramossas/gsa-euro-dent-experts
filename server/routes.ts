@@ -196,6 +196,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao buscar despesas" });
     }
   });
+
+  // Rotas para gerenciamento de gestores e clientes
+  app.get("/api/managers", requireAuth, async (req, res) => {
+    try {
+      if (req.session.userRole !== "admin") {
+        return res.status(403).json({ message: "Apenas administradores podem listar gestores" });
+      }
+      
+      // Buscar usuários com role='gestor'
+      const managers = await storage.listUsers("gestor");
+      res.json(managers);
+    } catch (error) {
+      console.error("Erro ao buscar gestores:", error);
+      res.status(500).json({ message: "Erro ao buscar gestores" });
+    }
+  });
+  
+  // Rota para atribuir cliente a um gestor
+  app.post("/api/managers/:managerId/clients", requireAuth, async (req, res) => {
+    try {
+      if (req.session.userRole !== "admin") {
+        return res.status(403).json({ message: "Apenas administradores podem atribuir clientes" });
+      }
+      
+      const { managerId } = req.params;
+      const { clientId } = req.body;
+      
+      if (!managerId || !clientId) {
+        return res.status(400).json({ message: "ID do gestor e cliente são obrigatórios" });
+      }
+      
+      // Verificar se o gestor existe e tem a role correta
+      const manager = await storage.getUser(Number(managerId));
+      if (!manager || manager.role !== "gestor") {
+        return res.status(404).json({ message: "Gestor não encontrado" });
+      }
+      
+      // Verificar se o cliente existe
+      const client = await storage.getClient(Number(clientId));
+      if (!client) {
+        return res.status(404).json({ message: "Cliente não encontrado" });
+      }
+      
+      // Atribuir cliente ao gestor
+      const assignment = await storage.assignClientToManager(Number(managerId), Number(clientId));
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Erro ao atribuir cliente ao gestor:", error);
+      res.status(500).json({ message: "Erro ao atribuir cliente ao gestor" });
+    }
+  });
+  
+  // Rota para remover atribuição de cliente a um gestor
+  app.delete("/api/managers/:managerId/clients/:clientId", requireAuth, async (req, res) => {
+    try {
+      if (req.session.userRole !== "admin") {
+        return res.status(403).json({ message: "Apenas administradores podem remover clientes" });
+      }
+      
+      const { managerId, clientId } = req.params;
+      
+      // Remover atribuição
+      const result = await storage.removeClientFromManager(Number(managerId), Number(clientId));
+      
+      if (result) {
+        res.status(200).json({ message: "Atribuição removida com sucesso" });
+      } else {
+        res.status(404).json({ message: "Atribuição não encontrada" });
+      }
+    } catch (error) {
+      console.error("Erro ao remover cliente do gestor:", error);
+      res.status(500).json({ message: "Erro ao remover cliente do gestor" });
+    }
+  });
+  
+  // Rota para listar clientes de um gestor
+  app.get("/api/managers/:managerId/clients", requireAuth, async (req, res) => {
+    try {
+      const { managerId } = req.params;
+      const userId = req.session.userId;
+      const userRole = req.session.userRole;
+      
+      // Se não for admin e não for o próprio gestor solicitando, negar acesso
+      if (userRole !== "admin" && Number(managerId) !== userId) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+      
+      // Buscar clientes do gestor
+      const clients = await storage.getManagerClients(Number(managerId));
+      res.json(clients);
+    } catch (error) {
+      console.error("Erro ao buscar clientes do gestor:", error);
+      res.status(500).json({ message: "Erro ao buscar clientes do gestor" });
+    }
+  });
   
   // Rota para criar despesa
   app.post("/api/expenses", requireAuth, async (req, res) => {
@@ -420,6 +515,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se o usuário for um técnico, restringe para mostrar apenas seus serviços
       if (userRole === "technician") {
         filters.technicianId = userId;
+      } else if (userRole === "gestor") {
+        // Se for gestor, pegar a lista de clientes atribuídos a ele
+        const clientesGestor = await storage.getManagerClients(Number(userId));
+        
+        if (clientesGestor.length === 0) {
+          // Se não tiver clientes atribuídos, retornar lista vazia
+          return res.json([]);
+        }
+        
+        // Se o query tem clientId, verificar se é um dos clientes do gestor
+        if (req.query.clientId) {
+          const clienteId = parseInt(req.query.clientId as string);
+          const clientePermitido = clientesGestor.some(c => c.id === clienteId);
+          
+          if (!clientePermitido) {
+            return res.status(403).json({ message: "Acesso negado a este cliente" });
+          }
+          
+          filters.clientId = clienteId;
+        } else {
+          // Filtrar por todos os clientes do gestor
+          filters.clientIds = clientesGestor.map(c => c.id);
+        }
       } else if (req.query.technicianId) {
         // Para administradores, ainda permite filtrar por técnico específico
         filters.technicianId = parseInt(req.query.technicianId as string);
@@ -429,7 +547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filters.status = req.query.status as string;
       }
       
-      if (req.query.clientId) {
+      if (req.query.clientId && userRole !== "gestor") {
         filters.clientId = parseInt(req.query.clientId as string);
       }
       
@@ -443,13 +561,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const serviceType = await storage.getServiceType(service.service_type_id);
           const technician = service.technician_id ? await storage.getUser(service.technician_id) : null;
           
-          return {
-            ...service,
+          // Base do objeto de serviço
+          const serviceData: any = {
+            id: service.id,
+            client_id: service.client_id,
+            vehicle_id: service.vehicle_id,
+            service_type_id: service.service_type_id,
+            technician_id: service.technician_id,
+            status: service.status,
+            description: service.description,
+            scheduled_date: service.scheduled_date,
+            start_date: service.start_date,
+            completion_date: service.completion_date,
+            location_type: service.location_type,
+            address: service.address,
+            latitude: service.latitude,
+            longitude: service.longitude,
+            notes: service.notes,
+            created_at: service.created_at,
+            
+            // Adicionar dados relacionados
             client: client ? { id: client.id, name: client.name } : null,
-            vehicle: vehicle ? { id: vehicle.id, make: vehicle.make, model: vehicle.model, year: vehicle.year, license_plate: vehicle.license_plate } : null,
+            vehicle: vehicle ? { id: vehicle.id, make: vehicle.make, model: vehicle.model, license_plate: vehicle.license_plate } : null,
             serviceType: serviceType ? { id: serviceType.id, name: serviceType.name } : null,
             technician: technician ? { id: technician.id, name: technician.name } : null
           };
+          
+          // Incluir valores financeiros apenas para técnicos, admins ou o próprio técnico do serviço
+          if (userRole === "admin" || 
+              (userRole === "technician" && Number(userId) === service.technician_id)) {
+            serviceData.price = service.price;
+            serviceData.displacement_fee = service.displacement_fee;
+            serviceData.administrative_fee = service.administrative_fee;
+            serviceData.total = service.total;
+          } else if (userRole === "technician") {
+            // Técnicos veem apenas o preço do serviço (sem taxas administrativas)
+            serviceData.price = service.price;
+            serviceData.displacement_fee = service.displacement_fee;
+            // Calcular total sem taxa administrativa
+            const subTotal = (service.price || 0) + (service.displacement_fee || 0);
+            serviceData.total = subTotal;
+          }
+          
+          return serviceData;
         })
       );
       
@@ -463,12 +617,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/services/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userRole = req.session.userRole;
+      const userId = req.session.userId;
+      
+      // Verificar se o usuário é gestor e se tem acesso a este serviço
+      if (userRole === "gestor") {
+        // Obter o serviço para verificar o cliente
+        const service = await storage.getService(id);
+        if (!service) {
+          return res.status(404).json({ message: "Service not found" });
+        }
+        
+        // Verificar se o cliente está associado a este gestor
+        const clientesGestor = await storage.getManagerClients(Number(userId));
+        const clientePermitido = clientesGestor.some(c => c.id === service.client_id);
+        
+        if (!clientePermitido) {
+          return res.status(403).json({ message: "Acesso negado a este serviço" });
+        }
+      }
+      
       const serviceDetails = await storage.getServiceDetails(id);
       
       if (!serviceDetails) {
         return res.status(404).json({ message: "Service not found" });
       }
       
+      // Se for um gestor, remover campos financeiros
+      if (userRole === "gestor") {
+        // Remover campos financeiros sensíveis
+        const { price, displacement_fee, administrative_fee, total, ...filteredDetails } = serviceDetails;
+        return res.json(filteredDetails);
+      } else if (userRole === "technician" && Number(userId) !== serviceDetails.technician_id) {
+        // Se for um técnico visualizando serviço de outro técnico
+        // Remover taxa administrativa, mas manter o preço
+        const { administrative_fee, ...filteredDetails } = serviceDetails;
+        // Recalcular o total sem a taxa administrativa
+        filteredDetails.total = (serviceDetails.price || 0) + (serviceDetails.displacement_fee || 0);
+        return res.json(filteredDetails);
+      }
+      
+      // Para admin ou o próprio técnico, retornar todos os detalhes
       res.json(serviceDetails);
     } catch (error) {
       console.error("Error fetching service details:", error);

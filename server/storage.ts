@@ -395,7 +395,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  async listServices(filters?: Partial<{ status: string, technicianId: number, clientId: number }>): Promise<Service[]> {
+  async listServices(filters?: Partial<{ status: string, technicianId: number, clientId: number, clientIds?: number[] }>): Promise<Service[]> {
     let query = db.select().from(services)
       // Sempre filtra os serviços com status "deleted"
       .where(sql`${services.status} != 'deleted'`);
@@ -411,6 +411,11 @@ export class DatabaseStorage implements IStorage {
       
       if (filters.clientId) {
         query = query.where(eq(services.client_id, filters.clientId));
+      }
+      
+      // Suporte para filtrar por múltiplos IDs de clientes (para gestores)
+      if (filters.clientIds && filters.clientIds.length > 0) {
+        query = query.where(sql`${services.client_id} IN (${filters.clientIds.join(',')})`);
       }
     }
     
@@ -1171,6 +1176,64 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedRequest;
+  }
+  
+  // Métodos para gestão de clientes por gestor
+  async assignClientToManager(managerId: number, clientId: number): Promise<ManagerClientAssignment> {
+    // Verificar se a atribuição já existe
+    const existingAssignments = await db.select().from(managerClientAssignments)
+      .where(and(
+        eq(managerClientAssignments.manager_id, managerId),
+        eq(managerClientAssignments.client_id, clientId)
+      ));
+    
+    if (existingAssignments.length > 0) {
+      return existingAssignments[0];
+    }
+    
+    // Criar nova atribuição
+    const [assignment] = await db.insert(managerClientAssignments)
+      .values({
+        manager_id: managerId,
+        client_id: clientId
+      })
+      .returning();
+    
+    return assignment;
+  }
+  
+  async removeClientFromManager(managerId: number, clientId: number): Promise<boolean> {
+    const result = await db.delete(managerClientAssignments)
+      .where(and(
+        eq(managerClientAssignments.manager_id, managerId),
+        eq(managerClientAssignments.client_id, clientId)
+      ));
+    
+    return result.rowCount > 0;
+  }
+  
+  async getManagerClients(managerId: number): Promise<Client[]> {
+    // Busca todos os clientes atribuídos a um gestor específico
+    const assignments = await db.select({
+      client: clients
+    })
+    .from(managerClientAssignments)
+    .innerJoin(clients, eq(managerClientAssignments.client_id, clients.id))
+    .where(eq(managerClientAssignments.manager_id, managerId));
+    
+    return assignments.map(a => a.client);
+  }
+  
+  async getClientManagers(clientId: number): Promise<User[]> {
+    // Busca todos os gestores atribuídos a um cliente específico
+    const assignments = await db.select({
+      manager: users
+    })
+    .from(managerClientAssignments)
+    .innerJoin(users, eq(managerClientAssignments.manager_id, users.id))
+    .where(eq(managerClientAssignments.client_id, clientId));
+    
+    return assignments.map(a => a.manager);
   }
 }
 
