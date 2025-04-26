@@ -824,10 +824,17 @@ export class DatabaseStorage implements IStorage {
     return results;
   }
   
-  async updatePaymentRequestStatus(id: number, status: string): Promise<PaymentRequest | undefined> {
+  async updatePaymentRequestStatus(id: number, status: string, paymentDetails?: any): Promise<PaymentRequest | undefined> {
+    // Incluir detalhes de pagamento se fornecidos
+    const updateData: any = { status };
+    if (paymentDetails && status === "pago") {
+      updateData.payment_details = paymentDetails;
+      updateData.payment_date = new Date();
+    }
+    
     const [updatedRequest] = await db
       .update(paymentRequests)
-      .set({ status })
+      .set(updateData)
       .where(eq(paymentRequests.id, id))
       .returning();
     
@@ -845,6 +852,65 @@ export class DatabaseStorage implements IStorage {
           .update(services)
           .set({ status: "faturado" })
           .where(eq(services.id, item.service_id));
+      }
+    }
+    
+    // If paid, update all associated services to "pago"
+    if (status === "pago") {
+      const items = await db
+        .select({
+          service_id: paymentRequestItems.service_id,
+        })
+        .from(paymentRequestItems)
+        .where(eq(paymentRequestItems.payment_request_id, id));
+      
+      for (const item of items) {
+        await db
+          .update(services)
+          .set({ status: "pago" })
+          .where(eq(services.id, item.service_id));
+      }
+      
+      // Registrar despesa automaticamente
+      if (updatedRequest) {
+        // Primeiro, obter os detalhes completos do pedido
+        const fullRequest = await this.getPaymentRequest(id);
+        if (fullRequest) {
+          const technician = fullRequest.technician;
+          const technicianValue = fullRequest.technicianValue || 0;
+          
+          // Criar descrição com detalhes das OS
+          const osNumbers = fullRequest.services?.map((s: any) => `#${s.id}`).join(", ") || "";
+          const description = `Pagamento ao técnico ${technician?.name || 'N/A'} - Pedido #${id} - OS ${osNumbers}`;
+          
+          // Registrar despesa como salário
+          // Nota: Interface para Despesas ainda não foi implementada, este é apenas um placeholder
+          // para quando o modelo/tabela de despesas for criado
+          console.log("Registrando despesa de salário:", {
+            description,
+            amount: technicianValue,
+            date: new Date(),
+            category: "salario",
+            provider: technician?.name,
+            payment_request_id: id,
+            notes: `Detalhes: ${JSON.stringify(paymentDetails)}`
+          });
+          
+          // Exemplo de como seria a implementação quando a tabela de despesas existir:
+          /*
+          await db
+            .insert(expenses)
+            .values({
+              description,
+              amount: technicianValue,
+              date: new Date(),
+              category: "salario",
+              provider: technician?.name,
+              payment_request_id: id,
+              notes: `Detalhes: ${JSON.stringify(paymentDetails)}`
+            });
+          */
+        }
       }
     }
     

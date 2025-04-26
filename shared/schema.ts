@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, time } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, time, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -182,6 +182,8 @@ export const paymentRequests = pgTable("payment_requests", {
   technician_id: integer("technician_id").notNull().references(() => users.id),
   created_at: timestamp("created_at").defaultNow(),
   status: text("status").notNull().default("pending"),
+  payment_date: timestamp("payment_date"),
+  payment_details: jsonb("payment_details"),
 });
 
 export const paymentRequestItems = pgTable("payment_request_items", {
