@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, time } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -137,3 +137,40 @@ export type InsertService = z.infer<typeof insertServiceSchema>;
 
 export type ServicePhoto = typeof servicePhotos.$inferSelect;
 export type InsertServicePhoto = z.infer<typeof insertServicePhotoSchema>;
+
+// Event Types (reunião, visita, serviço, etc.)
+export const eventTypes = pgTable("event_types", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#4f46e5"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertEventTypeSchema = createInsertSchema(eventTypes).omit({
+  id: true,
+  created_at: true
+});
+
+// Events (not directly related to services)
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  date: text("date").notNull(), // YYYY-MM-DD format
+  time: text("time").notNull(), // HH:MM format
+  duration: integer("duration").notNull().default(60), // in minutes
+  event_type_id: integer("event_type_id").notNull().references(() => eventTypes.id),
+  technician_id: integer("technician_id").notNull().references(() => users.id),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  created_at: true
+});
+
+export type EventType = typeof eventTypes.$inferSelect;
+export type InsertEventType = z.infer<typeof insertEventTypeSchema>;
+
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;

@@ -1,11 +1,13 @@
-import { users, clients, vehicles, serviceTypes, services, servicePhotos } from "@shared/schema";
+import { users, clients, vehicles, serviceTypes, services, servicePhotos, eventTypes, events } from "@shared/schema";
 import type { 
   User, InsertUser, 
   Client, InsertClient, 
   Vehicle, InsertVehicle, 
   ServiceType, InsertServiceType, 
   Service, InsertService, 
-  ServicePhoto, InsertServicePhoto 
+  ServicePhoto, InsertServicePhoto,
+  EventType, InsertEventType,
+  Event, InsertEvent
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, desc, sql } from "drizzle-orm";
@@ -55,6 +57,18 @@ export interface IStorage {
   // Dashboard data
   getDashboardStats(): Promise<any>;
   getTechnicianPerformance(): Promise<any>;
+  
+  // Event Type methods
+  getEventType(id: number): Promise<EventType | undefined>;
+  createEventType(eventType: InsertEventType): Promise<EventType>;
+  listEventTypes(): Promise<EventType[]>;
+  
+  // Event methods
+  getEvent(id: number): Promise<Event | undefined>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  updateEvent(id: number, eventData: Partial<Event>): Promise<Event | undefined>;
+  deleteEvent(id: number): Promise<boolean>;
+  listEvents(filters?: Partial<{ technician_id: number, date: string }>): Promise<Event[]>;
   
   // Session store
   sessionStore: session.SessionStore;
