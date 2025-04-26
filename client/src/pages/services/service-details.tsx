@@ -484,7 +484,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="1">Amassado de Rua</SelectItem>
-                                  <SelectItem value="2">Colisão</SelectItem>
+                                  <SelectItem value="2">Granizo</SelectItem>
                                   <SelectItem value="3">Outro</SelectItem>
                                 </SelectContent>
                               </Select>
