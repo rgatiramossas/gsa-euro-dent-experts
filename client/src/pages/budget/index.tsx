@@ -509,6 +509,8 @@ export default function Budget() {
     
     // Função para lidar com o foco no input
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      if (isViewMode) return; // Não ajustar o cursor no modo de visualização
+      
       // Precisamos usar setTimeout para garantir que o browser tenha tempo de processar o foco
       setTimeout(() => {
         // Posiciona o cursor no final do texto
@@ -520,6 +522,8 @@ export default function Budget() {
     // Função otimizada para lidar com a mudança nos inputs 
     // mantendo o foco ativo no campo atual
     const handleInputChange = (diameter: 'diameter20' | 'diameter30' | 'diameter40', value: string) => {
+      if (isViewMode) return; // Não permitir alterações no modo de visualização
+      
       const numValue = parseInt(value) || 0;
       
       // Atualizar o valor no estado
@@ -552,6 +556,8 @@ export default function Budget() {
               ref={(el) => {
                 inputRefs.current[`${partKey}-diameter20`] = el;
               }}
+              readOnly={isViewMode}
+              disabled={isViewMode}
             />
           </div>
           
@@ -574,6 +580,8 @@ export default function Budget() {
               ref={(el) => {
                 inputRefs.current[`${partKey}-diameter30`] = el;
               }}
+              readOnly={isViewMode}
+              disabled={isViewMode}
             />
           </div>
           
@@ -596,6 +604,8 @@ export default function Budget() {
               ref={(el) => {
                 inputRefs.current[`${partKey}-diameter40`] = el;
               }}
+              readOnly={isViewMode}
+              disabled={isViewMode}
             />
           </div>
           
@@ -606,6 +616,7 @@ export default function Budget() {
                 id={`${partKey}-optionA`} 
                 checked={damage.optionA}
                 onCheckedChange={(checked) => {
+                  if (isViewMode) return; // Não permitir alterações no modo de visualização
                   setPartDamages(prev => ({
                     ...prev,
                     [partKey]: {
@@ -614,6 +625,7 @@ export default function Budget() {
                     }
                   }));
                 }}
+                disabled={isViewMode}
               />
               <label htmlFor={`${partKey}-optionA`} className="text-xs">(A)</label>
             </div>
@@ -623,6 +635,7 @@ export default function Budget() {
                 id={`${partKey}-optionK`} 
                 checked={damage.optionK}
                 onCheckedChange={(checked) => {
+                  if (isViewMode) return; // Não permitir alterações no modo de visualização
                   setPartDamages(prev => ({
                     ...prev,
                     [partKey]: {
@@ -631,6 +644,7 @@ export default function Budget() {
                     }
                   }));
                 }}
+                disabled={isViewMode}
               />
               <label htmlFor={`${partKey}-optionK`} className="text-xs">(K)</label>
             </div>
@@ -640,6 +654,7 @@ export default function Budget() {
                 id={`${partKey}-optionP`} 
                 checked={damage.optionP}
                 onCheckedChange={(checked) => {
+                  if (isViewMode) return; // Não permitir alterações no modo de visualização
                   setPartDamages(prev => ({
                     ...prev,
                     [partKey]: {
@@ -648,6 +663,7 @@ export default function Budget() {
                     }
                   }));
                 }}
+                disabled={isViewMode}
               />
               <label htmlFor={`${partKey}-optionP`} className="text-xs">(P)</label>
             </div>
@@ -814,14 +830,21 @@ export default function Budget() {
                     <DamagedPartItem partKey="portaDianteiraEsquerda" label="Porta Dianteira Esq." />
                     
                     <div className="flex justify-center items-center p-2 border rounded-md">
-                      <Button
-                        variant="outline"
-                        className="w-full h-full flex flex-col items-center justify-center min-h-[135px]"
-                        onClick={handlePhotoUpload}
-                      >
-                        <CameraIcon className="h-10 w-10 mb-2" />
-                        <span className="text-sm">Adicionar Foto</span>
-                      </Button>
+                      {isViewMode ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] text-gray-400">
+                          <CameraIcon className="h-10 w-10 mb-2" />
+                          <span className="text-sm">Foto</span>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="w-full h-full flex flex-col items-center justify-center min-h-[135px]"
+                          onClick={handlePhotoUpload}
+                        >
+                          <CameraIcon className="h-10 w-10 mb-2" />
+                          <span className="text-sm">Adicionar Foto</span>
+                        </Button>
+                      )}
                     </div>
                     
                     <DamagedPartItem partKey="portaDianteiraDireita" label="Porta Dianteira Dir." />
@@ -867,6 +890,8 @@ export default function Budget() {
                       onChange={(e) => setTotalValue(Number(e.target.value))}
                       onFocus={(e) => e.target.select()}
                       autoComplete="off"
+                      readOnly={isViewMode}
+                      disabled={isViewMode}
                     />
                   </div>
                 </div>
