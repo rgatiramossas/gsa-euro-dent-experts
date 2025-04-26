@@ -856,6 +856,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao atualizar status do pedido" });
     }
   });
+  
+  // Rota específica para registrar pagamento
+  app.patch("/api/payment-requests/:id/pay", requireAuth, async (req, res) => {
+    if (req.session.userRole !== "admin") {
+      return res.status(403).json({ message: "Apenas administradores podem registrar pagamentos" });
+    }
+    
+    try {
+      const requestId = Number(req.params.id);
+      const { payment_date, payment_details } = req.body;
+      
+      // Verificar se o pedido existe e está no status aprovado
+      const request = await storage.getPaymentRequest(requestId);
+      if (!request || request.status !== "aprovado") {
+        return res.status(400).json({ 
+          message: "Um pedido de pagamento só pode ser pago após ser aprovado" 
+        });
+      }
+      
+      // Verificar se os dados de pagamento foram fornecidos
+      if (!payment_date || !payment_details) {
+        return res.status(400).json({ 
+          message: "Data e detalhes do pagamento são obrigatórios" 
+        });
+      }
+      
+      // Atualizar status para "pago" e registrar detalhes do pagamento
+      const updatedRequest = await storage.updatePaymentRequestStatus(
+        requestId, 
+        "pago", 
+        payment_details
+      );
+      
+      if (!updatedRequest) {
+        return res.status(404).json({ message: "Pedido de pagamento não encontrado" });
+      }
+      
+      // Retorno simplificado para evitar problemas de JSON
+      res.json({ status: "success" });
+    } catch (error) {
+      console.error("Erro ao registrar pagamento:", error);
+      res.status(500).json({ message: "Erro ao registrar pagamento" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

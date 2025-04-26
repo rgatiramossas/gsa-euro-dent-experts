@@ -260,7 +260,6 @@ export default function Finances() {
   const registerPaymentMutation = useMutation({
     mutationFn: async ({ requestId, paymentData }: { requestId: number, paymentData: PaymentFormValues }) => {
       return await apiRequest(`/api/payment-requests/${requestId}/pay`, 'PATCH', { 
-        status: "pago",
         payment_date: paymentData.payment_date,
         payment_details: {
           payment_method: paymentData.payment_method,
