@@ -557,64 +557,98 @@ export default function Budget() {
         });
         return;
       }
+      
+      // Se não estivermos visualizando o orçamento, abri-lo para visualização antes de imprimir
+      if (!showDialog || !isViewMode || selectedBudget?.id !== budgetId) {
+        handleViewBudget(budgetId);
+        
+        // Aguardar um pouco até o diálogo ser completamente renderizado
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
+      // Importar as bibliotecas necessárias
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+      
       toast({
         title: "Gerando PDF",
         description: "Aguarde enquanto o orçamento é preparado...",
       });
-
-      // Importar jsPDF
-      const jsPDF = (await import('jspdf')).default;
       
-      // Criar um novo PDF no formato A4
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      // Criar um clone do diálogo para modificar e capturar
+      const dialogElement = document.querySelector('[role="dialog"]') as HTMLElement;
       
-      // Configurações de fonte e cores
-      pdf.setFont("helvetica");
-      pdf.setTextColor(0, 0, 0);
+      if (!dialogElement) {
+        toast({
+          title: "Erro ao gerar PDF",
+          description: "Diálogo de orçamento não encontrado.",
+          variant: "destructive",
+        });
+        return;
+      }
       
-      // Título
-      pdf.setFontSize(18);
-      pdf.text(`Orçamento #${targetBudget.id}`, 15, 20);
+      // Criar um clone do conteúdo do diálogo
+      const printContainer = document.createElement('div');
+      printContainer.style.width = '800px';
+      printContainer.style.padding = '20px';
+      printContainer.style.backgroundColor = 'white';
+      printContainer.style.position = 'absolute';
+      printContainer.style.left = '-9999px';
+      printContainer.style.fontFamily = 'Arial, sans-serif';
       
-      // Subtítulo
-      pdf.setFontSize(12);
-      pdf.text(`Detalhes do orçamento para ${targetBudget.client_name || "Cliente"}.`, 15, 30);
+      // Copiar o conteúdo visual do diálogo atual
+      const header = document.createElement('div');
+      header.innerHTML = `
+        <h2 style="font-size: 24px; margin-bottom: 5px;">Orçamento #${targetBudget.id}</h2>
+        <p style="font-size: 14px; margin-bottom: 20px;">Detalhes do orçamento para ${targetBudget.client_name}.</p>
+      `;
+      printContainer.appendChild(header);
       
-      // Cabeçalho - Data e Cliente
-      pdf.setFontSize(14);
-      pdf.text("Data", 15, 45);
-      pdf.text("Cliente", 105, 45);
+      // Criar seção de dados do cliente e veículo
+      const clientSection = document.createElement('div');
+      clientSection.style.display = 'grid';
+      clientSection.style.gridTemplateColumns = '1fr 1fr';
+      clientSection.style.gap = '20px';
+      clientSection.style.marginBottom = '20px';
       
-      pdf.setFontSize(12);
-      pdf.text(formatDate(targetBudget.date) || "", 15, 55);
-      pdf.text(targetBudget.client_name || "", 105, 55);
-      
-      // Veículo e Placa
-      pdf.setFontSize(14);
-      pdf.text("Veículo", 15, 70);
-      pdf.text("Placa", 105, 70);
-      
-      pdf.setFontSize(12);
-      pdf.text(targetBudget.vehicle_info || "", 15, 80);
-      pdf.text(targetBudget.plate || licensePlate || "", 105, 80);
-      
-      // Chassi
-      pdf.setFontSize(14);
-      pdf.text("Chassi", 15, 95);
-      
-      pdf.setFontSize(12);
-      pdf.text(targetBudget.chassisNumber || chassisNumber || "", 15, 105);
+      clientSection.innerHTML = `
+        <div>
+          <p style="font-weight: bold; margin-bottom: 5px;">Data</p>
+          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${formatDate(targetBudget.date) || ""}</div>
+        </div>
+        <div>
+          <p style="font-weight: bold; margin-bottom: 5px;">Cliente</p>
+          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${targetBudget.client_name || ""}</div>
+        </div>
+        <div>
+          <p style="font-weight: bold; margin-bottom: 5px;">Veículo</p>
+          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${targetBudget.vehicle_info || ""}</div>
+        </div>
+        <div>
+          <p style="font-weight: bold; margin-bottom: 5px;">Placa</p>
+          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${targetBudget.plate || licensePlate || ""}</div>
+        </div>
+        <div style="grid-column: span 2;">
+          <p style="font-weight: bold; margin-bottom: 5px;">Chassi</p>
+          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${targetBudget.chassisNumber || chassisNumber || ""}</div>
+        </div>
+      `;
+      printContainer.appendChild(clientSection);
       
       // Título da seção de danos
-      pdf.setFontSize(16);
-      pdf.text("Danos do Veículo", 15, 125);
+      const damageTitle = document.createElement('h3');
+      damageTitle.textContent = 'Danos do Veículo';
+      damageTitle.style.fontSize = '18px';
+      damageTitle.style.margin = '20px 0 15px 0';
+      printContainer.appendChild(damageTitle);
       
-      // Lista de peças danificadas (mapeamento para nomes legíveis)
+      // Grid de peças danificadas
+      const partsGrid = document.createElement('div');
+      partsGrid.style.display = 'grid';
+      partsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+      partsGrid.style.gap = '15px';
+      
+      // Lista de nomes legíveis das peças
       const partsNames: Record<string, string> = {
         paraLamaEsquerdo: "Para-lama Esquerdo",
         capo: "Capô",
@@ -632,81 +666,175 @@ export default function Budget() {
         lateralDireita: "Lateral Direita"
       };
       
-      // Layout em 3 colunas para as peças
-      let yPos = 135;
-      const colWidth = 60;
-      let col = 0;
-      
-      // Listar as peças danificadas
-      if (targetBudget.damaged_parts) {
-        // Obter estado atual das peças ou usar as do orçamento
-        const currentDamages = partDamages;
+      // Função para criar uma peça com todos os detalhes
+      function createPartElement(partKey: string, displayName: string, isSelected: boolean) {
+        const part = document.createElement('div');
+        part.style.border = `1px solid ${isSelected ? '#1E40AF' : '#ddd'}`;
+        part.style.borderRadius = '6px';
+        part.style.padding = '12px';
+        part.style.backgroundColor = isSelected ? '#EFF6FF' : 'white'; // azul claro se selecionado
         
-        // Desenhar cada peça
-        Object.keys(partsNames).forEach((partKey, index) => {
-          const xPos = 15 + (col * colWidth);
+        const title = document.createElement('div');
+        title.textContent = displayName;
+        title.style.fontWeight = 'bold';
+        title.style.borderBottom = '1px solid #ddd';
+        title.style.paddingBottom = '8px';
+        title.style.marginBottom = '10px';
+        title.style.textAlign = 'center';
+        part.appendChild(title);
+        
+        // Adicionar campos de diâmetro
+        ['20mm', '30mm', '40mm'].forEach(diameter => {
+          const row = document.createElement('div');
+          row.style.display = 'flex';
+          row.style.justifyContent = 'space-between';
+          row.style.alignItems = 'center';
+          row.style.marginBottom = '8px';
           
-          // Verificar se a peça está selecionada
-          const isSelected = targetBudget.damaged_parts?.includes(partKey) || false;
+          const label = document.createElement('span');
+          label.textContent = diameter + ':';
+          label.style.fontSize = '14px';
           
-          // Desenhar o título da peça
-          pdf.setFontSize(11);
-          pdf.setFont("helvetica", "bold");
-          pdf.text(partsNames[partKey], xPos, yPos);
+          const input = document.createElement('div');
+          input.style.width = '80px';
+          input.style.height = '30px';
+          input.style.border = '1px solid #ddd';
+          input.style.borderRadius = '4px';
+          input.style.backgroundColor = 'white';
           
-          // Indicar se está selecionada
-          pdf.setFont("helvetica", "normal");
-          pdf.setFontSize(10);
-          
-          // Texto de seleção
-          pdf.text(isSelected ? "Selecionado" : "-", xPos, yPos + 8);
-          
-          // Ir para a próxima coluna ou linha
-          col++;
-          if (col >= 3) {
-            col = 0;
-            yPos += 20;
-          }
+          row.appendChild(label);
+          row.appendChild(input);
+          part.appendChild(row);
         });
+        
+        // Adicionar checkboxes A, K, P
+        const optionsRow = document.createElement('div');
+        optionsRow.style.display = 'flex';
+        optionsRow.style.justifyContent = 'space-between';
+        optionsRow.style.borderTop = '1px solid #ddd';
+        optionsRow.style.paddingTop = '8px';
+        optionsRow.style.marginTop = '5px';
+        
+        ['A', 'K', 'P'].forEach(option => {
+          const optionGroup = document.createElement('div');
+          optionGroup.style.display = 'flex';
+          optionGroup.style.alignItems = 'center';
+          
+          const checkbox = document.createElement('div');
+          checkbox.style.width = '16px';
+          checkbox.style.height = '16px';
+          checkbox.style.border = '1px solid #ddd';
+          checkbox.style.borderRadius = '2px';
+          checkbox.style.marginRight = '4px';
+          checkbox.style.backgroundColor = 'white';
+          
+          const label = document.createElement('span');
+          label.textContent = `(${option})`;
+          label.style.fontSize = '12px';
+          
+          optionGroup.appendChild(checkbox);
+          optionGroup.appendChild(label);
+          optionsRow.appendChild(optionGroup);
+        });
+        
+        part.appendChild(optionsRow);
+        return part;
       }
       
-      // Se houver foto, adicionar indicação
-      if (targetBudget.photo_url) {
-        pdf.setFontSize(12);
-        pdf.text("* Foto disponível no sistema", 15, 250);
-      }
+      // Adicionar cada peça ao grid
+      Object.keys(partsNames).forEach(partKey => {
+        const isSelected = targetBudget.damaged_parts?.includes(partKey) || false;
+        const partElement = createPartElement(partKey, partsNames[partKey], isSelected);
+        partsGrid.appendChild(partElement);
+      });
+      
+      printContainer.appendChild(partsGrid);
+      
+      // Rodapé com legenda
+      const footer = document.createElement('div');
+      footer.style.marginTop = '30px';
+      footer.style.borderTop = '1px solid #ddd';
+      footer.style.paddingTop = '15px';
+      
+      const legendTitle = document.createElement('p');
+      legendTitle.textContent = 'Materiais Especiais:';
+      legendTitle.style.fontWeight = 'bold';
+      legendTitle.style.marginBottom = '5px';
+      
+      const legend = document.createElement('p');
+      legend.textContent = 'A = ALUMÍNIO   K = COLA   P = PINTURA';
+      legend.style.fontSize = '12px';
+      
+      footer.appendChild(legendTitle);
+      footer.appendChild(legend);
+      printContainer.appendChild(footer);
       
       // Observações
       if (targetBudget.note) {
-        pdf.setFontSize(14);
-        pdf.text("Observações:", 15, 260);
-        pdf.setFontSize(10);
+        const notesSection = document.createElement('div');
+        notesSection.style.marginTop = '20px';
         
-        // Dividir o texto em linhas para não ultrapassar a largura da página
-        const maxWidth = 180; // largura máxima em mm
-        const lines = pdf.splitTextToSize(targetBudget.note, maxWidth);
-        pdf.text(lines, 15, 270);
+        const notesTitle = document.createElement('p');
+        notesTitle.textContent = 'Observações:';
+        notesTitle.style.fontWeight = 'bold';
+        notesTitle.style.marginBottom = '5px';
+        
+        const notesContent = document.createElement('p');
+        notesContent.textContent = targetBudget.note;
+        notesContent.style.fontSize = '12px';
+        notesContent.style.padding = '8px';
+        notesContent.style.border = '1px solid #ddd';
+        notesContent.style.borderRadius = '4px';
+        
+        notesSection.appendChild(notesTitle);
+        notesSection.appendChild(notesContent);
+        printContainer.appendChild(notesSection);
       }
       
-      // Materiais especiais
-      pdf.setFontSize(14);
-      pdf.text("Materiais Especiais:", 15, 280);
-      pdf.setFontSize(10);
-      pdf.text("A = ALUMÍNIO   K = COLA   P = PINTURA", 15, 287);
+      // Adicionar o container à página
+      document.body.appendChild(printContainer);
       
-      // Adicionar rodapé
-      pdf.setFontSize(10);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(`Orçamento #${targetBudget.id} - Euro Dent Experts - Gerado em ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' });
-      
-      // Salvar o PDF
-      pdf.save(`orcamento_${targetBudget.id}_${targetBudget.client_name.replace(/\s+/g, '_')}.pdf`);
-      
-      // Notificar que o PDF foi gerado com sucesso
-      toast({
-        title: "PDF gerado com sucesso",
-        description: "O orçamento foi exportado para PDF.",
-      });
+      try {
+        // Capturar o conteúdo como imagem
+        const canvas = await html2canvas(printContainer, {
+          scale: 2, // Melhor qualidade
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#fff",
+          logging: false
+        });
+        
+        // Criar PDF no formato A4
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+        
+        // Calcular dimensões para ajustar ao A4
+        const imgWidth = 210; // A4 tem 210mm de largura
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Adicionar imagem ao PDF
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        
+        // Adicionar rodapé
+        pdf.setFontSize(10);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`Orçamento #${targetBudget.id} - Euro Dent Experts - Gerado em ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' });
+        
+        // Salvar o PDF
+        pdf.save(`orcamento_${targetBudget.id}_${targetBudget.client_name.replace(/\s+/g, '_')}.pdf`);
+        
+        toast({
+          title: "PDF gerado com sucesso",
+          description: "O orçamento foi exportado para PDF.",
+        });
+      } finally {
+        // Remover o container da página
+        document.body.removeChild(printContainer);
+      }
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       toast({
