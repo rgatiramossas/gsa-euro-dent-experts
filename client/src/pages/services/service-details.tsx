@@ -323,12 +323,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         formData.append('price', dataPrice.toString());
       }
       
-      const dataDisplacementFee = typeof data.displacement_fee === 'string' ? parseFloat(data.displacement_fee) : data.displacement_fee;
-      const serviceDisplacementFee = typeof service.displacement_fee === 'string' ? parseFloat(service.displacement_fee) : service.displacement_fee;
-      
-      if (dataDisplacementFee !== serviceDisplacementFee) {
-        formData.append('displacement_fee', dataDisplacementFee.toString());
-      }
+      // Campo displacement_fee removido
       
       const dataAdministrativeFee = typeof data.administrative_fee === 'string' ? parseFloat(data.administrative_fee) : data.administrative_fee;
       const serviceAdministrativeFee = typeof service.administrative_fee === 'string' ? parseFloat(service.administrative_fee) : service.administrative_fee;
@@ -1060,7 +1055,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Valor do Serviço (€)</FormLabel>
+                          <FormLabel>Valor do Serviço (Técnico) (€)</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -1078,27 +1073,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     
                     {currentUser?.role === 'admin' && (
                       <>
-                        <FormField
-                          control={editForm.control}
-                          name="displacement_fee"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Taxa de Deslocamento (€)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  placeholder="0,00"
-                                  {...field}
-                                  onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
                         <FormField
                           control={editForm.control}
                           name="administrative_fee"
@@ -1132,7 +1106,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       <span className="text-primary text-lg">
                         {formatCurrency(
                           (editForm.watch('price') || 0) + 
-                          (editForm.watch('displacement_fee') || 0) + 
                           (editForm.watch('administrative_fee') || 0)
                         )}
                       </span>
