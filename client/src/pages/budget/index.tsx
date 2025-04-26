@@ -609,10 +609,10 @@ export default function Budget() {
         return;
       }
       
-      // Criar um clone do conteúdo do diálogo com design melhorado
+      // Criar um clone do conteúdo do diálogo com design melhorado e otimizado para PDF
       const printContainer = document.createElement('div');
       printContainer.style.width = '650px';
-      printContainer.style.padding = '18px';
+      printContainer.style.padding = '12px'; // Reduzido de 18px para 12px
       printContainer.style.backgroundColor = 'white';
       printContainer.style.position = 'absolute';
       printContainer.style.left = '-9999px';
@@ -621,42 +621,42 @@ export default function Budget() {
       printContainer.style.color = '#333';
       printContainer.style.boxSizing = 'border-box';
       
-      // Cabeçalho com estilo empresarial
+      // Cabeçalho com estilo empresarial (reduzido)
       const header = document.createElement('div');
-      header.style.borderBottom = '2px solid #1E40AF'; // Borda azul
-      header.style.paddingBottom = '8px';
-      header.style.marginBottom = '12px';
+      header.style.borderBottom = '1px solid #1E40AF'; // Borda mais fina
+      header.style.paddingBottom = '4px'; // Reduzido de 8px para 4px
+      header.style.marginBottom = '6px'; // Reduzido de 12px para 6px
       header.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <h2 style="font-size: 16px; margin: 0; color: #1E40AF;">Orçamento #${targetBudget.id}</h2>
-            <p style="font-size: 10px; margin: 3px 0 0 0; color: #555;">Euro Dent Experts</p>
+            <h2 style="font-size: 14px; margin: 0; color: #1E40AF;">Orçamento #${targetBudget.id}</h2>
+            <p style="font-size: 9px; margin: 2px 0 0 0; color: #555;">Euro Dent Experts</p>
           </div>
-          <div style="font-size: 10px; text-align: right; color: #555;">
+          <div style="font-size: 9px; text-align: right; color: #555;">
             Data de emissão: ${new Date().toLocaleDateString()}
           </div>
         </div>
       `;
       printContainer.appendChild(header);
       
-      // Detalhes do cliente
+      // Detalhes do cliente (reduzido)
       const clientTitle = document.createElement('p');
       clientTitle.textContent = 'Detalhes do orçamento para:';
       clientTitle.style.fontSize = '10px';
-      clientTitle.style.marginBottom = '6px';
+      clientTitle.style.margin = '4px 0'; // Reduzido
       clientTitle.style.fontWeight = 'bold';
       clientTitle.style.color = '#555';
       printContainer.appendChild(clientTitle);
       
-      // Criar seção de dados do cliente e veículo com visual melhorado
+      // Criar seção de dados do cliente e veículo com visual melhorado (mais compacto)
       const clientSection = document.createElement('div');
       clientSection.style.display = 'grid';
       clientSection.style.gridTemplateColumns = '1fr 1fr';
-      clientSection.style.gap = '10px';
-      clientSection.style.marginBottom = '15px';
+      clientSection.style.gap = '8px'; // Reduzido de 10px para 8px
+      clientSection.style.marginBottom = '8px'; // Reduzido de 15px para 8px
       clientSection.style.backgroundColor = '#f8f9fa';
-      clientSection.style.padding = '10px';
-      clientSection.style.borderRadius = '5px';
+      clientSection.style.padding = '6px'; // Reduzido de 10px para 6px
+      clientSection.style.borderRadius = '4px'; // Reduzido de 5px para 4px
       
       clientSection.innerHTML = `
         <div>
@@ -1032,19 +1032,36 @@ export default function Budget() {
         });
         
         // Calcular dimensões para ajustar ao A4
-        const imgWidth = 210; // A4 tem 210mm de largura
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let imgWidth = 210; // A4 tem 210mm de largura
         
-        // Adicionar imagem ao PDF
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        // Calcular altura proporcional mantendo relação de aspecto, mas com margem para rodapé
+        let imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        // Adicionar uma linha horizontal fina seguida do rodapé (exatamente como na imagem de referência)
+        // Verificar se a imagem ultrapassa a área segura de impressão e redimensionar se necessário
+        const maxSafeHeight = 270; // A4 tem 297mm, reservando 27mm para rodapé e margens
+        
+        if (imgHeight > maxSafeHeight) {
+          // Redimensionar proporcionalmente para caber na área segura
+          const scale = maxSafeHeight / imgHeight;
+          imgWidth = imgWidth * scale;
+          imgHeight = maxSafeHeight;
+          
+          // Centralizar horizontalmente
+          const leftMargin = (210 - imgWidth) / 2;
+          pdf.addImage(imgData, 'PNG', leftMargin, 0, imgWidth, imgHeight);
+        } else {
+          // Adicionar imagem ao PDF normalmente se for menor que a área segura
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        }
+        
+        // Adicionar uma linha horizontal fina seguida do rodapé
+        // Posicionar o rodapé no final da página, mas com espaço suficiente
         pdf.setDrawColor(200, 200, 200);
-        pdf.line(0, 280, 210, 280);
+        pdf.line(10, 285, 200, 285); // Linha mais curta nas laterais e mais abaixo
         
-        pdf.setFontSize(9);
+        pdf.setFontSize(8); // Fonte menor
         pdf.setTextColor(120, 120, 120);
-        pdf.text(`Orçamento #${targetBudget.id} - Euro Dent Experts - Gerado em ${new Date().toLocaleDateString()}`, 105, 287, { align: 'center' });
+        pdf.text(`Orçamento #${targetBudget.id} - Euro Dent Experts - Gerado em ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' });
         
         // Salvar o PDF
         pdf.save(`orcamento_${targetBudget.id}_${targetBudget.client_name.replace(/\s+/g, '_')}.pdf`);
