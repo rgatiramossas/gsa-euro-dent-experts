@@ -22,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
   Card, 
@@ -55,6 +55,17 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -143,6 +154,31 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       });
     }
   });
+  
+  const deleteServiceMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('DELETE', `/api/services/${id}`);
+      return res.ok;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['/api/services']});
+      queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
+      toast({
+        title: "Serviço excluído",
+        description: "O serviço foi excluído com sucesso",
+      });
+      // Redirecionar para a listagem após excluir
+      setLocation('/services');
+    },
+    onError: (error) => {
+      console.error('Error deleting service:', error);
+      toast({
+        title: "Erro ao excluir serviço",
+        description: "Ocorreu um erro ao excluir o serviço",
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleStatusUpdate = () => {
     if (!newStatus) return;
@@ -215,7 +251,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     <label className="block text-sm font-medium mb-1">Novo status</label>
                     <Select
                       value={newStatus}
-                      onValueChange={setNewStatus}
+                      onValueChange={(value) => setNewStatus(value as ServiceStatus)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o novo status" />
@@ -382,9 +418,26 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-gray-100 rounded-lg p-8 text-center text-gray-500">
-                    Nenhuma foto do dano
+                  <p className="text-gray-500 italic">Nenhuma foto de dano disponível</p>
+                )}
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Após Serviço</h3>
+                {service.photos?.after && service.photos.after.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                    {service.photos.after.map((photo) => (
+                      <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                        <img 
+                          src={photo.photo_url} 
+                          alt="Foto após reparo" 
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    ))}
                   </div>
+                ) : (
+                  <p className="text-gray-500 italic">Nenhuma foto após serviço disponível</p>
                 )}
               </div>
             </div>
@@ -415,258 +468,41 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
             </div>
           </CardContent>
           <CardFooter className="border-t pt-4">
-            <div className="flex w-full">
+            <div className="flex gap-2">
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline">Editar Serviço</Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-5xl h-[90vh]">
-                  <DialogHeader>
-                    <DialogTitle>Editar Serviço #{service.id}</DialogTitle>
-                    <DialogDescription>Atualize as informações do serviço</DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="overflow-y-auto flex-1 py-4">
-                    <Form {...editForm}>
-                      <form className="space-y-6">
-                        {/* Client and Vehicle Information */}
-                        <Card>
-                          <CardHeader className="pb-3">
-                            <CardTitle>Informações do Cliente</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium mb-1">Cliente</label>
-                                <Input 
-                                  value={service.client?.name || ''}
-                                  disabled
-                                />
-                                <p className="text-xs text-gray-500 mt-1">O cliente não pode ser alterado</p>
-                              </div>
-                              
-                              <div>
-                                <label className="block text-sm font-medium mb-1">Veículo</label>
-                                <Input 
-                                  value={`${service.vehicle?.make} ${service.vehicle?.model} ${service.vehicle?.year}`}
-                                  disabled
-                                />
-                                <p className="text-xs text-gray-500 mt-1">O veículo não pode ser alterado</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        
-                        {/* Service Information */}
-                        <Card>
-                          <CardHeader className="pb-3">
-                            <CardTitle>Informações do Serviço</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Tipo de Serviço <span className="text-red-500">*</span></label>
-                              <Select
-                                defaultValue={service.service_type_id?.toString()}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o tipo de serviço" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="1">Amassado de Rua</SelectItem>
-                                  <SelectItem value="2">Granizo</SelectItem>
-                                  <SelectItem value="3">Outro</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Descrição do Problema</label>
-                              <Textarea
-                                defaultValue={service.description || ""}
-                                placeholder="Descreva o problema em detalhes..."
-                                rows={3}
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Técnico Responsável</label>
-                              <Select
-                                defaultValue={service.technician_id?.toString()}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o técnico" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {technicians?.map((tech) => (
-                                    <SelectItem key={tech.id} value={tech.id.toString()}>
-                                      {tech.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Data <span className="text-red-500">*</span></label>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                      "pl-3 text-left font-normal w-full justify-start"
-                                    )}
-                                  >
-                                    {service.scheduled_date ? (
-                                      format(new Date(service.scheduled_date), "dd/MM/yyyy", { locale: ptBR })
-                                    ) : (
-                                      <span>Selecione a data</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={service.scheduled_date ? new Date(service.scheduled_date) : undefined}
-                                    initialFocus
-                                    locale={ptBR}
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-                          </CardContent>
-                        </Card>
-                        
-                        {/* Location */}
-                        <Card>
-                          <CardHeader className="pb-3">
-                            <CardTitle>Localização</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Localização <span className="text-red-500">*</span></label>
-                              <LocationSelector
-                                value={{
-                                  locationType: service.location_type as "client_location" | "workshop",
-                                  address: service.address || '',
-                                  latitude: service.latitude,
-                                  longitude: service.longitude,
-                                }}
-                                onChange={(value) => {
-                                  console.log("Nova localização:", value);
-                                }}
-                              />
-                            </div>
-                          </CardContent>
-                        </Card>
-                        
-                        {/* Photos */}
-                        <Card>
-                          <CardHeader className="pb-3">
-                            <CardTitle>Registro Fotográfico</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-4">
-                              <FormField
-                                control={editForm.control}
-                                name="photos"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Fotos do Dano <span className="text-red-500">*</span></FormLabel>
-                                    <FormControl>
-                                      <PhotoUpload
-                                        label="damage-photos-edit"
-                                        onChange={(files) => {
-                                          if (files.length > 0) {
-                                            // Em uma aplicação real, faríamos upload desses arquivos para um servidor
-                                            console.log("Arquivos selecionados:", files.length, "fotos");
-                                            editForm.setValue("photos", files, { shouldValidate: true });
-                                            toast({
-                                              title: "Fotos selecionadas com sucesso",
-                                              description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
-                                              variant: "default",
-                                            });
-                                          }
-                                        }}
-                                        multiple
-                                        maxFiles={5}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
-                                    </p>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                          </CardContent>
-                        </Card>
-                        
-                        {/* Price */}
-                        <Card>
-                          <CardHeader className="pb-3">
-                            <CardTitle>Valores</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className={`grid grid-cols-1 ${currentUser?.role === 'admin' ? 'sm:grid-cols-2' : ''} gap-4`}>
-                              <div>
-                                <label className="block text-sm font-medium mb-1">Valor do Serviço (€)</label>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  placeholder="0,00"
-                                  defaultValue={service.price?.toFixed(2) || '0.00'}
-                                />
-                              </div>
-                              
-                              {currentUser?.role === 'admin' && (
-                                <div>
-                                  <label className="block text-sm font-medium mb-1">Valor Administrativo (€)</label>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="0,00"
-                                    defaultValue={service.displacement_fee?.toFixed(2) || '0.00'}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="mt-4">
-                              <label className="block text-sm font-medium mb-1">Observações Adicionais</label>
-                              <Textarea
-                                defaultValue={service.notes || ""}
-                                placeholder="Observações sobre o orçamento..."
-                                rows={2}
-                              />
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </form>
-                    </Form>
-                  </div>
-                  
-                  <DialogFooter>
-                    <Button variant="outline" type="button">Cancelar</Button>
-                    <Button 
-                      type="button" 
-                      onClick={editForm.handleSubmit((data) => {
-                        console.log("Dados do formulário:", data);
-                        // Implementaria a mutação para atualizar o serviço
-                        toast({
-                          title: "Serviço atualizado",
-                          description: "As alterações foram salvas com sucesso",
-                        });
-                      })}
-                    >
-                      Salvar Alterações
-                    </Button>
-                  </DialogFooter>
+                  {/* Dialog content goes here */}
                 </DialogContent>
               </Dialog>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir Serviço
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir serviço</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => deleteServiceMutation.mutate()}
+                      disabled={deleteServiceMutation.isPending}
+                    >
+                      {deleteServiceMutation.isPending ? "Excluindo..." : "Excluir"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardFooter>
         </Card>

@@ -427,6 +427,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para excluir um serviço
+  app.delete("/api/services/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const service = await storage.getService(id);
+      
+      if (!service) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+      
+      // Em uma implementação real, você implementaria um método de exclusão no storage
+      // Por enquanto, vamos simular a exclusão usando o updateService com um status "deleted"
+      const updatedService = await storage.updateService(id, { status: "deleted" });
+      res.status(200).json({ message: "Service deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      res.status(500).json({ message: "Failed to delete service" });
+    }
+  });
+  
   // Configure multer for file storage
   const storage_config = multer.diskStorage({
     destination: function (req, file, cb) {
