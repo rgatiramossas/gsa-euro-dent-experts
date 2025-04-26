@@ -15,11 +15,23 @@ export default function Dashboard() {
   
   // Fetch dashboard stats
   const { 
-    data: stats, 
+    data: statsResponse, 
     isLoading: isLoadingStats 
-  } = useQuery<DashboardStats>({
+  } = useQuery<any>({
     queryKey: ['/api/dashboard/stats'],
   });
+  
+  // Converter os dados antigos para o novo formato
+  const stats: DashboardStats = React.useMemo(() => {
+    if (!statsResponse) return undefined;
+    
+    return {
+      totalPendingServices: statsResponse.pendingServices || 0,
+      totalInProgressServices: statsResponse.inProgressServices || 0,
+      totalCompletedServices: statsResponse.completedToday || 0,
+      totalRevenue: statsResponse.monthlyRevenue || 0
+    };
+  }, [statsResponse]);
 
   // Fetch technician performance (only for admins)
   const { 
