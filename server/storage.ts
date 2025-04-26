@@ -11,7 +11,7 @@ import type {
   PaymentRequest, PaymentRequestItem
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, desc, sql } from "drizzle-orm";
+import { eq, and, like, desc, or, sql } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -447,12 +447,15 @@ export class DatabaseStorage implements IStorage {
       console.log('Administrador visualizando estatísticas de todos os técnicos');
     }
     
-    // Count pending services
+    // Count pending services (incluindo aguardando_aprovacao, que são serviços pendentes de aprovação)
     const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)
       .where(
         and(
-          eq(services.status, 'pending'),
+          or(
+            eq(services.status, 'pending'),
+            eq(services.status, 'aguardando_aprovacao')
+          ),
           ...baseConditions
         )
       );
@@ -491,13 +494,18 @@ export class DatabaseStorage implements IStorage {
     console.log('Calculando faturamento para:', technicianId ? `Técnico ID ${technicianId}` : 'Admin');
     const valueField = technicianId ? services.price : services.total;
     
+    // Considerar todos os serviços com faturamento (completed, aguardando_aprovacao, faturado)
     const [revenueResult] = await db.select({ 
       sum: sql<number>`COALESCE(SUM(${valueField}), 0)` 
     })
     .from(services)
     .where(
       and(
-        eq(services.status, 'completed'),
+        or(
+          eq(services.status, 'completed'), 
+          eq(services.status, 'aguardando_aprovacao'),
+          eq(services.status, 'faturado')
+        ),
         sql`${services.completion_date} >= ${thirtyDaysAgo}`,
         ...baseConditions
       )
