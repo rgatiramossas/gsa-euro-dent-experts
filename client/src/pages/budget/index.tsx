@@ -161,26 +161,73 @@ const hailCalculation = (
     }
   };
 
-  // Obtém a tabela correta com base na orientação
+  // Obtém a tabela correta com base na orientação (horizontal ou vertical)
   const awTable = isVertical ? baseData.vertical : baseData.horizontal;
   
   // Obtém a tabela específica para o tamanho (20mm, 30mm ou 40mm)
-  const sizeTable = (size === 20 || size === 30 || size === 40) ? awTable[size] : null;
+  let sizeTable;
   
-  // Verifica se o tamanho existe na tabela
+  // Verificar diretamente qual tabela usar com base no diâmetro
+  if (size === 20) {
+    sizeTable = awTable[20];
+  } else if (size === 30) {
+    sizeTable = awTable[30];
+  } else if (size === 40) {
+    sizeTable = awTable[40];
+  } else {
+    // Se o tamanho não estiver entre os valores padrão, usar o mais próximo
+    if (size < 25) {
+      sizeTable = awTable[20];
+      console.log(`Tamanho ${size}mm não encontrado na tabela. Usando 20mm.`);
+    } else if (size < 35) {
+      sizeTable = awTable[30];
+      console.log(`Tamanho ${size}mm não encontrado na tabela. Usando 30mm.`);
+    } else {
+      sizeTable = awTable[40];
+      console.log(`Tamanho ${size}mm não encontrado na tabela. Usando 40mm.`);
+    }
+  }
+  // Verificar se o tamanho existe na tabela
   if (!sizeTable) {
     console.warn(`Tamanho ${size}mm não encontrado na tabela.`);
     return { aw: 0, hours: 0, cost: "0.00" };
   }
   
-  // Verifica se o número de amassados existe para esse tamanho
-  if (!sizeTable[dents]) {
-    console.warn(`Número de amassados (${dents}) não encontrado na tabela para tamanho ${size}mm.`);
-    return { aw: 0, hours: 0, cost: "0.00" };
+  // Lógica simplificada: Buscar valor de referência e aplicar regra de três
+  let aw = 0;
+  
+  // 1. Se o valor existe diretamente na tabela, usamos ele
+  if (sizeTable[dents] !== undefined) {
+    aw = sizeTable[dents];
+  } 
+  // 2. Se não existe, usamos a referência mais próxima e aplicamos regra de três
+  else {
+    // Encontrar a referência mais próxima na tabela (para fazer regra de três)
+    const availableKeys = Object.keys(sizeTable).map(Number).sort((a, b) => a - b);
+    
+    // Se não tem amassados, retorna zero
+    if (dents === 0 || availableKeys.length === 0) {
+      return { aw: 0, hours: 0, cost: "0.00" };
+    }
+    
+    // Encontrar a referência mais próxima (por simplicidade)
+    let referenceKey = availableKeys[0]; // Começa com o primeiro valor
+    let minDistance = Math.abs(dents - referenceKey);
+    
+    for (const key of availableKeys) {
+      const distance = Math.abs(dents - key);
+      if (distance < minDistance) {
+        minDistance = distance;
+        referenceKey = key;
+      }
+    }
+    
+    // Usar regra de três simples baseada na referência mais próxima
+    const referenceValue = sizeTable[referenceKey];
+    aw = (referenceValue / referenceKey) * dents;
+    
+    console.log(`Calculando por regra de três: ${dents} amassados baseado em ${referenceKey} amassados (${referenceValue} AW) = ${aw} AW`);
   }
-
-  // Calcula o valor AW base
-  let aw = sizeTable[dents];
   
   // Aplica modificadores
   if (isAluminum) aw *= 1.25;  // Adicional para alumínio (+25%)
