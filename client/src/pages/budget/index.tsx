@@ -92,6 +92,8 @@ export default function Budget() {
   const [isManualVehicle, setIsManualVehicle] = useState(false);
   const [totalAw, setTotalAw] = useState<number>(0);
   const [totalValue, setTotalValue] = useState<number>(0);
+  const [licensePlate, setLicensePlate] = useState("");
+  const [chassisNumber, setChassisNumber] = useState("");
   
   // Estado para os danos do veículo (peças)
   const [partDamages, setPartDamages] = useState<Record<string, PartDamage>>({
@@ -223,6 +225,8 @@ export default function Budget() {
       setDate(new Date().toISOString().split('T')[0]);
       setIsManualVehicle(false);
       setManualVehicleInfo("");
+      setLicensePlate("");
+      setChassisNumber("");
       setPartDamages({
         paraLamaEsquerdo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
         capo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
@@ -502,94 +506,74 @@ export default function Budget() {
               <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto">
                 {/* Data, Cliente e Veículo */}
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Data</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="client">Cliente</Label>
-                    <Select 
-                      value={selectedClient?.toString() || ""} 
-                      onValueChange={(value) => {
-                        if (value) {
-                          setSelectedClient(parseInt(value));
-                          setIsManualVehicle(false);
-                        } else {
-                          setSelectedClient(null);
-                        }
-                      }}
-                      disabled={isManualVehicle}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um cliente" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients?.map((client) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.name} - {client.phone}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Checkbox 
-                        id="manual-vehicle" 
-                        checked={isManualVehicle}
-                        onCheckedChange={(checked) => {
-                          setIsManualVehicle(!!checked);
-                          if (checked) {
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="date">Data</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="client">Cliente</Label>
+                      <Select 
+                        value={selectedClient?.toString() || ""} 
+                        onValueChange={(value) => {
+                          if (value) {
+                            setSelectedClient(parseInt(value));
+                          } else {
                             setSelectedClient(null);
-                            setSelectedVehicle(null);
                           }
                         }}
-                      />
-                      <label
-                        htmlFor="manual-vehicle"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Informar veículo manualmente
-                      </label>
-                    </div>
-                  </div>
-                  
-                  {isManualVehicle ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="manualVehicle">Informações do Veículo</Label>
-                      <Input
-                        id="manualVehicle"
-                        placeholder="Ex: BMW X5 2022 (ABC-1234)"
-                        value={manualVehicleInfo}
-                        onChange={(e) => setManualVehicleInfo(e.target.value)}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Label htmlFor="vehicle">Veículo</Label>
-                      <Select 
-                        value={selectedVehicle?.toString() || ""} 
-                        onValueChange={(value) => setSelectedVehicle(parseInt(value))}
-                        disabled={!selectedClient || vehiclesLoading}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={selectedClient ? "Selecione um veículo" : "Selecione um cliente primeiro"} />
+                          <SelectValue placeholder="Selecione um cliente" />
                         </SelectTrigger>
                         <SelectContent>
-                          {vehicles?.map((vehicle) => (
-                            <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
-                              {vehicle.make} {vehicle.model} {vehicle.year}
-                              {vehicle.license_plate && ` (${vehicle.license_plate})`}
+                          {clients?.map((client) => (
+                            <SelectItem key={client.id} value={client.id.toString()}>
+                              {client.name} - {client.phone}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="vehicleInfo">Veículo</Label>
+                      <Input
+                        id="vehicleInfo"
+                        placeholder="Ex: BMW X5 2022"
+                        value={manualVehicleInfo}
+                        onChange={(e) => setManualVehicleInfo(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="licensePlate">Placa</Label>
+                      <Input
+                        id="licensePlate"
+                        placeholder="Ex: ABC-1234"
+                        value={licensePlate}
+                        onChange={(e) => setLicensePlate(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="chassisNumber">Chassi</Label>
+                      <Input
+                        id="chassisNumber"
+                        placeholder="Ex: 9BW11111111111111"
+                        value={chassisNumber}
+                        onChange={(e) => setChassisNumber(e.target.value)}
+                      />
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Grid de Peças do Carro */}
