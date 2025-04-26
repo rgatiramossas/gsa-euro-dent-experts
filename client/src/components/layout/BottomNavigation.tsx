@@ -29,7 +29,7 @@ export function BottomNavigation() {
     },
     {
       name: "Orçamentos",
-      path: "/quotes",
+      path: "/budget",
       icon: <FileText className="h-6 w-6" />,
     }
   ];

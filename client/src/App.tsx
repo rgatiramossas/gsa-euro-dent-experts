@@ -26,6 +26,9 @@ import NewVehicle from "@/pages/clients/new-vehicle";
 import TechniciansList from "@/pages/technicians/index";
 import NewTechnician from "@/pages/technicians/new-technician";
 
+// Import budget page
+import Budget from "@/pages/budget/index";
+
 // Import other pages
 import Schedule from "@/pages/schedule";
 import Finances from "@/pages/finances";
@@ -172,6 +175,14 @@ function AppRoutes() {
         <RequireAuth>
           <MainLayout>
             <Finances />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      
+      <Route path="/budget">
+        <RequireAuth>
+          <MainLayout>
+            <Budget />
           </MainLayout>
         </RequireAuth>
       </Route>
