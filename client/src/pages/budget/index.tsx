@@ -90,13 +90,13 @@ export default function Budget() {
   const [selectedClient, setSelectedClient] = useState<number | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<number | null>(null);
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [note, setNote] = useState("");
   const [manualVehicleInfo, setManualVehicleInfo] = useState("");
   const [isManualVehicle, setIsManualVehicle] = useState(false);
   const [totalAw, setTotalAw] = useState<number>(0);
   const [totalValue, setTotalValue] = useState<number>(0);
   const [licensePlate, setLicensePlate] = useState("");
   const [chassisNumber, setChassisNumber] = useState("");
+  const [note, setNote] = useState("");
   
   // Estado para os danos do veículo (peças)
   const [partDamages, setPartDamages] = useState<Record<string, PartDamage>>({
@@ -702,20 +702,13 @@ export default function Budget() {
                   </div>
                 </div>
                 
-                {/* Observações */}
+                {/* Materiais Especiais */}
                 <div className="space-y-2">
-                  <Label htmlFor="note">Observações</Label>
-                  <div className="mb-2 text-sm border p-2 rounded bg-muted">
+                  <Label>Materiais Especiais</Label>
+                  <div className="text-sm border p-2 rounded bg-muted">
                     <strong>MATERIAIS ESPECIAIS:</strong><br />
                     A= ALUMÍNIO   K= COLA   P= PINTURA
                   </div>
-                  <Textarea
-                    id="note"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Observações adicionais para o orçamento..."
-                    rows={3}
-                  />
                 </div>
               </div>
               
