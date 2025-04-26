@@ -211,6 +211,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       
       // Resetar o estado de edição
       setIsEditing(false);
+      // Limpar fotos nos dois formatos (novo e legado)
+      setServicePhotos(null);
+      setServicePhotoPreview(null);
       setBeforePhotos(null);
       setAfterPhotos(null);
       setBeforePhotoPreview(null);
@@ -732,7 +735,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       (service.photos?.after && service.photos.after.length > 0) ||
                       (service.photos?.service && service.photos.service.length > 0)) ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                        {/* Fotos de tipo 'service' */}
+                        {/* Fotos de tipo 'service' (novo formato unificado) */}
                         {service.photos?.service && service.photos.service.map((photo) => (
                           <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
                             <img 
@@ -740,6 +743,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               alt="Foto do veículo" 
                               className="object-cover w-full h-full"
                             />
+                            <Badge className="absolute top-1 left-1 bg-blue-500 text-white">
+                              Serviço
+                            </Badge>
                           </div>
                         ))}
                         
@@ -751,6 +757,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               alt="Foto do veículo" 
                               className="object-cover w-full h-full"
                             />
+                            <Badge className="absolute top-1 left-1 bg-orange-500 text-white">
+                              Antes
+                            </Badge>
                           </div>
                         ))}
                         
@@ -762,6 +771,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               alt="Foto do veículo" 
                               className="object-cover w-full h-full"
                             />
+                            <Badge className="absolute top-1 left-1 bg-green-500 text-white">
+                              Depois
+                            </Badge>
                           </div>
                         ))}
                       </div>
@@ -1004,14 +1016,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       name="photos"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Fotos do Veículo</FormLabel>
+                          <FormLabel>Fotos do Serviço</FormLabel>
                           <FormControl>
                             <PhotoUpload
-                              label="fotos-veiculo"
+                              label="fotos-servico"
                               onChange={(files) => {
                                 if (files.length > 0) {
                                   editForm.setValue("photos", files, { shouldValidate: true });
-                                  handleBeforePhotoChange(files);
+                                  handleServicePhotoChange(files);
                                   toast({
                                     title: "Fotos selecionadas com sucesso",
                                     description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
@@ -1021,12 +1033,12 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               }}
                               multiple
                               maxFiles={4}
-                              preview={beforePhotoPreview || undefined}
+                              preview={servicePhotoPreview || undefined}
                             />
                           </FormControl>
                           <FormMessage />
                           <p className="text-xs text-gray-500 mt-1">
-                            Adicione até 4 fotos para documentar o estado do veículo.
+                            Adicione até 4 fotos do serviço. Estas fotos serão usadas para documentar o trabalho realizado.
                           </p>
                         </FormItem>
                       )}
