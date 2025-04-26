@@ -1035,14 +1035,14 @@ export default function Finances() {
                                   <TableCell>#{service.id}</TableCell>
                                   <TableCell>{service.client?.name}</TableCell>
                                   <TableCell>{service.serviceType?.name}</TableCell>
-                                  <TableCell className="text-right">{formatCurrency(service.total || 0)}</TableCell>
+                                  <TableCell className="text-right">{formatCurrency(service.price || 0)}</TableCell>
                                 </TableRow>
                               ))}
                               <TableRow>
                                 <TableCell colSpan={3} className="text-right font-medium">Total:</TableCell>
                                 <TableCell className="text-right font-semibold">
                                   {formatCurrency(
-                                    request.services?.reduce((sum: number, s: any) => sum + (s.total || 0), 0) || 0
+                                    request.services?.reduce((sum: number, s: any) => sum + (s.price || 0), 0) || 0
                                   )}
                                 </TableCell>
                               </TableRow>
@@ -1188,10 +1188,7 @@ export default function Finances() {
                             </div>
                           </div>
                           <div className="font-semibold">
-                            {isAdmin 
-                              ? formatCurrency(service.total || 0)
-                              : formatCurrency(service.price || 0) // Técnicos veem apenas o valor do serviço
-                            }
+                            {formatCurrency(service.price || 0)} {/* Sempre mostrar o valor do técnico, independente do perfil */}
                           </div>
                         </div>
                       ))}
