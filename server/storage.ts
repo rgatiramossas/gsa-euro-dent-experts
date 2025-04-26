@@ -744,7 +744,8 @@ export class DatabaseStorage implements IStorage {
       ...paymentRequest[0],
       technician: technician[0] || null,
       services: servicesDetails,
-      totalValue: serviceTotalValue, // Valor total para admin
+      totalValue: technicianTotalValue, // Valor do técnico que é o valor a ser pago
+      serviceTotalValue: serviceTotalValue, // Valor total para referência do admin
       technicianValue: technicianTotalValue // Valor para o técnico
     };
   }
@@ -804,14 +805,18 @@ export class DatabaseStorage implements IStorage {
       
       req.services = servicesDetails;
       
-      // Calcular valores totais
-      const serviceTotalValue = servicesDetails.reduce((sum, service) => 
-        sum + (service.total || 0), 0);
-      
+      // CORREÇÃO: sempre usar o valor do técnico (price) nos pedidos de pagamento
+      // Este é o valor que o técnico receberá, não o valor total incluindo taxas administrativas
       const technicianTotalValue = servicesDetails.reduce((sum, service) => 
         sum + (service.price || 0), 0);
       
-      req.totalValue = technicianId ? technicianTotalValue : serviceTotalValue;
+      // Para o admin, também calculamos o valor total (com taxas) para referência
+      const serviceTotalValue = servicesDetails.reduce((sum, service) => 
+        sum + (service.total || 0), 0);
+      
+      // Sempre mostramos o valor do técnico para pagamento
+      req.totalValue = technicianTotalValue;
+      // Mas mantemos ambos os valores disponíveis para referência do admin
       req.serviceTotalValue = serviceTotalValue; // Valor total (admin)
       req.technicianValue = technicianTotalValue; // Valor do técnico
     }
