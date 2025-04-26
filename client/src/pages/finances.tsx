@@ -148,9 +148,9 @@ export default function Finances() {
   
   // Get all technicians for admin payment request selection
   const { data: technicians } = useQuery<{id: number, name: string}[]>({
-    queryKey: ['/api/users'],
+    queryKey: ['/api/users', 'technician'],
     queryFn: async () => {
-      const result = await apiRequest('/api/users?role=technician');
+      const result = await apiRequest('/api/users', 'GET', null, { params: { role: 'technician' } });
       return result;
     },
     enabled: isAdmin,
