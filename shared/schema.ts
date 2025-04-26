@@ -201,6 +201,26 @@ export const insertPaymentRequestItemSchema = createInsertSchema(paymentRequestI
   id: true,
 });
 
+// Expenses
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // "salario", "aluguel", "compra_material", etc.
+  amount: doublePrecision("amount").notNull(),
+  date: timestamp("date").notNull(),
+  description: text("description").notNull(),
+  payment_method: text("payment_method").notNull(),
+  notes: text("notes"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertExpenseSchema = createInsertSchema(expenses).omit({
+  id: true,
+  created_at: true
+});
+
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+
 export type PaymentRequest = typeof paymentRequests.$inferSelect;
 export type InsertPaymentRequest = z.infer<typeof insertPaymentRequestSchema>;
 export type PaymentRequestItem = typeof paymentRequestItems.$inferSelect;
