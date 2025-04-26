@@ -988,8 +988,26 @@ export class DatabaseStorage implements IStorage {
             console.log("Registrando despesa:", description);
             
             // Extrair detalhes do pagamento
-            const paymentMethod = paymentDetails?.payment_method || "outro";
-            const paymentNotes = paymentDetails?.payment_notes || "";
+            console.log("Detalhes de pagamento recebidos:", JSON.stringify(paymentDetails));
+            let paymentMethod = "outro";
+            let paymentNotes = "";
+            
+            // Verificar a estrutura dos detalhes do pagamento
+            if (typeof paymentDetails === 'string') {
+              try {
+                // Tentar fazer o parse se for uma string JSON
+                const parsed = JSON.parse(paymentDetails);
+                paymentMethod = parsed?.payment_method || "outro";
+                paymentNotes = parsed?.payment_notes || "";
+              } catch (e) {
+                console.log("Erro ao fazer parse dos detalhes do pagamento:", e);
+                paymentNotes = paymentDetails; // Usar como observação se não for JSON
+              }
+            } else if (paymentDetails && typeof paymentDetails === 'object') {
+              // Se já for um objeto
+              paymentMethod = paymentDetails.payment_method || "outro";
+              paymentNotes = paymentDetails.payment_notes || "";
+            }
             
             // Inserir na tabela de despesas
             await db

@@ -891,11 +891,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Dados recebidos para pagamento:", JSON.stringify(req.body));
       
       // Extrair dados do corpo da requisição
-      const { payment_date, payment_details } = req.body;
+      const { payment_date, payment_method, payment_notes } = req.body;
+      
+      // Criar objeto de detalhes do pagamento
+      const paymentDetails = {
+        payment_date: payment_date || new Date().toISOString().split('T')[0],
+        payment_method: payment_method || "outro",
+        payment_notes: payment_notes || ""
+      };
       
       console.log("ID do pedido:", requestId);
-      console.log("Data do pagamento:", payment_date);
-      console.log("Detalhes do pagamento:", JSON.stringify(payment_details));
+      console.log("Data do pagamento:", paymentDetails.payment_date);
+      console.log("Detalhes do pagamento:", JSON.stringify(paymentDetails));
       
       // Verificar se o pedido existe e está no status aprovado
       const request = await storage.getPaymentRequest(requestId);
@@ -919,17 +926,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Data do pagamento é obrigatória" });
       }
       
-      if (!payment_details) {
-        console.log("Detalhes do pagamento não fornecidos");
-        return res.status(400).json({ message: "Detalhes do pagamento são obrigatórios" });
-      }
-      
+      // Validamos que temos os dados mínimos (já garantido pela criação do objeto paymentDetails)
       try {
         // Atualizar status para "pago" e registrar detalhes do pagamento
         const updatedRequest = await storage.updatePaymentRequestStatus(
           requestId, 
           "pago", 
-          payment_details
+          paymentDetails
         );
         
         console.log("Resposta da atualização:", updatedRequest ? "Sucesso" : "Falha");
