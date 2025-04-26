@@ -47,14 +47,21 @@ import {
   PlusIcon, 
   PrinterIcon, 
   SendIcon,
-  CameraIcon,
-  UploadIcon
+  CameraIcon
 } from "lucide-react";
 
 // Tipos para orçamento
+interface PartDamage {
+  selected: boolean;
+  diameter20: number;
+  diameter30: number;
+  diameter40: number;
+}
+
 interface CarPart {
   id: string;
   name: string;
+  damage: PartDamage;
 }
 
 interface Budget {
@@ -85,21 +92,21 @@ export default function Budget() {
   const [totalValue, setTotalValue] = useState<number>(0);
   
   // Estado para os danos do veículo (peças)
-  const [damagedParts, setDamagedParts] = useState<Record<string, boolean>>({
-    paraLamaEsquerdo: false,
-    capo: false,
-    paraLamaDireito: false,
-    colunaEsquerda: false,
-    teto: false, 
-    colunaDireita: false,
-    portaDianteiraEsquerda: false,
-    portaDianteiraDireita: false,
-    portaTraseiraEsquerda: false,
-    portaMalasSuperior: false,
-    portaTraseiraDireita: false,
-    lateralEsquerda: false,
-    portaMalasInferior: false,
-    lateralDireita: false
+  const [partDamages, setPartDamages] = useState<Record<string, PartDamage>>({
+    paraLamaEsquerdo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    capo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    paraLamaDireito: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    colunaEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    teto: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 }, 
+    colunaDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    portaDianteiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    portaDianteiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    portaTraseiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    portaMalasSuperior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    portaTraseiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    lateralEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    portaMalasInferior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+    lateralDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 }
   });
   
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -214,21 +221,21 @@ export default function Budget() {
       setDate(new Date().toISOString().split('T')[0]);
       setIsManualVehicle(false);
       setManualVehicleInfo("");
-      setDamagedParts({
-        paraLamaEsquerdo: false,
-        capo: false,
-        paraLamaDireito: false,
-        colunaEsquerda: false,
-        teto: false, 
-        colunaDireita: false,
-        portaDianteiraEsquerda: false,
-        portaDianteiraDireita: false,
-        portaTraseiraEsquerda: false,
-        portaMalasSuperior: false,
-        portaTraseiraDireita: false,
-        lateralEsquerda: false,
-        portaMalasInferior: false,
-        lateralDireita: false
+      setPartDamages({
+        paraLamaEsquerdo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        capo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        paraLamaDireito: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        colunaEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        teto: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 }, 
+        colunaDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        portaDianteiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        portaDianteiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        portaTraseiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        portaMalasSuperior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        portaTraseiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        lateralEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        portaMalasInferior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
+        lateralDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 }
       });
       setPhotoUrl(null);
       setTotalAw(0);
@@ -274,19 +281,29 @@ export default function Budget() {
     }
     
     // Contar número de peças danificadas para AW
-    const damagedPartsCount = Object.values(damagedParts).filter(Boolean).length;
+    const selectedParts = Object.values(partDamages).filter(damage => damage.selected);
+    const selectedPartsCount = selectedParts.length;
+    
+    // Calcular total de diâmetros
+    let totalDiameters = 0;
+    selectedParts.forEach(damage => {
+      totalDiameters += damage.diameter20 + damage.diameter30 + damage.diameter40;
+    });
+    
+    // Usar a contagem de diâmetros se houver algum, senão usar a contagem de peças
+    const totalAWValue = totalDiameters > 0 ? totalDiameters : selectedPartsCount;
     
     // Criar orçamento
     createBudgetMutation.mutate({
       client_id: !isManualVehicle && selectedClient ? selectedClient : undefined,
       vehicle_id: !isManualVehicle && selectedVehicle ? selectedVehicle : undefined,
       date,
-      damaged_parts: Object.entries(damagedParts)
-        .filter(([_, selected]) => selected)
+      damaged_parts: Object.entries(partDamages)
+        .filter(([_, damage]) => damage.selected)
         .map(([part]) => part),
       photo_url: photoUrl || undefined,
-      total_aw: totalAw || damagedPartsCount, // Usar valor informado ou contagem de peças
-      total_value: totalValue || damagedPartsCount * 100, // Valor arbitrário para exemplo
+      total_aw: totalAw || totalAWValue,
+      total_value: totalValue || totalAWValue * 100, // Valor arbitrário para exemplo
       note: note.trim(),
       vehicle_info: isManualVehicle ? manualVehicleInfo : undefined
     });
@@ -314,19 +331,77 @@ export default function Budget() {
   };
 
   const handleToggleDamagedPart = (part: string, checked: boolean) => {
-    setDamagedParts(prev => ({
+    setPartDamages(prev => ({
       ...prev,
-      [part]: checked
+      [part]: {
+        ...prev[part],
+        selected: checked
+      }
     }));
     
-    // Atualizar automaticamente o total de AW
-    const newCount = Object.entries({
-      ...damagedParts,
-      [part]: checked
-    }).filter(([_, selected]) => selected).length;
+    // Atualizar automaticamente o total de AW com base nas peças selecionadas
+    const updatedDamages = {
+      ...partDamages,
+      [part]: {
+        ...partDamages[part],
+        selected: checked
+      }
+    };
     
-    setTotalAw(newCount);
-    setTotalValue(newCount * 100); // Valor arbitrário para exemplo
+    // Contar número de peças danificadas
+    const newCount = Object.values(updatedDamages).filter(damage => damage.selected).length;
+    
+    // Calcular total de diâmetros
+    let totalDiameters = 0;
+    Object.values(updatedDamages).forEach(damage => {
+      if (damage.selected) {
+        totalDiameters += damage.diameter20 + damage.diameter30 + damage.diameter40;
+      }
+    });
+    
+    // Usar a contagem de peças se não houver diâmetros informados
+    const totalAWValue = totalDiameters > 0 ? totalDiameters : newCount;
+    
+    setTotalAw(totalAWValue);
+    setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
+  };
+  
+  // Função para atualizar a quantidade de um diâmetro específico
+  const handleDiameterChange = (part: string, diameter: 'diameter20' | 'diameter30' | 'diameter40', value: number) => {
+    setPartDamages(prev => ({
+      ...prev,
+      [part]: {
+        ...prev[part],
+        [diameter]: value,
+        selected: value > 0 ? true : prev[part].selected // Seleciona automaticamente se valor > 0
+      }
+    }));
+    
+    // Recalcular totais
+    const updatedDamages = {
+      ...partDamages,
+      [part]: {
+        ...partDamages[part],
+        [diameter]: value,
+        selected: value > 0 ? true : partDamages[part].selected
+      }
+    };
+    
+    // Calcular total de diâmetros
+    let totalDiameters = 0;
+    Object.values(updatedDamages).forEach(damage => {
+      if (damage.selected) {
+        totalDiameters += damage.diameter20 + damage.diameter30 + damage.diameter40;
+      }
+    });
+    
+    const selectedCount = Object.values(updatedDamages).filter(damage => damage.selected).length;
+    
+    // Usar a contagem de diâmetros se houver algum, senão usar a contagem de peças
+    const totalAWValue = totalDiameters > 0 ? totalDiameters : selectedCount;
+    
+    setTotalAw(totalAWValue);
+    setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
   };
   
   const handlePhotoUpload = () => {
@@ -336,6 +411,62 @@ export default function Budget() {
       description: "Em uma implementação real, isso abriria um seletor de arquivos ou câmera.",
     });
     setPhotoUrl("https://via.placeholder.com/150");
+  };
+
+  // Componente para renderizar cada item de peça
+  const DamagedPartItem = ({ partKey, label }: { partKey: string, label: string }) => {
+    const damage = partDamages[partKey];
+    
+    return (
+      <div className="p-2 border rounded-md space-y-3">
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id={partKey} 
+            checked={damage.selected}
+            onCheckedChange={(checked) => handleToggleDamagedPart(partKey, !!checked)}
+          />
+          <label htmlFor={partKey} className="text-sm font-medium">{label}</label>
+        </div>
+        
+        <div className="space-y-2 pl-6">
+          <div className="flex items-center justify-between">
+            <label htmlFor={`${partKey}-20`} className="text-xs">20mm:</label>
+            <Input
+              id={`${partKey}-20`}
+              type="number"
+              min="0"
+              value={damage.diameter20}
+              onChange={(e) => handleDiameterChange(partKey, 'diameter20', parseInt(e.target.value) || 0)}
+              className="w-16 h-7 text-xs"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <label htmlFor={`${partKey}-30`} className="text-xs">30mm:</label>
+            <Input
+              id={`${partKey}-30`}
+              type="number"
+              min="0"
+              value={damage.diameter30}
+              onChange={(e) => handleDiameterChange(partKey, 'diameter30', parseInt(e.target.value) || 0)}
+              className="w-16 h-7 text-xs"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <label htmlFor={`${partKey}-40`} className="text-xs">40mm:</label>
+            <Input
+              id={`${partKey}-40`}
+              type="number"
+              min="0"
+              value={damage.diameter40}
+              onChange={(e) => handleDiameterChange(partKey, 'diameter40', parseInt(e.target.value) || 0)}
+              className="w-16 h-7 text-xs"
+            />
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (budgetsLoading) {
@@ -465,146 +596,40 @@ export default function Budget() {
                   <Label>Danos do Veículo</Label>
                   <div className="grid grid-cols-3 gap-2">
                     {/* Linha 1 */}
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="paraLamaEsquerdo" 
-                        checked={damagedParts.paraLamaEsquerdo}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('paraLamaEsquerdo', !!checked)}
-                      />
-                      <label htmlFor="paraLamaEsquerdo" className="text-sm">Para-lama Esquerdo</label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="capo" 
-                        checked={damagedParts.capo}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('capo', !!checked)}
-                      />
-                      <label htmlFor="capo" className="text-sm">Capô</label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="paraLamaDireito" 
-                        checked={damagedParts.paraLamaDireito}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('paraLamaDireito', !!checked)}
-                      />
-                      <label htmlFor="paraLamaDireito" className="text-sm">Para-lama Direito</label>
-                    </div>
+                    <DamagedPartItem partKey="paraLamaEsquerdo" label="Para-lama Esquerdo" />
+                    <DamagedPartItem partKey="capo" label="Capô" />
+                    <DamagedPartItem partKey="paraLamaDireito" label="Para-lama Direito" />
                     
                     {/* Linha 2 */}
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="colunaEsquerda" 
-                        checked={damagedParts.colunaEsquerda}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('colunaEsquerda', !!checked)}
-                      />
-                      <label htmlFor="colunaEsquerda" className="text-sm">Coluna Esquerda</label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="teto" 
-                        checked={damagedParts.teto}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('teto', !!checked)}
-                      />
-                      <label htmlFor="teto" className="text-sm">Teto</label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="colunaDireita" 
-                        checked={damagedParts.colunaDireita}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('colunaDireita', !!checked)}
-                      />
-                      <label htmlFor="colunaDireita" className="text-sm">Coluna Direita</label>
-                    </div>
+                    <DamagedPartItem partKey="colunaEsquerda" label="Coluna Esquerda" />
+                    <DamagedPartItem partKey="teto" label="Teto" />
+                    <DamagedPartItem partKey="colunaDireita" label="Coluna Direita" />
                     
                     {/* Linha 3 */}
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="portaDianteiraEsquerda" 
-                        checked={damagedParts.portaDianteiraEsquerda}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('portaDianteiraEsquerda', !!checked)}
-                      />
-                      <label htmlFor="portaDianteiraEsquerda" className="text-sm">Porta Dianteira Esq.</label>
-                    </div>
+                    <DamagedPartItem partKey="portaDianteiraEsquerda" label="Porta Dianteira Esq." />
                     
                     <div className="flex justify-center items-center p-2 border rounded-md">
                       <Button
                         variant="outline"
-                        className="w-full h-full flex flex-col items-center justify-center min-h-[60px]"
+                        className="w-full h-full flex flex-col items-center justify-center min-h-[135px]"
                         onClick={handlePhotoUpload}
                       >
-                        <CameraIcon className="h-5 w-5 mb-1" />
-                        <span className="text-xs">Foto</span>
+                        <CameraIcon className="h-10 w-10 mb-2" />
+                        <span className="text-sm">Adicionar Foto</span>
                       </Button>
                     </div>
                     
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="portaDianteiraDireita" 
-                        checked={damagedParts.portaDianteiraDireita}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('portaDianteiraDireita', !!checked)}
-                      />
-                      <label htmlFor="portaDianteiraDireita" className="text-sm">Porta Dianteira Dir.</label>
-                    </div>
+                    <DamagedPartItem partKey="portaDianteiraDireita" label="Porta Dianteira Dir." />
                     
                     {/* Linha 4 */}
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="portaTraseiraEsquerda" 
-                        checked={damagedParts.portaTraseiraEsquerda}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('portaTraseiraEsquerda', !!checked)}
-                      />
-                      <label htmlFor="portaTraseiraEsquerda" className="text-sm">Porta Traseira Esq.</label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="portaMalasSuperior" 
-                        checked={damagedParts.portaMalasSuperior}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('portaMalasSuperior', !!checked)}
-                      />
-                      <label htmlFor="portaMalasSuperior" className="text-sm">Porta Malas Superior</label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="portaTraseiraDireita" 
-                        checked={damagedParts.portaTraseiraDireita}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('portaTraseiraDireita', !!checked)}
-                      />
-                      <label htmlFor="portaTraseiraDireita" className="text-sm">Porta Traseira Dir.</label>
-                    </div>
+                    <DamagedPartItem partKey="portaTraseiraEsquerda" label="Porta Traseira Esq." />
+                    <DamagedPartItem partKey="portaMalasSuperior" label="Porta Malas Superior" />
+                    <DamagedPartItem partKey="portaTraseiraDireita" label="Porta Traseira Dir." />
                     
                     {/* Linha 5 */}
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="lateralEsquerda" 
-                        checked={damagedParts.lateralEsquerda}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('lateralEsquerda', !!checked)}
-                      />
-                      <label htmlFor="lateralEsquerda" className="text-sm">Lateral Esquerda</label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="portaMalasInferior" 
-                        checked={damagedParts.portaMalasInferior}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('portaMalasInferior', !!checked)}
-                      />
-                      <label htmlFor="portaMalasInferior" className="text-sm">Porta Malas Inferior</label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 p-2 border rounded-md">
-                      <Checkbox 
-                        id="lateralDireita" 
-                        checked={damagedParts.lateralDireita}
-                        onCheckedChange={(checked) => handleToggleDamagedPart('lateralDireita', !!checked)}
-                      />
-                      <label htmlFor="lateralDireita" className="text-sm">Lateral Direita</label>
-                    </div>
+                    <DamagedPartItem partKey="lateralEsquerda" label="Lateral Esquerda" />
+                    <DamagedPartItem partKey="portaMalasInferior" label="Porta Malas Inferior" />
+                    <DamagedPartItem partKey="lateralDireita" label="Lateral Direita" />
                   </div>
                 </div>
                 
@@ -675,6 +700,8 @@ export default function Budget() {
                   <TableHead>ID</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Veículo</TableHead>
+                  <TableHead>Total (AW)</TableHead>
+                  <TableHead>Total (€)</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -685,6 +712,8 @@ export default function Budget() {
                       <TableCell className="font-medium">{budget.id}</TableCell>
                       <TableCell>{budget.client_name}</TableCell>
                       <TableCell>{budget.vehicle_info}</TableCell>
+                      <TableCell>{budget.total_aw}</TableCell>
+                      <TableCell>{formatCurrency(budget.total_value || 0)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button 
@@ -717,7 +746,7 @@ export default function Budget() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6 text-gray-500 italic">
+                    <TableCell colSpan={6} className="text-center py-6 text-gray-500 italic">
                       Nenhum orçamento encontrado. Crie um novo orçamento para começar.
                     </TableCell>
                   </TableRow>
