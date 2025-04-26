@@ -972,6 +972,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Falha ao atualizar pedido de pagamento" });
         }
         
+        // Registrar despesa do tipo "salário" automaticamente
+        try {
+          // Obter valor total a ser pago ao técnico (soma dos serviços)
+          const requestDetails = await storage.getPaymentRequest(requestId);
+          
+          if (requestDetails && requestDetails.services && requestDetails.technician) {
+            // Calcular o valor total dos serviços (preço do técnico)
+            const technicianValue = requestDetails.services.reduce((sum, service) => {
+              return sum + (service.price || 0);
+            }, 0);
+            
+            // Registrar despesa do tipo "salário"
+            const [expenseRecord] = await db
+              .insert(expenses)
+              .values({
+                type: "salario",
+                amount: technicianValue,
+                date: new Date(paymentDetails.payment_date || new Date()),
+                description: `Pagamento ao técnico ${requestDetails.technician.name} - Pedido #${requestId}`,
+                payment_method: paymentDetails.payment_method || "manual",
+                notes: `Pagamento referente ao pedido #${requestId}. ${paymentDetails.payment_notes || ''}`,
+                provider: requestDetails.technician.name
+              })
+              .returning();
+              
+            console.log("Despesa de salário registrada:", expenseRecord ? "Sucesso" : "Falha");
+          } else {
+            console.log("Não foi possível registrar despesa de salário - dados insuficientes");
+          }
+        } catch (expenseError) {
+          console.error("Erro ao registrar despesa de salário:", expenseError);
+          // Não impedimos o fluxo de sucesso se falhar o registro da despesa
+        }
+        
         // Retorno simplificado para evitar problemas de JSON
         console.log("Enviando resposta de sucesso");
         res.json({ status: "success" });
