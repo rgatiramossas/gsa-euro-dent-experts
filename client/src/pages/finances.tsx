@@ -611,8 +611,39 @@ export default function Finances() {
     const servicesCount = filteredServices.length;
     const averageTicket = servicesCount > 0 ? totalRevenue / servicesCount : 0;
     
+    // Calcular total de despesas para o mesmo período
+    const filteredExpenses = expenses?.filter(expense => {
+      if (!expense.date) return false;
+      
+      const expenseDate = new Date(expense.date);
+      if (period === "week") {
+        // Last 7 days
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+        return expenseDate >= weekAgo;
+      } else if (period === "month") {
+        // Last 30 days
+        const monthAgo = new Date(now);
+        monthAgo.setDate(now.getDate() - 30);
+        return expenseDate >= monthAgo;
+      } else if (period === "year") {
+        // This year
+        return expenseDate.getFullYear() === now.getFullYear();
+      }
+      return true; // All time
+    }) || [];
+    
+    const totalExpenses = filteredExpenses.reduce((sum, expense) => {
+      return sum + (expense.amount || 0);
+    }, 0);
+    
+    // Calcular lucro (receita - despesas)
+    const profit = totalRevenue - totalExpenses;
+    
     return {
       totalRevenue,
+      totalExpenses,
+      profit,
       servicesCount,
       averageTicket,
     };
@@ -822,7 +853,7 @@ export default function Finances() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Faturamento Total</CardTitle>
@@ -834,19 +865,28 @@ export default function Finances() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Serviços Concluídos</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Despesas Totais</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.servicesCount}</div>
+            <div className="text-2xl font-bold">{formatCurrency(stats.totalExpenses || 0)}</div>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Ticket Médio</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Lucro Líquido</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.averageTicket)}</div>
+            <div className="text-2xl font-bold text-success">{formatCurrency(stats.profit || 0)}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Serviços Concluídos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.servicesCount}</div>
           </CardContent>
         </Card>
       </div>
