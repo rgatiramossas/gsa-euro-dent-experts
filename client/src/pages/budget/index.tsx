@@ -111,6 +111,8 @@ const hailCalculation = (
   needsHohlraum = false,
   hourlyRate = 28 // Taxa horária padrão de 28€
 ) => {
+  // Log para debug
+  console.log(`hailCalculation: tamanho=${size}mm, amassados=${dents}, vertical=${isVertical}`);
   const baseData: OrientationTable = {
     horizontal: {
       20: { 1: 6, 2: 7, 3: 8, 4: 9, 5: 10, 6: 11, 7: 12, 8: 13, 9: 14, 10: 15,
@@ -215,48 +217,37 @@ const hailCalculation = (
     const lowerKey = availableKeys.filter(k => k < dents).pop();
     const higherKey = availableKeys.find(k => k > dents);
     
-    // Caso específico de 42 amassados para diâmetro 20mm em peça horizontal (capo)
-    if (size === 20 && dents === 42 && !isVertical) {
-      // Para 42 amassados no capo (Horizontal, 20mm):
-      // Casa anterior 40: 28 AW
-      // Casa posterior 45: 30 AW
-      // Diferença: 2AW
-      // Como 42 está mais próximo de 40, pegamos 28 + 1AW = 29 AW
-      aw = 29; // 28 (valor de 40 amassados) + 1 (proporção como descrito)
-      console.log(`Caso específico: 42 amassados (20mm) no capô = 29 AW (28 + 1)`);
-    }
     // Caso temos valores anterior e posterior para fazer a interpolação
-    else if (lowerKey !== undefined && higherKey !== undefined) {
+    if (lowerKey !== undefined && higherKey !== undefined) {
       const lowerAW = sizeTable[lowerKey];
       const higherAW = sizeTable[higherKey];
       
       // Diferença total em AW
       const awDifference = higherAW - lowerAW;
       
-      // Distância entre os pontos
-      const dentsDifference = higherKey - lowerKey;
+      // Divisão da diferença por 2 (metade)
+      const halfDifference = awDifference / 2;
       
-      // Encontrar proporção da diferença 
-      // Se estamos mais próximos do anterior, usamos apenas 1/2 da diferença
-      // Se estamos exatamente no meio, usamos 1/2 da diferença
+      // Calculando a proximidade para determinar qual valor usar como base
+      const distToLower = dents - lowerKey;
+      const distToHigher = higherKey - dents;
       
-      // Calcular proporção baseada na proximidade
-      let proportion = 0;
-      if (dents - lowerKey < higherKey - dents) {
-        // Está mais próximo do valor anterior (como 42 está mais próximo de 40 que de 45)
-        // Usar apenas 1 AW conforme explicado
-        proportion = 1;
-      } else if (dents - lowerKey > higherKey - dents) {
+      // Decisão baseada na proximidade
+      if (distToLower < distToHigher) {
+        // Está mais próximo do valor anterior
+        aw = lowerAW + halfDifference;
+        console.log(`Interpolação: ${dents} amassados mais próximo de ${lowerKey} (${lowerAW} AW) + ${halfDifference} = ${aw} AW`);
+      } 
+      else if (distToLower > distToHigher) {
         // Está mais próximo do valor posterior
-        // Usar valor posterior - 1 AW
-        proportion = awDifference - 1;
-      } else {
-        // Está exatamente no meio, usar metade da diferença
-        proportion = awDifference / 2;
+        aw = higherAW - halfDifference;
+        console.log(`Interpolação: ${dents} amassados mais próximo de ${higherKey} (${higherAW} AW) - ${halfDifference} = ${aw} AW`);
+      } 
+      else {
+        // Está exatamente no meio, usar o valor posterior como base
+        aw = higherAW + halfDifference;
+        console.log(`Interpolação: ${dents} amassados exatamente no meio, usando ${higherKey} (${higherAW} AW) + ${halfDifference} = ${aw} AW`);
       }
-      
-      // Calcular o valor final de AW
-      aw = lowerAW + proportion;
       
       console.log(`Interpolação específica: ${dents} amassados entre ${lowerKey} (${lowerAW} AW) e ${higherKey} (${higherAW} AW) = ${aw} AW`);
     } 
