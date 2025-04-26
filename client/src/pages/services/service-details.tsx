@@ -508,7 +508,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-1">Veículo</h3>
                 <p className="text-gray-800 font-medium">
-                  {service.vehicle?.make} {service.vehicle?.model} {service.vehicle?.year}
+                  {service.vehicle?.make} {service.vehicle?.model}
                 </p>
                 <p className="text-gray-600 text-sm">
                   {service.vehicle?.color} - Placa {service.vehicle?.license_plate}

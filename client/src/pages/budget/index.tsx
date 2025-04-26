@@ -405,7 +405,7 @@ export default function Budget() {
       if (data.vehicle_id && vehicles) {
         const vehicle = vehicles.find(v => v.id === data.vehicle_id);
         if (vehicle) {
-          vehicle_info = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
+          vehicle_info = `${vehicle.make} ${vehicle.model}`;
           if (vehicle.license_plate) vehicle_info += ` (${vehicle.license_plate})`;
         }
       }

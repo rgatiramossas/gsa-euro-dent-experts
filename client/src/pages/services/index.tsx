@@ -143,7 +143,7 @@ export default function ServicesList() {
                         <TableCell className="font-medium">#{service.id}</TableCell>
                         <TableCell>{service.client.name}</TableCell>
                         <TableCell>
-                          {service.vehicle.make} {service.vehicle.model} {service.vehicle.year}
+                          {service.vehicle.make} {service.vehicle.model}
                           {service.vehicle.license_plate && ` - ${service.vehicle.license_plate}`}
                         </TableCell>
                         <TableCell>{service.technician?.name || "Não atribuído"}</TableCell>

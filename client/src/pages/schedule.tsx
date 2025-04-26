@@ -158,7 +158,7 @@ export default function Schedule() {
                         <div>
                           <p className="font-medium">{service.client.name}</p>
                           <p className="text-sm text-gray-500">
-                            {service.vehicle.make} {service.vehicle.model} {service.vehicle.year}
+                            {service.vehicle.make} {service.vehicle.model}
                             {service.vehicle.license_plate && ` - ${service.vehicle.license_plate}`}
                           </p>
                         </div>
