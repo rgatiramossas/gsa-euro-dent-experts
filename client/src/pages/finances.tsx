@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { 
   BarChart,
   Bar,
@@ -290,6 +291,8 @@ export default function Finances() {
           <TabsTrigger value="revenue">Faturamento</TabsTrigger>
           <TabsTrigger value="services">Serviços</TabsTrigger>
           <TabsTrigger value="transactions">Transações</TabsTrigger>
+          <TabsTrigger value="payment_requests">Pedidos de Pagamento</TabsTrigger>
+          <TabsTrigger value="expenses">Despesas</TabsTrigger>
         </TabsList>
         
         <TabsContent value="revenue" className="space-y-6">
@@ -487,6 +490,101 @@ export default function Finances() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="payment_requests">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Pedidos de Pagamento</CardTitle>
+              <Button size="sm" variant="outline">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Novo Pedido
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Serviço</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      Nenhum pedido de pagamento encontrado
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="expenses">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Despesas</CardTitle>
+              <Button size="sm" variant="outline">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Nova Despesa
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Fornecedor</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      Nenhuma despesa encontrada
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Despesas por Categoria</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80 flex items-center justify-center">
+                  <p className="text-gray-500">Nenhum dado disponível</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Despesas Mensais</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80 flex items-center justify-center">
+                  <p className="text-gray-500">Nenhum dado disponível</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
