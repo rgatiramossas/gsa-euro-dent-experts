@@ -1462,8 +1462,8 @@ export default function Budget() {
         </div>
         
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <label htmlFor={`${partKey}-diameter20`} className="text-xs flex-shrink-0 mr-1">20mm:</label>
+          <div className="flex items-center">
+            <label htmlFor={`${partKey}-diameter20`} className="text-xs flex-shrink-0 w-12">20mm:</label>
             <Input
               id={`${partKey}-diameter20`}
               type="text"
@@ -1477,7 +1477,7 @@ export default function Budget() {
               }}
               onFocus={handleFocus}
               autoComplete="off"
-              className="w-16 h-7 text-xs flex-shrink-0"
+              className="w-14 h-7 text-xs flex-shrink-0 pl-1"
               ref={(el) => {
                 inputRefs.current[`${partKey}-diameter20`] = el;
               }}
@@ -1486,8 +1486,8 @@ export default function Budget() {
             />
           </div>
           
-          <div className="flex items-center justify-between">
-            <label htmlFor={`${partKey}-diameter30`} className="text-xs flex-shrink-0 mr-1">30mm:</label>
+          <div className="flex items-center">
+            <label htmlFor={`${partKey}-diameter30`} className="text-xs flex-shrink-0 w-12">30mm:</label>
             <Input
               id={`${partKey}-diameter30`}
               type="text"
@@ -1501,7 +1501,7 @@ export default function Budget() {
               }}
               onFocus={handleFocus}
               autoComplete="off"
-              className="w-16 h-7 text-xs flex-shrink-0"
+              className="w-14 h-7 text-xs flex-shrink-0 pl-1"
               ref={(el) => {
                 inputRefs.current[`${partKey}-diameter30`] = el;
               }}
@@ -1510,8 +1510,8 @@ export default function Budget() {
             />
           </div>
           
-          <div className="flex items-center justify-between">
-            <label htmlFor={`${partKey}-diameter40`} className="text-xs flex-shrink-0 mr-1">40mm:</label>
+          <div className="flex items-center">
+            <label htmlFor={`${partKey}-diameter40`} className="text-xs flex-shrink-0 w-12">40mm:</label>
             <Input
               id={`${partKey}-diameter40`}
               type="text"
@@ -1525,7 +1525,7 @@ export default function Budget() {
               }}
               onFocus={handleFocus}
               autoComplete="off"
-              className="w-16 h-7 text-xs flex-shrink-0"
+              className="w-14 h-7 text-xs flex-shrink-0 pl-1"
               ref={(el) => {
                 inputRefs.current[`${partKey}-diameter40`] = el;
               }}
