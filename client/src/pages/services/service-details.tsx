@@ -156,6 +156,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         description: "O status do serviço foi atualizado com sucesso",
       });
       setShowStatusDialog(false);
+      setNewStatus("");
+      setStatusNotes("");
     },
     onError: (error) => {
       console.error('Error updating status:', error);
@@ -168,27 +170,19 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   });
   
   const updateServiceMutation = useMutation({
-    mutationFn: async (data: any) => {
-      // Se data for um FormData, enviar diretamente
-      if (data instanceof FormData) {
-        const res = await fetch(`/api/services/${id}`, {
-          method: 'PATCH',
-          body: data
-        });
-        
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || 'Erro ao atualizar serviço');
-        }
-        
-        return await res.json();
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch(`/api/services/${id}`, {
+        method: 'PATCH',
+        body: formData,
+        // Não definir Content-Type para multipart/form-data
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Erro na resposta:", errorText);
+        throw new Error(`Erro ao atualizar serviço: ${res.status} ${res.statusText}`);
       }
       
-      // Caso contrário, enviar como JSON
-      const res = await apiRequest('PATCH', `/api/services/${id}`, data);
-      if (!res.ok) {
-        throw new Error('Failed to update service');
-      }
       return res.json();
     },
     onSuccess: () => {
@@ -197,10 +191,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
       toast({
         title: "Serviço atualizado",
-        description: "As alterações foram salvas com sucesso",
+        description: "As informações do serviço foram atualizadas com sucesso",
       });
       
-      // Sai do modo de edição e limpa os estados
+      // Resetar o estado de edição
       setIsEditing(false);
       setBeforePhotos(null);
       setAfterPhotos(null);
@@ -212,68 +206,56 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       console.error('Error updating service:', error);
       toast({
         title: "Erro ao atualizar serviço",
-        description: "Ocorreu um erro ao salvar as alterações",
+        description: "Ocorreu um erro ao atualizar as informações do serviço",
         variant: "destructive",
       });
     }
   });
   
-  // Manipuladores para as fotos do serviço
-  const handleBeforePhotoChange = (files: FileList) => {
-    if (files.length > 0) {
-      setBeforePhotos(files);
-      
-      // Criar preview para a primeira foto
-      const fileReader = new FileReader();
-      fileReader.onload = (e) => {
-        setBeforePhotoPreview(e.target?.result as string);
-      };
-      fileReader.readAsDataURL(files[0]);
-    }
-  };
-  
-  const handleAfterPhotoChange = (files: FileList) => {
-    if (files.length > 0) {
-      setAfterPhotos(files);
-      
-      // Criar preview para a primeira foto
-      const fileReader = new FileReader();
-      fileReader.onload = (e) => {
-        setAfterPhotoPreview(e.target?.result as string);
-      };
-      fileReader.readAsDataURL(files[0]);
-    }
-  };
-  
-  const handleRemovePhoto = (photoId: number) => {
-    // Adicionar ID da foto à lista de fotos para remover
-    setPhotosToRemove((prev) => [...prev, photoId]);
+  const handleStatusUpdate = () => {
+    if (!newStatus) return;
     
-    // Atualizar a UI removendo a foto da lista visível
-    toast({
-      title: "Foto marcada para remoção",
-      description: "A foto será removida quando você salvar as alterações.",
-      variant: "default"
-    });
-  };
-
-  // Função para iniciar o modo de edição
-  const handleStartEditing = () => {
-    // Reset o formulário com os valores atuais
-    if (service) {
-      editForm.reset({
-        service_type_id: service.service_type_id || 0,
-        price: service.price || 0,
-        displacement_fee: service.displacement_fee || 0,
-      });
+    const data: { status: ServiceStatus; notes?: string } = {
+      status: newStatus as ServiceStatus
+    };
+    
+    if (statusNotes.trim()) {
+      data.notes = statusNotes.trim();
     }
+    
+    updateStatusMutation.mutate(data);
+  };
+  
+  const handleBack = () => {
+    setLocation('/services');
+  };
+  
+  // Funções para edição inline
+  const handleStartEditing = () => {
     setIsEditing(true);
   };
   
-  // Função para cancelar a edição
   const handleCancelEditing = () => {
     setIsEditing(false);
-    // Limpar estados das fotos
+    // Resetar quaisquer modificações não salvas
+    if (service) {
+      editForm.reset({
+        service_type_id: service.service_type_id || 0,
+        technician_id: service.technician_id || 0,
+        description: service.description || "",
+        notes: service.notes || "",
+        price: service.price || 0,
+        displacement_fee: service.displacement_fee || 0,
+        location_type: service.location_type as "client_location" | "workshop",
+        address: service.address || "",
+        latitude: service.latitude || 0,
+        longitude: service.longitude || 0,
+        scheduled_date: service.scheduled_date ? new Date(service.scheduled_date) : new Date(),
+        photos: undefined
+      });
+    }
+    
+    // Resetar os estados de fotos
     setBeforePhotos(null);
     setAfterPhotos(null);
     setBeforePhotoPreview(null);
@@ -349,20 +331,62 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       });
     }
   });
-
-  const handleStatusUpdate = () => {
-    if (!newStatus) return;
+  
+  // Função para receber novas fotos do tipo "antes"
+  const handleBeforePhotoChange = (files: FileList) => {
+    if (files.length === 0) return;
     
-    updateStatusMutation.mutate({
-      status: newStatus as ServiceStatus,
-      notes: statusNotes || undefined
+    setBeforePhotos(files);
+    
+    // Limpar previews antigos
+    if (beforePhotoPreview) {
+      URL.revokeObjectURL(beforePhotoPreview);
+    }
+    
+    // Criar previews para mostrar ao usuário
+    // No caso real, usaríamos múltiplos previews
+    const previewUrls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      previewUrls.push(URL.createObjectURL(files[i]));
+    }
+    setBeforePhotoPreview(previewUrls.join(','));
+    
+    console.log(`${files.length} fotos 'antes' selecionadas`);
+  };
+  
+  // Função para receber novas fotos do tipo "depois"
+  const handleAfterPhotoChange = (files: FileList) => {
+    if (files.length === 0) return;
+    
+    setAfterPhotos(files);
+    
+    // Limpar previews antigos
+    if (afterPhotoPreview) {
+      URL.revokeObjectURL(afterPhotoPreview);
+    }
+    
+    // Criar previews para mostrar ao usuário
+    const previewUrls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      previewUrls.push(URL.createObjectURL(files[i]));
+    }
+    setAfterPhotoPreview(previewUrls.join(','));
+    
+    console.log(`${files.length} fotos 'depois' selecionadas`);
+  };
+  
+  // Função para marcar uma foto para remoção
+  const handleRemovePhoto = (photoId: number) => {
+    setPhotosToRemove((prev) => [...prev, photoId]);
+    
+    toast({
+      title: "Foto marcada para remoção",
+      description: "A foto será removida quando você salvar as alterações",
     });
+    
+    console.log(`Foto ${photoId} marcada para remoção`);
   };
-
-  const handleBack = () => {
-    setLocation('/services');
-  };
-
+  
   if (isLoading) {
     return (
       <div className="py-6 px-4 sm:px-6 lg:px-8 flex justify-center items-center min-h-[300px]">
@@ -506,122 +530,84 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           </CardContent>
         </Card>
         
-        {/* Service Details */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center">
-              <CardTitle>Detalhes do Serviço</CardTitle>
-              {!isEditing ? (
-                <Button variant="outline" size="sm" onClick={handleStartEditing}>
-                  Editar Serviço
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleCancelEditing}>
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleSaveChanges} disabled={updateServiceMutation.isPending}>
-                    {updateServiceMutation.isPending ? "Salvando..." : "Salvar"}
+        {!isEditing ? (
+          <>
+            {/* Service Details - View Mode */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-center">
+                  <CardTitle>Detalhes do Serviço</CardTitle>
+                  <Button variant="outline" size="sm" onClick={handleStartEditing}>
+                    Editar Serviço
                   </Button>
                 </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Tipo de Serviço</h3>
-              {!isEditing ? (
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div>
-                  <p className="text-gray-800">{service.serviceType?.name}</p>
-                  {service.serviceType?.description && (
-                    <p className="text-gray-600 text-sm mt-1">{service.serviceType.description}</p>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Tipo de Serviço</h3>
+                  <div>
+                    <p className="text-gray-800">{service.serviceType?.name}</p>
+                    {service.serviceType?.description && (
+                      <p className="text-gray-600 text-sm mt-1">{service.serviceType.description}</p>
+                    )}
+                  </div>
+                </div>
+                
+                {service.description && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">Descrição</h3>
+                    <p className="text-gray-800">{service.description}</p>
+                  </div>
+                )}
+                
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">Localização</h3>
+                  <div className="bg-gray-100 rounded-lg p-3 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <div className="text-gray-700 text-sm">
+                      <p className="font-medium">{service.location_type === "workshop" ? "Oficina" : "Local do Cliente"}</p>
+                      <p>{service.address || "Endereço não especificado"}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {service.scheduled_date && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">Data Agendada</h3>
+                      <p className="text-gray-800">{formatDateTime(service.scheduled_date)}</p>
+                    </div>
+                  )}
+                  
+                  {service.start_date && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">Data de Início</h3>
+                      <p className="text-gray-800">{formatDateTime(service.start_date)}</p>
+                    </div>
+                  )}
+                  
+                  {service.completion_date && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">Data de Conclusão</h3>
+                      <p className="text-gray-800">{formatDateTime(service.completion_date)}</p>
+                    </div>
                   )}
                 </div>
-              ) : (
-                <Form {...editForm}>
-                  <FormField
-                    control={editForm.control}
-                    name="service_type_id"
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        defaultValue={field.value?.toString()}
-                        value={field.value?.toString()}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecione o tipo de serviço" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {serviceTypes?.map((type) => (
-                            <SelectItem key={type.id} value={type.id.toString()}>
-                              {type.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </Form>
-              )}
-            </div>
+              </CardContent>
+            </Card>
             
-            {service.description && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">Descrição</h3>
-                <p className="text-gray-800">{service.description}</p>
-              </div>
-            )}
-            
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Localização</h3>
-              <div className="bg-gray-100 rounded-lg p-3 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <div className="text-gray-700 text-sm">
-                  <p className="font-medium">{service.location_type === "workshop" ? "Oficina" : "Local do Cliente"}</p>
-                  <p>{service.address || "Endereço não especificado"}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {service.scheduled_date && (
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Data Agendada</h3>
-                  <p className="text-gray-800">{formatDateTime(service.scheduled_date)}</p>
-                </div>
-              )}
-              
-              {service.start_date && (
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Data de Início</h3>
-                  <p className="text-gray-800">{formatDateTime(service.start_date)}</p>
-                </div>
-              )}
-              
-              {service.completion_date && (
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Data de Conclusão</h3>
-                  <p className="text-gray-800">{formatDateTime(service.completion_date)}</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Photo Section */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Registro Fotográfico</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos do Dano</h3>
-                {!isEditing ? (
-                  <>
+            {/* Photo Gallery - View Mode */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>Fotos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Antes do Serviço</h3>
                     {service.photos?.before && service.photos.before.length > 0 ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                         {service.photos.before.map((photo) => (
@@ -635,11 +621,204 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-500 italic">Nenhuma foto de dano disponível</p>
+                      <p className="text-gray-500 italic">Nenhuma foto do dano disponível</p>
                     )}
-                  </>
-                ) : (
+                  </div>
+                  
                   <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Após Serviço</h3>
+                    {service.photos?.after && service.photos.after.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                        {service.photos.after.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                            <img 
+                              src={photo.photo_url} 
+                              alt="Foto após reparo" 
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 italic">Nenhuma foto após serviço disponível</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Financial Section - View Mode */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>Valores</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Valor do serviço</span>
+                    <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
+                  </div>
+                  {currentUser?.role === 'admin' && (
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-600">Valor administrativo</span>
+                      <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between py-2 font-medium">
+                    <span className="text-gray-700">Total</span>
+                    <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="border-t pt-4">
+                <div className="flex gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir Serviço
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir serviço</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => deleteServiceMutation.mutate()}
+                          disabled={deleteServiceMutation.isPending}
+                        >
+                          {deleteServiceMutation.isPending ? "Excluindo..." : "Excluir"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardFooter>
+            </Card>
+          </>
+        ) : (
+          /* Edit Mode - Using the same structure as the new-service form but only for editable fields */
+          <Form {...editForm}>
+            <form onSubmit={(e) => { e.preventDefault(); handleSaveChanges(); }} className="space-y-6">
+              <div className="flex justify-end gap-2 mb-4">
+                <Button variant="outline" type="button" onClick={handleCancelEditing}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={updateServiceMutation.isPending}>
+                  {updateServiceMutation.isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+            
+              {/* Service Information */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Informações do Serviço</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={editForm.control}
+                    name="service_type_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Serviço <span className="text-red-500">*</span></FormLabel>
+                        <Select
+                          onValueChange={(value) => editForm.setValue('service_type_id', parseInt(value))}
+                          value={field.value?.toString()}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o tipo de serviço" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {serviceTypes?.map((type) => (
+                              <SelectItem key={type.id} value={type.id.toString()}>
+                                {type.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+              
+              {/* Financial Information */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Valores</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={editForm.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valor do Serviço (€)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0,00"
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {currentUser?.role === 'admin' && (
+                      <FormField
+                        control={editForm.control}
+                        name="displacement_fee"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Valor Administrativo (€)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="0,00"
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                  
+                  <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
+                    <span className="text-gray-700">Total</span>
+                    <span className="text-primary text-lg">
+                      {formatCurrency((editForm.watch('price') || 0) + (editForm.watch('displacement_fee') || 0))}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Photos */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Registro Fotográfico</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Antes do Serviço</h3>
                     <div className="mb-4">
                       <PhotoUpload
                         label="Adicionar fotos (máx. 5)"
@@ -677,31 +856,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Após Serviço</h3>
-                {!isEditing ? (
-                  <>
-                    {service.photos?.after && service.photos.after.length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                        {service.photos.after.map((photo) => (
-                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
-                            <img 
-                              src={photo.photo_url} 
-                              alt="Foto após reparo" 
-                              className="object-cover w-full h-full"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 italic">Nenhuma foto após serviço disponível</p>
-                    )}
-                  </>
-                ) : (
+                  
                   <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Após Serviço</h3>
                     <div className="mb-4">
                       <PhotoUpload
                         label="Adicionar fotos (máx. 5)"
@@ -739,105 +896,47 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Financial Section */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>Valores</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!isEditing ? (
-              <div className="mb-4">
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Valor do serviço</span>
-                  <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
-                </div>
-                {currentUser?.role === 'admin' && (
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Valor administrativo</span>
-                    <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between py-2 font-medium">
-                  <span className="text-gray-700">Total</span>
-                  <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="mb-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">Valor do Serviço (€)</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0,00"
-                      value={editForm.watch('price') !== undefined ? editForm.watch('price') : 0}
-                      onChange={(e) => editForm.setValue('price', e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                    />
-                  </div>
-                  
-                  {currentUser?.role === 'admin' && (
-                    <div>
-                      <label className="text-sm font-medium mb-1 block">Valor Administrativo (€)</label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0,00"
-                        value={editForm.watch('displacement_fee') !== undefined ? editForm.watch('displacement_fee') : 0}
-                        onChange={(e) => editForm.setValue('displacement_fee', e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                      />
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
-                  <span className="text-gray-700">Total</span>
-                  <span className="text-primary text-lg">
-                    {formatCurrency((editForm.watch('price') || 0) + (editForm.watch('displacement_fee') || 0))}
-                  </span>
-                </div>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="border-t pt-4">
-            <div className="flex gap-2">
+                </CardContent>
+              </Card>
               
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir Serviço
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir serviço</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={() => deleteServiceMutation.mutate()}
-                      disabled={deleteServiceMutation.isPending}
-                    >
-                      {deleteServiceMutation.isPending ? "Excluindo..." : "Excluir"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardFooter>
-        </Card>
+              {/* Footer with Delete Button */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Ações</CardTitle>
+                </CardHeader>
+                <CardFooter className="border-t pt-4">
+                  <div className="flex gap-2">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir Serviço
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir serviço</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => deleteServiceMutation.mutate()}
+                            disabled={deleteServiceMutation.isPending}
+                          >
+                            {deleteServiceMutation.isPending ? "Excluindo..." : "Excluir"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardFooter>
+              </Card>
+            </form>
+          </Form>
+        )}
         
         {/* Notes Section */}
         {service.notes && (
