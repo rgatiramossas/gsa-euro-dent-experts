@@ -398,7 +398,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Dashboard data
-  async getDashboardStats(): Promise<any> {
+  async getDashboardStats(technicianId?: number): Promise<any> {
     // Count pending services
     const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)

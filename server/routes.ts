@@ -298,13 +298,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/services", requireAuth, async (req, res) => {
     try {
       const filters: any = {};
+      const userRole = req.session.userRole;
+      const userId = req.session.userId;
+      
+      // Se o usuário for um técnico, restringe para mostrar apenas seus serviços
+      if (userRole === "technician") {
+        filters.technicianId = userId;
+      } else if (req.query.technicianId) {
+        // Para administradores, ainda permite filtrar por técnico específico
+        filters.technicianId = parseInt(req.query.technicianId as string);
+      }
       
       if (req.query.status) {
         filters.status = req.query.status as string;
-      }
-      
-      if (req.query.technicianId) {
-        filters.technicianId = parseInt(req.query.technicianId as string);
       }
       
       if (req.query.clientId) {
