@@ -144,6 +144,27 @@ export class DatabaseStorage implements IStorage {
         base_price: 350
       });
       
+      // Criar tipos de eventos iniciais
+      await this.createEventType({
+        name: "Reunião",
+        color: "#4f46e5" // Azul
+      });
+      
+      await this.createEventType({
+        name: "Visita Técnica",
+        color: "#16a34a" // Verde
+      });
+      
+      await this.createEventType({
+        name: "Avaliação",
+        color: "#ea580c" // Laranja
+      });
+      
+      await this.createEventType({
+        name: "Serviço",
+        color: "#dc2626" // Vermelho
+      });
+      
       console.log("Sample data initialized successfully!");
     }
   }
@@ -465,6 +486,75 @@ export class DatabaseStorage implements IStorage {
     );
     
     return results;
+  }
+
+  // Event Type methods
+  async getEventType(id: number): Promise<EventType | undefined> {
+    const [eventType] = await db.select().from(eventTypes).where(eq(eventTypes.id, id));
+    return eventType;
+  }
+  
+  async createEventType(insertEventType: InsertEventType): Promise<EventType> {
+    const [eventType] = await db.insert(eventTypes).values(insertEventType).returning();
+    return eventType;
+  }
+  
+  async listEventTypes(): Promise<EventType[]> {
+    return db.select().from(eventTypes);
+  }
+  
+  // Event methods
+  async getEvent(id: number): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event;
+  }
+  
+  async createEvent(insertEvent: InsertEvent): Promise<Event> {
+    const [event] = await db.insert(events).values(insertEvent).returning();
+    return event;
+  }
+  
+  async updateEvent(id: number, eventData: Partial<Event>): Promise<Event | undefined> {
+    const [updatedEvent] = await db.update(events)
+      .set(eventData)
+      .where(eq(events.id, id))
+      .returning();
+    return updatedEvent;
+  }
+  
+  async deleteEvent(id: number): Promise<boolean> {
+    const result = await db.delete(events).where(eq(events.id, id)).returning();
+    return result.length > 0;
+  }
+  
+  async listEvents(filters?: Partial<{ technician_id: number, date: string }>): Promise<Event[]> {
+    // Consulta base para eventos com join para tipo de evento e técnico
+    let query = db.select({
+      ...events,
+      event_type: {
+        name: eventTypes.name,
+        color: eventTypes.color
+      },
+      technician: {
+        name: users.name
+      }
+    })
+    .from(events)
+    .leftJoin(eventTypes, eq(events.event_type_id, eventTypes.id))
+    .leftJoin(users, eq(events.technician_id, users.id));
+    
+    // Aplicar filtros se existirem
+    if (filters) {
+      if (filters.technician_id) {
+        query = query.where(eq(events.technician_id, filters.technician_id));
+      }
+      
+      if (filters.date) {
+        query = query.where(eq(events.date, filters.date));
+      }
+    }
+    
+    return query.orderBy(events.date, events.time);
   }
 }
 

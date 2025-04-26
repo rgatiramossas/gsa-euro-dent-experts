@@ -8,7 +8,15 @@ import path from "path";
 import fs from "fs";
 import multer from "multer";
 import { fileURLToPath } from "url";
-import { insertUserSchema, insertClientSchema, insertVehicleSchema, insertServiceSchema, insertServicePhotoSchema } from "@shared/schema";
+import { 
+  insertUserSchema, 
+  insertClientSchema, 
+  insertVehicleSchema, 
+  insertServiceSchema, 
+  insertServicePhotoSchema,
+  insertEventTypeSchema,
+  insertEventSchema 
+} from "@shared/schema";
 import { z } from "zod";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -528,6 +536,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(photos);
     } catch (error) {
       console.error("Error fetching service photos:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Event types routes
+  app.get("/api/event-types", requireAuth, async (req, res) => {
+    try {
+      const eventTypes = await storage.listEventTypes();
+      res.json(eventTypes);
+    } catch (error) {
+      console.error("Error fetching event types:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/event-types", requireAuth, async (req, res) => {
+    try {
+      // Verificar se o usuário é admin
+      if (req.session.userRole !== "admin") {
+        return res.status(403).json({ message: "Only admins can create event types" });
+      }
+
+      const eventTypeInput = insertEventTypeSchema.parse(req.body);
+      const eventType = await storage.createEventType(eventTypeInput);
+      res.status(201).json(eventType);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      console.error("Error creating event type:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Events routes
+  app.get("/api/events", requireAuth, async (req, res) => {
+    try {
+      const filters: Partial<{ technician_id: number, date: string }> = {};
+      
+      if (req.query.technician_id) {
+        filters.technician_id = parseInt(req.query.technician_id as string);
+      }
+      
+      if (req.query.date) {
+        filters.date = req.query.date as string;
+      }
+      
+      const events = await storage.listEvents(filters);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/events/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.getEvent(id);
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/events", requireAuth, async (req, res) => {
+    try {
+      const eventInput = insertEventSchema.parse(req.body);
+      
+      // Se o usuário não for admin, só pode criar eventos para si mesmo
+      if (req.session.userRole !== "admin" && eventInput.technician_id !== req.session.userId) {
+        return res.status(403).json({ 
+          message: "Technicians can only create events for themselves" 
+        });
+      }
+      
+      const event = await storage.createEvent(eventInput);
+      res.status(201).json(event);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      console.error("Error creating event:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/events/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const eventData = req.body;
+      
+      // Verificar se o evento existe
+      const existingEvent = await storage.getEvent(id);
+      if (!existingEvent) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      // Se o usuário não for admin, só pode editar seus próprios eventos
+      if (req.session.userRole !== "admin" && existingEvent.technician_id !== req.session.userId) {
+        return res.status(403).json({ 
+          message: "Technicians can only edit their own events" 
+        });
+      }
+      
+      const updatedEvent = await storage.updateEvent(id, eventData);
+      res.json(updatedEvent);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/events/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Verificar se o evento existe
+      const existingEvent = await storage.getEvent(id);
+      if (!existingEvent) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      // Se o usuário não for admin, só pode excluir seus próprios eventos
+      if (req.session.userRole !== "admin" && existingEvent.technician_id !== req.session.userId) {
+        return res.status(403).json({ 
+          message: "Technicians can only delete their own events" 
+        });
+      }
+      
+      const success = await storage.deleteEvent(id);
+      
+      if (success) {
+        res.status(200).json({ message: "Event deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete event" });
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

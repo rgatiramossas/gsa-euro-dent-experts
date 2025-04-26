@@ -33,6 +33,7 @@ import Budget from "@/pages/budget/index";
 import Schedule from "@/pages/schedule";
 import Finances from "@/pages/finances";
 import Settings from "@/pages/settings";
+import Eventos from "@/pages/eventos";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
