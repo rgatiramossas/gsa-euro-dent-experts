@@ -129,8 +129,20 @@ export default function Finances() {
     queryKey: ['/api/services'],
   });
   
+  interface PaymentRequest {
+    id: number;
+    created_at: string;
+    status: string;
+    technician_id: number;
+    technician?: {
+      id: number;
+      name: string;
+    } | null;
+    services?: ServiceListItem[];
+  }
+
   // Get payment requests data
-  const { data: paymentRequests, isLoading: loadingPaymentRequests } = useQuery({
+  const { data: paymentRequests, isLoading: loadingPaymentRequests } = useQuery<PaymentRequest[]>({
     queryKey: ['/api/payment-requests'],
   });
   
@@ -281,24 +293,54 @@ export default function Finances() {
                 </Button>
               </CardHeader>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Serviço</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                        Nenhum pedido de pagamento encontrado
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                {loadingPaymentRequests ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                  </div>
+                ) : !paymentRequests || !Array.isArray(paymentRequests) || paymentRequests.length === 0 ? (
+                  <div className="flex justify-center items-center py-8 text-gray-500">
+                    Nenhum pedido de pagamento encontrado
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Valor Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paymentRequests
+                        .filter(req => req.technician_id === currentUser?.id)
+                        .map((request) => (
+                          <TableRow key={request.id}>
+                            <TableCell>#{request.id}</TableCell>
+                            <TableCell>{formatDate(request.created_at)}</TableCell>
+                            <TableCell>
+                              <Badge className={
+                                request.status === "aguardando_aprovacao" ? "bg-amber-600" :
+                                request.status === "aprovado" ? "bg-green-600" :
+                                request.status === "rejeitado" ? "bg-red-600" :
+                                "bg-gray-600"
+                              }>
+                                {request.status === "aguardando_aprovacao" ? "Aguardando Aprovação" :
+                                 request.status === "aprovado" ? "Aprovado" :
+                                 request.status === "rejeitado" ? "Rejeitado" : request.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatCurrency(
+                                request.services?.reduce((sum: number, s: any) => sum + (s.total || 0), 0) || 0
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      }
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -830,13 +872,13 @@ export default function Finances() {
                 <div className="flex justify-center items-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                 </div>
-              ) : !paymentRequests || paymentRequests.length === 0 ? (
+              ) : !paymentRequests || !Array.isArray(paymentRequests) || paymentRequests.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 px-4">
                   <p className="text-gray-500 mb-2">Nenhum pedido de pagamento encontrado</p>
                 </div>
               ) : (
                 <div className="space-y-4 p-4">
-                  {paymentRequests.map((request: any) => (
+                  {paymentRequests.map((request: PaymentRequest) => (
                     <div key={request.id} className="border rounded-lg overflow-hidden">
                       <div className="bg-gray-50 p-4 flex items-center justify-between">
                         <div>
