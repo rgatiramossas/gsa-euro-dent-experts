@@ -8,6 +8,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { PhotoUpload } from "@/components/common/PhotoUpload";
+import { LocationSelector } from "@/components/common/LocationSelector";
+import { useForm } from "react-hook-form";
+import { Form } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { 
   Card, 
   CardContent,
@@ -31,8 +39,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 
 interface ServiceDetailsProps {
@@ -374,76 +389,215 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 <DialogTrigger asChild>
                   <Button variant="outline">Editar Serviço</Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-5xl h-[90vh]">
                   <DialogHeader>
                     <DialogTitle>Editar Serviço #{service.id}</DialogTitle>
+                    <DialogDescription>Atualize as informações do serviço</DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Valor do Serviço</label>
-                        <div className="flex items-center">
-                          <span className="mr-2">R$</span>
-                          <input 
-                            type="number" 
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            defaultValue={service.price || 0}
-                            min={0}
-                            step="0.01"
-                          />
-                        </div>
-                      </div>
-                      {currentUser?.role === 'admin' && (
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Valor Administrativo</label>
-                          <div className="flex items-center">
-                            <span className="mr-2">R$</span>
-                            <input 
-                              type="number" 
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              defaultValue={service.displacement_fee || 0}
-                              min={0}
-                              step="0.01"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Descrição do Serviço</label>
-                      <Textarea
-                        defaultValue={service.description || ""}
-                        placeholder="Descreva o serviço a ser realizado"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Fotos <span className="text-red-500">*</span></label>
-                      <PhotoUpload
-                        label="edit-photos"
-                        onChange={(files) => {
-                          console.log("Fotos selecionadas:", files.length);
-                          // Aqui implementaríamos a lógica para atualizar as fotos
-                        }}
-                        multiple
-                        maxFiles={5}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Observações</label>
-                      <Textarea
-                        defaultValue={service.notes || ""}
-                        placeholder="Informações adicionais ou observações"
-                        rows={3}
-                      />
-                    </div>
+                  
+                  <div className="overflow-y-auto flex-1 py-4">
+                    <Form {...form}>
+                      <form className="space-y-6">
+                        {/* Client and Vehicle Information */}
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle>Informações do Cliente</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-1">Cliente</label>
+                                <Input 
+                                  value={service.client?.name || ''}
+                                  disabled
+                                />
+                                <p className="text-xs text-gray-500 mt-1">O cliente não pode ser alterado</p>
+                              </div>
+                              
+                              <div>
+                                <label className="block text-sm font-medium mb-1">Veículo</label>
+                                <Input 
+                                  value={`${service.vehicle?.make} ${service.vehicle?.model} ${service.vehicle?.year}`}
+                                  disabled
+                                />
+                                <p className="text-xs text-gray-500 mt-1">O veículo não pode ser alterado</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        {/* Service Information */}
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle>Informações do Serviço</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Tipo de Serviço <span className="text-red-500">*</span></label>
+                              <Select
+                                defaultValue={service.service_type_id?.toString()}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o tipo de serviço" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="1">Amassado de Rua</SelectItem>
+                                  <SelectItem value="2">Colisão</SelectItem>
+                                  <SelectItem value="3">Outro</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Descrição do Problema</label>
+                              <Textarea
+                                defaultValue={service.description || ""}
+                                placeholder="Descreva o problema em detalhes..."
+                                rows={3}
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Técnico Responsável</label>
+                              <Select
+                                defaultValue={service.technician_id?.toString()}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o técnico" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {technicians?.map((tech) => (
+                                    <SelectItem key={tech.id} value={tech.id.toString()}>
+                                      {tech.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Data <span className="text-red-500">*</span></label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "pl-3 text-left font-normal w-full justify-start"
+                                    )}
+                                  >
+                                    {service.scheduled_date ? (
+                                      format(new Date(service.scheduled_date), "dd/MM/yyyy", { locale: ptBR })
+                                    ) : (
+                                      <span>Selecione a data</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={service.scheduled_date ? new Date(service.scheduled_date) : undefined}
+                                    initialFocus
+                                    locale={ptBR}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        {/* Location */}
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle>Localização</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Localização <span className="text-red-500">*</span></label>
+                              <LocationSelector
+                                value={{
+                                  locationType: service.location_type as "client_location" | "workshop",
+                                  address: service.address || '',
+                                  latitude: service.latitude,
+                                  longitude: service.longitude,
+                                }}
+                                onChange={(value) => {
+                                  console.log("Nova localização:", value);
+                                }}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        {/* Photos */}
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle>Fotos</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Fotos <span className="text-red-500">*</span></label>
+                              <PhotoUpload
+                                label="edit-photos"
+                                onChange={(files) => {
+                                  console.log("Arquivos selecionados:", files.length, "fotos");
+                                }}
+                                multiple
+                                maxFiles={5}
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        
+                        {/* Price */}
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle>Valores</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className={`grid grid-cols-1 ${currentUser?.role === 'admin' ? 'sm:grid-cols-2' : ''} gap-4`}>
+                              <div>
+                                <label className="block text-sm font-medium mb-1">Valor do Serviço (€)</label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0,00"
+                                  defaultValue={service.price?.toFixed(2) || '0.00'}
+                                />
+                              </div>
+                              
+                              {currentUser?.role === 'admin' && (
+                                <div>
+                                  <label className="block text-sm font-medium mb-1">Valor Administrativo (€)</label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="0,00"
+                                    defaultValue={service.displacement_fee?.toFixed(2) || '0.00'}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="mt-4">
+                              <label className="block text-sm font-medium mb-1">Observações Adicionais</label>
+                              <Textarea
+                                defaultValue={service.notes || ""}
+                                placeholder="Observações sobre o orçamento..."
+                                rows={2}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </form>
+                    </Form>
                   </div>
+                  
                   <DialogFooter>
                     <Button variant="outline" type="button">Cancelar</Button>
                     <Button type="button">Salvar Alterações</Button>
