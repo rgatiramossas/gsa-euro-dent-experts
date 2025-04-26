@@ -31,6 +31,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +51,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -145,6 +145,22 @@ export default function Finances() {
   const { data: paymentRequests, isLoading: loadingPaymentRequests } = useQuery<PaymentRequest[]>({
     queryKey: ['/api/payment-requests'],
   });
+  
+  // Get all technicians for admin payment request selection
+  const { data: technicians } = useQuery<{id: number, name: string}[]>({
+    queryKey: ['/api/users'],
+    queryFn: () => apiRequest('/api/users?role=tecnico'),
+    enabled: isAdmin,
+  });
+  
+  // State for technician selection in admin payment request form
+  const [selectedTechnician, setSelectedTechnician] = useState<number | undefined>();
+  
+  // All services that can be added to a payment request (completed but not in a payment request)
+  const completableServices = services?.filter(service => 
+    (service.status === "completed" && 
+    (!selectedTechnician || service.technician?.id === selectedTechnician))
+  );
   
   // Serviços do técnico logado com status "completed" (para pedidos de pagamento)
   const completedTechnicianServices = services?.filter(service => 
@@ -866,6 +882,15 @@ export default function Finances() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Pedidos de Pagamento</CardTitle>
+              <Button 
+                size="sm" 
+                onClick={() => setPaymentRequestDialogOpen(true)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Novo Pedido
+              </Button>
             </CardHeader>
             <CardContent className="p-0">
               {loadingPaymentRequests ? (
@@ -1056,6 +1081,114 @@ export default function Finances() {
         </TabsContent>
       </Tabs>
 
+      {/* Modal de Nova Despesa */}
+      {/* Modal de Novo Pedido de Pagamento para Admin */}
+      {isAdmin && (
+        <Dialog open={paymentRequestDialogOpen} onOpenChange={setPaymentRequestDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Novo Pedido de Pagamento</DialogTitle>
+              <DialogDescription>
+                Selecione os serviços concluídos para os quais deseja criar um pedido de pagamento.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Label>Técnico:</Label>
+                    <Select
+                      value={selectedTechnician?.toString() || ""}
+                      onValueChange={(value) => setSelectedTechnician(value ? parseInt(value) : undefined)}
+                    >
+                      <SelectTrigger className="w-60">
+                        <SelectValue placeholder="Selecione um técnico (opcional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Sem técnico</SelectItem>
+                        {technicians?.map(tech => (
+                          <SelectItem key={tech.id} value={tech.id.toString()}>
+                            {tech.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {completableServices?.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Nenhum serviço disponível para solicitar pagamento.
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {completableServices?.map(service => (
+                        <div 
+                          key={service.id} 
+                          className="flex items-center space-x-2 p-3 border rounded-md hover:bg-gray-50 cursor-pointer"
+                          onClick={() => toggleServiceSelection(service.id)}
+                        >
+                          <input 
+                            type="checkbox" 
+                            className="h-5 w-5 rounded" 
+                            checked={selectedServices.includes(service.id)}
+                            onChange={() => toggleServiceSelection(service.id)}
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium">
+                              {service.client?.name} - {service.serviceType?.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {formatDate(service.completion_date || service.created_at)} - OS #{service.id}
+                              {service.technician ? ` - Técnico: ${service.technician.name}` : ' - Sem técnico'}
+                            </div>
+                          </div>
+                          <div className="font-semibold">
+                            {formatCurrency(service.total || 0)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="flex justify-between items-center border-t pt-4 mt-4">
+              <div>
+                <span className="font-medium">Total selecionado: </span>
+                {formatCurrency(
+                  completableServices
+                    ?.filter(service => selectedServices.includes(service.id))
+                    .reduce((sum, service) => sum + (service.total || 0), 0) || 0
+                )}
+              </div>
+              <div className="space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setPaymentRequestDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleCreatePaymentRequest}
+                  disabled={selectedServices.length === 0 || createPaymentRequestMutation.isPending}
+                >
+                  {createPaymentRequestMutation.isPending ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      Enviando...
+                    </div>
+                  ) : "Criar Pedido"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      
       {/* Modal de Nova Despesa */}
       <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
