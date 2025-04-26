@@ -589,18 +589,19 @@ export default function Budget() {
       
       // Criar um clone do conteúdo do diálogo
       const printContainer = document.createElement('div');
-      printContainer.style.width = '800px';
-      printContainer.style.padding = '20px';
+      printContainer.style.width = '650px';
+      printContainer.style.padding = '15px';
       printContainer.style.backgroundColor = 'white';
       printContainer.style.position = 'absolute';
       printContainer.style.left = '-9999px';
       printContainer.style.fontFamily = 'Arial, sans-serif';
+      printContainer.style.fontSize = '10px';
       
       // Copiar o conteúdo visual do diálogo atual
       const header = document.createElement('div');
       header.innerHTML = `
-        <h2 style="font-size: 24px; margin-bottom: 5px;">Orçamento #${targetBudget.id}</h2>
-        <p style="font-size: 14px; margin-bottom: 20px;">Detalhes do orçamento para ${targetBudget.client_name}.</p>
+        <h2 style="font-size: 16px; margin-bottom: 2px;">Orçamento #${targetBudget.id}</h2>
+        <p style="font-size: 10px; margin-bottom: 8px;">Detalhes do orçamento para ${targetBudget.client_name}.</p>
       `;
       printContainer.appendChild(header);
       
@@ -608,29 +609,29 @@ export default function Budget() {
       const clientSection = document.createElement('div');
       clientSection.style.display = 'grid';
       clientSection.style.gridTemplateColumns = '1fr 1fr';
-      clientSection.style.gap = '20px';
-      clientSection.style.marginBottom = '20px';
+      clientSection.style.gap = '8px';
+      clientSection.style.marginBottom = '10px';
       
       clientSection.innerHTML = `
         <div>
-          <p style="font-weight: bold; margin-bottom: 5px;">Data</p>
-          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${formatDate(targetBudget.date) || ""}</div>
+          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Data</p>
+          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${formatDate(targetBudget.date) || ""}</div>
         </div>
         <div>
-          <p style="font-weight: bold; margin-bottom: 5px;">Cliente</p>
-          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${targetBudget.client_name || ""}</div>
+          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Cliente</p>
+          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${targetBudget.client_name || ""}</div>
         </div>
         <div>
-          <p style="font-weight: bold; margin-bottom: 5px;">Veículo</p>
-          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${targetBudget.vehicle_info || ""}</div>
+          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Veículo</p>
+          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${targetBudget.vehicle_info || ""}</div>
         </div>
         <div>
-          <p style="font-weight: bold; margin-bottom: 5px;">Placa</p>
-          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${targetBudget.plate || licensePlate || ""}</div>
+          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Placa</p>
+          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${targetBudget.plate || licensePlate || ""}</div>
         </div>
         <div style="grid-column: span 2;">
-          <p style="font-weight: bold; margin-bottom: 5px;">Chassi</p>
-          <div style="border: 1px solid #ddd; padding: 8px; border-radius: 4px;">${targetBudget.chassisNumber || chassisNumber || ""}</div>
+          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Chassi</p>
+          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${targetBudget.chassisNumber || chassisNumber || ""}</div>
         </div>
       `;
       printContainer.appendChild(clientSection);
@@ -638,15 +639,31 @@ export default function Budget() {
       // Título da seção de danos
       const damageTitle = document.createElement('h3');
       damageTitle.textContent = 'Danos do Veículo';
-      damageTitle.style.fontSize = '18px';
-      damageTitle.style.margin = '20px 0 15px 0';
+      damageTitle.style.fontSize = '12px';
+      damageTitle.style.margin = '8px 0 6px 0';
+      damageTitle.style.fontWeight = 'bold';
       printContainer.appendChild(damageTitle);
       
-      // Grid de peças danificadas
+      // Grid de peças danificadas em linhas e colunas específicas
       const partsGrid = document.createElement('div');
       partsGrid.style.display = 'grid';
       partsGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-      partsGrid.style.gap = '15px';
+      partsGrid.style.gap = '8px'; // Reduzido o espaçamento para caber melhor
+      partsGrid.style.fontSize = '10px'; // Fonte menor para caber tudo
+      
+      // Lista de peças na ordem exata do grid
+      const gridLayout = [
+        // Linha 1
+        ['paraLamaEsquerdo', 'capo', 'paraLamaDireito'],
+        // Linha 2
+        ['colunaEsquerda', 'teto', 'colunaDireita'],
+        // Linha 3 (com foto no meio)
+        ['portaDianteiraEsquerda', 'foto', 'portaDianteiraDireita'],
+        // Linha 4
+        ['portaTraseiraEsquerda', 'portaMalasSuperior', 'portaTraseiraDireita'],
+        // Linha 5
+        ['lateralEsquerda', 'portaMalasInferior', 'lateralDireita']
+      ];
       
       // Lista de nomes legíveis das peças
       const partsNames: Record<string, string> = {
@@ -666,21 +683,22 @@ export default function Budget() {
         lateralDireita: "Lateral Direita"
       };
       
-      // Função para criar uma peça com todos os detalhes
-      function createPartElement(partKey: string, displayName: string, isSelected: boolean) {
+      // Criar uma peça com todos os detalhes
+      const createPartElement = (partKey: string, displayName: string, isSelected: boolean): HTMLElement => {
         const part = document.createElement('div');
         part.style.border = `1px solid ${isSelected ? '#1E40AF' : '#ddd'}`;
-        part.style.borderRadius = '6px';
-        part.style.padding = '12px';
+        part.style.borderRadius = '4px';
+        part.style.padding = '6px';
         part.style.backgroundColor = isSelected ? '#EFF6FF' : 'white'; // azul claro se selecionado
         
         const title = document.createElement('div');
         title.textContent = displayName;
         title.style.fontWeight = 'bold';
         title.style.borderBottom = '1px solid #ddd';
-        title.style.paddingBottom = '8px';
-        title.style.marginBottom = '10px';
+        title.style.paddingBottom = '3px';
+        title.style.marginBottom = '3px';
         title.style.textAlign = 'center';
+        title.style.fontSize = '9px';
         part.appendChild(title);
         
         // Adicionar campos de diâmetro
@@ -689,17 +707,17 @@ export default function Budget() {
           row.style.display = 'flex';
           row.style.justifyContent = 'space-between';
           row.style.alignItems = 'center';
-          row.style.marginBottom = '8px';
+          row.style.marginBottom = '3px';
           
           const label = document.createElement('span');
           label.textContent = diameter + ':';
-          label.style.fontSize = '14px';
+          label.style.fontSize = '9px';
           
           const input = document.createElement('div');
-          input.style.width = '80px';
-          input.style.height = '30px';
+          input.style.width = '50px';
+          input.style.height = '16px';
           input.style.border = '1px solid #ddd';
-          input.style.borderRadius = '4px';
+          input.style.borderRadius = '2px';
           input.style.backgroundColor = 'white';
           
           row.appendChild(label);
@@ -712,8 +730,8 @@ export default function Budget() {
         optionsRow.style.display = 'flex';
         optionsRow.style.justifyContent = 'space-between';
         optionsRow.style.borderTop = '1px solid #ddd';
-        optionsRow.style.paddingTop = '8px';
-        optionsRow.style.marginTop = '5px';
+        optionsRow.style.paddingTop = '3px';
+        optionsRow.style.marginTop = '2px';
         
         ['A', 'K', 'P'].forEach(option => {
           const optionGroup = document.createElement('div');
@@ -721,16 +739,16 @@ export default function Budget() {
           optionGroup.style.alignItems = 'center';
           
           const checkbox = document.createElement('div');
-          checkbox.style.width = '16px';
-          checkbox.style.height = '16px';
+          checkbox.style.width = '10px';
+          checkbox.style.height = '10px';
           checkbox.style.border = '1px solid #ddd';
           checkbox.style.borderRadius = '2px';
-          checkbox.style.marginRight = '4px';
+          checkbox.style.marginRight = '2px';
           checkbox.style.backgroundColor = 'white';
           
           const label = document.createElement('span');
           label.textContent = `(${option})`;
-          label.style.fontSize = '12px';
+          label.style.fontSize = '8px';
           
           optionGroup.appendChild(checkbox);
           optionGroup.appendChild(label);
@@ -739,52 +757,84 @@ export default function Budget() {
         
         part.appendChild(optionsRow);
         return part;
-      }
+      };
       
-      // Adicionar cada peça ao grid
-      Object.keys(partsNames).forEach(partKey => {
-        const isSelected = targetBudget.damaged_parts?.includes(partKey) || false;
-        const partElement = createPartElement(partKey, partsNames[partKey], isSelected);
-        partsGrid.appendChild(partElement);
+      // Criar componente de foto para a posição central
+      const createPhotoElement = (): HTMLElement => {
+        const photoContainer = document.createElement('div');
+        photoContainer.style.border = '1px solid #ddd';
+        photoContainer.style.borderRadius = '4px';
+        photoContainer.style.padding = '6px';
+        photoContainer.style.textAlign = 'center';
+        photoContainer.style.display = 'flex';
+        photoContainer.style.flexDirection = 'column';
+        photoContainer.style.justifyContent = 'center';
+        photoContainer.style.alignItems = 'center';
+        
+        const photoIcon = document.createElement('div');
+        photoIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect opacity="0.5" x="2" y="4" width="20" height="16" rx="2" stroke="#888888" stroke-width="2"/>
+          <circle cx="8.5" cy="8.5" r="2.5" stroke="#888888" stroke-width="1.5"/>
+          <path d="M14.5 11.5C14.5 11.5 15.5 10.25 17 10.25C18.5 10.25 19.5 11.5 19.5 11.5V18H14.5V11.5Z" stroke="#888888" stroke-width="1.5"/>
+          <path d="M4.5 18V13.5C4.5 13.5 5.5 12 7 12C8.5 12 9.5 13.5 9.5 13.5L12.5 15.5" stroke="#888888" stroke-width="1.5"/>
+        </svg>`;
+        
+        const photoText = document.createElement('div');
+        photoText.textContent = "Foto disponível no sistema";
+        photoText.style.marginTop = '6px';
+        photoText.style.fontSize = '8px';
+        photoText.style.color = '#555';
+        
+        photoContainer.appendChild(photoIcon);
+        photoContainer.appendChild(photoText);
+        return photoContainer;
+      };
+      
+      // Construir o grid linha a linha
+      gridLayout.forEach(row => {
+        row.forEach(partKey => {
+          if (partKey === 'foto') {
+            // Adicionar o elemento de foto
+            partsGrid.appendChild(createPhotoElement());
+          } else {
+            // Adicionar a peça com seu estado
+            const isSelected = targetBudget.damaged_parts?.includes(partKey) || false;
+            const partElement = createPartElement(partKey, partsNames[partKey], isSelected);
+            partsGrid.appendChild(partElement);
+          }
+        });
       });
       
       printContainer.appendChild(partsGrid);
       
       // Rodapé com legenda
       const footer = document.createElement('div');
-      footer.style.marginTop = '30px';
+      footer.style.marginTop = '10px';
       footer.style.borderTop = '1px solid #ddd';
-      footer.style.paddingTop = '15px';
+      footer.style.paddingTop = '5px';
       
-      const legendTitle = document.createElement('p');
-      legendTitle.textContent = 'Materiais Especiais:';
-      legendTitle.style.fontWeight = 'bold';
-      legendTitle.style.marginBottom = '5px';
-      
-      const legend = document.createElement('p');
-      legend.textContent = 'A = ALUMÍNIO   K = COLA   P = PINTURA';
-      legend.style.fontSize = '12px';
-      
-      footer.appendChild(legendTitle);
-      footer.appendChild(legend);
+      const legendText = document.createElement('p');
+      legendText.innerHTML = '<strong style="font-size: 9px;">Materiais Especiais:</strong> <span style="font-size: 8px;">A = ALUMÍNIO   K = COLA   P = PINTURA</span>';
+      footer.appendChild(legendText);
       printContainer.appendChild(footer);
       
       // Observações
       if (targetBudget.note) {
         const notesSection = document.createElement('div');
-        notesSection.style.marginTop = '20px';
+        notesSection.style.marginTop = '8px';
         
         const notesTitle = document.createElement('p');
         notesTitle.textContent = 'Observações:';
         notesTitle.style.fontWeight = 'bold';
-        notesTitle.style.marginBottom = '5px';
+        notesTitle.style.marginBottom = '2px';
+        notesTitle.style.fontSize = '9px';
         
         const notesContent = document.createElement('p');
         notesContent.textContent = targetBudget.note;
-        notesContent.style.fontSize = '12px';
-        notesContent.style.padding = '8px';
+        notesContent.style.fontSize = '8px';
+        notesContent.style.padding = '4px';
         notesContent.style.border = '1px solid #ddd';
-        notesContent.style.borderRadius = '4px';
+        notesContent.style.borderRadius = '3px';
         
         notesSection.appendChild(notesTitle);
         notesSection.appendChild(notesContent);
