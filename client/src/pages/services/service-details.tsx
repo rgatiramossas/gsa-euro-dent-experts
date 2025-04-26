@@ -474,6 +474,12 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   <Button variant="outline">Editar Serviço</Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-5xl h-[90vh]">
+                  <DialogHeader>
+                    <DialogTitle>Editar Serviço</DialogTitle>
+                    <DialogDescription>
+                      Edite os detalhes deste serviço.
+                    </DialogDescription>
+                  </DialogHeader>
                   {/* Dialog content goes here */}
                 </DialogContent>
               </Dialog>
