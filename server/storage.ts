@@ -683,18 +683,20 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, paymentRequest[0].technician_id))
       .limit(1);
     
+    // No método getPaymentRequest, a visualização técnico/admin será determinada no frontend 
+    // baseada no papel do usuário atual, então vamos enviar ambos os valores
+    const serviceTotalValue = requestItems.reduce((sum, item) => 
+      sum + (item.service?.total || 0), 0);
+    
+    const technicianTotalValue = requestItems.reduce((sum, item) => 
+      sum + (item.service?.price || 0), 0);
+    
     return {
       ...paymentRequest[0],
       technician: technician[0] || null,
       items: requestItems,
-      // Para técnicos, mostrar apenas o preço do serviço
-      totalValue: requestItems.reduce((sum, item) => {
-        const isTechnicianView = paymentRequest[0].technician_id && !technician[0]?.id;
-        const valueToAdd = isTechnicianView 
-          ? (item.service?.price || 0) 
-          : (item.service?.total || 0);
-        return sum + valueToAdd;
-      }, 0)
+      totalValue: serviceTotalValue, // Valor total para admin
+      technicianValue: technicianTotalValue // Valor para o técnico
     };
   }
   
@@ -733,15 +735,24 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(serviceTypes, eq(services.service_type_id, serviceTypes.id));
       
       req.items = items;
-      // Para técnicos, calcular o valor total apenas com o preço do serviço
-      // Para admin, somar o valor total completo
-      const isTechnicianView = req.technician_id && !technicianId;
-      req.totalValue = items.reduce((sum, item) => {
-        const valueToAdd = isTechnicianView 
-          ? (item.service?.price || 0) 
-          : (item.service?.total || 0);
-        return sum + valueToAdd;
-      }, 0);
+      
+      // Calcular ambos os valores (para técnico e para admin)
+      const serviceTotalValue = items.reduce((sum, item) => 
+        sum + (item.service?.total || 0), 0);
+      
+      const technicianTotalValue = items.reduce((sum, item) => 
+        sum + (item.service?.price || 0), 0);
+      
+      // Se technicianId estiver definido, significa que é um técnico visualizando seus próprios pedidos
+      if (technicianId) {
+        req.totalValue = technicianTotalValue; // Valor para o técnico
+      } else {
+        req.totalValue = serviceTotalValue; // Valor total para admin
+      }
+      
+      // Armazenar ambos os valores para flexibilidade no frontend
+      req.serviceTotalValue = serviceTotalValue; // Valor total
+      req.technicianValue = technicianTotalValue; // Valor do técnico
     }
     
     return results;
