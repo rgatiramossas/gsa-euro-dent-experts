@@ -62,18 +62,45 @@ export function PhotoUpload({
   };
   
   const handleFiles = (files: FileList) => {
-    // Verificar se o número de arquivos excede o limite
-    if (multiple && files.length > maxFiles) {
+    // Se o componente já tem arquivos selecionados, verificamos a soma total
+    const existingCount = selectedFiles ? selectedFiles.length : 0;
+    const newCount = files.length;
+    const totalCount = existingCount + newCount;
+    
+    // Verificar se o número total de arquivos excede o limite
+    if (multiple && totalCount > maxFiles) {
       toast({
         title: "Limite de arquivos excedido",
-        description: `Você pode selecionar no máximo ${maxFiles} fotos.`,
+        description: `Você pode selecionar no máximo ${maxFiles} fotos no total. Você já selecionou ${existingCount} foto(s).`,
         variant: "destructive",
       });
       return;
     }
     
-    setSelectedFiles(files);
-    onChange(files);
+    // Se estivermos combinando arquivos existentes com novos arquivos
+    if (selectedFiles && existingCount > 0) {
+      // Criar um novo DataTransfer para combinar os arquivos
+      const dataTransfer = new DataTransfer();
+      
+      // Adicionar arquivos existentes
+      Array.from(selectedFiles).forEach(file => {
+        dataTransfer.items.add(file);
+      });
+      
+      // Adicionar novos arquivos
+      Array.from(files).forEach(file => {
+        dataTransfer.items.add(file);
+      });
+      
+      // Gerar o novo FileList combinado
+      const combinedFiles = dataTransfer.files;
+      setSelectedFiles(combinedFiles);
+      onChange(combinedFiles);
+    } else {
+      // Caso não tenha arquivos anteriores, apenas use os novos
+      setSelectedFiles(files);
+      onChange(files);
+    }
     
     // Limpar previews antigos
     previewUrls.forEach(url => URL.revokeObjectURL(url));
@@ -111,13 +138,13 @@ export function PhotoUpload({
       >
         <div className="space-y-1 text-center">
           {previewUrls.length > 0 ? (
-            <div className="mb-4 grid grid-cols-5 gap-2">
+            <div className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
               {previewUrls.map((url, index) => (
-                <div key={index} className="relative group">
+                <div key={index} className="relative group aspect-w-4 aspect-h-3">
                   <img 
                     src={url} 
                     alt={`Foto ${index + 1}`} 
-                    className="h-20 w-full object-cover rounded"
+                    className="w-full h-24 object-cover rounded"
                   />
                   <span className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-1 rounded-bl rounded-tr">
                     {index + 1}/{previewUrls.length}
@@ -153,9 +180,9 @@ export function PhotoUpload({
                   </button>
                 </div>
               ))}
-              {/* Mostrar slots vazios para completar até 5 */}
-              {[...Array(Math.max(0, 5 - previewUrls.length))].map((_, index) => (
-                <div key={`empty-${index}`} className="h-20 border border-dashed border-gray-300 rounded flex items-center justify-center">
+              {/* Mostrar slots vazios para completar até o maxFiles */}
+              {[...Array(Math.max(0, maxFiles - previewUrls.length))].map((_, index) => (
+                <div key={`empty-${index}`} className="h-24 border border-dashed border-gray-300 rounded flex items-center justify-center">
                   <span className="text-gray-400 text-xs">Vazio</span>
                 </div>
               ))}

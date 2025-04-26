@@ -488,19 +488,25 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const calculateRemainingPhotoSlots = (): number => {
     if (!service || !service.photos) return 4; // Se não há serviço ou fotos, permite o máximo
     
-    // Conta o número total de fotos existentes
+    // Conta o número total de fotos existentes no servidor
     const existingPhotosCount = 
       (service.photos.service?.length || 0) + 
       (service.photos.before?.length || 0) + 
       (service.photos.after?.length || 0);
     
+    // Conta novas fotos adicionadas localmente (ainda não enviadas ao servidor)
+    const newPhotosCount = servicePhotos ? servicePhotos.length : 0;
+    
     // Subtrai o número de fotos marcadas para remoção
     const countAfterRemovals = existingPhotosCount - photosToRemove.length;
     
-    // Calcular o número máximo de fotos que ainda podem ser adicionadas
-    const remainingSlots = Math.max(0, 4 - countAfterRemovals);
+    // Total de fotos após todas as alterações
+    const totalPhotos = countAfterRemovals + newPhotosCount;
     
-    console.log(`Slots de fotos disponíveis: ${remainingSlots} (total: ${existingPhotosCount}, removidas: ${photosToRemove.length})`);
+    // Calcular o número máximo de fotos que ainda podem ser adicionadas
+    const remainingSlots = Math.max(0, 4 - totalPhotos);
+    
+    console.log(`Slots de fotos disponíveis: ${remainingSlots} (existentes: ${existingPhotosCount}, removidas: ${photosToRemove.length}, novas: ${newPhotosCount}, total final: ${totalPhotos})`);
     
     return remainingSlots;
   };
