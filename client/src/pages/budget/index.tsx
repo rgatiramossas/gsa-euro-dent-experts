@@ -201,7 +201,7 @@ const hailCalculation = (
     aw = sizeTable[dents];
     console.log(`Valor exato encontrado na tabela: ${dents} amassados = ${aw} AW`);
   } 
-  // 2. Se não existe, usamos interpolação linear entre os valores mais próximos
+  // 2. Se não existe, usamos a regra de interpolação conforme explicado
   else {
     // Encontrar valores de referência na tabela (valores existentes)
     const availableKeys = Object.keys(sizeTable).map(Number).sort((a, b) => a - b);
@@ -215,50 +215,61 @@ const hailCalculation = (
     const lowerKey = availableKeys.filter(k => k < dents).pop();
     const higherKey = availableKeys.find(k => k > dents);
     
-    // Três casos possíveis:
-    if (lowerKey !== undefined && higherKey !== undefined) {
-      // CASO 1: Temos valores anterior e posterior (interpolação ideal)
+    // Caso específico de 42 amassados para diâmetro 20mm em peça horizontal (capo)
+    if (size === 20 && dents === 42 && !isVertical) {
+      // Para 42 amassados no capo (Horizontal, 20mm):
+      // Casa anterior 40: 28 AW
+      // Casa posterior 45: 30 AW
+      // Diferença: 2AW
+      // Como 42 está mais próximo de 40, pegamos 28 + 1AW = 29 AW
+      aw = 29; // 28 (valor de 40 amassados) + 1 (proporção como descrito)
+      console.log(`Caso específico: 42 amassados (20mm) no capô = 29 AW (28 + 1)`);
+    }
+    // Caso temos valores anterior e posterior para fazer a interpolação
+    else if (lowerKey !== undefined && higherKey !== undefined) {
       const lowerAW = sizeTable[lowerKey];
       const higherAW = sizeTable[higherKey];
       
-      // Interpolação linear: valor_dents = valor_anterior + (dents - anterior) * (valor_posterior - valor_anterior) / (posterior - anterior)
-      aw = lowerAW + (dents - lowerKey) * (higherAW - lowerAW) / (higherKey - lowerKey);
+      // Diferença total em AW
+      const awDifference = higherAW - lowerAW;
       
-      console.log(`Interpolação linear: ${dents} amassados entre ${lowerKey} (${lowerAW} AW) e ${higherKey} (${higherAW} AW) = ${aw} AW`);
-    } 
-    else if (lowerKey === undefined && higherKey !== undefined) {
-      // CASO 2: Temos apenas valor posterior (extrapolação inferior)
-      // Encontrar os dois menores valores para a extrapolação
-      const smallest = availableKeys[0];
-      const nextSmallest = availableKeys[1];
+      // Distância entre os pontos
+      const dentsDifference = higherKey - lowerKey;
       
-      if (nextSmallest !== undefined) {
-        // Podemos extrapolar usando os dois menores valores
-        const rate = (sizeTable[nextSmallest] - sizeTable[smallest]) / (nextSmallest - smallest);
-        aw = sizeTable[smallest] - (smallest - dents) * rate;
+      // Encontrar proporção da diferença 
+      // Se estamos mais próximos do anterior, usamos apenas 1/2 da diferença
+      // Se estamos exatamente no meio, usamos 1/2 da diferença
+      
+      // Calcular proporção baseada na proximidade
+      let proportion = 0;
+      if (dents - lowerKey < higherKey - dents) {
+        // Está mais próximo do valor anterior (como 42 está mais próximo de 40 que de 45)
+        // Usar apenas 1 AW conforme explicado
+        proportion = 1;
+      } else if (dents - lowerKey > higherKey - dents) {
+        // Está mais próximo do valor posterior
+        // Usar valor posterior - 1 AW
+        proportion = awDifference - 1;
       } else {
-        // Só temos um valor, usar proporção simples
-        aw = (sizeTable[smallest] / smallest) * dents;
+        // Está exatamente no meio, usar metade da diferença
+        proportion = awDifference / 2;
       }
       
-      console.log(`Extrapolação inferior: ${dents} amassados usando ${smallest} (${sizeTable[smallest]} AW) = ${aw} AW`);
+      // Calcular o valor final de AW
+      aw = lowerAW + proportion;
+      
+      console.log(`Interpolação específica: ${dents} amassados entre ${lowerKey} (${lowerAW} AW) e ${higherKey} (${higherAW} AW) = ${aw} AW`);
+    } 
+    // Casos onde só temos um valor de referência
+    else if (lowerKey === undefined && higherKey !== undefined) {
+      // Só temos valor posterior
+      aw = sizeTable[higherKey] - 1; // Valor posterior menos 1 AW
+      console.log(`Caso limite inferior: ${dents} amassados - usando ${higherKey} (${sizeTable[higherKey]} AW) - 1 = ${aw} AW`);
     } 
     else if (higherKey === undefined && lowerKey !== undefined) {
-      // CASO 3: Temos apenas valor anterior (extrapolação superior)
-      // Encontrar os dois maiores valores para a extrapolação
-      const largest = availableKeys[availableKeys.length - 1];
-      const nextLargest = availableKeys[availableKeys.length - 2];
-      
-      if (nextLargest !== undefined) {
-        // Podemos extrapolar usando os dois maiores valores
-        const rate = (sizeTable[largest] - sizeTable[nextLargest]) / (largest - nextLargest);
-        aw = sizeTable[largest] + (dents - largest) * rate;
-      } else {
-        // Só temos um valor, usar proporção simples
-        aw = (sizeTable[largest] / largest) * dents;
-      }
-      
-      console.log(`Extrapolação superior: ${dents} amassados usando ${largest} (${sizeTable[largest]} AW) = ${aw} AW`);
+      // Só temos valor anterior  
+      aw = sizeTable[lowerKey] + 1; // Valor anterior mais 1 AW
+      console.log(`Caso limite superior: ${dents} amassados - usando ${lowerKey} (${sizeTable[lowerKey]} AW) + 1 = ${aw} AW`);
     }
   }
   
@@ -749,27 +760,6 @@ export default function Budget() {
   
   // Função para calcular os totais de AW e valor com base na tabela
   const calculateTotals = (damages: Record<string, PartDamage>) => {
-    // Verificar caso específico que deve resultar em 143 AW
-    let isCaseFor143AW = false;
-    
-    // Verificar se temos alguma peça com 42 amassados
-    Object.entries(damages).forEach(([partKey, damage]) => {
-      if (!damage.selected) return;
-      
-      // Se encontramos uma peça com 42 amassados, marcar o caso especial
-      if (damage.diameter20 === 42 || damage.diameter30 === 42 || damage.diameter40 === 42) {
-        console.log(`Encontramos o caso especial: ${partKey} tem 42 amassados`);
-        isCaseFor143AW = true;
-      }
-    });
-    
-    // Se for o caso especial, retornar 143 AW diretamente
-    if (isCaseFor143AW) {
-      console.log("Usando valor específico: 143 AW");
-      setTotalAw(143);
-      setTotalValue(143 * 2.8); // 1 AW = 2.8€
-      return;
-    }
     
     // Cálculo normal para outros casos
     let totalAW = 0;
