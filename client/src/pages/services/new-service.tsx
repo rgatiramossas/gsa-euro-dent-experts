@@ -68,7 +68,7 @@ const formSchema = insertServiceSchema.extend({
   scheduled_time: z.string().optional(),
   status: z.string().default("pending"),
   price: z.number().optional().nullable(),
-  displacement_fee: z.number().optional().nullable().default(0),
+  administrative_fee: z.number().optional().nullable().default(0),
   // Campo para upload de fotos (apenas para o formulário, não é enviado diretamente)
   photos: z.any().optional(), // z.any() para permitir FileList
   // Garantir que campos opcionais não causem problemas
@@ -119,7 +119,7 @@ export default function NewService() {
       description: "",
       location_type: "client_location",
       price: 0,
-      displacement_fee: 0,
+      administrative_fee: 0,
       // photos removido
       address: "",
       latitude: null,
@@ -196,11 +196,11 @@ export default function NewService() {
         ? formattedData.price 
         : 0;
       
-      const displacementFee = formattedData.displacement_fee !== undefined && formattedData.displacement_fee !== null 
-        ? formattedData.displacement_fee 
+      const administrativeFee = formattedData.administrative_fee !== undefined && formattedData.administrative_fee !== null 
+        ? formattedData.administrative_fee 
         : 0;
       
-      formattedData.total = price + displacementFee;
+      formattedData.total = price + administrativeFee;
       
       // Remover parâmetros desnecessários dos dados
       const { scheduled_time, photos, ...serviceData } = formattedData;
@@ -645,7 +645,7 @@ export default function NewService() {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valor do Serviço (€)</FormLabel>
+                      <FormLabel>Valor do Serviço (Técnico) (€)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -665,10 +665,10 @@ export default function NewService() {
                 {user?.role === 'admin' && (
                   <FormField
                     control={form.control}
-                    name="displacement_fee"
+                    name="administrative_fee"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Valor Administrativo (€)</FormLabel>
+                        <FormLabel>Taxa Administrativa (€)</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -680,6 +680,9 @@ export default function NewService() {
                             value={field.value !== undefined ? field.value?.toFixed(2) : '0.00'}
                           />
                         </FormControl>
+                        <FormDescription>
+                          Comissão para o administrador (apenas visível para administradores)
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
