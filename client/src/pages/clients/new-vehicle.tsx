@@ -52,7 +52,6 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
       client_id: parseInt(clientId),
       make: "",
       model: "",
-      year: new Date().getFullYear(), // Ano atual como padrão
       color: "",
       license_plate: "",
       vin: "",
@@ -114,7 +113,7 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
               <CardTitle>Informações do Veículo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="make"
@@ -137,28 +136,6 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
                       <FormLabel>Modelo</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Ex: Civic, Corolla, etc." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="year"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ano</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field} 
-                          value={field.value}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))}
-                          placeholder="Ex: 2022"
-                          min={1900}
-                          max={new Date().getFullYear() + 1}
-                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

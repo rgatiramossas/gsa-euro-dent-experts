@@ -46,7 +46,6 @@ export const vehicles = pgTable("vehicles", {
   client_id: integer("client_id").notNull().references(() => clients.id),
   make: text("make").notNull(),
   model: text("model").notNull(),
-  year: integer("year").notNull(),
   color: text("color"),
   license_plate: text("license_plate"),
   vin: text("vin"),
