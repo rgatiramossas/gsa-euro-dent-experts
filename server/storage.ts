@@ -847,11 +847,33 @@ export class DatabaseStorage implements IStorage {
         .from(paymentRequestItems)
         .where(eq(paymentRequestItems.payment_request_id, id));
       
+      // Atualizar status das ordens de serviço para "faturado"
       for (const item of items) {
         await db
           .update(services)
           .set({ status: "faturado" })
           .where(eq(services.id, item.service_id));
+          
+        // Atualizar transações relacionadas a este serviço de "aguardando aprovação" para "faturado"
+        // Buscar todas as transações com status "aguardando_aprovacao" para este serviço
+        const servicesToUpdate = await db
+          .select()
+          .from(services)
+          .where(eq(services.id, item.service_id));
+        
+        if (servicesToUpdate.length > 0) {
+          const service = servicesToUpdate[0];
+          // Atualizar as transações relacionadas ao cliente e veículo deste serviço
+          await db
+            .update(services)
+            .set({ status: "faturado" })
+            .where(
+              and(
+                eq(services.client_id, service.client_id),
+                eq(services.status, "aguardando_aprovacao")
+              )
+            );
+        }
       }
     }
     
@@ -864,11 +886,33 @@ export class DatabaseStorage implements IStorage {
         .from(paymentRequestItems)
         .where(eq(paymentRequestItems.payment_request_id, id));
       
+      // Atualizar status das ordens de serviço para "pago"
       for (const item of items) {
         await db
           .update(services)
           .set({ status: "pago" })
           .where(eq(services.id, item.service_id));
+          
+        // Atualizar transações relacionadas a este serviço de "faturado" para "pago"
+        // Buscar todas as transações com status "faturado" para este serviço
+        const servicesToUpdate = await db
+          .select()
+          .from(services)
+          .where(eq(services.id, item.service_id));
+        
+        if (servicesToUpdate.length > 0) {
+          const service = servicesToUpdate[0];
+          // Atualizar as transações relacionadas ao cliente e veículo deste serviço
+          await db
+            .update(services)
+            .set({ status: "pago" })
+            .where(
+              and(
+                eq(services.client_id, service.client_id),
+                eq(services.status, "faturado")
+              )
+            );
+        }
       }
       
       // Registrar despesa automaticamente
@@ -928,6 +972,29 @@ export class DatabaseStorage implements IStorage {
           .update(services)
           .set({ status: "completed" })
           .where(eq(services.id, item.service_id));
+          
+        // Também atualizar transações relacionadas para "completed"
+        const servicesToUpdate = await db
+          .select()
+          .from(services)
+          .where(eq(services.id, item.service_id));
+        
+        if (servicesToUpdate.length > 0) {
+          const service = servicesToUpdate[0];
+          // Atualizar as transações relacionadas ao cliente e veículo deste serviço
+          await db
+            .update(services)
+            .set({ status: "completed" })
+            .where(
+              and(
+                eq(services.client_id, service.client_id),
+                or(
+                  eq(services.status, "aguardando_aprovacao"),
+                  eq(services.status, "faturado")
+                )
+              )
+            );
+        }
       }
     }
     
