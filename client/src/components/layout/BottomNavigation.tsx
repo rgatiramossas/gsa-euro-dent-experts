@@ -1,22 +1,37 @@
 import React from "react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Home, 
   Briefcase, 
   Users, 
-  FileText
+  FileText,
+  Calendar,
+  BarChart
 } from "lucide-react";
 
 export function BottomNavigation() {
   const [location, setLocation] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
-  const mobileNavItems = [
+  // Itens comuns a todos os usuários
+  const commonNavItems = [
     {
       name: "Início",
       path: "/dashboard",
       icon: <Home className="h-6 w-6" />,
     },
+    {
+      name: "Orçamentos",
+      path: "/budget",
+      icon: <FileText className="h-6 w-6" />,
+    }
+  ];
+
+  // Itens específicos para administradores
+  const adminItems = [
     {
       name: "Serviços",
       path: "/services",
@@ -26,12 +41,27 @@ export function BottomNavigation() {
       name: "Clientes",
       path: "/clients",
       icon: <Users className="h-6 w-6" />,
+    }
+  ];
+
+  // Itens específicos para técnicos
+  const technicianItems = [
+    {
+      name: "Agenda",
+      path: "/eventos",
+      icon: <Calendar className="h-6 w-6" />,
     },
     {
-      name: "Orçamentos",
-      path: "/budget",
-      icon: <FileText className="h-6 w-6" />,
+      name: "Finanças",
+      path: "/finances",
+      icon: <BarChart className="h-6 w-6" />,
     }
+  ];
+
+  // Monta o menu conforme o perfil do usuário
+  const mobileNavItems = [
+    ...commonNavItems,
+    ...(isAdmin ? adminItems : technicianItems)
   ];
 
   return (
