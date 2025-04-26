@@ -482,8 +482,12 @@ export class DatabaseStorage implements IStorage {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
+    // Para técnicos, somamos apenas o preço do serviço (sem deslocamento)
+    // Para admin, somamos o valor total
+    const valueField = technicianId ? services.price : services.total;
+    
     const [revenueResult] = await db.select({ 
-      sum: sql<number>`COALESCE(SUM(${services.total}), 0)` 
+      sum: sql<number>`COALESCE(SUM(${valueField}), 0)` 
     })
     .from(services)
     .where(
@@ -683,7 +687,14 @@ export class DatabaseStorage implements IStorage {
       ...paymentRequest[0],
       technician: technician[0] || null,
       items: requestItems,
-      totalValue: requestItems.reduce((sum, item) => sum + (item.service?.total || 0), 0)
+      // Para técnicos, mostrar apenas o preço do serviço
+      totalValue: requestItems.reduce((sum, item) => {
+        const isTechnicianView = paymentRequest[0].technician_id && !technician[0]?.id;
+        const valueToAdd = isTechnicianView 
+          ? (item.service?.price || 0) 
+          : (item.service?.total || 0);
+        return sum + valueToAdd;
+      }, 0)
     };
   }
   
@@ -722,7 +733,15 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(serviceTypes, eq(services.service_type_id, serviceTypes.id));
       
       req.items = items;
-      req.totalValue = items.reduce((sum, item) => sum + (item.service?.total || 0), 0);
+      // Para técnicos, calcular o valor total apenas com o preço do serviço
+      // Para admin, somar o valor total completo
+      const isTechnicianView = req.technician_id && !technicianId;
+      req.totalValue = items.reduce((sum, item) => {
+        const valueToAdd = isTechnicianView 
+          ? (item.service?.price || 0) 
+          : (item.service?.total || 0);
+        return sum + valueToAdd;
+      }, 0);
     }
     
     return results;
