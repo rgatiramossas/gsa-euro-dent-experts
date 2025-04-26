@@ -84,10 +84,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   // Nova abordagem para edição inline
   const [isEditing, setIsEditing] = useState(false);
+  // Mantendo for compatibilidade temporária
   const [beforePhotos, setBeforePhotos] = useState<FileList | null>(null);
   const [afterPhotos, setAfterPhotos] = useState<FileList | null>(null);
   const [beforePhotoPreview, setBeforePhotoPreview] = useState<string | null>(null);
   const [afterPhotoPreview, setAfterPhotoPreview] = useState<string | null>(null);
+  // Nova abordagem unificada
+  const [servicePhotos, setServicePhotos] = useState<FileList | null>(null);
+  const [servicePhotoPreview, setServicePhotoPreview] = useState<string | null>(null);
   const [photosToRemove, setPhotosToRemove] = useState<number[]>([]);
   
   // Simulação de dados dos técnicos - normalmente viria de uma API
@@ -271,6 +275,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     setAfterPhotos(null);
     setBeforePhotoPreview(null);
     setAfterPhotoPreview(null);
+    // Resetar também as fotos de serviço
+    setServicePhotos(null);
+    setServicePhotoPreview(null);
     setPhotosToRemove([]);
   };
   
@@ -340,7 +347,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       
       // Verificar se existem dados para atualizar
       const hasChanges = Object.keys(updateData).length > 0;
-      const hasPhotos = beforePhotos || afterPhotos || photosToRemove.length > 0;
+      // Incluir também servicePhotos para a verificação
+      const hasPhotos = servicePhotos || beforePhotos || afterPhotos || photosToRemove.length > 0;
       
       if (!hasChanges && !hasPhotos) {
         toast({
@@ -361,17 +369,23 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         }
       });
       
-      // Adicionar fotos do serviço se houver (usando novo formato 'service')
-      if (beforePhotos) {
-        Array.from(beforePhotos).forEach((file: File) => {
-          formData.append('photos', file);
+      // Nova abordagem unificada - fotos de serviço
+      if (servicePhotos) {
+        Array.from(servicePhotos).forEach((file: File) => {
+          formData.append('photos_service', file);
         });
       }
       
-      // Manter compatibilidade com sistema antigo - caso exista
+      // Manter suporte a tipos anteriores para compatibilidade durante a transição
+      if (beforePhotos) {
+        Array.from(beforePhotos).forEach((file: File) => {
+          formData.append('photos_before', file);
+        });
+      }
+      
       if (afterPhotos) {
         Array.from(afterPhotos).forEach((file: File) => {
-          formData.append('photos', file);
+          formData.append('photos_after', file);
         });
       }
       
@@ -381,7 +395,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       }
       
       // Tentar enviar como JSON normal se não houver fotos
-      if (!beforePhotos && !afterPhotos && photosToRemove.length === 0) {
+      if (!servicePhotos && !beforePhotos && !afterPhotos && photosToRemove.length === 0) {
         console.log("Enviando como JSON:", updateData);
         updateServiceMutation.mutate(updateData);
       } else {
@@ -457,6 +471,27 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     setAfterPhotoPreview(previewUrls.join(','));
     
     console.log(`${files.length} fotos 'depois' selecionadas`);
+  };
+  
+  // Função para receber novas fotos do tipo "service" (abordagem unificada)
+  const handleServicePhotoChange = (files: FileList) => {
+    if (files.length === 0) return;
+    
+    setServicePhotos(files);
+    
+    // Limpar previews antigos
+    if (servicePhotoPreview) {
+      URL.revokeObjectURL(servicePhotoPreview);
+    }
+    
+    // Criar previews para mostrar ao usuário
+    const previewUrls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      previewUrls.push(URL.createObjectURL(files[i]));
+    }
+    setServicePhotoPreview(previewUrls.join(','));
+    
+    console.log(`${files.length} fotos de serviço selecionadas`);
   };
   
   // Função para marcar uma foto para remoção
