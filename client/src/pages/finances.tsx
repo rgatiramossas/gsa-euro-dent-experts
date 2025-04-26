@@ -1091,6 +1091,30 @@ export default function Finances() {
                               </AlertDialog>
                             </div>
                           )}
+                          
+                          {/* Botão de Pagar para pedidos aprovados */}
+                          {request.status === "aprovado" && (
+                            <div className="flex space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-blue-600 hover:text-blue-700 border-blue-600 hover:border-blue-700 hover:bg-blue-50"
+                                onClick={() => handleOpenPaymentDialog(request)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Pagar
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {/* Mostrar data de pagamento para pedidos pagos */}
+                          {request.status === "pago" && request.payment_date && (
+                            <div className="text-sm text-gray-500">
+                              Pago em: {formatDate(request.payment_date)}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="p-4">
@@ -1450,6 +1474,126 @@ export default function Finances() {
                   Cancelar
                 </Button>
                 <Button type="submit">Salvar</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de pagamento */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar Pagamento</DialogTitle>
+            <DialogDescription>
+              Registre os detalhes do pagamento ao técnico {selectedPaymentRequest?.technician?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...paymentForm}>
+            <form onSubmit={paymentForm.handleSubmit(handleSubmitPayment)} className="space-y-4">
+              <FormField
+                control={paymentForm.control}
+                name="payment_method"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Método de Pagamento</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o método de pagamento" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="pix">PIX</SelectItem>
+                        <SelectItem value="transferencia">Transferência Bancária</SelectItem>
+                        <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                        <SelectItem value="cheque">Cheque</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={paymentForm.control}
+                name="payment_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data do Pagamento</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={paymentForm.control}
+                name="transaction_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID da Transação (opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Exemplo: código PIX, número de referência" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={paymentForm.control}
+                name="payment_notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações (opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Informações adicionais sobre o pagamento"
+                        className="min-h-[80px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="pt-4 border-t">
+                <div className="mb-4 flex justify-between">
+                  <span className="font-semibold">Valor a pagar:</span>
+                  <span className="font-bold">
+                    {formatCurrency(
+                      selectedPaymentRequest?.services?.reduce((sum: number, s: any) => {
+                        return sum + (s.price || 0);
+                      }, 0) || 0
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setPaymentDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={registerPaymentMutation.isPending}
+                >
+                  {registerPaymentMutation.isPending ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></div>
+                      Processando...
+                    </div>
+                  ) : "Confirmar Pagamento"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
