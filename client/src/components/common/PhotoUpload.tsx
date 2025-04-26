@@ -25,10 +25,32 @@ export function PhotoUpload({
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   
+  // Converter string de preview para array se necessário
+  useEffect(() => {
+    if (preview) {
+      // Limpar previews antigos
+      previewUrls.forEach(url => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      // Se o preview for uma string separada por vírgulas, dividi-la
+      const urls = preview.includes(',') ? preview.split(',') : [preview];
+      setPreviewUrls(urls);
+    } else {
+      setPreviewUrls([]);
+    }
+  }, [preview]);
+  
   // Limpar URLs de pré-visualização quando o componente for desmontado
   useEffect(() => {
     return () => {
-      previewUrls.forEach(url => URL.revokeObjectURL(url));
+      previewUrls.forEach(url => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
     };
   }, [previewUrls]);
   

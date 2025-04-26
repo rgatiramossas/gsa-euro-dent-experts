@@ -511,14 +511,32 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const handleServicePhotoChange = (files: FileList) => {
     if (files.length === 0 || !service) return;
     
-    // Verificar quantas fotos já existem no servidor menos as marcadas para remoção
-    const existingPhotosOnServer = 
-      ((service.photos?.service?.length || 0) + 
-      (service.photos?.before?.length || 0) + 
-      (service.photos?.after?.length || 0)) - photosToRemove.length;
+    // Calcular corretamente as fotos existentes no servidor
+    const currentPhotos = [
+      ...(service.photos?.service || []),
+      ...(service.photos?.before || []),
+      ...(service.photos?.after || [])
+    ];
     
-    // Verificar se o número de novas fotos ultrapassa o limite
+    // Filtrar fotos que não estão marcadas para remoção
+    const remainingPhotos = currentPhotos.filter(photo => !photosToRemove.includes(photo.id));
+    
+    // Verificar quantas fotos existentes temos desconsiderando as marcadas para remoção
+    const existingPhotosOnServer = remainingPhotos.length;
+    
+    console.log("Contagem de fotos existentes:", {
+      service: service.photos?.service?.length || 0,
+      before: service.photos?.before?.length || 0,
+      after: service.photos?.after?.length || 0,
+      total: currentPhotos.length,
+      marcadasParaRemover: photosToRemove.length,
+      realmenteExistentes: existingPhotosOnServer
+    });
+    
+    // Calcular slots restantes
     const remainingSlots = 4 - existingPhotosOnServer;
+    
+    console.log(`Slots disponíveis: ${remainingSlots} (4 - ${existingPhotosOnServer})`);
     
     if (remainingSlots <= 0) {
       toast({
@@ -546,9 +564,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     // Atualizar o estado com a lista de novas fotos
     setServicePhotos(newFileList);
     
-    // Limpar previews antigos
+    // Limpar previews antigos se existirem
     if (servicePhotoPreview) {
-      URL.revokeObjectURL(servicePhotoPreview);
+      servicePhotoPreview.split(',').forEach(url => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
     }
     
     // Criar previews para mostrar ao usuário
@@ -556,9 +578,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     for (let i = 0; i < newFileList.length; i++) {
       previewUrls.push(URL.createObjectURL(newFileList[i]));
     }
-    setServicePhotoPreview(previewUrls.join(','));
+    
+    // Armazenar os URLs de preview separados por vírgula
+    const previewUrlsString = previewUrls.join(',');
+    setServicePhotoPreview(previewUrlsString);
     
     console.log(`Total de ${newFileList.length} novas fotos de serviço selecionadas.`);
+    console.log("Preview URLs:", previewUrlsString);
     
     // Mostrar feedback ao usuário
     if (newFiles.length < files.length) {
