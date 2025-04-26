@@ -22,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Trash2 } from "lucide-react";
+import { CalendarIcon, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
   Card, 
@@ -409,6 +409,35 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     })();
   };
   
+  // Exclusão de fotos individuais
+  const deletePhotoMutation = useMutation({
+    mutationFn: async (photoId: number) => {
+      return await apiRequest(`/api/services/${id}/photos/${photoId}`, 'DELETE');
+    },
+    onSuccess: (data) => {
+      // Atualizar os dados do serviço para refletir a foto removida
+      queryClient.invalidateQueries({queryKey: [`/api/services/${id}`]});
+      
+      toast({
+        title: "Foto removida",
+        description: `Foto removida com sucesso. Restam ${data.remainingSlots} slots disponíveis.`,
+      });
+    },
+    onError: (error) => {
+      console.error('Erro ao excluir foto:', error);
+      toast({
+        title: "Erro ao remover foto",
+        description: "Ocorreu um erro ao remover a foto",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Função para lidar com a exclusão de uma foto
+  const handleDeletePhoto = (photoId: number) => {
+    deletePhotoMutation.mutate(photoId);
+  };
+  
   const deleteServiceMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest(`/api/services/${id}`, 'DELETE');
@@ -767,7 +796,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             <Badge className="absolute top-1 left-1 bg-blue-500 text-white">
                               Serviço
                             </Badge>
-                            {isEditMode && (
+                            {isEditing && (
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(photo.id)}
