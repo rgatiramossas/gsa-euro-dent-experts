@@ -557,27 +557,36 @@ export class DatabaseStorage implements IStorage {
       );
     
     // 4. Faturamento total (todas as OS concluídas, em qualquer período)
-    // Admin vê valor total, técnico vê apenas seu valor
+    // Admin vê valor total (preço + taxa administrativa), técnico vê apenas seu valor (price)
     console.log('Calculando faturamento para:', technicianId ? `Técnico ID ${technicianId}` : 'Admin');
     
-    // Calcular o faturamento real a partir dos dados do banco
-    const valueField = technicianId ? services.price : services.total;
-    const [revenueResult] = await db.select({ 
-      sum: sql<number>`COALESCE(SUM(${valueField}), 0)` 
-    })
-    .from(services)
-    .where(
-      and(
-        or(
-          eq(services.status, 'completed'),
-          eq(services.status, 'aguardando_aprovacao'),
-          eq(services.status, 'faturado'),
-          eq(services.status, 'pago')
-        ),
-        ...baseConditions
-      )
-    );
-    const totalRevenue = revenueResult.sum || 0;
+    let totalRevenue = 0;
+    
+    // Obter todos os serviços concluídos que correspondem aos filtros
+    const completedServices = await db.select()
+      .from(services)
+      .where(
+        and(
+          or(
+            eq(services.status, 'completed'),
+            eq(services.status, 'aguardando_aprovacao'),
+            eq(services.status, 'faturado'),
+            eq(services.status, 'pago')
+          ),
+          ...baseConditions
+        )
+      );
+    
+    // Calcular o valor de acordo com o tipo de usuário
+    if (technicianId) {
+      // Para técnicos: apenas a soma do valor do serviço (price)
+      totalRevenue = completedServices.reduce((sum, service) => 
+        sum + (service.price || 0), 0);
+    } else {
+      // Para administradores: soma do valor do serviço (price) + taxa administrativa (administrative_fee)
+      totalRevenue = completedServices.reduce((sum, service) => 
+        sum + (service.price || 0) + (service.administrative_fee || 0), 0);
+    }
     
     // Converter para o formato esperado pelo frontend
     const totalPendingServices = typeof pendingResult.count === 'string' 
@@ -596,7 +605,7 @@ export class DatabaseStorage implements IStorage {
       totalPendingServices,
       totalInProgressServices: totalFaturadoServices, // Mudou de in_progress para faturado, mantendo o nome da prop para compatibilidade
       totalCompletedServices,
-      totalRevenue
+      totalRevenue: totalRevenue
     };
     
     console.log('Stats formatados para envio:', stats);
