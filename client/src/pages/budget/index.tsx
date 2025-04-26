@@ -340,7 +340,7 @@ export default function Budget() {
   };
   
   // Função para atualizar a quantidade de um diâmetro específico
-  const handleDiameterChange = (part: string, diameter: 'diameter20' | 'diameter30' | 'diameter40', value: number) => {
+  const handleDiameterChange = (part: string, diameter: 'diameter20' | 'diameter30' | 'diameter40', value: number, inputElement?: HTMLInputElement) => {
     setPartDamages(prev => {
       // Determinar se a peça está selecionada com base em se algum diâmetro tem um valor > 0
       const newPartDamage = {
@@ -401,7 +401,13 @@ export default function Budget() {
       
       setTotalAw(totalAWValue);
       setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
-    }, 0);
+      
+      // Restaurar o foco e selecionar o input se o elemento foi passado
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select();
+      }
+    }, 10); // Aumentei um pouco o timeout para garantir que o React terminou de renderizar
   };
   
   const handlePhotoUpload = () => {
@@ -430,15 +436,8 @@ export default function Budget() {
       const numValue = parseInt(value) || 0;
       const currentInput = e.target;
       
-      // Atualizar o valor no estado
-      handleDiameterChange(partKey, diameter, numValue);
-      
-      // Usar um timeout para garantir que o estado já foi atualizado
-      setTimeout(() => {
-        // Manter foco e selecionar o texto
-        currentInput.focus();
-        currentInput.select();
-      }, 0);
+      // Atualizar o valor no estado e passar o elemento input
+      handleDiameterChange(partKey, diameter, numValue, currentInput);
     };
     
     return (
