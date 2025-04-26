@@ -21,15 +21,18 @@ export default function Dashboard() {
     queryKey: ['/api/dashboard/stats'],
   });
   
-  // Converter os dados antigos para o novo formato
+  // Usar os dados do backend diretamente com os novos nomes
   const stats: DashboardStats = React.useMemo(() => {
     if (!statsResponse) return undefined;
     
+    console.log("Stats recebidos do backend:", statsResponse);
+    
+    // Usar diretamente os dados que recebemos do backend
     return {
-      totalPendingServices: statsResponse.pendingServices || 0,
-      totalInProgressServices: statsResponse.inProgressServices || 0,
-      totalCompletedServices: statsResponse.completedToday || 0,
-      totalRevenue: statsResponse.monthlyRevenue || 0
+      totalPendingServices: statsResponse.totalPendingServices || 0,
+      totalInProgressServices: statsResponse.totalInProgressServices || 0,
+      totalCompletedServices: statsResponse.totalCompletedServices || 0,
+      totalRevenue: statsResponse.totalRevenue || 0
     };
   }, [statsResponse]);
 
