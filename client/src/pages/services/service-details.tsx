@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ServiceWithDetails, ServiceStatus } from "@/types";
+import { ServiceWithDetails, ServiceStatus, ServiceType } from "@/types";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,6 +82,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const [statusNotes, setStatusNotes] = useState("");
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [uploadedPhotos, setUploadedPhotos] = useState<FileList | null>(null);
   
   // Simulação de dados dos técnicos - normalmente viria de uma API
   const technicians = [
@@ -91,6 +92,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const { data: service, isLoading, error } = useQuery<ServiceWithDetails>({
     queryKey: [`/api/services/${id}`],
+  });
+  
+  const { data: serviceTypes } = useQuery<ServiceType[]>({
+    queryKey: ['/api/service-types'],
   });
   
   // Criar um formulário para edição com valores padrão
@@ -512,119 +517,88 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   
                   <Form {...editForm}>
                     <form onSubmit={editForm.handleSubmit((data) => updateServiceMutation.mutate(data))} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Tipo de Serviço */}
-                        <FormField
-                          control={editForm.control}
-                          name="service_type_id"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Tipo de Serviço</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="text"
-                                  value={service.serviceType?.name || ""}
-                                  disabled
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        {/* Técnico */}
-                        <FormField
-                          control={editForm.control}
-                          name="technician_id"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Técnico</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="text"
-                                  value={service.technician?.name || "Não atribuído"}
-                                  disabled
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Cliente */}
-                        <FormItem>
-                          <FormLabel>Cliente</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="text"
-                              value={service.client?.name || ""}
-                              disabled
-                            />
-                          </FormControl>
-                        </FormItem>
-                        
-                        {/* Veículo */}
-                        <FormItem>
-                          <FormLabel>Veículo</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="text"
-                              value={service.vehicle ? `${service.vehicle.make} ${service.vehicle.model} ${service.vehicle.year}` : ""}
-                              disabled
-                            />
-                          </FormControl>
-                        </FormItem>
-                      </div>
-                      
-                      {/* Descrição */}
+                      {/* Tipo de Serviço */}
                       <FormField
                         control={editForm.control}
-                        name="description"
+                        name="service_type_id"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Descrição</FormLabel>
+                            <FormLabel>Tipo de Serviço</FormLabel>
                             <FormControl>
-                              <textarea
-                                className="min-h-[100px] flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                placeholder="Descrição do serviço"
-                                {...field}
-                              />
+                              <Select
+                                onValueChange={(value) => field.onChange(parseInt(value))}
+                                defaultValue={field.value?.toString()}
+                                value={field.value?.toString()}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o tipo de serviço" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {serviceTypes?.map((type) => (
+                                    <SelectItem key={type.id} value={type.id.toString()}>
+                                      {type.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </FormControl>
                           </FormItem>
                         )}
                       />
                       
-                      {/* Valores */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={editForm.control}
-                          name="price"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Valor do Serviço (€)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  placeholder="0,00"
-                                  {...field}
-                                  onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                                  value={field.value !== undefined ? field.value : 0}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      {/* Informações do Cliente */}
+                      <div>
+                        <h3 className="font-medium mb-3">Informações do Cliente</h3>
                         
-                        {currentUser?.role === 'admin' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                          {/* Cliente */}
+                          <FormItem>
+                            <FormLabel>Cliente</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                value={service.client?.name || ""}
+                                disabled
+                              />
+                            </FormControl>
+                          </FormItem>
+                          
+                          {/* Veículo */}
+                          <FormItem>
+                            <FormLabel>Veículo</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                value={service.vehicle ? `${service.vehicle.make} ${service.vehicle.model} ${service.vehicle.year}` : ""}
+                                disabled
+                              />
+                            </FormControl>
+                          </FormItem>
+                        </div>
+                      </div>
+                      
+                      {/* Técnico */}
+                      <FormItem>
+                        <FormLabel>Técnico</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            value={service.technician?.name || "Não atribuído"}
+                            disabled
+                          />
+                        </FormControl>
+                      </FormItem>
+                      
+                      {/* Valores */}
+                      <div>
+                        <h3 className="font-medium mb-3">Valores</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <FormField
                             control={editForm.control}
-                            name="displacement_fee"
+                            name="price"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Valor Administrativo (€)</FormLabel>
+                                <FormLabel>Valor do Serviço (€)</FormLabel>
                                 <FormControl>
                                   <Input
                                     type="number"
@@ -640,26 +614,32 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               </FormItem>
                             )}
                           />
-                        )}
+                          
+                          {currentUser?.role === 'admin' && (
+                            <FormField
+                              control={editForm.control}
+                              name="displacement_fee"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Valor Administrativo (€)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      placeholder="0,00"
+                                      {...field}
+                                      onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                                      value={field.value !== undefined ? field.value : 0}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                        </div>
                       </div>
-                      
-                      {/* Notas */}
-                      <FormField
-                        control={editForm.control}
-                        name="notes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Observações</FormLabel>
-                            <FormControl>
-                              <textarea
-                                className="min-h-[100px] flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                placeholder="Observações adicionais"
-                                {...field}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
                       
                       <div className="flex justify-end space-x-2 pt-4">
                         <Button 
