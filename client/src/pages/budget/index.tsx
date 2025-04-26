@@ -56,6 +56,9 @@ interface PartDamage {
   diameter20: number;
   diameter30: number;
   diameter40: number;
+  optionA: boolean;
+  optionK: boolean;
+  optionP: boolean;
 }
 
 interface CarPart {
@@ -97,20 +100,20 @@ export default function Budget() {
   
   // Estado para os danos do veículo (peças)
   const [partDamages, setPartDamages] = useState<Record<string, PartDamage>>({
-    paraLamaEsquerdo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    capo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    paraLamaDireito: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    colunaEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    teto: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 }, 
-    colunaDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    portaDianteiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    portaDianteiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    portaTraseiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    portaMalasSuperior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    portaTraseiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    lateralEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    portaMalasInferior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-    lateralDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 }
+    paraLamaEsquerdo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    capo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    paraLamaDireito: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    colunaEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    teto: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false }, 
+    colunaDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    portaDianteiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    portaDianteiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    portaTraseiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    portaMalasSuperior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    portaTraseiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    lateralEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    portaMalasInferior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+    lateralDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false }
   });
   
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -228,20 +231,20 @@ export default function Budget() {
       setLicensePlate("");
       setChassisNumber("");
       setPartDamages({
-        paraLamaEsquerdo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        capo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        paraLamaDireito: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        colunaEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        teto: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 }, 
-        colunaDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        portaDianteiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        portaDianteiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        portaTraseiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        portaMalasSuperior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        portaTraseiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        lateralEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        portaMalasInferior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 },
-        lateralDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0 }
+        paraLamaEsquerdo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        capo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        paraLamaDireito: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        colunaEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        teto: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false }, 
+        colunaDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        portaDianteiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        portaDianteiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        portaTraseiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        portaMalasSuperior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        portaTraseiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        lateralEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        portaMalasInferior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false },
+        lateralDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false }
       });
       setPhotoUrl(null);
       setTotalAw(0);
@@ -468,6 +471,60 @@ export default function Budget() {
               autoComplete="off"
               className="w-16 h-7 text-xs"
             />
+          </div>
+          
+          {/* Checkboxes A, K, P */}
+          <div className="flex justify-between pt-1 border-t mt-2">
+            <div className="flex items-center gap-1">
+              <Checkbox 
+                id={`${partKey}-optionA`} 
+                checked={damage.optionA}
+                onCheckedChange={(checked) => {
+                  setPartDamages(prev => ({
+                    ...prev,
+                    [partKey]: {
+                      ...prev[partKey],
+                      optionA: !!checked
+                    }
+                  }));
+                }}
+              />
+              <label htmlFor={`${partKey}-optionA`} className="text-xs">(A)</label>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <Checkbox 
+                id={`${partKey}-optionK`} 
+                checked={damage.optionK}
+                onCheckedChange={(checked) => {
+                  setPartDamages(prev => ({
+                    ...prev,
+                    [partKey]: {
+                      ...prev[partKey],
+                      optionK: !!checked
+                    }
+                  }));
+                }}
+              />
+              <label htmlFor={`${partKey}-optionK`} className="text-xs">(K)</label>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <Checkbox 
+                id={`${partKey}-optionP`} 
+                checked={damage.optionP}
+                onCheckedChange={(checked) => {
+                  setPartDamages(prev => ({
+                    ...prev,
+                    [partKey]: {
+                      ...prev[partKey],
+                      optionP: !!checked
+                    }
+                  }));
+                }}
+              />
+              <label htmlFor={`${partKey}-optionP`} className="text-xs">(P)</label>
+            </div>
           </div>
         </div>
       </div>
