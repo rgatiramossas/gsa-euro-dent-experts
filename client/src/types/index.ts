@@ -85,7 +85,7 @@ export interface Service {
 export interface ServicePhoto {
   id: number;
   service_id: number;
-  photo_type: 'before' | 'after';
+  photo_type: 'before' | 'after' | 'service';
   photo_url: string;
   created_at?: string;
 }
@@ -99,6 +99,7 @@ export interface ServiceWithDetails extends Service {
   photos?: {
     before: ServicePhoto[];
     after: ServicePhoto[];
+    service: ServicePhoto[];
   };
 }
 
