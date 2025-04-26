@@ -796,21 +796,25 @@ export default function Budget() {
           checkbox.style.marginRight = '4px';
           checkbox.style.backgroundColor = 'white';
           
-          // Letra colorida dentro de box
+          // Letra colorida dentro de box (ajustando posição vertical conforme referência)
           const colorBox = document.createElement('div');
           colorBox.style.width = '14px';
           colorBox.style.height = '14px';
           colorBox.style.backgroundColor = optionColors[option as keyof typeof optionColors];
           colorBox.style.borderRadius = '2px';
-          colorBox.style.display = 'flex';
-          colorBox.style.justifyContent = 'center';
-          colorBox.style.alignItems = 'center';
+          colorBox.style.position = 'relative'; // Para posicionamento absoluto do label
           
           const label = document.createElement('span');
           label.textContent = option;
           label.style.fontSize = '8px';
           label.style.fontWeight = 'bold';
           label.style.color = '#333';
+          label.style.position = 'absolute';
+          label.style.top = '4px'; // Ajuste para posicionar no centro vertical do box
+          label.style.left = '0';
+          label.style.right = '0';
+          label.style.textAlign = 'center';
+          label.style.lineHeight = '6px';
           
           colorBox.appendChild(label);
           optionGroup.appendChild(checkbox);
