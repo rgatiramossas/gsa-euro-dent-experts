@@ -865,36 +865,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const requestId = Number(req.params.id);
+      console.log("Dados recebidos para pagamento:", JSON.stringify(req.body));
+      
+      // Extrair dados do corpo da requisição
       const { payment_date, payment_details } = req.body;
+      
+      console.log("ID do pedido:", requestId);
+      console.log("Data do pagamento:", payment_date);
+      console.log("Detalhes do pagamento:", JSON.stringify(payment_details));
       
       // Verificar se o pedido existe e está no status aprovado
       const request = await storage.getPaymentRequest(requestId);
-      if (!request || request.status !== "aprovado") {
+      
+      if (!request) {
+        console.log("Pedido não encontrado com ID:", requestId);
+        return res.status(404).json({ message: "Pedido de pagamento não encontrado" });
+      }
+      
+      console.log("Status atual do pedido:", request.status);
+      
+      if (request.status !== "aprovado") {
         return res.status(400).json({ 
           message: "Um pedido de pagamento só pode ser pago após ser aprovado" 
         });
       }
       
       // Verificar se os dados de pagamento foram fornecidos
-      if (!payment_date || !payment_details) {
-        return res.status(400).json({ 
-          message: "Data e detalhes do pagamento são obrigatórios" 
-        });
+      if (!payment_date) {
+        console.log("Data de pagamento não fornecida");
+        return res.status(400).json({ message: "Data do pagamento é obrigatória" });
       }
       
-      // Atualizar status para "pago" e registrar detalhes do pagamento
-      const updatedRequest = await storage.updatePaymentRequestStatus(
-        requestId, 
-        "pago", 
-        payment_details
-      );
-      
-      if (!updatedRequest) {
-        return res.status(404).json({ message: "Pedido de pagamento não encontrado" });
+      if (!payment_details) {
+        console.log("Detalhes do pagamento não fornecidos");
+        return res.status(400).json({ message: "Detalhes do pagamento são obrigatórios" });
       }
       
-      // Retorno simplificado para evitar problemas de JSON
-      res.json({ status: "success" });
+      try {
+        // Atualizar status para "pago" e registrar detalhes do pagamento
+        const updatedRequest = await storage.updatePaymentRequestStatus(
+          requestId, 
+          "pago", 
+          payment_details
+        );
+        
+        console.log("Resposta da atualização:", updatedRequest ? "Sucesso" : "Falha");
+        
+        if (!updatedRequest) {
+          return res.status(404).json({ message: "Falha ao atualizar pedido de pagamento" });
+        }
+        
+        // Retorno simplificado para evitar problemas de JSON
+        console.log("Enviando resposta de sucesso");
+        res.json({ status: "success" });
+      } catch (storageError) {
+        console.error("Erro no storage ao atualizar pagamento:", storageError);
+        res.status(500).json({ message: "Erro ao processar o pagamento no banco de dados" });
+      }
     } catch (error) {
       console.error("Erro ao registrar pagamento:", error);
       res.status(500).json({ message: "Erro ao registrar pagamento" });
