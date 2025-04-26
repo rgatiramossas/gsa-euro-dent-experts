@@ -150,8 +150,7 @@ export default function Finances() {
   const { data: technicians } = useQuery<{id: number, name: string}[]>({
     queryKey: ['/api/users', 'technician'],
     queryFn: async () => {
-      const result = await apiRequest('/api/users', 'GET', null, { params: { role: 'technician' } });
-      return result;
+      return await apiRequest('/api/users', 'GET', null, { params: { role: 'technician' } });
     },
     enabled: isAdmin,
   });
