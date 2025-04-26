@@ -149,7 +149,10 @@ export default function Finances() {
   // Get all technicians for admin payment request selection
   const { data: technicians } = useQuery<{id: number, name: string}[]>({
     queryKey: ['/api/users'],
-    queryFn: () => apiRequest('/api/users?role=tecnico'),
+    queryFn: async () => {
+      const result = await apiRequest('/api/users?role=tecnico');
+      return result;
+    },
     enabled: isAdmin,
   });
   
@@ -170,9 +173,18 @@ export default function Finances() {
   // Mutation para criar pedido de pagamento
   const createPaymentRequestMutation = useMutation({
     mutationFn: async (serviceIds: number[]) => {
-      return await apiRequest('/api/payment-requests', 'POST', { 
-        service_ids: serviceIds 
-      });
+      // Se for admin, inclui o técnico selecionado (ou null se não houver)
+      if (isAdmin) {
+        return await apiRequest('/api/payment-requests', 'POST', { 
+          service_ids: serviceIds,
+          technician_id: selectedTechnician
+        });
+      } else {
+        // Para técnicos, usa apenas os IDs de serviço
+        return await apiRequest('/api/payment-requests', 'POST', { 
+          service_ids: serviceIds
+        });
+      }
     },
     onSuccess: () => {
       // Invalidar cache para atualizar dados de serviços e pedidos
