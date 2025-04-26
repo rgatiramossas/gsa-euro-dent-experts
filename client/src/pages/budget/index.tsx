@@ -329,79 +329,70 @@ export default function Budget() {
       description: `Visualizando detalhes do orçamento #${budgetId}.`,
     });
   };
-
-  const handleToggleDamagedPart = (part: string, checked: boolean) => {
-    setPartDamages(prev => ({
-      ...prev,
-      [part]: {
-        ...prev[part],
-        selected: checked
-      }
-    }));
-    
-    // Atualizar automaticamente o total de AW com base nas peças selecionadas
-    const updatedDamages = {
-      ...partDamages,
-      [part]: {
-        ...partDamages[part],
-        selected: checked
-      }
-    };
-    
-    // Contar número de peças danificadas
-    const newCount = Object.values(updatedDamages).filter(damage => damage.selected).length;
-    
-    // Calcular total de diâmetros
-    let totalDiameters = 0;
-    Object.values(updatedDamages).forEach(damage => {
-      if (damage.selected) {
-        totalDiameters += damage.diameter20 + damage.diameter30 + damage.diameter40;
-      }
-    });
-    
-    // Usar a contagem de peças se não houver diâmetros informados
-    const totalAWValue = totalDiameters > 0 ? totalDiameters : newCount;
-    
-    setTotalAw(totalAWValue);
-    setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
-  };
   
   // Função para atualizar a quantidade de um diâmetro específico
   const handleDiameterChange = (part: string, diameter: 'diameter20' | 'diameter30' | 'diameter40', value: number) => {
-    setPartDamages(prev => ({
-      ...prev,
-      [part]: {
+    setPartDamages(prev => {
+      // Determinar se a peça está selecionada com base em se algum diâmetro tem um valor > 0
+      const newPartDamage = {
         ...prev[part],
-        [diameter]: value,
-        selected: value > 0 ? true : prev[part].selected // Seleciona automaticamente se valor > 0
-      }
-    }));
-    
-    // Recalcular totais
-    const updatedDamages = {
-      ...partDamages,
-      [part]: {
-        ...partDamages[part],
-        [diameter]: value,
-        selected: value > 0 ? true : partDamages[part].selected
-      }
-    };
-    
-    // Calcular total de diâmetros
-    let totalDiameters = 0;
-    Object.values(updatedDamages).forEach(damage => {
-      if (damage.selected) {
-        totalDiameters += damage.diameter20 + damage.diameter30 + damage.diameter40;
-      }
+        [diameter]: value
+      };
+      
+      // Atualizar selected baseado em se algum diâmetro tem um valor
+      const hasValue = newPartDamage.diameter20 > 0 || newPartDamage.diameter30 > 0 || newPartDamage.diameter40 > 0;
+      newPartDamage.selected = hasValue;
+      
+      return {
+        ...prev,
+        [part]: newPartDamage
+      };
     });
     
-    const selectedCount = Object.values(updatedDamages).filter(damage => damage.selected).length;
-    
-    // Usar a contagem de diâmetros se houver algum, senão usar a contagem de peças
-    const totalAWValue = totalDiameters > 0 ? totalDiameters : selectedCount;
-    
-    setTotalAw(totalAWValue);
-    setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
+    // Recalcular totais - usar setTimeout para garantir que o estado foi atualizado
+    setTimeout(() => {
+      // Calcular total de diâmetros
+      let totalDiameters = 0;
+      let selectedCount = 0;
+      
+      Object.values(partDamages).forEach(damage => {
+        // Determinar se a peça tem algum valor positivo em qualquer diâmetro
+        const hasValue = damage.diameter20 > 0 || damage.diameter30 > 0 || damage.diameter40 > 0;
+        
+        if (hasValue) {
+          selectedCount++;
+          totalDiameters += damage.diameter20 + damage.diameter30 + damage.diameter40;
+        }
+      });
+      
+      // Consideramos a peça sendo editada agora
+      const currentDamage = {
+        ...partDamages[part],
+        [diameter]: value
+      };
+      
+      const currentHasValue = currentDamage.diameter20 > 0 || currentDamage.diameter30 > 0 || currentDamage.diameter40 > 0;
+      
+      // Atualizar os totais com os valores atuais
+      if (currentHasValue && !partDamages[part].selected) {
+        selectedCount++;
+        totalDiameters += currentDamage.diameter20 + currentDamage.diameter30 + currentDamage.diameter40;
+      } else if (!currentHasValue && partDamages[part].selected) {
+        selectedCount--;
+        totalDiameters -= (partDamages[part].diameter20 + partDamages[part].diameter30 + partDamages[part].diameter40);
+        totalDiameters += currentDamage.diameter20 + currentDamage.diameter30 + currentDamage.diameter40;
+      } else if (partDamages[part].selected) {
+        // Ajustar apenas o diâmetro que mudou
+        totalDiameters -= partDamages[part][diameter];
+        totalDiameters += value;
+      }
+      
+      // Usar a contagem de diâmetros se houver algum, senão usar a contagem de peças
+      const totalAWValue = totalDiameters > 0 ? totalDiameters : selectedCount;
+      
+      setTotalAw(totalAWValue);
+      setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
+    }, 0);
   };
   
   const handlePhotoUpload = () => {
@@ -419,16 +410,11 @@ export default function Budget() {
     
     return (
       <div className="p-2 border rounded-md space-y-3">
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id={partKey} 
-            checked={damage.selected}
-            onCheckedChange={(checked) => handleToggleDamagedPart(partKey, !!checked)}
-          />
-          <label htmlFor={partKey} className="text-sm font-medium">{label}</label>
+        <div className="font-medium text-sm text-center border-b pb-1 mb-1">
+          {label}
         </div>
         
-        <div className="space-y-2 pl-6">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label htmlFor={`${partKey}-20`} className="text-xs">20mm:</label>
             <Input
