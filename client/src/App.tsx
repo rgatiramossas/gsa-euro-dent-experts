@@ -29,6 +29,10 @@ import NewVehicle from "@/pages/clients/new-vehicle";
 import TechniciansList from "@/pages/technicians/index";
 import NewTechnician from "@/pages/technicians/new-technician";
 
+// Import manager related pages
+import ManagersList from "@/pages/managers/index";
+import NewManager from "@/pages/managers/new-manager";
+
 // Import budget page
 import Budget from "@/pages/budget/index";
 
@@ -175,6 +179,27 @@ function AppRoutes() {
           <RequireAdmin>
             <MainLayout>
               <NewTechnician />
+            </MainLayout>
+          </RequireAdmin>
+        </RequireAuth>
+      </Route>
+      
+      {/* Managers (Gestores) routes - apenas administradores podem gerenciar gestores */}
+      <Route path="/managers">
+        <RequireAuth>
+          <RequireAdmin>
+            <MainLayout>
+              <ManagersList />
+            </MainLayout>
+          </RequireAdmin>
+        </RequireAuth>
+      </Route>
+      
+      <Route path="/managers/new-manager">
+        <RequireAuth>
+          <RequireAdmin>
+            <MainLayout>
+              <NewManager />
             </MainLayout>
           </RequireAdmin>
         </RequireAuth>

@@ -6,7 +6,8 @@ import {
   Home, 
   Briefcase, 
   Users, 
-  FileText
+  FileText,
+  UserCog
 } from "lucide-react";
 
 export function BottomNavigation() {
