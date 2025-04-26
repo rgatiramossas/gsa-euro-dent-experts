@@ -376,11 +376,6 @@ export default function Budget() {
                   <TableHead>ID</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Veículo</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Desconto</TableHead>
-                  <TableHead>Final</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Validade</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -391,11 +386,6 @@ export default function Budget() {
                       <TableCell className="font-medium">{budget.id}</TableCell>
                       <TableCell>{budget.client_name}</TableCell>
                       <TableCell>{budget.vehicle_info}</TableCell>
-                      <TableCell>{formatCurrency(budget.total_value)}</TableCell>
-                      <TableCell>{budget.discount}%</TableCell>
-                      <TableCell className="font-medium">{formatCurrency(budget.final_value)}</TableCell>
-                      <TableCell>{getStatusBadge(budget.status)}</TableCell>
-                      <TableCell>{formatDate(budget.expiry_date)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button 
@@ -428,7 +418,7 @@ export default function Budget() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-6 text-gray-500 italic">
+                    <TableCell colSpan={4} className="text-center py-6 text-gray-500 italic">
                       Nenhum orçamento encontrado. Crie um novo orçamento para começar.
                     </TableCell>
                   </TableRow>
