@@ -399,13 +399,21 @@ export class DatabaseStorage implements IStorage {
   
   // Dashboard data
   async getDashboardStats(technicianId?: number): Promise<any> {
+    // Condições base para todos os filtros (excluir serviços deletados)
+    const baseConditions = [sql`${services.status} != 'deleted'`];
+    
+    // Se for um técnico específico, adiciona a condição de filtrar por ID
+    if (technicianId) {
+      baseConditions.push(eq(services.technician_id, technicianId));
+    }
+    
     // Count pending services
     const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)
       .where(
         and(
           eq(services.status, 'pending'),
-          sql`${services.status} != 'deleted'`
+          ...baseConditions
         )
       );
     
@@ -415,7 +423,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(services.status, 'in_progress'),
-          sql`${services.status} != 'deleted'`
+          ...baseConditions
         )
       );
     
@@ -429,7 +437,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(services.status, 'completed'),
           sql`DATE(${services.completion_date}) = CURRENT_DATE`,
-          sql`${services.status} != 'deleted'`
+          ...baseConditions
         )
       );
     
@@ -445,7 +453,7 @@ export class DatabaseStorage implements IStorage {
       and(
         eq(services.status, 'completed'),
         sql`${services.completion_date} >= ${thirtyDaysAgo}`,
-        sql`${services.status} != 'deleted'`
+        ...baseConditions
       )
     );
     

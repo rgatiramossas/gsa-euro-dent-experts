@@ -136,7 +136,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard routes
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {
-      const stats = await storage.getDashboardStats();
+      // Se for um técnico, passe o ID para filtrar os resultados
+      const userRole = req.session.userRole;
+      const userId = req.session.userId;
+      
+      let technicianId: number | undefined = undefined;
+      if (userRole === "technician") {
+        technicianId = userId;
+      }
+      
+      const stats = await storage.getDashboardStats(technicianId);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -146,6 +155,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/dashboard/technician-performance", requireAuth, async (req, res) => {
     try {
+      // Verifica se o usuário é um administrador
+      const userRole = req.session.userRole;
+      
+      if (userRole === "technician") {
+        // Se for técnico, retorna um array vazio para esconder a seção no frontend
+        return res.json([]);
+      }
+      
       const performance = await storage.getTechnicianPerformance();
       res.json(performance);
     } catch (error) {
