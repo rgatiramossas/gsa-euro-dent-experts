@@ -943,15 +943,26 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
                       </div>
                       
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Taxa administrativa</span>
-                        <span className="text-gray-800 font-medium">{formatCurrency(service.administrative_fee || 0)}</span>
-                      </div>
+                      {/* Taxa administrativa visível apenas para administradores */}
+                      {currentUser?.role === 'admin' && (
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600">Taxa administrativa</span>
+                          <span className="text-gray-800 font-medium">{formatCurrency(service.administrative_fee || 0)}</span>
+                        </div>
+                      )}
                       
-                      <div className="flex justify-between py-2 font-medium">
-                        <span className="text-gray-700">Total</span>
-                        <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
-                      </div>
+                      {/* Total diferente para admin e gestor/técnico */}
+                      {currentUser?.role === 'admin' ? (
+                        <div className="flex justify-between py-2 font-medium">
+                          <span className="text-gray-700">Total</span>
+                          <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between py-2 font-medium">
+                          <span className="text-gray-700">Valor do Serviço</span>
+                          <span className="text-primary text-lg">{formatCurrency(service.price)}</span>
+                        </div>
+                      )}
                     </>
                   )}
                   

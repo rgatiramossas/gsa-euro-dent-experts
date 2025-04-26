@@ -13,9 +13,10 @@ import {
 export function BottomNavigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
-  // Menu padrão para todos os usuários
-  const mobileNavItems = [
+  // Itens padrões para todos os usuários
+  let mobileNavItems = [
     {
       name: "Início",
       path: "/dashboard",
@@ -37,6 +38,18 @@ export function BottomNavigation() {
       icon: <FileText className="h-6 w-6" />,
     }
   ];
+  
+  // Se for administrador, substitui o último item pelo menu de gestores
+  if (isAdmin) {
+    mobileNavItems = [
+      ...mobileNavItems.slice(0, 3),
+      {
+        name: "Gestores",
+        path: "/managers",
+        icon: <UserCog className="h-6 w-6" />,
+      }
+    ];
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">

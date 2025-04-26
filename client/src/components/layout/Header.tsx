@@ -102,7 +102,14 @@ export function Header() {
                 <DropdownMenuItem>
                   <div className="flex flex-col">
                     <span className="font-medium">{user.name}</span>
-                    <span className="text-xs text-gray-500">{user.role === "admin" ? "Administrador" : "Técnico"}</span>
+                    <span className="text-xs text-gray-500">
+                      {user.role === "admin" 
+                        ? "Administrador" 
+                        : user.role === "gestor"
+                          ? "Gestor" 
+                          : "Técnico"
+                      }
+                    </span>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
