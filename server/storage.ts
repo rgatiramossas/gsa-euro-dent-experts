@@ -326,6 +326,23 @@ export class DatabaseStorage implements IStorage {
       updatedData.completion_date = new Date(updatedData.completion_date);
     }
     
+    // Garantir que os campos numéricos sejam do tipo number
+    if (updatedData.price !== undefined) {
+      const price = Number(updatedData.price);
+      console.log(`Convertendo preço de ${updatedData.price} (${typeof updatedData.price}) para ${price} (number)`);
+      updatedData.price = price;
+    }
+    
+    if (updatedData.displacement_fee !== undefined) {
+      const fee = Number(updatedData.displacement_fee);
+      console.log(`Convertendo taxa de deslocamento de ${updatedData.displacement_fee} (${typeof updatedData.displacement_fee}) para ${fee} (number)`);
+      updatedData.displacement_fee = fee;
+    }
+    
+    if (updatedData.total !== undefined) {
+      updatedData.total = Number(updatedData.total);
+    }
+    
     try {
       const [updatedService] = await db.update(services)
         .set(updatedData)

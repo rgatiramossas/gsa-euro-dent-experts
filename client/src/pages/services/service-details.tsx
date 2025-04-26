@@ -170,12 +170,24 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   });
   
   const updateServiceMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const res = await fetch(`/api/services/${id}`, {
+    mutationFn: async (formData: FormData | Record<string, any>) => {
+      // Verificar se os dados são FormData ou um objeto regular
+      let options: RequestInit = {
         method: 'PATCH',
-        body: formData,
-        // Não definir Content-Type para multipart/form-data
-      });
+      };
+      
+      // Se for FormData, deixamos o Content-Type ser definido automaticamente
+      if (formData instanceof FormData) {
+        options.body = formData;
+      } else {
+        // Se for um objeto JSON, definimos o Content-Type
+        options.body = JSON.stringify(formData);
+        options.headers = {
+          'Content-Type': 'application/json'
+        };
+      }
+      
+      const res = await fetch(`/api/services/${id}`, options);
       
       if (!res.ok) {
         const errorText = await res.text();
@@ -291,12 +303,22 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         updateData.technician_id = data.technician_id;
       }
       
-      if (data.price !== service.price) {
-        updateData.price = data.price;
+      // Para valores numéricos, precisamos garantir que a comparação seja correta
+      // Converter para números para evitar problemas de tipo string vs number
+      const dataPrice = typeof data.price === 'string' ? parseFloat(data.price) : data.price;
+      const servicePrice = typeof service.price === 'string' ? parseFloat(service.price) : service.price;
+      
+      if (dataPrice !== servicePrice) {
+        console.log("Preço alterado de", servicePrice, "para", dataPrice);
+        updateData.price = dataPrice;
       }
       
-      if (data.displacement_fee !== service.displacement_fee) {
-        updateData.displacement_fee = data.displacement_fee;
+      const dataDisplacementFee = typeof data.displacement_fee === 'string' ? parseFloat(data.displacement_fee) : data.displacement_fee;
+      const serviceDisplacementFee = typeof service.displacement_fee === 'string' ? parseFloat(service.displacement_fee) : service.displacement_fee;
+      
+      if (dataDisplacementFee !== serviceDisplacementFee) {
+        console.log("Taxa de deslocamento alterada de", serviceDisplacementFee, "para", dataDisplacementFee);
+        updateData.displacement_fee = dataDisplacementFee;
       }
       
       if (data.description !== service.description) {

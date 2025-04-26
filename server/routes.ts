@@ -445,9 +445,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Recalculate total if price or displacement_fee is updated
       if (updates.price !== undefined || updates.displacement_fee !== undefined) {
-        const price = updates.price !== undefined ? updates.price : service.price || 0;
-        const displacementFee = updates.displacement_fee !== undefined ? updates.displacement_fee : service.displacement_fee || 0;
+        // Certificar-se de que os valores são numéricos
+        let price = updates.price !== undefined ? Number(updates.price) : Number(service.price) || 0;
+        let displacementFee = updates.displacement_fee !== undefined ? Number(updates.displacement_fee) : Number(service.displacement_fee) || 0;
+        
+        console.log('Calculando total com:', { price, displacementFee, oldPrice: service.price, oldFee: service.displacement_fee });
+        
+        updates.price = price;
+        updates.displacement_fee = displacementFee;
         updates.total = price + displacementFee;
+        
+        console.log('Novo total calculado:', updates.total);
       }
       
       // Update completion_date if status is being set to completed or outras etapas de faturamento
