@@ -229,27 +229,22 @@ const hailCalculation = (
       // Divisão da diferença por 2 (metade)
       const halfDifference = awDifference / 2;
       
-      // Calculando a distância para determinar qual valor usar como base
-      const distToLower = dents - lowerKey;
-      const distToHigher = higherKey - dents;
+      // Calcular o ponto médio entre os valores de referência
+      const middlePoint = (lowerKey + higherKey) / 2;
       
       console.log(`Calculando entre ${lowerKey}(${lowerAW} AW) e ${higherKey}(${higherAW} AW), diferença=${awDifference} AW, metade=${halfDifference} AW`);
+      console.log(`Ponto médio: ${middlePoint}, dents: ${dents}`);
       
       // Decisão baseada na proximidade
-      if (distToLower < distToHigher) {
+      if (dents >= middlePoint) {
+        // Está no meio ou mais próximo do valor posterior
+        aw = higherAW + halfDifference;
+        console.log(`No meio ou próximo do valor posterior: ${higherAW} + ${halfDifference} = ${aw} AW`);
+      } 
+      else {
         // Está mais próximo do valor anterior
         aw = lowerAW + halfDifference;
         console.log(`Mais próximo do valor anterior: ${lowerAW} + ${halfDifference} = ${aw} AW`);
-      } 
-      else if (distToLower > distToHigher) {
-        // Está mais próximo do valor posterior
-        aw = higherAW - halfDifference;
-        console.log(`Mais próximo do valor posterior: ${higherAW} - ${halfDifference} = ${aw} AW`);
-      } 
-      else {
-        // Está exatamente no meio, usar o valor posterior como base
-        aw = higherAW;
-        console.log(`Exatamente no meio, usando valor posterior: ${higherAW} AW`);
       }
     } 
     // Casos onde só temos um valor de referência
