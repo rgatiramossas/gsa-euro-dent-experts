@@ -386,6 +386,8 @@ export default function Budget() {
       total_value: number;
       note: string;
       vehicle_info?: string;
+      plate?: string;
+      chassisNumber?: string;
     }) => {
       // Em uma implementação real, faríamos uma chamada à API
       // const response = await apiRequest('POST', '/api/budgets', data);
@@ -433,10 +435,8 @@ export default function Budget() {
       // Fechar o dialog e limpar o form
       setShowDialog(false);
       setSelectedClient(null);
-      setSelectedVehicle(null);
       setNote("");
       setDate(new Date().toISOString().split('T')[0]);
-      setIsManualVehicle(false);
       setManualVehicleInfo("");
       setLicensePlate("");
       setChassisNumber("");
@@ -1111,8 +1111,6 @@ export default function Budget() {
     
     // Resetar o formulário primeiro
     setSelectedClient(null);
-    setSelectedVehicle(null);
-    setIsManualVehicle(true);
     setManualVehicleInfo(budget.vehicle_info || "");
     setDate(budget.date || new Date().toISOString().split('T')[0]);
     setNote(budget.note || "");
