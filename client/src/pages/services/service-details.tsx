@@ -351,7 +351,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       // Verificar se existem dados para atualizar
       const hasChanges = Object.keys(updateData).length > 0;
       // Incluir também servicePhotos para a verificação
-      const hasPhotos = servicePhotos || beforePhotos || afterPhotos || photosToRemove.length > 0;
+      const hasPhotos = (servicePhotos && servicePhotos.length > 0) || 
+                      (beforePhotos && beforePhotos.length > 0) || 
+                      (afterPhotos && afterPhotos.length > 0) || 
+                      photosToRemove.length > 0;
       
       if (!hasChanges && !hasPhotos) {
         toast({
@@ -360,6 +363,12 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         });
         setIsEditing(false);
         return;
+      }
+      
+      // Adicionar pelo menos um campo ao updateData para garantir que o servidor processe a solicitação
+      if (!hasChanges && hasPhotos) {
+        // Se não há alterações nos campos mas há fotos, precisamos enviar algo para o servidor processar
+        updateData._hasPhotoChanges = true;
       }
       
       // Criar o FormData para o envio
@@ -372,23 +381,28 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         }
       });
       
+      let hasAddedPhoto = false;
+      
       // Nova abordagem unificada - fotos de serviço
-      if (servicePhotos) {
+      if (servicePhotos && servicePhotos.length > 0) {
         Array.from(servicePhotos).forEach((file: File) => {
           formData.append('photos_service', file);
+          hasAddedPhoto = true;
         });
       }
       
       // Manter suporte a tipos anteriores para compatibilidade durante a transição
-      if (beforePhotos) {
+      if (beforePhotos && beforePhotos.length > 0) {
         Array.from(beforePhotos).forEach((file: File) => {
           formData.append('photos_before', file);
+          hasAddedPhoto = true;
         });
       }
       
-      if (afterPhotos) {
+      if (afterPhotos && afterPhotos.length > 0) {
         Array.from(afterPhotos).forEach((file: File) => {
           formData.append('photos_after', file);
+          hasAddedPhoto = true;
         });
       }
       
@@ -397,8 +411,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         formData.append('photos_to_remove', JSON.stringify(photosToRemove));
       }
       
+      // Se houver fotos adicionadas ou para remover, precisamos garantir que o servidor saiba disso
+      if (hasPhotos) {
+        formData.append('has_photo_changes', 'true');
+      }
+      
       // Tentar enviar como JSON normal se não houver fotos
-      if (!servicePhotos && !beforePhotos && !afterPhotos && photosToRemove.length === 0) {
+      if (!hasAddedPhoto && photosToRemove.length === 0) {
         console.log("Enviando como JSON:", updateData);
         updateServiceMutation.mutate(updateData);
       } else {
