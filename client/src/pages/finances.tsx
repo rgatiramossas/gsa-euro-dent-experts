@@ -155,6 +155,23 @@ export default function Finances() {
     queryKey: ['/api/services'],
   });
   
+  // Get all expenses
+  const { data: expenses, isLoading: loadingExpenses } = useQuery<Expense[]>({
+    queryKey: ['/api/expenses'],
+  });
+  
+  interface Expense {
+    id: number;
+    type: string;
+    amount: number;
+    date: string;
+    description: string;
+    payment_method: string;
+    provider?: string;
+    notes?: string;
+    created_at: string;
+  }
+  
   interface PaymentRequest {
     id: number;
     created_at: string;
@@ -719,22 +736,44 @@ export default function Finances() {
   // Chart colors
   const COLORS = ['#1a5276', '#2e86c1', '#f39c12', '#27ae60', '#e74c3c'];
   
+  // Mutation para criar nova despesa
+  const createExpenseMutation = useMutation({
+    mutationFn: async (data: ExpenseFormValues) => {
+      // Converter a string de valor para número
+      const cleanAmount = data.amount.replace(/[€\s]/g, '').replace(',', '.');
+      const amount = parseFloat(cleanAmount);
+      
+      return await apiRequest('/api/expenses', 'POST', {
+        type: data.category,
+        amount,
+        date: data.date,
+        description: data.description,
+        payment_method: 'manual', // Valor padrão
+        notes: data.notes,
+        provider: data.provider
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
+      toast({
+        title: "Despesa registrada",
+        description: "A despesa foi registrada com sucesso.",
+      });
+      expenseForm.reset();
+      setExpenseDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao registrar despesa",
+        description: `Ocorreu um erro: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
   // Lidar com o envio do formulário de despesas
   function onExpenseSubmit(data: ExpenseFormValues) {
-    // Aqui você pode tratar os dados do formulário
-    console.log("Dados do formulário de despesa:", data);
-    
-    // Converter a string de valor para número
-    const cleanAmount = data.amount.replace(/[€\s]/g, '').replace(',', '.');
-    const amount = parseFloat(cleanAmount);
-    
-    // TODO: Integrar com a API quando estiver pronta
-    // Por enquanto, apenas mostra uma mensagem e fecha o diálogo
-    alert(`Despesa "${data.description}" registrada com sucesso no valor de ${formatCurrency(amount)}`);
-    
-    // Resetar o formulário e fechar o diálogo
-    expenseForm.reset();
-    setExpenseDialogOpen(false);
+    createExpenseMutation.mutate(data);
   }
   
   return (
@@ -1182,18 +1221,54 @@ export default function Finances() {
                   <TableRow>
                     <TableHead>Data</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead>Categoria</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Fornecedor</TableHead>
+                    <TableHead>Método de Pagamento</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                      Nenhuma despesa encontrada
-                    </TableCell>
-                  </TableRow>
+                  {loadingExpenses ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <div className="flex justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : !expenses || expenses.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        Nenhuma despesa encontrada
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    expenses.map((expense) => (
+                      <TableRow key={expense.id} className="hover:bg-gray-50">
+                        <TableCell>{formatDate(expense.date)}</TableCell>
+                        <TableCell>{expense.description}</TableCell>
+                        <TableCell>
+                          <Badge className={
+                            expense.type === "salario" ? "bg-blue-600" : 
+                            expense.type === "operacional" ? "bg-green-600" :
+                            expense.type === "material" ? "bg-amber-600" : 
+                            "bg-slate-600"
+                          }>
+                            {expense.type === "salario" ? "Salário" :
+                             expense.type === "operacional" ? "Operacional" :
+                             expense.type === "material" ? "Material" :
+                             expense.type === "aluguel" ? "Aluguel" :
+                             expense.type === "alimentacao" ? "Alimentação" :
+                             expense.type === "transporte" ? "Transporte" : 
+                             expense.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{expense.provider}</TableCell>
+                        <TableCell>{expense.payment_method}</TableCell>
+                        <TableCell className="text-right font-medium">{formatCurrency(expense.amount)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

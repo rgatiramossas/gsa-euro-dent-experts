@@ -156,6 +156,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para criar despesa
+  app.post("/api/expenses", requireAuth, async (req, res) => {
+    try {
+      if (req.session.userRole !== "admin") {
+        return res.status(403).json({ message: "Apenas administradores podem criar despesas" });
+      }
+      
+      // Validar dados da requisição
+      const expenseData = req.body;
+      
+      // Inserir despesa no banco de dados
+      const [newExpense] = await db
+        .insert(expenses)
+        .values({
+          type: expenseData.type,
+          amount: expenseData.amount,
+          date: new Date(expenseData.date),
+          description: expenseData.description,
+          payment_method: expenseData.payment_method || "manual",
+          notes: expenseData.notes || null,
+          provider: expenseData.provider || null
+        })
+        .returning();
+      
+      res.status(201).json(newExpense);
+    } catch (error) {
+      console.error("Erro ao criar despesa:", error);
+      res.status(500).json({ message: "Erro ao criar despesa" });
+    }
+  });
+  
   // Dashboard routes
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {

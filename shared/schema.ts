@@ -209,6 +209,7 @@ export const expenses = pgTable("expenses", {
   date: timestamp("date").notNull(),
   description: text("description").notNull(),
   payment_method: text("payment_method").notNull(),
+  provider: text("provider"),
   notes: text("notes"),
   created_at: timestamp("created_at").defaultNow(),
 });
