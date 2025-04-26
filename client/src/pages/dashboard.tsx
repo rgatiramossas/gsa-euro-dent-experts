@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardStats, ServiceListItem, TechnicianPerformance as TechnicianPerformanceType } from "@/types";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -7,6 +7,7 @@ import { RecentServicesTable } from "@/components/dashboard/RecentServicesTable"
 import { PageHeader } from "@/components/common/PageHeader";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "wouter";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -44,7 +45,7 @@ export default function Dashboard() {
         description="Visão geral dos serviços e produtividade da equipe" 
       />
       
-      {/* Statistics Cards */}
+      {/* Statistics Cards - Com ações rápidas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           title="Serviços Pendentes"
@@ -55,6 +56,8 @@ export default function Dashboard() {
             </svg>
           }
           colorClass="bg-primary"
+          actionUrl="/services?status=pendente"
+          actionLabel="Ver pendentes"
         />
         
         <StatCard
@@ -66,6 +69,8 @@ export default function Dashboard() {
             </svg>
           }
           colorClass="bg-secondary"
+          actionUrl="/services?status=em_andamento"
+          actionLabel="Ver em andamento"
         />
         
         <StatCard
@@ -77,6 +82,8 @@ export default function Dashboard() {
             </svg>
           }
           colorClass="bg-success"
+          actionUrl="/services?status=concluido"
+          actionLabel="Ver concluídos"
         />
         
         <StatCard
@@ -88,7 +95,42 @@ export default function Dashboard() {
             </svg>
           }
           colorClass="bg-amber-500"
+          actionUrl="/finances"
+          actionLabel="Ver finanças"
         />
+      </div>
+      
+      {/* Quick Actions Row */}
+      <div className="flex flex-wrap gap-3 mb-8">
+        <Link href="/services/new" className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Novo Serviço
+        </Link>
+        
+        <Link href="/clients/new" className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+          Novo Cliente
+        </Link>
+        
+        <Link href="/budget" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          Novo Orçamento
+        </Link>
+        
+        {isAdmin && (
+          <Link href="/payment-requests" className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Pedidos de Pagamento
+          </Link>
+        )}
       </div>
       
       {/* Main Content */}
@@ -103,7 +145,7 @@ export default function Dashboard() {
         
         {/* Technician Performance - visível apenas para administradores */}
         {isAdmin && (
-          <div>
+          <div className="lg:col-span-1">
             <TechnicianPerformance
               technicians={techPerformance || []}
               isLoading={isLoadingPerformance}
