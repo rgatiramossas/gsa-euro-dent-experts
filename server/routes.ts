@@ -720,36 +720,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      console.log("Atualizando serviço com dados:", updates);
+      console.log("Atualizando serviço com dados brutos:", updates);
+      
+      // Filtrar campos que não devem ser enviados para o banco de dados
+      const filteredUpdates = {...updates};
+      
+      // Remover campos personalizados e temporários
+      const fieldsToRemove = [
+        '_hasPhotoChangesOnly', 
+        '_hasPhotoChanges', 
+        'has_photo_changes', 
+        'photos_to_remove'
+      ];
+      
+      // Remover todos os campos que começam com underscore e os campos específicos
+      Object.keys(filteredUpdates).forEach(key => {
+        if (key.startsWith('_') || fieldsToRemove.includes(key)) {
+          delete filteredUpdates[key];
+        }
+      });
+      
+      console.log("Atualizando serviço com dados filtrados:", filteredUpdates);
       
       // Recalculate total if price or displacement_fee is updated
-      if (updates.price !== undefined || updates.displacement_fee !== undefined) {
+      if (filteredUpdates.price !== undefined || filteredUpdates.displacement_fee !== undefined) {
         // Certificar-se de que os valores são numéricos
-        let price = updates.price !== undefined ? Number(updates.price) : Number(service.price) || 0;
-        let displacementFee = updates.displacement_fee !== undefined ? Number(updates.displacement_fee) : Number(service.displacement_fee) || 0;
+        let price = filteredUpdates.price !== undefined ? Number(filteredUpdates.price) : Number(service.price) || 0;
+        let displacementFee = filteredUpdates.displacement_fee !== undefined ? Number(filteredUpdates.displacement_fee) : Number(service.displacement_fee) || 0;
         
         console.log('Calculando total com:', { price, displacementFee, oldPrice: service.price, oldFee: service.displacement_fee });
         
-        updates.price = price;
-        updates.displacement_fee = displacementFee;
-        updates.total = price + displacementFee;
+        filteredUpdates.price = price;
+        filteredUpdates.displacement_fee = displacementFee;
+        filteredUpdates.total = price + displacementFee;
         
-        console.log('Novo total calculado:', updates.total);
+        console.log('Novo total calculado:', filteredUpdates.total);
       }
       
       // Update completion_date if status is being set to completed or outras etapas de faturamento
-      if (updates.status === "completed" && service.status !== "completed") {
-        updates.completion_date = new Date();
+      if (filteredUpdates.status === "completed" && service.status !== "completed") {
+        filteredUpdates.completion_date = new Date();
       }
       
       // Tratamento especial para outras mudanças de status
-      if (updates.status === "aguardando_aprovacao" && service.status !== "aguardando_aprovacao") {
+      if (filteredUpdates.status === "aguardando_aprovacao" && service.status !== "aguardando_aprovacao") {
         if (!service.completion_date) {
-          updates.completion_date = new Date();
+          filteredUpdates.completion_date = new Date();
         }
       }
       
-      const updatedService = await storage.updateService(id, updates);
+      // Se após a filtragem não sobrar nenhum campo, não tente atualizar o banco
+      if (Object.keys(filteredUpdates).length === 0) {
+        console.log("Após filtragem não há campos para atualizar, retornando o serviço sem alterar");
+        return res.json({
+          ...service,
+          message: "Fotos atualizadas com sucesso"
+        });
+      }
+      
+      const updatedService = await storage.updateService(id, filteredUpdates);
       res.json(updatedService);
     } catch (error) {
       console.error("Error updating service:", error);
