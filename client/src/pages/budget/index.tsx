@@ -84,6 +84,123 @@ interface Budget {
 
 
 
+// Definição de tipos para a tabela de cálculos
+type SizeTable = {
+  [key: number]: number;
+};
+
+type DiameterTable = {
+  20: SizeTable;
+  30: SizeTable;
+  40: SizeTable;
+};
+
+type OrientationTable = {
+  horizontal: DiameterTable;
+  vertical: DiameterTable;
+};
+
+// Função para calcular o valor de AW e custo baseado na tabela fornecida
+const hailCalculation = (
+  size: number,
+  dents: number,
+  isVertical = false,
+  isAluminum = false,
+  isGlueTechnique = false,
+  needsVordrucken = false,
+  needsHohlraum = false,
+  hourlyRate = 28 // Taxa horária padrão de 28€
+) => {
+  const baseData: OrientationTable = {
+    horizontal: {
+      20: { 1: 6, 2: 7, 3: 8, 4: 9, 5: 10, 6: 11, 7: 12, 8: 13, 9: 14, 10: 15,
+          13: 17, 16: 19, 19: 20, 22: 22, 25: 23, 28: 24, 31: 25, 34: 26, 37: 27, 40: 28,
+          45: 30, 50: 32, 55: 33, 60: 35, 65: 37, 70: 39, 75: 40, 80: 42, 85: 44, 90: 46,
+          95: 47, 100: 49, 110: 53, 120: 56, 130: 60, 140: 63, 150: 67, 160: 70, 170: 74, 180: 77,
+          190: 80, 200: 84, 210: 87, 220: 91, 230: 94, 240: 98, 250: 102, 260: 104, 270: 106, 280: 109,
+           300: 114, 325: 122, 350: 129, 375: 137, 400: 145, 425: 153, 450: 160, 475: 168, 500: 176, 525: 183,
+           550: 191, 575: 199, 600: 206 },
+    
+      30: { 1: 7, 2: 9, 3: 10, 4: 12, 5: 13, 6: 15, 7: 16, 8: 18, 9: 19, 10: 21,
+          13: 23, 16: 25, 19: 27, 22: 29, 25: 30, 28: 32, 31: 33, 34: 35, 37: 36, 40: 38,
+          45: 40, 50: 43, 55: 45, 60: 48, 65: 50, 70: 53, 75: 55, 80: 58, 85: 60, 90: 63,
+          95: 65, 100: 68, 110: 73, 120: 78, 130: 83, 140: 88, 150: 93, 160: 98, 170: 103, 180: 108,
+          190: 113, 200: 118, 210: 123, 220: 128, 230: 133, 240: 138, 250: 143, 260: 147, 270: 151, 280: 155,
+           300: 163, 325: 174, 350: 186, 375: 197, 400: 209, 425: 220, 450: 232, 475: 243, 500: 255, 525: 266,
+           550: 278, 575: 289, 600: 301 },
+
+      40: { 1: 8, 2: 10, 3: 12, 4: 14, 5: 16, 6: 18, 7: 20, 8: 22, 9: 24, 10: 26,
+          13: 29, 16: 32, 19: 35, 22: 37, 25: 40, 28: 42, 31: 44, 34: 46, 37: 48, 40: 50,
+          45: 54, 50: 57, 55: 61, 60: 64, 65: 68, 70: 71, 75: 75, 80: 78, 85: 82, 90: 85,
+          95: 89, 100: 92, 110: 99, 120: 106, 130: 113, 140: 120, 150: 127, 160: 134, 170: 141, 180: 148,
+          190: 155, 200: 162, 210: 169, 220: 176, 230: 183, 240: 190, 250: 197, 260: 203, 270: 209, 280: 215,
+           300: 229, 325: 246, 350: 264, 375: 281, 400: 298, 425: 315, 450: 332, 475: 349, 500: 366, 525: 384,
+           550: 401, 575: 418, 600: 435 }
+    },
+    vertical: {
+      20: { 1: 6, 2: 8, 3: 9, 4: 11, 5: 12, 6: 13, 7: 14, 8: 15, 9: 16, 10: 17,
+          11: 18, 12: 16, 13: 20, 14: 21, 15: 22, 16: 23, 17: 24, 18: 25, 19: 26, 20: 27,
+          21: 28, 22: 29, 23: 29, 24: 30, 25: 31, 26: 32, 27: 32, 28: 33, 29: 34, 30: 35, 31: 35,
+           32: 36, 33: 37, 34: 38, 35: 38, 36: 39, 37: 40, 38: 41, 39: 41,
+          40: 42, 41: 43, 42: 44, 43: 44, 44: 45, 45: 46, 46: 47, 47: 47, 48: 48, 49: 49,
+          50: 50, 51: 51, 52: 51, 53: 52, 54: 53, 55: 54, 60: 60, 65: 65, 70: 70, 80: 82, 90: 94, 100: 106 },
+      
+      30: { 1: 7, 2: 9, 3: 11, 4: 13, 5: 15, 6: 17, 7: 18, 8: 20, 9: 21, 10: 23,
+          11: 24, 12: 26, 13: 27, 14: 29, 15: 30, 16: 32, 17: 33, 18: 35, 19: 36, 20: 38,
+          21: 39, 22: 40, 23: 41, 24: 42, 25: 43, 26: 44, 27: 45, 28: 46, 29: 47, 30: 48, 31: 49,
+           32: 50, 33: 51, 34: 52, 35: 53, 36: 54, 37: 55, 38: 56, 39: 57,
+          40: 58, 41: 59, 42: 60, 43: 61, 44: 62, 45: 63, 46: 64, 47: 65, 48: 66, 49: 67,
+          50: 68, 51: 69, 52: 70, 53: 71, 54: 72, 55: 73, 60: 78, 65: 83, 70: 88, 80: 99, 90: 119, 100: 129 },
+    
+      40: { 1: 9, 2: 12, 3: 14, 4: 17, 5: 19, 6: 21, 7: 23, 8: 25, 9: 27, 10: 29,
+          11: 31, 12: 33, 13: 35, 14: 37, 15: 39, 16: 41, 17: 43, 18: 45, 19: 47, 20: 49,
+          21: 51, 22: 52, 23: 54, 24: 55, 25: 57, 26: 58, 27: 60, 28: 61, 29: 63, 30: 64, 31: 66,
+           32: 67, 33: 69, 34: 70, 35: 72, 36: 73, 37: 75, 38: 76, 39: 78,
+          40: 79, 41: 81, 42: 82, 43: 84, 44: 85, 45: 87, 46: 88, 47: 90, 48: 91, 49: 93,
+          50: 94, 51: 96, 52: 97, 53: 99, 54: 100, 55: 102, 60: 108, 65: 115, 70: 122, 80: 136, 90: 150, 100: 164 }
+    }
+  };
+
+  // Obtém a tabela correta com base na orientação
+  const awTable = isVertical ? baseData.vertical : baseData.horizontal;
+  
+  // Obtém a tabela específica para o tamanho (20mm, 30mm ou 40mm)
+  const sizeTable = (size === 20 || size === 30 || size === 40) ? awTable[size] : null;
+  
+  // Verifica se o tamanho existe na tabela
+  if (!sizeTable) {
+    console.warn(`Tamanho ${size}mm não encontrado na tabela.`);
+    return { aw: 0, hours: 0, cost: "0.00" };
+  }
+  
+  // Verifica se o número de amassados existe para esse tamanho
+  if (!sizeTable[dents]) {
+    console.warn(`Número de amassados (${dents}) não encontrado na tabela para tamanho ${size}mm.`);
+    return { aw: 0, hours: 0, cost: "0.00" };
+  }
+
+  // Calcula o valor AW base
+  let aw = sizeTable[dents];
+  
+  // Aplica modificadores
+  if (isAluminum) aw *= 1.25;  // Adicional para alumínio (+25%)
+  if (isGlueTechnique) aw *= 1.30;  // Adicional para cola (+30%)
+  // Pintura não afeta o cálculo conforme especificado
+  
+  // Aplica outros modificadores se necessário
+  if (needsVordrucken) aw *= 1.60;
+  if (needsHohlraum) aw += 4;
+
+  // Arredonda o AW para um valor inteiro
+  aw = Math.round(aw);
+  
+  // Calcula horas e custo
+  const hours = aw / 10;
+  const cost = hours * hourlyRate;
+
+  return { aw, hours, cost: cost.toFixed(2) };
+};
+
 export default function Budget() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
@@ -536,35 +653,76 @@ export default function Budget() {
       };
     });
     
-    // Calcular total de diâmetros
-    let totalDiameters = 0;
-    let selectedCount = 0;
-    
     // Criar uma versão atualizada para calcular totais
     const updatedDamages = {
       ...partDamages,
       [part]: {
         ...partDamages[part],
         [diameter]: value,
-        selected: true // Assumimos que se há um valor, a peça está selecionada
+        selected: value > 0 // Assumimos que se há um valor, a peça está selecionada
       }
     };
     
-    Object.entries(updatedDamages).forEach(([partKey, damage]) => {
-      // Se a peça for a que estamos atualizando agora, usar os valores atualizados
-      const hasValue = damage.diameter20 > 0 || damage.diameter30 > 0 || damage.diameter40 > 0;
-      
-      if (hasValue) {
-        selectedCount++;
-        totalDiameters += damage.diameter20 + damage.diameter30 + damage.diameter40;
+    // Calculadora de AW e valor total
+    calculateTotals(updatedDamages);
+  };
+  
+  // Função para calcular os totais de AW e valor com base na tabela
+  const calculateTotals = (damages: Record<string, PartDamage>) => {
+    let totalAW = 0;
+    let totalEuros = 0;
+    
+    // Para cada peça danificada, calcular o AW
+    Object.entries(damages).forEach(([partKey, damage]) => {
+      // Verifica se algum diâmetro possui valor
+      if (damage.selected) {
+        // Processar diâmetro 20mm se houver
+        if (damage.diameter20 > 0) {
+          const result = hailCalculation(
+            20, 
+            damage.diameter20, 
+            !damage.isHorizontal, // isVertical é o oposto de isHorizontal
+            damage.optionA,  // Alumínio
+            damage.optionK   // Cola (Glue)
+          );
+          totalAW += result.aw;
+          totalEuros += parseFloat(result.cost);
+        }
+        
+        // Processar diâmetro 30mm se houver
+        if (damage.diameter30 > 0) {
+          const result = hailCalculation(
+            30, 
+            damage.diameter30, 
+            !damage.isHorizontal, 
+            damage.optionA, 
+            damage.optionK
+          );
+          totalAW += result.aw;
+          totalEuros += parseFloat(result.cost);
+        }
+        
+        // Processar diâmetro 40mm se houver
+        if (damage.diameter40 > 0) {
+          const result = hailCalculation(
+            40, 
+            damage.diameter40, 
+            !damage.isHorizontal, 
+            damage.optionA, 
+            damage.optionK
+          );
+          totalAW += result.aw;
+          totalEuros += parseFloat(result.cost);
+        }
       }
     });
     
-    // Usar a contagem de diâmetros se houver algum, senão usar a contagem de peças
-    const totalAWValue = totalDiameters > 0 ? totalDiameters : selectedCount;
+    // Arredondar o valor total para 2 casas decimais
+    totalEuros = Math.round(totalEuros * 100) / 100;
     
-    setTotalAw(totalAWValue);
-    setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
+    // Atualizar os estados
+    setTotalAw(totalAW);
+    setTotalValue(totalEuros);
   };
   
   // Referência para o input de arquivo
@@ -735,13 +893,25 @@ export default function Budget() {
                 checked={damage.optionA}
                 onCheckedChange={(checked) => {
                   if (isViewMode) return; // Não permitir alterações no modo de visualização
-                  setPartDamages(prev => ({
-                    ...prev,
-                    [partKey]: {
-                      ...prev[partKey],
-                      optionA: !!checked
+                  const newValue = !!checked;
+                  
+                  // Atualizar estado do checkbox
+                  setPartDamages(prev => {
+                    const updatedDamages = {
+                      ...prev,
+                      [partKey]: {
+                        ...prev[partKey],
+                        optionA: newValue
+                      }
+                    };
+                    
+                    // Recalcular totais após a mudança se a peça estiver selecionada
+                    if (prev[partKey].selected) {
+                      calculateTotals(updatedDamages);
                     }
-                  }));
+                    
+                    return updatedDamages;
+                  });
                 }}
                 disabled={isViewMode}
               />
@@ -754,13 +924,25 @@ export default function Budget() {
                 checked={damage.optionK}
                 onCheckedChange={(checked) => {
                   if (isViewMode) return; // Não permitir alterações no modo de visualização
-                  setPartDamages(prev => ({
-                    ...prev,
-                    [partKey]: {
-                      ...prev[partKey],
-                      optionK: !!checked
+                  const newValue = !!checked;
+                  
+                  // Atualizar estado do checkbox
+                  setPartDamages(prev => {
+                    const updatedDamages = {
+                      ...prev,
+                      [partKey]: {
+                        ...prev[partKey],
+                        optionK: newValue
+                      }
+                    };
+                    
+                    // Recalcular totais após a mudança se a peça estiver selecionada
+                    if (prev[partKey].selected) {
+                      calculateTotals(updatedDamages);
                     }
-                  }));
+                    
+                    return updatedDamages;
+                  });
                 }}
                 disabled={isViewMode}
               />
@@ -773,6 +955,7 @@ export default function Budget() {
                 checked={damage.optionP}
                 onCheckedChange={(checked) => {
                   if (isViewMode) return; // Não permitir alterações no modo de visualização
+                  // Pintura não afeta o cálculo conforme especificado
                   setPartDamages(prev => ({
                     ...prev,
                     [partKey]: {
