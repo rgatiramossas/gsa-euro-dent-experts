@@ -78,8 +78,8 @@ const expenseFormSchema = z.object({
   }),
   amount: z.string().refine(
     (val) => {
-      // Remover R$ e trocar vírgula por ponto para conversão
-      const cleanValue = val.replace(/[R$\s]/g, '').replace(',', '.');
+      // Remover € e trocar vírgula por ponto para conversão
+      const cleanValue = val.replace(/[€\s]/g, '').replace(',', '.');
       return !isNaN(parseFloat(cleanValue)) && parseFloat(cleanValue) > 0;
     },
     {
@@ -304,7 +304,7 @@ export default function Finances() {
     console.log("Dados do formulário de despesa:", data);
     
     // Converter a string de valor para número
-    const cleanAmount = data.amount.replace(/[R$\s]/g, '').replace(',', '.');
+    const cleanAmount = data.amount.replace(/[€\s]/g, '').replace(',', '.');
     const amount = parseFloat(cleanAmount);
     
     // TODO: Integrar com a API quando estiver pronta
@@ -400,10 +400,10 @@ export default function Finances() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis 
-                        tickFormatter={(value) => `R$ ${value}`}
+                        tickFormatter={(value) => `€ ${value}`}
                       />
                       <Tooltip 
-                        formatter={(value) => [`R$ ${value}`, "Faturamento"]}
+                        formatter={(value) => [`€ ${value}`, "Faturamento"]}
                       />
                       <Bar dataKey="value" fill="#1a5276" />
                     </BarChart>
@@ -711,7 +711,7 @@ export default function Finances() {
                     <FormLabel>Valor</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="R$ 0,00"
+                        placeholder="€ 0,00"
                         {...field}
                       />
                     </FormControl>
