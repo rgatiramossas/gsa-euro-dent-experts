@@ -454,27 +454,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Location Type is required" });
       }
       
+      // Verificação detalhada do service_type_id
+      try {
+        const serviceType = await storage.getServiceType(parseInt(req.body.service_type_id));
+        if (!serviceType) {
+          console.error(`Tipo de serviço não encontrado: ID ${req.body.service_type_id}`);
+          return res.status(404).json({ message: `Tipo de serviço com ID ${req.body.service_type_id} não encontrado` });
+        }
+        console.log(`Tipo de serviço encontrado: ${serviceType.name} (ID: ${serviceType.id})`);
+      } catch (typeError) {
+        console.error("Erro ao verificar tipo de serviço:", typeError);
+      }
+      
       try {
         const serviceInput = insertServiceSchema.parse(req.body);
         
         // Calculate total
         const total = (serviceInput.price || 0) + (serviceInput.displacement_fee || 0);
+        
+        console.log("Criando serviço com dados validados:", {
+          ...serviceInput,
+          total
+        });
+        
         const service = await storage.createService({
           ...serviceInput,
           total
         });
         
+        console.log("Serviço criado com sucesso:", service);
         res.status(201).json(service);
       } catch (validationError) {
         if (validationError instanceof z.ZodError) {
           console.error("Erro de validação Zod:", JSON.stringify(validationError.errors, null, 2));
-          return res.status(400).json({ message: "Invalid input", errors: validationError.errors });
+          return res.status(400).json({ message: "Dados inválidos", errors: validationError.errors });
         }
+        console.error("Erro de validação não-Zod:", validationError);
         throw validationError;
       }
     } catch (error) {
       console.error("Erro ao criar serviço:", error);
-      res.status(500).json({ message: "Internal server error" });
+      // Fornecer mensagem de erro mais específica
+      const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor";
+      res.status(500).json({ message: `Erro ao criar serviço: ${errorMessage}` });
     }
   });
 
