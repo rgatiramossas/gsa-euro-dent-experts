@@ -81,6 +81,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const [newStatus, setNewStatus] = useState<ServiceStatus | "">("");
   const [statusNotes, setStatusNotes] = useState("");
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   
   // Simulação de dados dos técnicos - normalmente viria de uma API
   const technicians = [
@@ -150,6 +151,34 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       toast({
         title: "Erro ao atualizar status",
         description: "Ocorreu um erro ao atualizar o status do serviço",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const updateServiceMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest('PATCH', `/api/services/${id}`, data);
+      if (!res.ok) {
+        throw new Error('Failed to update service');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: [`/api/services/${id}`]});
+      queryClient.invalidateQueries({queryKey: ['/api/services']});
+      queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
+      toast({
+        title: "Serviço atualizado",
+        description: "As alterações foram salvas com sucesso",
+      });
+      setShowEditDialog(false);
+    },
+    onError: (error) => {
+      console.error('Error updating service:', error);
+      toast({
+        title: "Erro ao atualizar serviço",
+        description: "Ocorreu um erro ao salvar as alterações",
         variant: "destructive",
       });
     }
@@ -473,14 +502,173 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 <DialogTrigger asChild>
                   <Button variant="outline">Editar Serviço</Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-5xl h-[90vh]">
+                <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Editar Serviço</DialogTitle>
                     <DialogDescription>
                       Edite os detalhes deste serviço.
                     </DialogDescription>
                   </DialogHeader>
-                  {/* Dialog content goes here */}
+                  
+                  <Form {...editForm}>
+                    <form onSubmit={editForm.handleSubmit(() => console.log("Formulário enviado"))} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Tipo de Serviço */}
+                        <FormField
+                          control={editForm.control}
+                          name="service_type_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Tipo de Serviço</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="text"
+                                  value={service.serviceType?.name || ""}
+                                  disabled
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        {/* Técnico */}
+                        <FormField
+                          control={editForm.control}
+                          name="technician_id"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Técnico</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="text"
+                                  value={service.technician?.name || "Não atribuído"}
+                                  disabled
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Cliente */}
+                        <FormItem>
+                          <FormLabel>Cliente</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="text"
+                              value={service.client?.name || ""}
+                              disabled
+                            />
+                          </FormControl>
+                        </FormItem>
+                        
+                        {/* Veículo */}
+                        <FormItem>
+                          <FormLabel>Veículo</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="text"
+                              value={service.vehicle ? `${service.vehicle.make} ${service.vehicle.model} ${service.vehicle.year}` : ""}
+                              disabled
+                            />
+                          </FormControl>
+                        </FormItem>
+                      </div>
+                      
+                      {/* Descrição */}
+                      <FormField
+                        control={editForm.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Descrição</FormLabel>
+                            <FormControl>
+                              <textarea
+                                className="min-h-[100px] flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="Descrição do serviço"
+                                {...field}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {/* Valores */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={editForm.control}
+                          name="price"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Valor do Serviço (€)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0,00"
+                                  {...field}
+                                  onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                                  value={field.value !== undefined ? field.value : 0}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        {currentUser?.role === 'admin' && (
+                          <FormField
+                            control={editForm.control}
+                            name="displacement_fee"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Valor Administrativo (€)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="0,00"
+                                    {...field}
+                                    onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                                    value={field.value !== undefined ? field.value : 0}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+                      
+                      {/* Notas */}
+                      <FormField
+                        control={editForm.control}
+                        name="notes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Observações</FormLabel>
+                            <FormControl>
+                              <textarea
+                                className="min-h-[100px] flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="Observações adicionais"
+                                {...field}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="flex justify-end space-x-2 pt-4">
+                        <Button variant="outline" type="button" onClick={() => document.querySelector('.DialogClose')?.dispatchEvent(new MouseEvent('click'))}>
+                          Cancelar
+                        </Button>
+                        <Button type="submit">Salvar Alterações</Button>
+                      </div>
+                    </form>
+                  </Form>
                 </DialogContent>
               </Dialog>
               
