@@ -1083,16 +1083,27 @@ export class DatabaseStorage implements IStorage {
               paymentNotes = paymentDetails.payment_notes || "";
             }
             
+            // Extrair a data do pagamento ou usar a data atual
+            let paymentDate = new Date();
+            if (paymentDetails.payment_date) {
+              try {
+                paymentDate = new Date(paymentDetails.payment_date);
+              } catch (e) {
+                console.log("Erro ao converter data de pagamento:", e);
+              }
+            }
+            
             // Inserir na tabela de despesas
             await db
               .insert(expenses)
               .values({
                 type: "salario",
                 amount: technicianValue,
-                date: new Date(),
+                date: paymentDate,
                 description: description,
                 payment_method: paymentMethod,
                 notes: paymentNotes,
+                provider: technicianName
               });
               
             console.log("Despesa registrada com sucesso");
