@@ -473,8 +473,7 @@ export default function Budget() {
       setTotalAw(0);
       setTotalValue(0);
     },
-    onError: (error) => {
-      console.error('Erro ao criar orçamento:', error);
+    onError: () => {
       toast({
         title: "Erro ao criar orçamento",
         description: "Ocorreu um erro ao criar o orçamento. Tente novamente.",
@@ -1063,8 +1062,7 @@ export default function Budget() {
         // Remover o container da página
         document.body.removeChild(printContainer);
       }
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
+    } catch (_) {
       toast({
         title: "Erro ao gerar PDF",
         description: "Ocorreu um erro ao gerar o PDF. Tente novamente.",
