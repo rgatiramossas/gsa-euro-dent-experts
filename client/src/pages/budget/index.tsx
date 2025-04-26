@@ -98,9 +98,8 @@ export default function Budget() {
   const [chassisNumber, setChassisNumber] = useState("");
   const [note, setNote] = useState("");
   
-  // Estados para busca
+  // Estado para busca (busca única em todos os campos)
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchFilter, setSearchFilter] = useState<"client" | "plate" | "chassis">("client");
   
   // Estado para os danos do veículo (peças)
   const [partDamages, setPartDamages] = useState<Record<string, PartDamage>>({
@@ -601,28 +600,22 @@ export default function Budget() {
     );
   };
 
-  // Filtrar orçamentos baseado no critério de busca
+  // Filtrar orçamentos baseado numa busca que procura em todos os campos simultaneamente
   const filteredBudgets = React.useMemo(() => {
     if (!budgets || !searchQuery.trim()) return budgets;
     
     const query = searchQuery.toLowerCase().trim();
     
     return budgets.filter(budget => {
-      switch(searchFilter) {
-        case "client":
-          return budget.client_name.toLowerCase().includes(query);
-        case "plate":
-          // Procura pelo número da placa no campo vehicle_info
-          return budget.vehicle_info.toLowerCase().includes(query);
-        case "chassis":
-          // Esta seria uma implementação real, mas como não temos o número do chassi no budget,
-          // vamos procurar em todo o campo vehicle_info como exemplo
-          return budget.vehicle_info.toLowerCase().includes(query);
-        default:
-          return true;
-      }
+      // Procurar em todos os campos simultaneamente
+      const matchesClient = budget.client_name.toLowerCase().includes(query);
+      const matchesVehicle = budget.vehicle_info.toLowerCase().includes(query);
+      const matchesId = budget.id.toString().includes(query);
+      
+      // Retorna true se qualquer um dos campos contiver o texto da busca
+      return matchesClient || matchesVehicle || matchesId;
     });
-  }, [budgets, searchQuery, searchFilter]);
+  }, [budgets, searchQuery]);
   
   if (budgetsLoading) {
     return (
@@ -833,29 +826,13 @@ export default function Budget() {
               Todos os orçamentos criados para clientes
             </CardDescription>
             
-            <div className="mt-4 flex flex-col sm:flex-row gap-2">
-              <div className="flex-1">
-                <Input
-                  placeholder="Pesquisar orçamentos..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              
-              <Select 
-                value={searchFilter} 
-                onValueChange={(value) => setSearchFilter(value as "client" | "plate" | "chassis")}
-              >
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Filtrar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="client">Cliente</SelectItem>
-                  <SelectItem value="plate">Placa</SelectItem>
-                  <SelectItem value="chassis">Chassi</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="mt-4">
+              <Input
+                placeholder="Buscar por Cliente, Placa ou Chassi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+              />
             </div>
           </CardHeader>
           <CardContent>
@@ -913,10 +890,7 @@ export default function Budget() {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-6 text-gray-500 italic">
                       {budgets && budgets.length > 0 && searchQuery 
-                        ? `Nenhum orçamento encontrado para "${searchQuery}" em ${
-                            searchFilter === "client" ? "Cliente" : 
-                            searchFilter === "plate" ? "Placa" : "Chassi"
-                          }.` 
+                        ? `Nenhum orçamento encontrado para "${searchQuery}".` 
                         : "Nenhum orçamento encontrado. Crie um novo orçamento para começar."}
                     </TableCell>
                   </TableRow>
