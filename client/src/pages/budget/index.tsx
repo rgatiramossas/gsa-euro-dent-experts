@@ -347,8 +347,14 @@ export default function Budget() {
       // const response = await apiRequest('GET', '/api/budgets');
       // return response.json();
       
-      // Simulando dados de orçamentos para demonstração
-      return [
+      // Verificar se existe uma lista de orçamentos no localStorage
+      const savedBudgets = localStorage.getItem('eurodent_budgets');
+      if (savedBudgets) {
+        return JSON.parse(savedBudgets);
+      }
+      
+      // Orçamentos iniciais (só usados na primeira vez)
+      const initialBudgets = [
         {
           id: 1001,
           client_name: "Alexsandro Figueiredo",
@@ -372,6 +378,11 @@ export default function Budget() {
           note: ""
         }
       ];
+      
+      // Salvar no localStorage para persistência
+      localStorage.setItem('eurodent_budgets', JSON.stringify(initialBudgets));
+      
+      return initialBudgets;
     },
   });
 
@@ -402,30 +413,39 @@ export default function Budget() {
         if (client) client_name = client.name;
       }
       
-      if (data.vehicle_id && vehicles) {
-        const vehicle = vehicles.find(v => v.id === data.vehicle_id);
-        if (vehicle) {
-          vehicle_info = `${vehicle.make} ${vehicle.model}`;
-          if (vehicle.license_plate) vehicle_info += ` (${vehicle.license_plate})`;
-        }
+      let vehicleDisplay = vehicle_info;
+      // Adiciona informação da placa/chassi ao texto do veículo, se disponível
+      if (data.plate) {
+        vehicleDisplay += ` (${data.plate})`;
       }
       
-      return {
+      const newBudget = {
         id: Math.floor(Math.random() * 10000) + 1000,
         client_name,
-        vehicle_info,
+        vehicle_info: vehicleDisplay,
         date: data.date,
         damaged_parts: data.damaged_parts,
         photo_url: data.photo_url,
         total_aw: data.total_aw,
         total_value: data.total_value,
         created_at: new Date().toISOString(),
-        note: data.note
+        note: data.note,
+        plate: data.plate,
+        chassisNumber: data.chassisNumber
       };
+      
+      return newBudget;
     },
-    onSuccess: () => {
-      // Invalidar cache para atualizar a lista
-      queryClient.invalidateQueries({ queryKey: ['/api/budgets'] });
+    onSuccess: (newBudget) => {
+      // Adicionar o novo orçamento à lista atual
+      const currentBudgets = queryClient.getQueryData<Budget[]>(['/api/budgets']) || [];
+      const updatedBudgets = [...currentBudgets, newBudget];
+      
+      // Atualiza o cache do React Query
+      queryClient.setQueryData(['/api/budgets'], updatedBudgets);
+      
+      // Salvar no localStorage para persistência
+      localStorage.setItem('eurodent_budgets', JSON.stringify(updatedBudgets));
       
       toast({
         title: "Orçamento criado",
@@ -1068,6 +1088,9 @@ export default function Budget() {
       
       // Atualizar o cache do React Query
       queryClient.setQueryData(['/api/budgets'], updatedBudgets);
+      
+      // Salvar no localStorage para persistência
+      localStorage.setItem('eurodent_budgets', JSON.stringify(updatedBudgets));
     }
     
     toast({
@@ -1089,10 +1112,18 @@ export default function Budget() {
       // Atualiza o cache do React Query
       queryClient.setQueryData(['/api/budgets'], updatedBudgets);
       
+      // Salvar no localStorage para persistência
+      localStorage.setItem('eurodent_budgets', JSON.stringify(updatedBudgets));
+      
       toast({
         title: "Orçamento excluído",
         description: `O orçamento #${budgetId} foi excluído com sucesso.`,
       });
+      
+      // Fechar o diálogo se estiver aberto
+      if (showDialog && selectedBudget?.id === budgetId) {
+        setShowDialog(false);
+      }
     }
   };
   
