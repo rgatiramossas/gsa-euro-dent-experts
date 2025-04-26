@@ -412,6 +412,11 @@ export default function Budget() {
   const DamagedPartItem = ({ partKey, label }: { partKey: string, label: string }) => {
     const damage = partDamages[partKey];
     
+    // Função para selecionar todo o texto no input quando receber foco
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      e.target.select();
+    };
+    
     return (
       <div className="p-2 border rounded-md space-y-3">
         <div className="font-medium text-sm text-center border-b pb-1 mb-1">
@@ -427,6 +432,8 @@ export default function Budget() {
               min="0"
               value={damage.diameter20}
               onChange={(e) => handleDiameterChange(partKey, 'diameter20', parseInt(e.target.value) || 0)}
+              onFocus={handleFocus}
+              autoComplete="off"
               className="w-16 h-7 text-xs"
             />
           </div>
@@ -439,6 +446,8 @@ export default function Budget() {
               min="0"
               value={damage.diameter30}
               onChange={(e) => handleDiameterChange(partKey, 'diameter30', parseInt(e.target.value) || 0)}
+              onFocus={handleFocus}
+              autoComplete="off"
               className="w-16 h-7 text-xs"
             />
           </div>
@@ -451,6 +460,8 @@ export default function Budget() {
               min="0"
               value={damage.diameter40}
               onChange={(e) => handleDiameterChange(partKey, 'diameter40', parseInt(e.target.value) || 0)}
+              onFocus={handleFocus}
+              autoComplete="off"
               className="w-16 h-7 text-xs"
             />
           </div>
@@ -632,6 +643,8 @@ export default function Budget() {
                       type="number"
                       value={totalAw}
                       onChange={(e) => setTotalAw(Number(e.target.value))}
+                      onFocus={(e) => e.target.select()}
+                      autoComplete="off"
                     />
                   </div>
                   
@@ -642,6 +655,8 @@ export default function Budget() {
                       type="number"
                       value={totalValue}
                       onChange={(e) => setTotalValue(Number(e.target.value))}
+                      onFocus={(e) => e.target.select()}
+                      autoComplete="off"
                     />
                   </div>
                 </div>
