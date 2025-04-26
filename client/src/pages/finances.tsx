@@ -780,9 +780,75 @@ export default function Finances() {
     }));
   };
   
+  // Prepare expenses by category data
+  const prepareExpensesByCategoryData = () => {
+    if (!expenses || expenses.length === 0) {
+      return [];
+    }
+    
+    const categories: {[key: string]: number} = {};
+    
+    expenses.forEach(expense => {
+      const categoryName = expense.type || "Outros";
+      const normalizedCategory = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
+      
+      if (categories[normalizedCategory]) {
+        categories[normalizedCategory] += expense.amount;
+      } else {
+        categories[normalizedCategory] = expense.amount;
+      }
+    });
+    
+    return Object.entries(categories).map(([name, value]) => ({
+      name,
+      value,
+    }));
+  };
+  
+  // Prepare monthly expenses data
+  const prepareMonthlyExpensesData = () => {
+    if (!expenses || expenses.length === 0) {
+      return [];
+    }
+    
+    const now = new Date();
+    const monthlyData: { name: string; value: number }[] = [];
+    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    
+    // Create a map with all months initialized to 0
+    const monthTotals: {[key: string]: number} = {};
+    for (let i = 0; i < 12; i++) {
+      monthTotals[monthNames[i]] = 0;
+    }
+    
+    // Sum expenses by month
+    expenses.forEach(expense => {
+      if (!expense.date) return;
+      
+      const expenseDate = new Date(expense.date);
+      // Only consider expenses from current year
+      if (expenseDate.getFullYear() === now.getFullYear()) {
+        const monthName = monthNames[expenseDate.getMonth()];
+        monthTotals[monthName] += expense.amount;
+      }
+    });
+    
+    // Convert to array format for chart
+    for (let i = 0; i < 12; i++) {
+      monthlyData.push({
+        name: monthNames[i],
+        value: monthTotals[monthNames[i]]
+      });
+    }
+    
+    return monthlyData;
+  };
+  
   const stats = calculateStats();
   const chartData = prepareChartData();
   const serviceTypeData = prepareServiceTypeData();
+  const expensesByCategoryData = prepareExpensesByCategoryData();
+  const monthlyExpensesData = prepareMonthlyExpensesData();
   
   // Chart colors
   const COLORS = ['#1a5276', '#2e86c1', '#f39c12', '#27ae60', '#e74c3c'];
@@ -1345,8 +1411,37 @@ export default function Finances() {
                 <CardTitle>Despesas por Categoria</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80 flex items-center justify-center">
-                  <p className="text-gray-500">Nenhum dado disponível</p>
+                <div className="h-80">
+                  {loadingExpenses ? (
+                    <div className="flex justify-center items-center h-full">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                  ) : expensesByCategoryData.length === 0 ? (
+                    <div className="h-80 flex items-center justify-center">
+                      <p className="text-gray-500">Nenhum dado disponível</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={expensesByCategoryData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={false}
+                        >
+                          {expensesByCategoryData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [formatCurrency(value as number), "Valor"]} />
+                        <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{ paddingTop: 20 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1356,8 +1451,33 @@ export default function Finances() {
                 <CardTitle>Despesas Mensais</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80 flex items-center justify-center">
-                  <p className="text-gray-500">Nenhum dado disponível</p>
+                <div className="h-80">
+                  {loadingExpenses ? (
+                    <div className="flex justify-center items-center h-full">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                    </div>
+                  ) : monthlyExpensesData.every(item => item.value === 0) ? (
+                    <div className="h-80 flex items-center justify-center">
+                      <p className="text-gray-500">Nenhum dado disponível</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={monthlyExpensesData}
+                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis 
+                          tickFormatter={(value) => `€ ${value}`}
+                        />
+                        <Tooltip 
+                          formatter={(value) => [`€ ${value}`, "Despesas"]}
+                        />
+                        <Bar dataKey="value" fill="#e74c3c" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </CardContent>
             </Card>
