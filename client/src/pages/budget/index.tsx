@@ -46,7 +46,7 @@ import {
   FileTextIcon,
   PlusIcon, 
   PrinterIcon, 
-  SendIcon,
+  Trash2Icon,
   CameraIcon
 } from "lucide-react";
 
@@ -325,11 +325,21 @@ export default function Budget() {
     });
   };
 
-  const handleSendBudget = (budgetId: number) => {
-    toast({
-      title: "Função em desenvolvimento",
-      description: "O envio de orçamentos por e-mail será implementada em breve.",
-    });
+  const handleDeleteBudget = (budgetId: number) => {
+    if (window.confirm(`Tem certeza que deseja excluir o orçamento #${budgetId}?`)) {
+      // Simulação de exclusão - em uma implementação real, seria feita uma chamada à API
+      
+      // Atualize o estado local para remover o orçamento
+      const updatedBudgets = budgets?.filter(budget => budget.id !== budgetId) || [];
+      
+      // Atualiza o cache do React Query
+      queryClient.setQueryData(['/api/budgets'], updatedBudgets);
+      
+      toast({
+        title: "Orçamento excluído",
+        description: `O orçamento #${budgetId} foi excluído com sucesso.`,
+      });
+    }
   };
   
   const handleViewBudget = (budgetId: number) => {
@@ -838,10 +848,10 @@ export default function Budget() {
                           <Button 
                             variant="outline" 
                             size="icon"
-                            onClick={() => handleSendBudget(budget.id)}
-                            title="Enviar por e-mail"
+                            onClick={() => handleDeleteBudget(budget.id)}
+                            title="Excluir orçamento"
                           >
-                            <SendIcon className="h-4 w-4" />
+                            <Trash2Icon className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
