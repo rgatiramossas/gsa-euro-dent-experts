@@ -1159,7 +1159,10 @@ export default function Finances() {
                             </div>
                           </div>
                           <div className="font-semibold">
-                            {formatCurrency(service.total || 0)}
+                            {isAdmin 
+                              ? formatCurrency(service.total || 0)
+                              : formatCurrency(service.price || 0) // Técnicos veem apenas o valor do serviço
+                            }
                           </div>
                         </div>
                       ))}
