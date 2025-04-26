@@ -10,7 +10,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   phone: text("phone"),
-  role: text("role").notNull().default("technician"), // "admin" or "technician"
+  role: text("role").notNull().default("technician"), // "admin", "technician" ou "gestor"
   profile_image: text("profile_image"),
   active: boolean("active").notNull().default(true),
   created_at: timestamp("created_at").defaultNow(),
@@ -228,3 +228,19 @@ export type PaymentRequest = typeof paymentRequests.$inferSelect;
 export type InsertPaymentRequest = z.infer<typeof insertPaymentRequestSchema>;
 export type PaymentRequestItem = typeof paymentRequestItems.$inferSelect;
 export type InsertPaymentRequestItem = z.infer<typeof insertPaymentRequestItemSchema>;
+
+// Gestores de Clientes - Associação entre gestores e clientes
+export const managerClientAssignments = pgTable("manager_client_assignments", {
+  id: serial("id").primaryKey(),
+  manager_id: integer("manager_id").notNull().references(() => users.id),
+  client_id: integer("client_id").notNull().references(() => clients.id),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertManagerClientAssignmentSchema = createInsertSchema(managerClientAssignments).omit({
+  id: true,
+  created_at: true
+});
+
+export type ManagerClientAssignment = typeof managerClientAssignments.$inferSelect;
+export type InsertManagerClientAssignment = z.infer<typeof insertManagerClientAssignmentSchema>;

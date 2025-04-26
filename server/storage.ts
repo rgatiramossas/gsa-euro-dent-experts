@@ -1,4 +1,8 @@
-import { users, clients, vehicles, serviceTypes, services, servicePhotos, eventTypes, events, paymentRequests, paymentRequestItems, expenses } from "@shared/schema";
+import { 
+  users, clients, vehicles, serviceTypes, services, servicePhotos, 
+  eventTypes, events, paymentRequests, paymentRequestItems, expenses,
+  managerClientAssignments
+} from "@shared/schema";
 import type { 
   User, InsertUser, 
   Client, InsertClient, 
@@ -9,7 +13,8 @@ import type {
   EventType, InsertEventType,
   Event, InsertEvent,
   PaymentRequest, PaymentRequestItem,
-  Expense, InsertExpense
+  Expense, InsertExpense,
+  ManagerClientAssignment, InsertManagerClientAssignment
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, desc, or, sql } from "drizzle-orm";
@@ -78,6 +83,12 @@ export interface IStorage {
   getPaymentRequest(id: number): Promise<any>;
   listPaymentRequests(technicianId?: number): Promise<any[]>;
   updatePaymentRequestStatus(id: number, status: string): Promise<PaymentRequest | undefined>;
+  
+  // Manager-Client methods
+  assignClientToManager(managerId: number, clientId: number): Promise<ManagerClientAssignment>;
+  removeClientFromManager(managerId: number, clientId: number): Promise<boolean>;
+  getManagerClients(managerId: number): Promise<Client[]>;
+  getClientManagers(clientId: number): Promise<User[]>;
   
   // Session store
   sessionStore: session.SessionStore;
