@@ -84,7 +84,11 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   // Nova abordagem para edição inline
   const [isEditing, setIsEditing] = useState(false);
-  const [uploadedPhotos, setUploadedPhotos] = useState<FileList | null>(null);
+  const [beforePhotos, setBeforePhotos] = useState<FileList | null>(null);
+  const [afterPhotos, setAfterPhotos] = useState<FileList | null>(null);
+  const [beforePhotoPreview, setBeforePhotoPreview] = useState<string | null>(null);
+  const [afterPhotoPreview, setAfterPhotoPreview] = useState<string | null>(null);
+  const [photosToRemove, setPhotosToRemove] = useState<number[]>([]);
   
   // Simulação de dados dos técnicos - normalmente viria de uma API
   const technicians = [
@@ -165,29 +169,22 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const updateServiceMutation = useMutation({
     mutationFn: async (data: any) => {
-      // Se tiver fotos no formulário, precisa enviar como multipart
-      if (uploadedPhotos && uploadedPhotos.length > 0) {
-        const formData = new FormData();
-        
-        // Adicionar dados do serviço como JSON
-        formData.append('serviceData', JSON.stringify(data));
-        
-        // Adicionar cada foto
-        for (let i = 0; i < uploadedPhotos.length; i++) {
-          formData.append('photos', uploadedPhotos[i]);
-        }
-        
-        const uploadRes = await fetch(`/api/services/${id}/photos`, {
-          method: 'POST',
-          body: formData,
+      // Se data for um FormData, enviar diretamente
+      if (data instanceof FormData) {
+        const res = await fetch(`/api/services/${id}`, {
+          method: 'PATCH',
+          body: data
         });
         
-        if (!uploadRes.ok) {
-          throw new Error('Erro ao fazer upload das fotos');
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Erro ao atualizar serviço');
         }
+        
+        return await res.json();
       }
       
-      // Enviar os dados do serviço sem as fotos
+      // Caso contrário, enviar como JSON
       const res = await apiRequest('PATCH', `/api/services/${id}`, data);
       if (!res.ok) {
         throw new Error('Failed to update service');
@@ -202,9 +199,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         title: "Serviço atualizado",
         description: "As alterações foram salvas com sucesso",
       });
-      // Sai do modo de edição
+      
+      // Sai do modo de edição e limpa os estados
       setIsEditing(false);
-      setUploadedPhotos(null);
+      setBeforePhotos(null);
+      setAfterPhotos(null);
+      setBeforePhotoPreview(null);
+      setAfterPhotoPreview(null);
+      setPhotosToRemove([]);
     },
     onError: (error) => {
       console.error('Error updating service:', error);
@@ -216,6 +218,45 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     }
   });
   
+  // Manipuladores para as fotos do serviço
+  const handleBeforePhotoChange = (files: FileList) => {
+    if (files.length > 0) {
+      setBeforePhotos(files);
+      
+      // Criar preview para a primeira foto
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => {
+        setBeforePhotoPreview(e.target?.result as string);
+      };
+      fileReader.readAsDataURL(files[0]);
+    }
+  };
+  
+  const handleAfterPhotoChange = (files: FileList) => {
+    if (files.length > 0) {
+      setAfterPhotos(files);
+      
+      // Criar preview para a primeira foto
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => {
+        setAfterPhotoPreview(e.target?.result as string);
+      };
+      fileReader.readAsDataURL(files[0]);
+    }
+  };
+  
+  const handleRemovePhoto = (photoId: number) => {
+    // Adicionar ID da foto à lista de fotos para remover
+    setPhotosToRemove((prev) => [...prev, photoId]);
+    
+    // Atualizar a UI removendo a foto da lista visível
+    toast({
+      title: "Foto marcada para remoção",
+      description: "A foto será removida quando você salvar as alterações.",
+      variant: "default"
+    });
+  };
+
   // Função para iniciar o modo de edição
   const handleStartEditing = () => {
     // Reset o formulário com os valores atuais
@@ -232,19 +273,55 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   // Função para cancelar a edição
   const handleCancelEditing = () => {
     setIsEditing(false);
-    setUploadedPhotos(null);
+    // Limpar estados das fotos
+    setBeforePhotos(null);
+    setAfterPhotos(null);
+    setBeforePhotoPreview(null);
+    setAfterPhotoPreview(null);
+    setPhotosToRemove([]);
   };
   
   // Função para salvar as alterações
   const handleSaveChanges = () => {
     editForm.handleSubmit((data) => {
-      // Apenas enviar os campos que podem ser editados
+      // Preparar o objeto de dados para envio
       const updateData = {
         service_type_id: data.service_type_id,
         price: data.price,
         displacement_fee: data.displacement_fee,
       };
-      updateServiceMutation.mutate(updateData);
+      
+      // Criar o FormData para o envio
+      const formData = new FormData();
+      
+      // Adicionar os dados do serviço
+      Object.entries(updateData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      });
+      
+      // Adicionar fotos "antes" se houver
+      if (beforePhotos) {
+        Array.from(beforePhotos).forEach((file: File) => {
+          formData.append('before_photos', file);
+        });
+      }
+      
+      // Adicionar fotos "depois" se houver
+      if (afterPhotos) {
+        Array.from(afterPhotos).forEach((file: File) => {
+          formData.append('after_photos', file);
+        });
+      }
+      
+      // Adicionar IDs das fotos para remover
+      if (photosToRemove.length > 0) {
+        formData.append('photos_to_remove', JSON.stringify(photosToRemove));
+      }
+      
+      // Enviar o FormData para o servidor
+      updateServiceMutation.mutate(formData);
     })();
   };
   
@@ -432,14 +509,59 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         {/* Service Details */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>Detalhes do Serviço</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle>Detalhes do Serviço</CardTitle>
+              {!isEditing ? (
+                <Button variant="outline" size="sm" onClick={handleStartEditing}>
+                  Editar Serviço
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleCancelEditing}>
+                    Cancelar
+                  </Button>
+                  <Button size="sm" onClick={handleSaveChanges} disabled={updateServiceMutation.isPending}>
+                    {updateServiceMutation.isPending ? "Salvando..." : "Salvar"}
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
               <h3 className="text-sm font-medium text-gray-500 mb-1">Tipo de Serviço</h3>
-              <p className="text-gray-800">{service.serviceType?.name}</p>
-              {service.serviceType?.description && (
-                <p className="text-gray-600 text-sm mt-1">{service.serviceType.description}</p>
+              {!isEditing ? (
+                <div>
+                  <p className="text-gray-800">{service.serviceType?.name}</p>
+                  {service.serviceType?.description && (
+                    <p className="text-gray-600 text-sm mt-1">{service.serviceType.description}</p>
+                  )}
+                </div>
+              ) : (
+                <Form {...editForm}>
+                  <FormField
+                    control={editForm.control}
+                    name="service_type_id"
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        defaultValue={field.value?.toString()}
+                        value={field.value?.toString()}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione o tipo de serviço" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {serviceTypes?.map((type) => (
+                            <SelectItem key={type.id} value={type.id.toString()}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </Form>
               )}
             </div>
             
@@ -498,39 +620,125 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos do Dano</h3>
-                {service.photos?.before && service.photos.before.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                    {service.photos.before.map((photo) => (
-                      <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
-                        <img 
-                          src={photo.photo_url} 
-                          alt="Foto do dano" 
-                          className="object-cover w-full h-full"
-                        />
+                {!isEditing ? (
+                  <>
+                    {service.photos?.before && service.photos.before.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                        {service.photos.before.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                            <img 
+                              src={photo.photo_url} 
+                              alt="Foto do dano" 
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    ) : (
+                      <p className="text-gray-500 italic">Nenhuma foto de dano disponível</p>
+                    )}
+                  </>
                 ) : (
-                  <p className="text-gray-500 italic">Nenhuma foto de dano disponível</p>
+                  <div>
+                    <div className="mb-4">
+                      <PhotoUpload
+                        label="Adicionar fotos (máx. 5)"
+                        onChange={(files) => handleBeforePhotoChange(files)}
+                        className="mt-1"
+                        accept="image/*"
+                        multiple={true}
+                        maxFiles={5}
+                        preview={beforePhotoPreview || undefined}
+                      />
+                    </div>
+                    
+                    {/* Exibição das fotos existentes com opção de remoção */}
+                    {service.photos?.before && service.photos.before.length > 0 && (
+                      <div className="mt-4">
+                        <div className="text-sm font-medium mb-2">Fotos existentes</div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                          {service.photos.before.map((photo) => (
+                            <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
+                              <img 
+                                src={photo.photo_url} 
+                                alt="Foto do dano" 
+                                className="object-cover w-full h-full"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePhoto(photo.id)}
+                                className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                              >
+                                <Trash2 className="h-6 w-6 text-white" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
               
               <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Após Serviço</h3>
-                {service.photos?.after && service.photos.after.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                    {service.photos.after.map((photo) => (
-                      <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
-                        <img 
-                          src={photo.photo_url} 
-                          alt="Foto após reparo" 
-                          className="object-cover w-full h-full"
-                        />
+                {!isEditing ? (
+                  <>
+                    {service.photos?.after && service.photos.after.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                        {service.photos.after.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                            <img 
+                              src={photo.photo_url} 
+                              alt="Foto após reparo" 
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    ) : (
+                      <p className="text-gray-500 italic">Nenhuma foto após serviço disponível</p>
+                    )}
+                  </>
                 ) : (
-                  <p className="text-gray-500 italic">Nenhuma foto após serviço disponível</p>
+                  <div>
+                    <div className="mb-4">
+                      <PhotoUpload
+                        label="Adicionar fotos (máx. 5)"
+                        onChange={(files) => handleAfterPhotoChange(files)}
+                        className="mt-1"
+                        accept="image/*"
+                        multiple={true}
+                        maxFiles={5}
+                        preview={afterPhotoPreview || undefined}
+                      />
+                    </div>
+                    
+                    {/* Exibição das fotos existentes com opção de remoção */}
+                    {service.photos?.after && service.photos.after.length > 0 && (
+                      <div className="mt-4">
+                        <div className="text-sm font-medium mb-2">Fotos existentes</div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                          {service.photos.after.map((photo) => (
+                            <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
+                              <img 
+                                src={photo.photo_url} 
+                                alt="Foto após reparo" 
+                                className="object-cover w-full h-full"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePhoto(photo.id)}
+                                className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                              >
+                                <Trash2 className="h-6 w-6 text-white" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -543,182 +751,64 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
             <CardTitle>Valores</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
-              <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-gray-600">Valor do serviço</span>
-                <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
-              </div>
-              {currentUser?.role === 'admin' && (
+            {!isEditing ? (
+              <div className="mb-4">
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Valor administrativo</span>
-                  <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
+                  <span className="text-gray-600">Valor do serviço</span>
+                  <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
                 </div>
-              )}
-              <div className="flex justify-between py-2 font-medium">
-                <span className="text-gray-700">Total</span>
-                <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
+                {currentUser?.role === 'admin' && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Valor administrativo</span>
+                    <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between py-2 font-medium">
+                  <span className="text-gray-700">Total</span>
+                  <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Valor do Serviço (€)</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0,00"
+                      value={editForm.watch('price') !== undefined ? editForm.watch('price') : 0}
+                      onChange={(e) => editForm.setValue('price', e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                    />
+                  </div>
+                  
+                  {currentUser?.role === 'admin' && (
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Valor Administrativo (€)</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0,00"
+                        value={editForm.watch('displacement_fee') !== undefined ? editForm.watch('displacement_fee') : 0}
+                        onChange={(e) => editForm.setValue('displacement_fee', e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
+                  <span className="text-gray-700">Total</span>
+                  <span className="text-primary text-lg">
+                    {formatCurrency((editForm.watch('price') || 0) + (editForm.watch('displacement_fee') || 0))}
+                  </span>
+                </div>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="border-t pt-4">
             <div className="flex gap-2">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline">Editar Serviço</Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Editar Serviço</DialogTitle>
-                    <DialogDescription>
-                      Edite os detalhes deste serviço.
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <Form {...editForm}>
-                    <form onSubmit={editForm.handleSubmit((data) => updateServiceMutation.mutate(data))} className="space-y-6">
-                      {/* Tipo de Serviço */}
-                      <FormField
-                        control={editForm.control}
-                        name="service_type_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tipo de Serviço</FormLabel>
-                            <FormControl>
-                              <Select
-                                onValueChange={(value) => field.onChange(parseInt(value))}
-                                defaultValue={field.value?.toString()}
-                                value={field.value?.toString()}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o tipo de serviço" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {serviceTypes?.map((type) => (
-                                    <SelectItem key={type.id} value={type.id.toString()}>
-                                      {type.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      {/* Informações do Cliente */}
-                      <div>
-                        <h3 className="font-medium mb-3">Informações do Cliente</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          {/* Cliente */}
-                          <FormItem>
-                            <FormLabel>Cliente</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="text"
-                                value={service.client?.name || ""}
-                                disabled
-                              />
-                            </FormControl>
-                          </FormItem>
-                          
-                          {/* Veículo */}
-                          <FormItem>
-                            <FormLabel>Veículo</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="text"
-                                value={service.vehicle ? `${service.vehicle.make} ${service.vehicle.model} ${service.vehicle.year}` : ""}
-                                disabled
-                              />
-                            </FormControl>
-                          </FormItem>
-                        </div>
-                      </div>
-                      
-                      {/* Técnico */}
-                      <FormItem>
-                        <FormLabel>Técnico</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="text"
-                            value={service.technician?.name || "Não atribuído"}
-                            disabled
-                          />
-                        </FormControl>
-                      </FormItem>
-                      
-                      {/* Valores */}
-                      <div>
-                        <h3 className="font-medium mb-3">Valores</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <FormField
-                            control={editForm.control}
-                            name="price"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Valor do Serviço (€)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="0,00"
-                                    {...field}
-                                    onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                                    value={field.value !== undefined ? field.value : 0}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          {currentUser?.role === 'admin' && (
-                            <FormField
-                              control={editForm.control}
-                              name="displacement_fee"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Valor Administrativo (€)</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="0.01"
-                                      min="0"
-                                      placeholder="0,00"
-                                      {...field}
-                                      onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                                      value={field.value !== undefined ? field.value : 0}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-end space-x-2 pt-4">
-                        <Button 
-                          variant="outline" 
-                          type="button" 
-                          onClick={() => {/* Dialog fechará automaticamente */}}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button 
-                          type="submit"
-                          disabled={updateServiceMutation.isPending}
-                        >
-                          {updateServiceMutation.isPending ? "Salvando..." : "Salvar Alterações"}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
               
               <AlertDialog>
                 <AlertDialogTrigger asChild>
