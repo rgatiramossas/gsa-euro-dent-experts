@@ -358,8 +358,8 @@ export default function Budget() {
       if (inputElement) {
         // Usar requestAnimationFrame garante que o DOM já foi atualizado
         requestAnimationFrame(() => {
+          // Apenas foca o elemento
           inputElement.focus();
-          inputElement.select();
         });
       }
     }
@@ -437,9 +437,14 @@ export default function Budget() {
   const DamagedPartItem = ({ partKey, label }: { partKey: string, label: string }) => {
     const damage = partDamages[partKey];
     
-    // Função para evitar perda de foco e selecionar todo o texto
+    // Função para lidar com o foco no input
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      e.target.select();
+      // Precisamos usar setTimeout para garantir que o browser tenha tempo de processar o foco
+      setTimeout(() => {
+        // Posiciona o cursor no final do texto
+        const length = e.target.value.length;
+        e.target.setSelectionRange(length, length);
+      }, 0);
     };
     
     // Função otimizada para lidar com a mudança nos inputs 
@@ -462,11 +467,15 @@ export default function Budget() {
             <label htmlFor={`${partKey}-diameter20`} className="text-xs">20mm:</label>
             <Input
               id={`${partKey}-diameter20`}
-              type="number"
-              min="0"
-              max="9999"
-              value={damage.diameter20}
-              onChange={(e) => handleInputChange('diameter20', e.target.value)}
+              type="text"
+              pattern="[0-9]*"
+              inputMode="numeric"
+              value={damage.diameter20 || ''}
+              onChange={(e) => {
+                // Permitir apenas números e limitar a 4 dígitos
+                const value = e.target.value.replace(/\D/g, '').substring(0, 4);
+                handleInputChange('diameter20', value);
+              }}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
@@ -480,11 +489,15 @@ export default function Budget() {
             <label htmlFor={`${partKey}-diameter30`} className="text-xs">30mm:</label>
             <Input
               id={`${partKey}-diameter30`}
-              type="number"
-              min="0"
-              max="9999"
-              value={damage.diameter30}
-              onChange={(e) => handleInputChange('diameter30', e.target.value)}
+              type="text"
+              pattern="[0-9]*"
+              inputMode="numeric"
+              value={damage.diameter30 || ''}
+              onChange={(e) => {
+                // Permitir apenas números e limitar a 4 dígitos
+                const value = e.target.value.replace(/\D/g, '').substring(0, 4);
+                handleInputChange('diameter30', value);
+              }}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
@@ -498,11 +511,15 @@ export default function Budget() {
             <label htmlFor={`${partKey}-diameter40`} className="text-xs">40mm:</label>
             <Input
               id={`${partKey}-diameter40`}
-              type="number"
-              min="0"
-              max="9999"
-              value={damage.diameter40}
-              onChange={(e) => handleInputChange('diameter40', e.target.value)}
+              type="text"
+              pattern="[0-9]*"
+              inputMode="numeric"
+              value={damage.diameter40 || ''}
+              onChange={(e) => {
+                // Permitir apenas números e limitar a 4 dígitos
+                const value = e.target.value.replace(/\D/g, '').substring(0, 4);
+                handleInputChange('diameter40', value);
+              }}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
