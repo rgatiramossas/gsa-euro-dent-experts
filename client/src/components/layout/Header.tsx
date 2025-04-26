@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
-import { DollarSign, CalendarClock, Bell, Settings } from "lucide-react";
+import { DollarSign, CalendarClock, Bell, Settings, Calendar } from "lucide-react";
 
 // Não precisamos mais da interface HeaderProps já que não temos mais o sidebar
 export function Header() {
@@ -65,13 +65,13 @@ export function Header() {
             </button>
           </div>
           
-          {/* Ícone Agenda */}
+          {/* Ícone Eventos */}
           <div>
             <button 
-              onClick={() => setLocation("/schedule")}
+              onClick={() => setLocation("/eventos")}
               className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
             >
-              <CalendarClock className="h-6 w-6" />
+              <Calendar className="h-6 w-6" />
             </button>
           </div>
           
