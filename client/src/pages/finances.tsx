@@ -29,6 +29,30 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { 
   BarChart,
   Bar,
@@ -47,10 +71,53 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ServiceStatusBadge } from "@/components/common/ServiceStatusBadge";
 
+// Esquema para o formulário de despesas
+const expenseFormSchema = z.object({
+  description: z.string().min(3, {
+    message: "A descrição precisa ter pelo menos 3 caracteres.",
+  }),
+  amount: z.string().refine(
+    (val) => {
+      // Remover R$ e trocar vírgula por ponto para conversão
+      const cleanValue = val.replace(/[R$\s]/g, '').replace(',', '.');
+      return !isNaN(parseFloat(cleanValue)) && parseFloat(cleanValue) > 0;
+    },
+    {
+      message: "O valor deve ser um número positivo",
+    }
+  ),
+  date: z.string().refine(val => !isNaN(Date.parse(val)), {
+    message: "Data inválida",
+  }),
+  category: z.string().min(1, {
+    message: "Categoria é obrigatória",
+  }),
+  provider: z.string().optional(),
+  notes: z.string().optional(),
+  is_recurring: z.boolean().default(false),
+});
+
+type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
+
 export default function Finances() {
   const [period, setPeriod] = useState("month");
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "admin";
+  
+  // Formulário de despesas
+  const expenseForm = useForm<ExpenseFormValues>({
+    resolver: zodResolver(expenseFormSchema),
+    defaultValues: {
+      description: "",
+      amount: "",
+      date: new Date().toISOString().split('T')[0],
+      category: "operacional",
+      provider: "",
+      notes: "",
+      is_recurring: false
+    }
+  });
   
   // Get all services for financial data
   const { data: services, isLoading } = useQuery<ServiceListItem[]>({
@@ -230,6 +297,24 @@ export default function Finances() {
   
   // Chart colors
   const COLORS = ['#1a5276', '#2e86c1', '#f39c12', '#27ae60', '#e74c3c'];
+  
+  // Lidar com o envio do formulário de despesas
+  function onExpenseSubmit(data: ExpenseFormValues) {
+    // Aqui você pode tratar os dados do formulário
+    console.log("Dados do formulário de despesa:", data);
+    
+    // Converter a string de valor para número
+    const cleanAmount = data.amount.replace(/[R$\s]/g, '').replace(',', '.');
+    const amount = parseFloat(cleanAmount);
+    
+    // TODO: Integrar com a API quando estiver pronta
+    // Por enquanto, apenas mostra uma mensagem e fecha o diálogo
+    alert(`Despesa "${data.description}" registrada com sucesso no valor de ${formatCurrency(amount)}`);
+    
+    // Resetar o formulário e fechar o diálogo
+    expenseForm.reset();
+    setExpenseDialogOpen(false);
+  }
   
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
@@ -532,7 +617,11 @@ export default function Finances() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Despesas</CardTitle>
-              <Button size="sm" variant="outline">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => setExpenseDialogOpen(true)}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
@@ -587,6 +676,169 @@ export default function Finances() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Nova Despesa */}
+      <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Registrar Nova Despesa</DialogTitle>
+            <DialogDescription>
+              Preencha o formulário para registrar uma nova despesa.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...expenseForm}>
+            <form onSubmit={expenseForm.handleSubmit(onExpenseSubmit)} className="space-y-4">
+              <FormField
+                control={expenseForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Digite a descrição da despesa" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={expenseForm.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="R$ 0,00"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={expenseForm.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={expenseForm.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoria</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma categoria" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="operacional">Operacional</SelectItem>
+                          <SelectItem value="salario">Salário</SelectItem>
+                          <SelectItem value="material">Material</SelectItem>
+                          <SelectItem value="aluguel">Aluguel</SelectItem>
+                          <SelectItem value="alimentacao">Alimentação</SelectItem>
+                          <SelectItem value="transporte">Transporte</SelectItem>
+                          <SelectItem value="outras">Outras</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={expenseForm.control}
+                name="provider"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fornecedor/Destinatário</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Digite o nome do fornecedor ou funcionário" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={expenseForm.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Informações adicionais sobre a despesa"
+                        className="min-h-[80px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={expenseForm.control}
+                name="is_recurring"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        className="form-checkbox h-5 w-5"
+                        checked={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Despesa Recorrente</FormLabel>
+                      <FormDescription>
+                        Marque esta opção para despesas que se repetem mensalmente
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setExpenseDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">Salvar</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
