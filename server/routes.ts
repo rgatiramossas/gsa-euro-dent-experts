@@ -684,7 +684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Service photo endpoints
-  app.post("/api/services/:id/photos", requireAuth, upload.array('photos', 5), async (req, res) => {
+  app.post("/api/services/:id/photos", requireAuth, upload.array('photos', 4), async (req, res) => {
     try {
       const serviceId = parseInt(req.params.id);
       const photoType = req.body.photo_type || 'service';
@@ -695,10 +695,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Service not found" });
       }
       
+      // Verificar quantas fotos já existem para este serviço
+      const existingPhotos = await storage.getServicePhotos(serviceId);
+      const totalExistingPhotos = existingPhotos.length;
+      
+      // Verificar se adicionar as novas fotos excederia o limite de 4
       const uploadedFiles = req.files as Express.Multer.File[];
       
       if (!uploadedFiles || uploadedFiles.length === 0) {
         return res.status(400).json({ message: "No files uploaded" });
+      }
+      
+      if (totalExistingPhotos + uploadedFiles.length > 4) {
+        // Remover os arquivos temporários que não serão usados
+        uploadedFiles.forEach(file => {
+          try {
+            fs.unlinkSync(file.path);
+          } catch (err) {
+            console.error(`Falha ao remover arquivo temporário ${file.path}:`, err);
+          }
+        });
+        
+        return res.status(400).json({ 
+          message: `Limite de fotos excedido. Já existem ${totalExistingPhotos} fotos, permitido no máximo 4.`,
+          current: totalExistingPhotos,
+          maximum: 4,
+          remainingSlots: Math.max(0, 4 - totalExistingPhotos)
+        });
       }
       
       // Add all photos to the service
@@ -714,8 +737,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const photos = await Promise.all(photoPromises);
       
       res.status(201).json({
-        message: `${photos.length} photos uploaded successfully`,
-        photos: photos
+        message: `${photos.length} fotos enviadas com sucesso`,
+        photos: photos,
+        total: totalExistingPhotos + photos.length,
+        remainingSlots: 4 - (totalExistingPhotos + photos.length)
       });
     } catch (error) {
       console.error("Error uploading service photos:", error);
@@ -731,9 +756,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const photos = await storage.getServicePhotos(serviceId, photoType);
       
-      res.json(photos);
+      // Calcular quantas fotos ainda podem ser adicionadas
+      const remainingSlots = Math.max(0, 4 - photos.length);
+      
+      res.json({
+        photos,
+        total: photos.length,
+        remainingSlots
+      });
     } catch (error) {
       console.error("Error fetching service photos:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Delete a specific photo
+  app.delete("/api/services/:serviceId/photos/:photoId", requireAuth, async (req, res) => {
+    try {
+      const serviceId = parseInt(req.params.serviceId);
+      const photoId = parseInt(req.params.photoId);
+      
+      // Verificar se o serviço existe
+      const service = await storage.getService(serviceId);
+      if (!service) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+      
+      // Verificar se a foto existe
+      const photos = await storage.getServicePhotos(serviceId);
+      const photoToDelete = photos.find(p => p.id === photoId);
+      
+      if (!photoToDelete) {
+        return res.status(404).json({ message: "Photo not found" });
+      }
+      
+      // Excluir a foto do sistema de arquivos
+      try {
+        // Pegar o caminho relativo da foto
+        const relativePath = photoToDelete.photo_url;
+        // Converter para caminho absoluto
+        const absolutePath = path.join(process.cwd(), 'public', relativePath);
+        
+        // Verificar se o arquivo existe antes de tentar excluir
+        if (fs.existsSync(absolutePath)) {
+          fs.unlinkSync(absolutePath);
+        }
+      } catch (err) {
+        console.error(`Falha ao remover arquivo físico:`, err);
+        // Continua mesmo com falha na exclusão do arquivo físico
+      }
+      
+      // Excluir o registro da foto do banco de dados
+      const deleted = await db.delete('service_photos').where({ id: photoId }).returning();
+      
+      res.json({
+        message: "Photo deleted successfully",
+        photoId,
+        remainingPhotos: photos.length - 1,
+        remainingSlots: Math.min(4, 4 - photos.length + 1)
+      });
+    } catch (error) {
+      console.error("Error deleting service photo:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

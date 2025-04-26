@@ -758,7 +758,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                         {/* Fotos de tipo 'service' (novo formato unificado) */}
                         {service.photos?.service && service.photos.service.map((photo) => (
-                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                             <img 
                               src={photo.photo_url} 
                               alt="Foto do veículo" 
@@ -767,12 +767,22 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             <Badge className="absolute top-1 left-1 bg-blue-500 text-white">
                               Serviço
                             </Badge>
+                            {isEditMode && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePhoto(photo.id)}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Remover foto"
+                              >
+                                <X size={16} />
+                              </button>
+                            )}
                           </div>
                         ))}
                         
                         {/* Fotos de tipo 'before' (retrocompatibilidade) */}
                         {service.photos?.before && service.photos.before.map((photo) => (
-                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                             <img 
                               src={photo.photo_url} 
                               alt="Foto do veículo" 
@@ -781,12 +791,22 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             <Badge className="absolute top-1 left-1 bg-orange-500 text-white">
                               Antes
                             </Badge>
+                            {isEditMode && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePhoto(photo.id)}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Remover foto"
+                              >
+                                <X size={16} />
+                              </button>
+                            )}
                           </div>
                         ))}
                         
                         {/* Fotos de tipo 'after' (retrocompatibilidade) */}
                         {service.photos?.after && service.photos.after.map((photo) => (
-                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                             <img 
                               src={photo.photo_url} 
                               alt="Foto do veículo" 
@@ -795,6 +815,16 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             <Badge className="absolute top-1 left-1 bg-green-500 text-white">
                               Depois
                             </Badge>
+                            {isEditMode && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePhoto(photo.id)}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Remover foto"
+                              >
+                                <X size={16} />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
