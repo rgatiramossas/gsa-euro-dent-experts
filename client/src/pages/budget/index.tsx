@@ -490,6 +490,7 @@ export default function Budget() {
       return;
     }
     
+    // Se não está no modo manual, precisa de um veículo selecionado
     if (!selectedVehicle && !isManualVehicle) {
       toast({
         title: "Erro ao criar orçamento",
@@ -499,10 +500,21 @@ export default function Budget() {
       return;
     }
     
+    // Se está no modo manual, precisa preencher as informações do veículo
     if (isManualVehicle && !manualVehicleInfo) {
       toast({
         title: "Erro ao criar orçamento",
         description: "Informe os dados do veículo manualmente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validação para placa e chassi - pelo menos um dos dois deve estar preenchido
+    if (isManualVehicle && !licensePlate && !chassisNumber) {
+      toast({
+        title: "Erro ao criar orçamento",
+        description: "Preencha pelo menos um dos campos: placa ou chassi do veículo.",
         variant: "destructive",
       });
       return;
