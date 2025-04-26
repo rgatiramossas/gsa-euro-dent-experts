@@ -32,6 +32,14 @@ export function formatDate(dateString: string | undefined): string {
   return format(date, "dd/MM/yyyy", { locale: ptBR });
 }
 
+// Função separada para exibir sempre a data completa (sem "Hoje" ou "Ontem")
+export function formatCompleteDateOnly(dateString: string | undefined): string {
+  if (!dateString) return "";
+  
+  const date = new Date(dateString);
+  return format(date, "dd/MM/yyyy", { locale: ptBR });
+}
+
 export function formatDateTime(dateString: string | undefined): string {
   if (!dateString) return "";
   

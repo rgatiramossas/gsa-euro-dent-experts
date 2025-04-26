@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Client, Vehicle, User, ServiceType } from "@/types";
 import { apiRequest } from "@/lib/queryClient";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatCompleteDateOnly } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -661,7 +661,7 @@ export default function Budget() {
       clientSection.innerHTML = `
         <div>
           <p style="font-weight: 600; margin: 0 0 3px 0; font-size: 9px; color: #1E40AF;">DATA</p>
-          <div style="border: 1px solid #e0e0e0; padding: 5px; border-radius: 3px; font-size: 9px; background-color: white;">${formatDate(targetBudget.date) || ""}</div>
+          <div style="border: 1px solid #e0e0e0; padding: 5px; border-radius: 3px; font-size: 9px; background-color: white;">${formatCompleteDateOnly(targetBudget.date) || ""}</div>
         </div>
         <div>
           <p style="font-weight: 600; margin: 0 0 3px 0; font-size: 9px; color: #1E40AF;">CLIENTE</p>
