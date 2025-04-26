@@ -137,6 +137,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         notes: service.notes || "",
         price: service.price || 0,
         displacement_fee: service.displacement_fee || 0,
+        administrative_fee: service.administrative_fee || 0,
         location_type: service.location_type as "client_location" | "workshop",
         address: service.address || "",
         latitude: service.latitude || 0,
@@ -265,6 +266,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         notes: service.notes || "",
         price: service.price || 0,
         displacement_fee: service.displacement_fee || 0,
+        administrative_fee: service.administrative_fee || 0,
         location_type: service.location_type as "client_location" | "workshop",
         address: service.address || "",
         latitude: service.latitude || 0,
@@ -326,6 +328,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       
       if (dataDisplacementFee !== serviceDisplacementFee) {
         formData.append('displacement_fee', dataDisplacementFee.toString());
+      }
+      
+      const dataAdministrativeFee = typeof data.administrative_fee === 'string' ? parseFloat(data.administrative_fee) : data.administrative_fee;
+      const serviceAdministrativeFee = typeof service.administrative_fee === 'string' ? parseFloat(service.administrative_fee) : service.administrative_fee;
+      
+      if (dataAdministrativeFee !== serviceAdministrativeFee) {
+        formData.append('administrative_fee', dataAdministrativeFee.toString());
       }
       
       if (data.description !== service.description) {
