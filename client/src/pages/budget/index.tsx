@@ -339,8 +339,41 @@ export default function Budget() {
     });
   };
   
+  // Estado para armazenar a informação do último input modificado
+  const [lastModified, setLastModified] = React.useState<{
+    part: string;
+    diameter: 'diameter20' | 'diameter30' | 'diameter40';
+    id: string;
+  } | null>(null);
+
+  // Referência para armazenar os refs dos inputs
+  const inputRefs = React.useRef<{[key: string]: HTMLInputElement | null}>({});
+  
+  // UseEffect para restaurar o foco quando lastModified muda
+  React.useEffect(() => {
+    if (lastModified) {
+      const inputId = `${lastModified.part}-${lastModified.diameter}`;
+      const inputElement = inputRefs.current[inputId];
+      
+      if (inputElement) {
+        // Usar requestAnimationFrame garante que o DOM já foi atualizado
+        requestAnimationFrame(() => {
+          inputElement.focus();
+          inputElement.select();
+        });
+      }
+    }
+  }, [lastModified, partDamages]); // Dependência em partDamages para garantir que o efeito roda após atualização do estado
+  
   // Função para atualizar a quantidade de um diâmetro específico
-  const handleDiameterChange = (part: string, diameter: 'diameter20' | 'diameter30' | 'diameter40', value: number, inputElement?: HTMLInputElement) => {
+  const handleDiameterChange = (part: string, diameter: 'diameter20' | 'diameter30' | 'diameter40', value: number) => {
+    // Registrar qual campo foi modificado
+    setLastModified({
+      part,
+      diameter,
+      id: `${part}-${diameter}`
+    });
+    
     setPartDamages(prev => {
       // Determinar se a peça está selecionada com base em se algum diâmetro tem um valor > 0
       const newPartDamage = {
@@ -358,56 +391,35 @@ export default function Budget() {
       };
     });
     
-    // Recalcular totais - usar setTimeout para garantir que o estado foi atualizado
-    setTimeout(() => {
-      // Calcular total de diâmetros
-      let totalDiameters = 0;
-      let selectedCount = 0;
-      
-      Object.values(partDamages).forEach(damage => {
-        // Determinar se a peça tem algum valor positivo em qualquer diâmetro
-        const hasValue = damage.diameter20 > 0 || damage.diameter30 > 0 || damage.diameter40 > 0;
-        
-        if (hasValue) {
-          selectedCount++;
-          totalDiameters += damage.diameter20 + damage.diameter30 + damage.diameter40;
-        }
-      });
-      
-      // Consideramos a peça sendo editada agora
-      const currentDamage = {
+    // Calcular total de diâmetros
+    let totalDiameters = 0;
+    let selectedCount = 0;
+    
+    // Criar uma versão atualizada para calcular totais
+    const updatedDamages = {
+      ...partDamages,
+      [part]: {
         ...partDamages[part],
-        [diameter]: value
-      };
+        [diameter]: value,
+        selected: true // Assumimos que se há um valor, a peça está selecionada
+      }
+    };
+    
+    Object.entries(updatedDamages).forEach(([partKey, damage]) => {
+      // Se a peça for a que estamos atualizando agora, usar os valores atualizados
+      const hasValue = damage.diameter20 > 0 || damage.diameter30 > 0 || damage.diameter40 > 0;
       
-      const currentHasValue = currentDamage.diameter20 > 0 || currentDamage.diameter30 > 0 || currentDamage.diameter40 > 0;
-      
-      // Atualizar os totais com os valores atuais
-      if (currentHasValue && !partDamages[part].selected) {
+      if (hasValue) {
         selectedCount++;
-        totalDiameters += currentDamage.diameter20 + currentDamage.diameter30 + currentDamage.diameter40;
-      } else if (!currentHasValue && partDamages[part].selected) {
-        selectedCount--;
-        totalDiameters -= (partDamages[part].diameter20 + partDamages[part].diameter30 + partDamages[part].diameter40);
-        totalDiameters += currentDamage.diameter20 + currentDamage.diameter30 + currentDamage.diameter40;
-      } else if (partDamages[part].selected) {
-        // Ajustar apenas o diâmetro que mudou
-        totalDiameters -= partDamages[part][diameter];
-        totalDiameters += value;
+        totalDiameters += damage.diameter20 + damage.diameter30 + damage.diameter40;
       }
-      
-      // Usar a contagem de diâmetros se houver algum, senão usar a contagem de peças
-      const totalAWValue = totalDiameters > 0 ? totalDiameters : selectedCount;
-      
-      setTotalAw(totalAWValue);
-      setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
-      
-      // Restaurar o foco e selecionar o input se o elemento foi passado
-      if (inputElement) {
-        inputElement.focus();
-        inputElement.select();
-      }
-    }, 10); // Aumentei um pouco o timeout para garantir que o React terminou de renderizar
+    });
+    
+    // Usar a contagem de diâmetros se houver algum, senão usar a contagem de peças
+    const totalAWValue = totalDiameters > 0 ? totalDiameters : selectedCount;
+    
+    setTotalAw(totalAWValue);
+    setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
   };
   
   const handlePhotoUpload = () => {
@@ -432,12 +444,11 @@ export default function Budget() {
     
     // Função otimizada para lidar com a mudança nos inputs 
     // mantendo o foco ativo no campo atual
-    const handleInputChange = (diameter: 'diameter20' | 'diameter30' | 'diameter40', value: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (diameter: 'diameter20' | 'diameter30' | 'diameter40', value: string) => {
       const numValue = parseInt(value) || 0;
-      const currentInput = e.target;
       
-      // Atualizar o valor no estado e passar o elemento input
-      handleDiameterChange(partKey, diameter, numValue, currentInput);
+      // Atualizar o valor no estado
+      handleDiameterChange(partKey, diameter, numValue);
     };
     
     return (
@@ -454,10 +465,13 @@ export default function Budget() {
               type="number"
               min="0"
               value={damage.diameter20}
-              onChange={(e) => handleInputChange('diameter20', e.target.value, e)}
+              onChange={(e) => handleInputChange('diameter20', e.target.value)}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
+              ref={(el) => {
+                inputRefs.current[`${partKey}-diameter20`] = el;
+              }}
             />
           </div>
           
@@ -468,10 +482,13 @@ export default function Budget() {
               type="number"
               min="0"
               value={damage.diameter30}
-              onChange={(e) => handleInputChange('diameter30', e.target.value, e)}
+              onChange={(e) => handleInputChange('diameter30', e.target.value)}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
+              ref={(el) => {
+                inputRefs.current[`${partKey}-diameter30`] = el;
+              }}
             />
           </div>
           
@@ -482,10 +499,13 @@ export default function Budget() {
               type="number"
               min="0"
               value={damage.diameter40}
-              onChange={(e) => handleInputChange('diameter40', e.target.value, e)}
+              onChange={(e) => handleInputChange('diameter40', e.target.value)}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
+              ref={(el) => {
+                inputRefs.current[`${partKey}-diameter40`] = el;
+              }}
             />
           </div>
           
