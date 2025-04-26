@@ -404,6 +404,7 @@ export class DatabaseStorage implements IStorage {
     
     // Se for um técnico específico, adiciona a condição de filtrar por ID
     if (technicianId) {
+      console.log('Aplicando filtro de técnico ID:', technicianId);
       baseConditions.push(eq(services.technician_id, technicianId));
     }
     

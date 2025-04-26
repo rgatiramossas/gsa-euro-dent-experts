@@ -140,12 +140,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = req.session.userRole;
       const userId = req.session.userId;
       
+      console.log('Dashboard Stats Request - Role:', userRole, 'User ID:', userId);
+      
       let technicianId: number | undefined = undefined;
       if (userRole === "technician") {
-        technicianId = userId;
+        technicianId = Number(userId);
+        console.log('Filtrando stats do dashboard para o técnico ID:', technicianId);
       }
       
       const stats = await storage.getDashboardStats(technicianId);
+      console.log('Stats retornados:', stats);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
