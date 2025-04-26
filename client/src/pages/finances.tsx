@@ -599,9 +599,14 @@ export default function Finances() {
     
     const totalRevenue = filteredServices.reduce((sum, service) => {
       // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
-      // Para admin, mostrar a soma dos valores totais
-      const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
-      return sum + valueToAdd;
+      // Para admin, mostrar a soma dos valores do serviço + taxa administrativa
+      if (isAdmin) {
+        const servicePrice = service.price || 0;
+        const adminFee = service.administrative_fee || 0;
+        return sum + servicePrice + adminFee;
+      } else {
+        return sum + (service.price || 0);
+      }
     }, 0);
     const servicesCount = filteredServices.length;
     const averageTicket = servicesCount > 0 ? totalRevenue / servicesCount : 0;
@@ -639,9 +644,14 @@ export default function Finances() {
           })
           .reduce((sum, service) => {
             // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
-            // Para admin, mostrar a soma dos valores totais
-            const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
-            return sum + valueToAdd;
+            // Para admin, mostrar a soma dos valores do serviço + taxa administrativa
+            if (isAdmin) {
+              const servicePrice = service.price || 0;
+              const adminFee = service.administrative_fee || 0;
+              return sum + servicePrice + adminFee;
+            } else {
+              return sum + (service.price || 0);
+            }
           }, 0);
         
         chartData.push({
@@ -666,9 +676,14 @@ export default function Finances() {
           })
           .reduce((sum, service) => {
             // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
-            // Para admin, mostrar a soma dos valores totais
-            const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
-            return sum + valueToAdd;
+            // Para admin, mostrar a soma dos valores do serviço + taxa administrativa
+            if (isAdmin) {
+              const servicePrice = service.price || 0;
+              const adminFee = service.administrative_fee || 0;
+              return sum + servicePrice + adminFee;
+            } else {
+              return sum + (service.price || 0);
+            }
           }, 0);
         
         chartData.push({
@@ -691,9 +706,14 @@ export default function Finances() {
           })
           .reduce((sum, service) => {
             // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
-            // Para admin, mostrar a soma dos valores totais
-            const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
-            return sum + valueToAdd;
+            // Para admin, mostrar a soma dos valores do serviço + taxa administrativa
+            if (isAdmin) {
+              const servicePrice = service.price || 0;
+              const adminFee = service.administrative_fee || 0;
+              return sum + servicePrice + adminFee;
+            } else {
+              return sum + (service.price || 0);
+            }
           }, 0);
         
         chartData.push({
@@ -1027,7 +1047,12 @@ export default function Finances() {
                         <TableCell>
                           <ServiceStatusBadge status={service.status} />
                         </TableCell>
-                        <TableCell className="text-right font-medium">{formatCurrency(service.total || 0)}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {isAdmin 
+                            ? formatCurrency((service.price || 0) + (service.administrative_fee || 0)) 
+                            : formatCurrency(service.price || 0)
+                          }
+                        </TableCell>
                       </TableRow>
                     ))
                   )}

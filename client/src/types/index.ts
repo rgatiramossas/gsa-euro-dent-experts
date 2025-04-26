@@ -118,7 +118,7 @@ export interface ServiceListItem {
   scheduled_date?: string;
   completion_date?: string;
   price?: number;
-  displacement_fee?: number;
+  administrative_fee?: number;
   total?: number;
   created_at?: string;
 }
