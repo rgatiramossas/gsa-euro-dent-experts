@@ -565,7 +565,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Payment Request methods
-  async createPaymentRequest(technicianId: number, serviceIds: number[]): Promise<PaymentRequest> {
+  async createPaymentRequest(technicianId: number | null, serviceIds: number[]): Promise<PaymentRequest> {
     // Use a transaction to ensure all operations succeed or fail together
     const tx = await db.transaction(async (tx) => {
       // First create the payment request
@@ -573,7 +573,7 @@ export class DatabaseStorage implements IStorage {
         .insert(paymentRequests)
         .values({ 
           technician_id: technicianId,
-          status: "pending" 
+          status: "aguardando_aprovacao" 
         })
         .returning();
       
@@ -691,7 +691,7 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     // If approved, update all associated services to "faturado"
-    if (status === "approved") {
+    if (status === "aprovado") {
       const items = await db
         .select({
           service_id: paymentRequestItems.service_id,
@@ -708,7 +708,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     // If rejected, update all associated services back to "completed"
-    if (status === "rejected") {
+    if (status === "rejeitado") {
       const items = await db
         .select({
           service_id: paymentRequestItems.service_id,

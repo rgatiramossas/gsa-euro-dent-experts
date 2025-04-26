@@ -720,28 +720,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   app.post("/api/payment-requests", requireAuth, async (req, res) => {
-    if (req.session.userRole !== "technician") {
-      return res.status(403).json({ message: "Apenas técnicos podem criar pedidos de pagamento" });
-    }
-    
     try {
-      const { service_ids } = req.body;
+      const { service_ids, technician_id } = req.body;
       
       if (!service_ids || !Array.isArray(service_ids) || service_ids.length === 0) {
         return res.status(400).json({ message: "É necessário selecionar pelo menos um serviço" });
       }
       
-      const technicianId = Number(req.session.userId);
-      const paymentRequest = await storage.createPaymentRequest(technicianId, service_ids);
-      
-      res.status(201).json(paymentRequest);
+      // Se for admin, pode especificar o técnico ou criar sem técnico
+      if (req.session.userRole === "admin") {
+        // Converte para número ou mantém null/undefined
+        const techId = technician_id ? Number(technician_id) : null;
+        const paymentRequest = await storage.createPaymentRequest(techId, service_ids);
+        return res.status(201).json(paymentRequest);
+      } 
+      // Se for técnico, só pode criar para si mesmo
+      else if (req.session.userRole === "technician") {
+        const technicianId = Number(req.session.userId);
+        const paymentRequest = await storage.createPaymentRequest(technicianId, service_ids);
+        return res.status(201).json(paymentRequest);
+      }
+      else {
+        return res.status(403).json({ message: "Você não tem permissão para criar pedidos de pagamento" });
+      }
     } catch (error) {
       console.error("Erro ao criar pedido de pagamento:", error);
       res.status(500).json({ message: "Erro ao criar pedido de pagamento" });
     }
   });
   
-  app.put("/api/payment-requests/:id/status", requireAuth, async (req, res) => {
+  app.patch("/api/payment-requests/:id", requireAuth, async (req, res) => {
     if (req.session.userRole !== "admin") {
       return res.status(403).json({ message: "Apenas administradores podem alterar o status de pedidos de pagamento" });
     }
@@ -750,7 +758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const requestId = Number(req.params.id);
       const { status } = req.body;
       
-      if (!status || !["approved", "rejected"].includes(status)) {
+      if (!status || !["aprovado", "rejeitado"].includes(status)) {
         return res.status(400).json({ message: "Status inválido" });
       }
       
