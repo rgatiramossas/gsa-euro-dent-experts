@@ -455,6 +455,27 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     console.log(`${files.length} fotos 'antes' selecionadas`);
   };
   
+  // Função que calcula quantas slots de fotos ainda estão disponíveis
+  const calculateRemainingPhotoSlots = (): number => {
+    if (!service || !service.photos) return 4; // Se não há serviço ou fotos, permite o máximo
+    
+    // Conta o número total de fotos existentes
+    const existingPhotosCount = 
+      (service.photos.service?.length || 0) + 
+      (service.photos.before?.length || 0) + 
+      (service.photos.after?.length || 0);
+    
+    // Subtrai o número de fotos marcadas para remoção
+    const countAfterRemovals = existingPhotosCount - photosToRemove.length;
+    
+    // Calcular o número máximo de fotos que ainda podem ser adicionadas
+    const remainingSlots = Math.max(0, 4 - countAfterRemovals);
+    
+    console.log(`Slots de fotos disponíveis: ${remainingSlots} (total: ${existingPhotosCount}, removidas: ${photosToRemove.length})`);
+    
+    return remainingSlots;
+  };
+
   // Função para receber novas fotos do tipo "depois"
   const handleAfterPhotoChange = (files: FileList) => {
     if (files.length === 0) return;
@@ -1032,13 +1053,15 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                                 }
                               }}
                               multiple
-                              maxFiles={4}
+                              maxFiles={calculateRemainingPhotoSlots()}
                               preview={servicePhotoPreview || undefined}
                             />
                           </FormControl>
                           <FormMessage />
                           <p className="text-xs text-gray-500 mt-1">
-                            Adicione até 4 fotos do serviço. Estas fotos serão usadas para documentar o trabalho realizado.
+                            {calculateRemainingPhotoSlots() > 0 
+                              ? `Adicione até ${calculateRemainingPhotoSlots()} ${calculateRemainingPhotoSlots() === 1 ? 'foto' : 'fotos'} do serviço. Total máximo: 4 fotos.` 
+                              : 'Limite máximo de 4 fotos atingido. Remova alguma foto existente para adicionar novas.'}
                           </p>
                         </FormItem>
                       )}
