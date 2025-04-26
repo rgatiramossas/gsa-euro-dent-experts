@@ -705,6 +705,10 @@ export default function Budget() {
                 {/* Observações */}
                 <div className="space-y-2">
                   <Label htmlFor="note">Observações</Label>
+                  <div className="mb-2 text-sm border p-2 rounded bg-muted">
+                    <strong>MATERIAIS ESPECIAIS:</strong><br />
+                    A= ALUMÍNIO   K= COLA   P= PINTURA
+                  </div>
                   <Textarea
                     id="note"
                     value={note}
