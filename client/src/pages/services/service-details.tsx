@@ -81,7 +81,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const [newStatus, setNewStatus] = useState<ServiceStatus | "">("");
   const [statusNotes, setStatusNotes] = useState("");
   const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  
+  // Nova abordagem para edição inline
+  const [isEditing, setIsEditing] = useState(false);
   const [uploadedPhotos, setUploadedPhotos] = useState<FileList | null>(null);
   
   // Simulação de dados dos técnicos - normalmente viria de uma API
@@ -163,6 +165,29 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const updateServiceMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Se tiver fotos no formulário, precisa enviar como multipart
+      if (uploadedPhotos && uploadedPhotos.length > 0) {
+        const formData = new FormData();
+        
+        // Adicionar dados do serviço como JSON
+        formData.append('serviceData', JSON.stringify(data));
+        
+        // Adicionar cada foto
+        for (let i = 0; i < uploadedPhotos.length; i++) {
+          formData.append('photos', uploadedPhotos[i]);
+        }
+        
+        const uploadRes = await fetch(`/api/services/${id}/photos`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!uploadRes.ok) {
+          throw new Error('Erro ao fazer upload das fotos');
+        }
+      }
+      
+      // Enviar os dados do serviço sem as fotos
       const res = await apiRequest('PATCH', `/api/services/${id}`, data);
       if (!res.ok) {
         throw new Error('Failed to update service');
@@ -177,7 +202,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         title: "Serviço atualizado",
         description: "As alterações foram salvas com sucesso",
       });
-      setShowEditDialog(false);
+      // Sai do modo de edição
+      setIsEditing(false);
+      setUploadedPhotos(null);
     },
     onError: (error) => {
       console.error('Error updating service:', error);
@@ -188,6 +215,38 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       });
     }
   });
+  
+  // Função para iniciar o modo de edição
+  const handleStartEditing = () => {
+    // Reset o formulário com os valores atuais
+    if (service) {
+      editForm.reset({
+        service_type_id: service.service_type_id || 0,
+        price: service.price || 0,
+        displacement_fee: service.displacement_fee || 0,
+      });
+    }
+    setIsEditing(true);
+  };
+  
+  // Função para cancelar a edição
+  const handleCancelEditing = () => {
+    setIsEditing(false);
+    setUploadedPhotos(null);
+  };
+  
+  // Função para salvar as alterações
+  const handleSaveChanges = () => {
+    editForm.handleSubmit((data) => {
+      // Apenas enviar os campos que podem ser editados
+      const updateData = {
+        service_type_id: data.service_type_id,
+        price: data.price,
+        displacement_fee: data.displacement_fee,
+      };
+      updateServiceMutation.mutate(updateData);
+    })();
+  };
   
   const deleteServiceMutation = useMutation({
     mutationFn: async () => {
@@ -503,7 +562,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           </CardContent>
           <CardFooter className="border-t pt-4">
             <div className="flex gap-2">
-              <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+              <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline">Editar Serviço</Button>
                 </DialogTrigger>
@@ -645,7 +704,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         <Button 
                           variant="outline" 
                           type="button" 
-                          onClick={() => setShowEditDialog(false)}
+                          onClick={() => {/* Dialog fechará automaticamente */}}
                         >
                           Cancelar
                         </Button>
