@@ -602,20 +602,28 @@ export default function NewService() {
                   name="photos"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fotos do veículo (até 4 fotos)</FormLabel>
+                      <FormLabel>Fotos do serviço (até 4 fotos)</FormLabel>
                       <FormControl>
                         <PhotoUpload
-                          label="fotos-veiculo"
+                          label="fotos-servico"
                           multiple={true}
                           maxFiles={4}
                           onChange={(files) => {
                             field.onChange(files);
                             setPhotos(files);
+                            
+                            if (files.length > 0) {
+                              toast({
+                                title: "Fotos selecionadas com sucesso",
+                                description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
+                                variant: "default",
+                              });
+                            }
                           }}
                         />
                       </FormControl>
                       <FormDescription>
-                        Adicione fotos para documentar o estado do veículo
+                        Adicione até 4 fotos para documentar o serviço
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
