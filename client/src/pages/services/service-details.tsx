@@ -744,16 +744,32 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     <span className="text-gray-600">Valor do serviço</span>
                     <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
                   </div>
+                  
                   {currentUser?.role === 'admin' && (
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="text-gray-600">Valor administrativo</span>
-                      <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
+                    <>
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Taxa de deslocamento</span>
+                        <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
+                      </div>
+                      
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Taxa administrativa</span>
+                        <span className="text-gray-800 font-medium">{formatCurrency(service.administrative_fee || 0)}</span>
+                      </div>
+                      
+                      <div className="flex justify-between py-2 font-medium">
+                        <span className="text-gray-700">Total</span>
+                        <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  {currentUser?.role !== 'admin' && (
+                    <div className="flex justify-between py-2 font-medium mt-2">
+                      <span className="text-gray-700">Valor para o técnico</span>
+                      <span className="text-primary text-lg">{formatCurrency(service.price)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between py-2 font-medium">
-                    <span className="text-gray-700">Total</span>
-                    <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
-                  </div>
                 </div>
               </CardContent>
               <CardFooter className="border-t pt-4">
@@ -865,35 +881,74 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     />
                     
                     {currentUser?.role === 'admin' && (
-                      <FormField
-                        control={editForm.control}
-                        name="displacement_fee"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Valor Administrativo (€)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="0,00"
-                                {...field}
-                                onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <>
+                        <FormField
+                          control={editForm.control}
+                          name="displacement_fee"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Taxa de Deslocamento (€)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0,00"
+                                  {...field}
+                                  onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={editForm.control}
+                          name="administrative_fee"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Taxa Administrativa (€)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="0,00"
+                                  {...field}
+                                  onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Comissão para o administrador (apenas visível para administradores)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
                     )}
                   </div>
                   
-                  <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
-                    <span className="text-gray-700">Total</span>
-                    <span className="text-primary text-lg">
-                      {formatCurrency((editForm.watch('price') || 0) + (editForm.watch('displacement_fee') || 0))}
-                    </span>
-                  </div>
+                  {currentUser?.role === 'admin' ? (
+                    <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
+                      <span className="text-gray-700">Total</span>
+                      <span className="text-primary text-lg">
+                        {formatCurrency(
+                          (editForm.watch('price') || 0) + 
+                          (editForm.watch('displacement_fee') || 0) + 
+                          (editForm.watch('administrative_fee') || 0)
+                        )}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
+                      <span className="text-gray-700">Valor para o técnico</span>
+                      <span className="text-primary text-lg">
+                        {formatCurrency(editForm.watch('price') || 0)}
+                      </span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
