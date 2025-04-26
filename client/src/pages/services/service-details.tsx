@@ -94,7 +94,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       address: "",
       latitude: 0,
       longitude: 0,
-      scheduled_date: new Date()
+      scheduled_date: new Date(),
+      photos: undefined
     }
   });
   
@@ -112,7 +113,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         address: service.address || "",
         latitude: service.latitude || 0,
         longitude: service.longitude || 0,
-        scheduled_date: service.scheduled_date ? new Date(service.scheduled_date) : new Date()
+        scheduled_date: service.scheduled_date ? new Date(service.scheduled_date) : new Date(),
+        photos: undefined
       });
     }
   }, [service]);
@@ -364,16 +366,16 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
             <CardTitle>Registro Fotográfico</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Antes</h3>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos do Dano</h3>
                 {service.photos?.before && service.photos.before.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                     {service.photos.before.map((photo) => (
                       <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
                         <img 
                           src={photo.photo_url} 
-                          alt="Antes do reparo" 
+                          alt="Foto do dano" 
                           className="object-cover w-full h-full"
                         />
                       </div>
@@ -381,28 +383,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   </div>
                 ) : (
                   <div className="bg-gray-100 rounded-lg p-8 text-center text-gray-500">
-                    Nenhuma foto do estado inicial
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Depois</h3>
-                {service.photos?.after && service.photos.after.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {service.photos.after.map((photo) => (
-                      <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden">
-                        <img 
-                          src={photo.photo_url} 
-                          alt="Depois do reparo" 
-                          className="object-cover w-full h-full"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-gray-100 rounded-lg p-8 text-center text-gray-500">
-                    Nenhuma foto do resultado final
+                    Nenhuma foto do dano
                   </div>
                 )}
               </div>
