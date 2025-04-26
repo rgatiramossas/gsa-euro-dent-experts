@@ -201,65 +201,64 @@ const hailCalculation = (
     aw = sizeTable[dents];
     console.log(`Valor exato encontrado na tabela: ${dents} amassados = ${aw} AW`);
   } 
-  // 2. Neste caso, precisamos usar valores exatos da tabela
+  // 2. Se não existe, usamos interpolação linear entre os valores mais próximos
   else {
-    // Consultar valores específicos
-    // Verificar valor específico para 42 amassados com diâmetro 30mm em peça vertical
-    if (size === 30 && dents === 42 && isVertical) {
-      aw = 60; // Conforme tabela
-      console.log(`Valor específico encontrado: 42 amassados de 30mm, vertical = 60 AW`);
+    // Encontrar valores de referência na tabela (valores existentes)
+    const availableKeys = Object.keys(sizeTable).map(Number).sort((a, b) => a - b);
+    
+    // Se não tem amassados, retorna zero
+    if (dents === 0 || availableKeys.length === 0) {
+      return { aw: 0, hours: 0, cost: "0.00" };
     }
-    // Consultar valores específicos
-    // Verificar valor específico para 42 amassados com diâmetro 40mm em peça vertical
-    else if (size === 40 && dents === 42 && isVertical) {
-      aw = 82; // Conforme tabela
-      console.log(`Valor específico encontrado: 42 amassados de 40mm, vertical = 82 AW`);
-    }
-    // Outros valores específicos
-    else {
-      // Se não encontrou um valor específico, buscar os valores vizinhos para interpolar
-      // (baseado na tabela fornecida)
+    
+    // Encontrar o valor anterior e posterior mais próximos
+    const lowerKey = availableKeys.filter(k => k < dents).pop();
+    const higherKey = availableKeys.find(k => k > dents);
+    
+    // Três casos possíveis:
+    if (lowerKey !== undefined && higherKey !== undefined) {
+      // CASO 1: Temos valores anterior e posterior (interpolação ideal)
+      const lowerAW = sizeTable[lowerKey];
+      const higherAW = sizeTable[higherKey];
       
-      // Encontrar os valores adjacentes na tabela e interpolar
-      const availableKeys = Object.keys(sizeTable).map(Number).sort((a, b) => a - b);
+      // Interpolação linear: valor_dents = valor_anterior + (dents - anterior) * (valor_posterior - valor_anterior) / (posterior - anterior)
+      aw = lowerAW + (dents - lowerKey) * (higherAW - lowerAW) / (higherKey - lowerKey);
       
-      // Se não tem amassados, retorna zero
-      if (dents === 0 || availableKeys.length === 0) {
-        return { aw: 0, hours: 0, cost: "0.00" };
+      console.log(`Interpolação linear: ${dents} amassados entre ${lowerKey} (${lowerAW} AW) e ${higherKey} (${higherAW} AW) = ${aw} AW`);
+    } 
+    else if (lowerKey === undefined && higherKey !== undefined) {
+      // CASO 2: Temos apenas valor posterior (extrapolação inferior)
+      // Encontrar os dois menores valores para a extrapolação
+      const smallest = availableKeys[0];
+      const nextSmallest = availableKeys[1];
+      
+      if (nextSmallest !== undefined) {
+        // Podemos extrapolar usando os dois menores valores
+        const rate = (sizeTable[nextSmallest] - sizeTable[smallest]) / (nextSmallest - smallest);
+        aw = sizeTable[smallest] - (smallest - dents) * rate;
+      } else {
+        // Só temos um valor, usar proporção simples
+        aw = (sizeTable[smallest] / smallest) * dents;
       }
       
-      // Encontrar valores de referência para interpolar (valor abaixo e acima)
-      let lowerKey = availableKeys.filter(k => k < dents).pop();
-      let higherKey = availableKeys.find(k => k > dents);
+      console.log(`Extrapolação inferior: ${dents} amassados usando ${smallest} (${sizeTable[smallest]} AW) = ${aw} AW`);
+    } 
+    else if (higherKey === undefined && lowerKey !== undefined) {
+      // CASO 3: Temos apenas valor anterior (extrapolação superior)
+      // Encontrar os dois maiores valores para a extrapolação
+      const largest = availableKeys[availableKeys.length - 1];
+      const nextLargest = availableKeys[availableKeys.length - 2];
       
-      if (lowerKey === undefined && higherKey !== undefined) {
-        // Se não temos valor inferior, usar o menor valor disponível e proporção
-        lowerKey = availableKeys[0];
-        aw = (sizeTable[lowerKey] / lowerKey) * dents;
-        console.log(`Calculando por proporção com menor valor: ${dents} amassados baseado em ${lowerKey} (${sizeTable[lowerKey]} AW) = ${aw} AW`);
-      } 
-      else if (higherKey === undefined && lowerKey !== undefined) {
-        // Se não temos valor superior, usar o maior valor disponível e proporção 
-        aw = (sizeTable[lowerKey] / lowerKey) * dents;
-        console.log(`Calculando por proporção com maior valor: ${dents} amassados baseado em ${lowerKey} (${sizeTable[lowerKey]} AW) = ${aw} AW`);
+      if (nextLargest !== undefined) {
+        // Podemos extrapolar usando os dois maiores valores
+        const rate = (sizeTable[largest] - sizeTable[nextLargest]) / (largest - nextLargest);
+        aw = sizeTable[largest] + (dents - largest) * rate;
+      } else {
+        // Só temos um valor, usar proporção simples
+        aw = (sizeTable[largest] / largest) * dents;
       }
-      else if (lowerKey !== undefined && higherKey !== undefined) {
-        // Interpolar linearmente entre os valores adjacentes
-        const lowerAW = sizeTable[lowerKey];
-        const higherAW = sizeTable[higherKey];
-        
-        // Calcular proporção entre os valores
-        const ratio = (dents - lowerKey) / (higherKey - lowerKey);
-        aw = lowerAW + ratio * (higherAW - lowerAW);
-        
-        console.log(`Interpolando: ${dents} amassados entre ${lowerKey} (${lowerAW} AW) e ${higherKey} (${higherAW} AW) = ${aw} AW`);
-      }
-      else {
-        // Caso extremo (não deve ocorrer)
-        const middleKey = availableKeys[Math.floor(availableKeys.length / 2)];
-        aw = (sizeTable[middleKey] / middleKey) * dents;
-        console.log(`Calculando com valor médio: ${dents} amassados baseado em ${middleKey} (${sizeTable[middleKey]} AW) = ${aw} AW`);
-      }
+      
+      console.log(`Extrapolação superior: ${dents} amassados usando ${largest} (${sizeTable[largest]} AW) = ${aw} AW`);
     }
   }
   
