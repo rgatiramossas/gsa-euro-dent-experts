@@ -360,7 +360,12 @@ export default function Finances() {
                             </TableCell>
                             <TableCell className="text-right font-medium">
                               {formatCurrency(
-                                request.services?.reduce((sum: number, s: any) => sum + (s.total || 0), 0) || 0
+                                request.services?.reduce((sum: number, s: any) => {
+                                  // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
+                                  // Para admin, mostrar a soma dos valores totais
+                                  const valueToAdd = isAdmin ? (s.total || 0) : (s.price || 0);
+                                  return sum + valueToAdd;
+                                }, 0) || 0
                               )}
                             </TableCell>
                           </TableRow>
@@ -415,7 +420,7 @@ export default function Finances() {
                         </div>
                       </div>
                       <div className="font-semibold">
-                        {formatCurrency(service.total || 0)}
+                        {formatCurrency(isAdmin ? (service.total || 0) : (service.price || 0))}
                       </div>
                     </div>
                   ))}
@@ -428,7 +433,12 @@ export default function Finances() {
                 {formatCurrency(
                   completedTechnicianServices
                     ?.filter(service => selectedServices.includes(service.id))
-                    .reduce((sum, service) => sum + (service.total || 0), 0) || 0
+                    .reduce((sum, service) => {
+                      // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
+                      // Para admin, mostrar a soma dos valores totais
+                      const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
+                      return sum + valueToAdd;
+                    }, 0) || 0
                 )}
               </div>
               <div className="space-x-2">
