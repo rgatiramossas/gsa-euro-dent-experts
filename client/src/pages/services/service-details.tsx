@@ -117,6 +117,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       notes: "",
       price: 0,
       displacement_fee: 0,
+      administrative_fee: 0,
       location_type: "workshop" as "client_location" | "workshop",
       address: "",
       latitude: 0,

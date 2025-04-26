@@ -77,6 +77,7 @@ export interface Service {
   longitude?: number;
   price?: number;
   displacement_fee?: number;
+  administrative_fee?: number;
   total?: number;
   notes?: string;
   created_at?: string;
