@@ -438,10 +438,13 @@ export class DatabaseStorage implements IStorage {
     // Condições base para todos os filtros (excluir serviços deletados)
     const baseConditions = [sql`${services.status} != 'deleted'`];
     
-    // Se for um técnico específico, adiciona a condição de filtrar por ID
+    // O administrador deve ver TODOS os serviços, enquanto os técnicos veem apenas os seus próprios
     if (technicianId) {
       console.log('Aplicando filtro de técnico ID:', technicianId);
       baseConditions.push(eq(services.technician_id, technicianId));
+    } else {
+      // Se não tem technicianId, significa que é um administrador vendo todos os dados
+      console.log('Administrador visualizando estatísticas de todos os técnicos');
     }
     
     // Count pending services
@@ -501,11 +504,25 @@ export class DatabaseStorage implements IStorage {
     );
     
     // Converter para o formato esperado pelo frontend
+    const pendingServices = typeof pendingResult.count === 'string' 
+      ? parseInt(pendingResult.count) 
+      : (pendingResult.count || 0);
+    
+    const inProgressServices = typeof inProgressResult.count === 'string' 
+      ? parseInt(inProgressResult.count) 
+      : (inProgressResult.count || 0);
+    
+    const completedToday = typeof completedTodayResult.count === 'string' 
+      ? parseInt(completedTodayResult.count) 
+      : (completedTodayResult.count || 0);
+    
+    const monthlyRevenue = revenueResult.sum || 0;
+    
     const stats = {
-      pendingServices: parseInt(pendingResult.count) || 0,
-      inProgressServices: parseInt(inProgressResult.count) || 0,
-      completedToday: parseInt(completedTodayResult.count) || 0,
-      monthlyRevenue: revenueResult.sum || 0
+      pendingServices,
+      inProgressServices,
+      completedToday,
+      monthlyRevenue
     };
     
     console.log('Stats formatados para envio:', stats);
