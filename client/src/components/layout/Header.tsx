@@ -75,17 +75,7 @@ export function Header() {
             </button>
           </div>
           
-          {/* Ícone Configurações - disponível para administradores */}
-          {user?.role === "admin" && (
-            <div>
-              <button 
-                onClick={() => setLocation("/settings")}
-                className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
-              >
-                <Settings className="h-6 w-6" />
-              </button>
-            </div>
-          )}
+
           
           {/* Ícone Notificações - disponível para todos */}
           <div className="relative">
