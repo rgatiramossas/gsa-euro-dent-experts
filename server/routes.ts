@@ -817,13 +817,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const requestId = Number(req.params.id);
-      const { status } = req.body;
+      const { status, paymentDetails } = req.body;
       
-      if (!status || !["aprovado", "rejeitado"].includes(status)) {
+      if (!status || !["aprovado", "rejeitado", "pago"].includes(status)) {
         return res.status(400).json({ message: "Status inválido" });
       }
       
-      const updatedRequest = await storage.updatePaymentRequestStatus(requestId, status);
+      // Verificar se o pedido de pagamento está no status correto para a transição
+      if (status === "pago") {
+        const request = await storage.getPaymentRequest(requestId);
+        if (!request || request.status !== "aprovado") {
+          return res.status(400).json({ 
+            message: "Um pedido de pagamento só pode ser pago após ser aprovado" 
+          });
+        }
+        
+        // Para pagamento, exigir detalhes
+        if (!paymentDetails) {
+          return res.status(400).json({ 
+            message: "Detalhes do pagamento são obrigatórios para registrar um pagamento" 
+          });
+        }
+      }
+      
+      const updatedRequest = await storage.updatePaymentRequestStatus(
+        requestId, 
+        status, 
+        status === "pago" ? paymentDetails : undefined
+      );
       
       if (!updatedRequest) {
         return res.status(404).json({ message: "Pedido de pagamento não encontrado" });

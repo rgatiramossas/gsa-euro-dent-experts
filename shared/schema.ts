@@ -183,7 +183,7 @@ export const paymentRequests = pgTable("payment_requests", {
   created_at: timestamp("created_at").defaultNow(),
   status: text("status").notNull().default("pending"),
   payment_date: timestamp("payment_date"),
-  payment_details: jsonb("payment_details"),
+  payment_details: text("payment_details"),
 });
 
 export const paymentRequestItems = pgTable("payment_request_items", {
