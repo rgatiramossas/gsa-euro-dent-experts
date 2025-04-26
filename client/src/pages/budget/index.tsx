@@ -289,10 +289,8 @@ export default function Budget() {
   const [isViewMode, setIsViewMode] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [selectedClient, setSelectedClient] = useState<number | null>(null);
-  const [selectedVehicle, setSelectedVehicle] = useState<number | null>(null);
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [manualVehicleInfo, setManualVehicleInfo] = useState("");
-  const [isManualVehicle, setIsManualVehicle] = useState(false);
   const [totalAw, setTotalAw] = useState<number>(0);
   const [totalValue, setTotalValue] = useState<number>(0);
   const [licensePlate, setLicensePlate] = useState("");
@@ -481,37 +479,27 @@ export default function Budget() {
 
   const handleCreateBudget = () => {
     // Validar formulário
-    if (!selectedClient && !isManualVehicle) {
+    if (!selectedClient && !manualVehicleInfo) {
       toast({
         title: "Erro ao criar orçamento",
-        description: "Selecione um cliente ou informe manualmente os dados do veículo.",
+        description: "Selecione um cliente e informe os dados do veículo.",
         variant: "destructive",
       });
       return;
     }
     
-    // Se não está no modo manual, precisa de um veículo selecionado
-    if (!selectedVehicle && !isManualVehicle) {
+    // Precisa preencher as informações do veículo
+    if (!manualVehicleInfo) {
       toast({
         title: "Erro ao criar orçamento",
-        description: "Selecione um veículo para criar o orçamento.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Se está no modo manual, precisa preencher as informações do veículo
-    if (isManualVehicle && !manualVehicleInfo) {
-      toast({
-        title: "Erro ao criar orçamento",
-        description: "Informe os dados do veículo manualmente.",
+        description: "Informe os dados do veículo.",
         variant: "destructive",
       });
       return;
     }
     
     // Validação para placa e chassi - pelo menos um dos dois deve estar preenchido
-    if (isManualVehicle && !licensePlate && !chassisNumber) {
+    if (!licensePlate && !chassisNumber) {
       toast({
         title: "Erro ao criar orçamento",
         description: "Preencha pelo menos um dos campos: placa ou chassi do veículo.",
@@ -535,8 +523,8 @@ export default function Budget() {
     
     // Criar orçamento
     createBudgetMutation.mutate({
-      client_id: !isManualVehicle && selectedClient ? selectedClient : undefined,
-      vehicle_id: !isManualVehicle && selectedVehicle ? selectedVehicle : undefined,
+      client_id: selectedClient || undefined,
+      vehicle_id: undefined, // Nunca usamos um veículo do banco de dados
       date,
       damaged_parts: Object.entries(partDamages)
         .filter(([_, damage]) => damage.selected)
@@ -545,7 +533,9 @@ export default function Budget() {
       total_aw: totalAw || totalAWValue,
       total_value: totalValue || totalAWValue * 100, // Valor arbitrário para exemplo
       note: note.trim(),
-      vehicle_info: isManualVehicle ? manualVehicleInfo : undefined
+      vehicle_info: manualVehicleInfo, // Sempre usa as informações manuais do veículo
+      plate: licensePlate,
+      chassisNumber: chassisNumber
     });
   };
 
