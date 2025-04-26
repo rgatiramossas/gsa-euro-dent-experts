@@ -427,68 +427,6 @@ export default function Budget() {
             </Table>
           </CardContent>
         </Card>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Rascunhos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold">{budgets?.filter(b => b.status === 'draft').length || 0}</span>
-                <div className="p-2 bg-gray-100 rounded-full">
-                  <FileTextIcon className="h-6 w-6 text-gray-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Enviados</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold">{budgets?.filter(b => b.status === 'sent').length || 0}</span>
-                <div className="p-2 bg-blue-100 rounded-full">
-                  <SendIcon className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Aprovados</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold">{budgets?.filter(b => b.status === 'approved').length || 0}</span>
-                <div className="p-2 bg-green-100 rounded-full">
-                  <CheckIcon className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Valor Total</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold">
-                  {formatCurrency(
-                    budgets?.reduce((acc, budget) => acc + budget.final_value, 0) || 0
-                  )}
-                </span>
-                <div className="p-2 bg-purple-100 rounded-full">
-                  <EuroIcon className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );
