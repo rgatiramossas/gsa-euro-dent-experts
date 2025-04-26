@@ -418,10 +418,34 @@ export default function Budget() {
   // Componente para renderizar cada item de peça
   const DamagedPartItem = ({ partKey, label }: { partKey: string, label: string }) => {
     const damage = partDamages[partKey];
+    const [keepFocus, setKeepFocus] = useState<string | null>(null);
+    
+    // Efeito para manter o foco quando necessário
+    useEffect(() => {
+      if (keepFocus) {
+        const inputElement = document.getElementById(keepFocus);
+        if (inputElement) {
+          inputElement.focus();
+          setKeepFocus(null);
+        }
+      }
+    }, [keepFocus, damage]);
     
     // Função para selecionar todo o texto no input quando receber foco
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
       e.target.select();
+    };
+    
+    // Função para lidar com a mudança de valor nos campos de diâmetro
+    const handleInputChange = (diameter: 'diameter20' | 'diameter30' | 'diameter40', value: string) => {
+      const numValue = parseInt(value) || 0;
+      
+      // Salvar ID do elemento para restaurar o foco após a atualização do estado
+      const inputId = `${partKey}-${diameter}`;
+      setKeepFocus(inputId);
+      
+      // Atualizar o valor no estado
+      handleDiameterChange(partKey, diameter, numValue);
     };
     
     return (
@@ -432,13 +456,13 @@ export default function Budget() {
         
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label htmlFor={`${partKey}-20`} className="text-xs">20mm:</label>
+            <label htmlFor={`${partKey}-diameter20`} className="text-xs">20mm:</label>
             <Input
-              id={`${partKey}-20`}
+              id={`${partKey}-diameter20`}
               type="number"
               min="0"
               value={damage.diameter20}
-              onChange={(e) => handleDiameterChange(partKey, 'diameter20', parseInt(e.target.value) || 0)}
+              onChange={(e) => handleInputChange('diameter20', e.target.value)}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
@@ -446,13 +470,13 @@ export default function Budget() {
           </div>
           
           <div className="flex items-center justify-between">
-            <label htmlFor={`${partKey}-30`} className="text-xs">30mm:</label>
+            <label htmlFor={`${partKey}-diameter30`} className="text-xs">30mm:</label>
             <Input
-              id={`${partKey}-30`}
+              id={`${partKey}-diameter30`}
               type="number"
               min="0"
               value={damage.diameter30}
-              onChange={(e) => handleDiameterChange(partKey, 'diameter30', parseInt(e.target.value) || 0)}
+              onChange={(e) => handleInputChange('diameter30', e.target.value)}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
@@ -460,13 +484,13 @@ export default function Budget() {
           </div>
           
           <div className="flex items-center justify-between">
-            <label htmlFor={`${partKey}-40`} className="text-xs">40mm:</label>
+            <label htmlFor={`${partKey}-diameter40`} className="text-xs">40mm:</label>
             <Input
-              id={`${partKey}-40`}
+              id={`${partKey}-diameter40`}
               type="number"
               min="0"
               value={damage.diameter40}
-              onChange={(e) => handleDiameterChange(partKey, 'diameter40', parseInt(e.target.value) || 0)}
+              onChange={(e) => handleInputChange('diameter40', e.target.value)}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
