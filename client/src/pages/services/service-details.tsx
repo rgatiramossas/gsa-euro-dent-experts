@@ -513,19 +513,16 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       (service.photos.before?.length || 0) + 
       (service.photos.after?.length || 0);
     
-    // Conta novas fotos adicionadas localmente (ainda não enviadas ao servidor)
-    const newPhotosCount = servicePhotos ? servicePhotos.length : 0;
+    // Filtra as fotos existentes para excluir as que já foram marcadas para remoção
+    const existingPhotosFiltered = existingPhotosCount - photosToRemove.length;
     
-    // Subtrai o número de fotos marcadas para remoção
-    const countAfterRemovals = existingPhotosCount - photosToRemove.length;
+    // O número máximo de fotos que podem ser adicionadas
+    const maxPhotos = 4;
     
-    // Total de fotos após todas as alterações
-    const totalPhotos = countAfterRemovals + newPhotosCount;
+    // Calcular o número de slots disponíveis
+    const remainingSlots = Math.max(0, maxPhotos - existingPhotosFiltered);
     
-    // Calcular o número máximo de fotos que ainda podem ser adicionadas
-    const remainingSlots = Math.max(0, 4 - totalPhotos);
-    
-    console.log(`Slots de fotos disponíveis: ${remainingSlots} (existentes: ${existingPhotosCount}, removidas: ${photosToRemove.length}, novas: ${newPhotosCount}, total final: ${totalPhotos})`);
+    console.log(`Slots de fotos disponíveis: ${remainingSlots} (existentes: ${existingPhotosCount}, removidas: ${photosToRemove.length}, restantes no servidor: ${existingPhotosFiltered})`);
     
     return remainingSlots;
   };
@@ -555,28 +552,40 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const handleServicePhotoChange = (files: FileList) => {
     if (files.length === 0) return;
     
-    // Combinar as novas fotos com as existentes, se houver
-    const existingFiles = servicePhotos ? Array.from(servicePhotos) : [];
-    const newFiles = Array.from(files);
+    // Verificar quantas fotos já existem no servidor menos as marcadas para remoção
+    const existingPhotosOnServer = 
+      ((service.photos?.service?.length || 0) + 
+      (service.photos?.before?.length || 0) + 
+      (service.photos?.after?.length || 0)) - photosToRemove.length;
     
-    // Criar um novo objeto FileList com todas as fotos
-    const combinedFiles = new DataTransfer();
+    // Verificar se o número de novas fotos ultrapassa o limite
+    const remainingSlots = 4 - existingPhotosOnServer;
     
-    // Adicionar arquivos existentes
-    existingFiles.forEach(file => {
-      combinedFiles.items.add(file);
-    });
+    if (remainingSlots <= 0) {
+      toast({
+        title: "Limite de fotos atingido",
+        description: "Você já atingiu o limite de 4 fotos. Remova algumas fotos existentes antes de adicionar novas.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Limitar o número de novas fotos ao número de slots disponíveis
+    const newFiles = Array.from(files).slice(0, remainingSlots);
+    
+    // Criar um novo objeto FileList com as novas fotos
+    const newFilesTransfer = new DataTransfer();
     
     // Adicionar novos arquivos
     newFiles.forEach(file => {
-      combinedFiles.items.add(file);
+      newFilesTransfer.items.add(file);
     });
     
-    // Obter o novo FileList combinado
-    const combinedFileList = combinedFiles.files;
+    // Obter o novo FileList
+    const newFileList = newFilesTransfer.files;
     
-    // Atualizar o estado com a lista combinada
-    setServicePhotos(combinedFileList);
+    // Atualizar o estado com a lista de novas fotos
+    setServicePhotos(newFileList);
     
     // Limpar previews antigos
     if (servicePhotoPreview) {
@@ -585,12 +594,26 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     
     // Criar previews para mostrar ao usuário
     const previewUrls: string[] = [];
-    for (let i = 0; i < combinedFileList.length; i++) {
-      previewUrls.push(URL.createObjectURL(combinedFileList[i]));
+    for (let i = 0; i < newFileList.length; i++) {
+      previewUrls.push(URL.createObjectURL(newFileList[i]));
     }
     setServicePhotoPreview(previewUrls.join(','));
     
-    console.log(`Total de ${combinedFileList.length} fotos de serviço selecionadas (${files.length} novas adicionadas)`);
+    console.log(`Total de ${newFileList.length} novas fotos de serviço selecionadas.`);
+    
+    // Mostrar feedback ao usuário
+    if (newFiles.length < files.length) {
+      toast({
+        title: "Algumas fotos não foram adicionadas",
+        description: `Apenas ${newFiles.length} de ${files.length} fotos foram adicionadas devido ao limite de 4 fotos por serviço.`,
+        variant: "warning",
+      });
+    } else {
+      toast({
+        title: "Fotos adicionadas",
+        description: `${newFiles.length} ${newFiles.length === 1 ? 'foto foi adicionada' : 'fotos foram adicionadas'} com sucesso.`,
+      });
+    }
   };
   
   // Função para marcar uma foto para remoção
