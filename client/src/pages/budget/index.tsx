@@ -544,13 +544,56 @@ export default function Budget() {
     setTotalValue(totalAWValue * 100); // Valor arbitrário para exemplo
   };
   
+  // Referência para o input de arquivo
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
+  // Função para abrir o seletor de arquivos
   const handlePhotoUpload = () => {
-    // Simulação de upload
+    if (isViewMode) return; // Não permitir uploads no modo de visualização
+    
+    // Acionar o input de arquivo oculto
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  // Função para processar o arquivo selecionado
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Verificar o tipo de arquivo (apenas imagens)
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Tipo de arquivo inválido",
+        description: "Por favor, selecione uma imagem (JPG, PNG, etc).",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Verificar o tamanho do arquivo (máximo de 5MB por exemplo)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "O tamanho máximo permitido é 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Criar uma URL para o arquivo selecionado
+    const fileUrl = URL.createObjectURL(file);
+    setPhotoUrl(fileUrl);
+    
     toast({
-      title: "Upload simulado",
-      description: "Em uma implementação real, isso abriria um seletor de arquivos ou câmera.",
+      title: "Foto adicionada",
+      description: "A foto foi adicionada ao orçamento com sucesso.",
     });
-    setPhotoUrl("https://via.placeholder.com/150");
+    
+    // Limpar o valor do input para permitir selecionar o mesmo arquivo novamente
+    event.target.value = '';
   };
 
 
@@ -882,10 +925,38 @@ export default function Budget() {
                     <DamagedPartItem partKey="portaDianteiraEsquerda" label="Porta Dianteira Esq." />
                     
                     <div className="flex justify-center items-center p-2 border rounded-md">
-                      {isViewMode ? (
+                      {/* Input file oculto */}
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                      />
+                      
+                      {/* Exibir foto se existir ou mostrar botão/ícone */}
+                      {photoUrl ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] relative">
+                          <img 
+                            src={photoUrl} 
+                            alt="Foto do veículo" 
+                            className="max-h-[135px] max-w-full object-contain"
+                          />
+                          {!isViewMode && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-1 right-1"
+                              onClick={() => setPhotoUrl(null)}
+                            >
+                              <Trash2Icon className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ) : isViewMode ? (
                         <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] text-gray-400">
                           <CameraIcon className="h-10 w-10 mb-2" />
-                          <span className="text-sm">Foto</span>
+                          <span className="text-sm">Sem foto</span>
                         </div>
                       ) : (
                         <Button
