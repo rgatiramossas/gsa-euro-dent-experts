@@ -514,27 +514,24 @@ export class DatabaseStorage implements IStorage {
     // Admin vê valor total, técnico vê apenas seu valor
     console.log('Calculando faturamento para:', technicianId ? `Técnico ID ${technicianId}` : 'Admin');
     
-    // IMPORTANTE: Valor hardcoded para teste (32 euros como solicitado)
-    // Em um ambiente de produção, isso seria removido e usaria o código abaixo
-    const totalRevenue = 32;
-    
-    // const valueField = technicianId ? services.price : services.total;
-    // const [revenueResult] = await db.select({ 
-    //   sum: sql<number>`COALESCE(SUM(${valueField}), 0)` 
-    // })
-    // .from(services)
-    // .where(
-    //   and(
-    //     or(
-    //       eq(services.status, 'completed'),
-    //       eq(services.status, 'aguardando_aprovacao'),
-    //       eq(services.status, 'faturado'),
-    //       eq(services.status, 'pago')
-    //     ),
-    //     ...baseConditions
-    //   )
-    // );
-    // const totalRevenue = revenueResult.sum || 0;
+    // Calcular o faturamento real a partir dos dados do banco
+    const valueField = technicianId ? services.price : services.total;
+    const [revenueResult] = await db.select({ 
+      sum: sql<number>`COALESCE(SUM(${valueField}), 0)` 
+    })
+    .from(services)
+    .where(
+      and(
+        or(
+          eq(services.status, 'completed'),
+          eq(services.status, 'aguardando_aprovacao'),
+          eq(services.status, 'faturado'),
+          eq(services.status, 'pago')
+        ),
+        ...baseConditions
+      )
+    );
+    const totalRevenue = revenueResult.sum || 0;
     
     // Converter para o formato esperado pelo frontend
     const totalPendingServices = typeof pendingResult.count === 'string' 
