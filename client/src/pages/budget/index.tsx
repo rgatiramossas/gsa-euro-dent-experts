@@ -464,6 +464,7 @@ export default function Budget() {
               id={`${partKey}-diameter20`}
               type="number"
               min="0"
+              max="9999"
               value={damage.diameter20}
               onChange={(e) => handleInputChange('diameter20', e.target.value)}
               onFocus={handleFocus}
@@ -481,6 +482,7 @@ export default function Budget() {
               id={`${partKey}-diameter30`}
               type="number"
               min="0"
+              max="9999"
               value={damage.diameter30}
               onChange={(e) => handleInputChange('diameter30', e.target.value)}
               onFocus={handleFocus}
@@ -498,6 +500,7 @@ export default function Budget() {
               id={`${partKey}-diameter40`}
               type="number"
               min="0"
+              max="9999"
               value={damage.diameter40}
               onChange={(e) => handleInputChange('diameter40', e.target.value)}
               onFocus={handleFocus}
@@ -718,6 +721,8 @@ export default function Budget() {
                     <Input
                       id="totalAw"
                       type="number"
+                      min="0"
+                      max="99999"
                       value={totalAw}
                       onChange={(e) => setTotalAw(Number(e.target.value))}
                       onFocus={(e) => e.target.select()}
@@ -730,6 +735,8 @@ export default function Budget() {
                     <Input
                       id="totalValue"
                       type="number"
+                      min="0"
+                      max="9999999"
                       value={totalValue}
                       onChange={(e) => setTotalValue(Number(e.target.value))}
                       onFocus={(e) => e.target.select()}
