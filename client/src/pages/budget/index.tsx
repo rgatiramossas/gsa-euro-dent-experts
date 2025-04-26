@@ -768,7 +768,7 @@ export default function Budget() {
           part.appendChild(row);
         });
         
-        // Adicionar checkboxes A, K, P com visual aprimorado
+        // Adicionar checkboxes A, K, P exatamente como na imagem de referência
         const optionsRow = document.createElement('div');
         optionsRow.style.display = 'flex';
         optionsRow.style.justifyContent = 'space-between';
@@ -787,25 +787,34 @@ export default function Budget() {
           optionGroup.style.display = 'flex';
           optionGroup.style.alignItems = 'center';
           
+          // Checkbox branco
           const checkbox = document.createElement('div');
-          checkbox.style.width = '10px';
-          checkbox.style.height = '10px';
+          checkbox.style.width = '12px';
+          checkbox.style.height = '12px';
           checkbox.style.border = '1px solid #ccc';
           checkbox.style.borderRadius = '2px';
-          checkbox.style.marginRight = '2px';
+          checkbox.style.marginRight = '4px';
           checkbox.style.backgroundColor = 'white';
+          
+          // Letra colorida dentro de box
+          const colorBox = document.createElement('div');
+          colorBox.style.width = '14px';
+          colorBox.style.height = '14px';
+          colorBox.style.backgroundColor = optionColors[option as keyof typeof optionColors];
+          colorBox.style.borderRadius = '2px';
+          colorBox.style.display = 'flex';
+          colorBox.style.justifyContent = 'center';
+          colorBox.style.alignItems = 'center';
           
           const label = document.createElement('span');
           label.textContent = option;
           label.style.fontSize = '8px';
           label.style.fontWeight = 'bold';
-          label.style.color = '#555';
-          label.style.backgroundColor = optionColors[option as keyof typeof optionColors];
-          label.style.borderRadius = '3px';
-          label.style.padding = '1px 3px';
+          label.style.color = '#333';
           
+          colorBox.appendChild(label);
           optionGroup.appendChild(checkbox);
-          optionGroup.appendChild(label);
+          optionGroup.appendChild(colorBox);
           optionsRow.appendChild(optionGroup);
         });
         
@@ -984,10 +993,13 @@ export default function Budget() {
         // Adicionar imagem ao PDF
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
         
-        // Adicionar rodapé
-        pdf.setFontSize(10);
-        pdf.setTextColor(100, 100, 100);
-        pdf.text(`Orçamento #${targetBudget.id} - Euro Dent Experts - Gerado em ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' });
+        // Adicionar uma linha horizontal fina seguida do rodapé (exatamente como na imagem de referência)
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(0, 280, 210, 280);
+        
+        pdf.setFontSize(9);
+        pdf.setTextColor(120, 120, 120);
+        pdf.text(`Orçamento #${targetBudget.id} - Euro Dent Experts - Gerado em ${new Date().toLocaleDateString()}`, 105, 287, { align: 'center' });
         
         // Salvar o PDF
         pdf.save(`orcamento_${targetBudget.id}_${targetBudget.client_name.replace(/\s+/g, '_')}.pdf`);
