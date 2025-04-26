@@ -492,7 +492,12 @@ export default function Finances() {
       return true; // All time
     });
     
-    const totalRevenue = filteredServices.reduce((sum, service) => sum + (service.total || 0), 0);
+    const totalRevenue = filteredServices.reduce((sum, service) => {
+      // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
+      // Para admin, mostrar a soma dos valores totais
+      const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
+      return sum + valueToAdd;
+    }, 0);
     const servicesCount = filteredServices.length;
     const averageTicket = servicesCount > 0 ? totalRevenue / servicesCount : 0;
     
@@ -527,7 +532,12 @@ export default function Finances() {
             const serviceDate = new Date(service.created_at || "");
             return serviceDate >= date && serviceDate < nextDate;
           })
-          .reduce((sum, service) => sum + (service.total || 0), 0);
+          .reduce((sum, service) => {
+            // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
+            // Para admin, mostrar a soma dos valores totais
+            const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
+            return sum + valueToAdd;
+          }, 0);
         
         chartData.push({
           name: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
@@ -549,7 +559,12 @@ export default function Finances() {
             const serviceDate = new Date(service.created_at || "");
             return serviceDate >= weekStart && serviceDate < weekEnd;
           })
-          .reduce((sum, service) => sum + (service.total || 0), 0);
+          .reduce((sum, service) => {
+            // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
+            // Para admin, mostrar a soma dos valores totais
+            const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
+            return sum + valueToAdd;
+          }, 0);
         
         chartData.push({
           name: `Semana ${4-i}`,
@@ -569,7 +584,12 @@ export default function Finances() {
             const serviceDate = new Date(service.created_at || "");
             return serviceDate >= monthStart && serviceDate <= monthEnd;
           })
-          .reduce((sum, service) => sum + (service.total || 0), 0);
+          .reduce((sum, service) => {
+            // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
+            // Para admin, mostrar a soma dos valores totais
+            const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
+            return sum + valueToAdd;
+          }, 0);
         
         chartData.push({
           name: monthNames[i],
@@ -1177,7 +1197,12 @@ export default function Finances() {
                 {formatCurrency(
                   completableServices
                     ?.filter(service => selectedServices.includes(service.id))
-                    .reduce((sum, service) => sum + (service.total || 0), 0) || 0
+                    .reduce((sum, service) => {
+                      // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
+                      // Para admin, mostrar a soma dos valores totais
+                      const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
+                      return sum + valueToAdd;
+                    }, 0) || 0
                 )}
               </div>
               <div className="space-x-2">
