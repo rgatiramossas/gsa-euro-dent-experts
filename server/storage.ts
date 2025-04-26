@@ -1,4 +1,4 @@
-import { users, clients, vehicles, serviceTypes, services, servicePhotos, eventTypes, events } from "@shared/schema";
+import { users, clients, vehicles, serviceTypes, services, servicePhotos, eventTypes, events, paymentRequests, paymentRequestItems } from "@shared/schema";
 import type { 
   User, InsertUser, 
   Client, InsertClient, 
@@ -7,7 +7,8 @@ import type {
   Service, InsertService, 
   ServicePhoto, InsertServicePhoto,
   EventType, InsertEventType,
-  Event, InsertEvent
+  Event, InsertEvent,
+  PaymentRequest, PaymentRequestItem
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, desc, sql } from "drizzle-orm";
@@ -69,6 +70,12 @@ export interface IStorage {
   updateEvent(id: number, eventData: Partial<Event>): Promise<Event | undefined>;
   deleteEvent(id: number): Promise<boolean>;
   listEvents(filters?: Partial<{ technician_id: number, date: string }>): Promise<Event[]>;
+  
+  // Payment Request methods
+  createPaymentRequest(technicianId: number, serviceIds: number[]): Promise<PaymentRequest>;
+  getPaymentRequest(id: number): Promise<any>;
+  listPaymentRequests(technicianId?: number): Promise<any[]>;
+  updatePaymentRequestStatus(id: number, status: string): Promise<PaymentRequest | undefined>;
   
   // Session store
   sessionStore: session.SessionStore;
@@ -555,6 +562,169 @@ export class DatabaseStorage implements IStorage {
     }
     
     return query.orderBy(events.date, events.time);
+  }
+  
+  // Payment Request methods
+  async createPaymentRequest(technicianId: number, serviceIds: number[]): Promise<PaymentRequest> {
+    // Use a transaction to ensure all operations succeed or fail together
+    const tx = await db.transaction(async (tx) => {
+      // First create the payment request
+      const [paymentRequest] = await tx
+        .insert(paymentRequests)
+        .values({ 
+          technician_id: technicianId,
+          status: "pending" 
+        })
+        .returning();
+      
+      // Then add all the service items
+      if (serviceIds.length > 0) {
+        await tx
+          .insert(paymentRequestItems)
+          .values(
+            serviceIds.map(serviceId => ({
+              payment_request_id: paymentRequest.id,
+              service_id: serviceId,
+            }))
+          );
+        
+        // Update all the services to "aguardando_aprovacao" status
+        for (const serviceId of serviceIds) {
+          await tx
+            .update(services)
+            .set({ status: "aguardando_aprovacao" })
+            .where(eq(services.id, serviceId));
+        }
+      }
+      
+      return paymentRequest;
+    });
+    
+    return tx;
+  }
+  
+  async getPaymentRequest(id: number): Promise<any> {
+    const paymentRequest = await db
+      .select()
+      .from(paymentRequests)
+      .where(eq(paymentRequests.id, id))
+      .limit(1);
+    
+    if (!paymentRequest.length) {
+      return undefined;
+    }
+    
+    const requestItems = await db
+      .select({
+        id: paymentRequestItems.id,
+        service_id: paymentRequestItems.service_id,
+        service: services,
+        client: clients,
+        serviceType: serviceTypes,
+      })
+      .from(paymentRequestItems)
+      .where(eq(paymentRequestItems.payment_request_id, id))
+      .leftJoin(services, eq(paymentRequestItems.service_id, services.id))
+      .leftJoin(clients, eq(services.client_id, clients.id))
+      .leftJoin(serviceTypes, eq(services.service_type_id, serviceTypes.id));
+    
+    const technician = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, paymentRequest[0].technician_id))
+      .limit(1);
+    
+    return {
+      ...paymentRequest[0],
+      technician: technician[0] || null,
+      items: requestItems,
+      totalValue: requestItems.reduce((sum, item) => sum + (item.service?.total || 0), 0)
+    };
+  }
+  
+  async listPaymentRequests(technicianId?: number): Promise<any[]> {
+    let query = db
+      .select({
+        id: paymentRequests.id,
+        created_at: paymentRequests.created_at,
+        status: paymentRequests.status,
+        technician_id: paymentRequests.technician_id,
+        technician: users,
+      })
+      .from(paymentRequests)
+      .leftJoin(users, eq(paymentRequests.technician_id, users.id));
+    
+    if (technicianId) {
+      query = query.where(eq(paymentRequests.technician_id, technicianId));
+    }
+    
+    const results = await query.orderBy(desc(paymentRequests.created_at));
+    
+    // Add the associated services to each payment request
+    for (const req of results) {
+      const items = await db
+        .select({
+          id: paymentRequestItems.id,
+          service_id: paymentRequestItems.service_id,
+          service: services,
+          client: clients,
+          serviceType: serviceTypes,
+        })
+        .from(paymentRequestItems)
+        .where(eq(paymentRequestItems.payment_request_id, req.id))
+        .leftJoin(services, eq(paymentRequestItems.service_id, services.id))
+        .leftJoin(clients, eq(services.client_id, clients.id))
+        .leftJoin(serviceTypes, eq(services.service_type_id, serviceTypes.id));
+      
+      req.items = items;
+      req.totalValue = items.reduce((sum, item) => sum + (item.service?.total || 0), 0);
+    }
+    
+    return results;
+  }
+  
+  async updatePaymentRequestStatus(id: number, status: string): Promise<PaymentRequest | undefined> {
+    const [updatedRequest] = await db
+      .update(paymentRequests)
+      .set({ status })
+      .where(eq(paymentRequests.id, id))
+      .returning();
+    
+    // If approved, update all associated services to "faturado"
+    if (status === "approved") {
+      const items = await db
+        .select({
+          service_id: paymentRequestItems.service_id,
+        })
+        .from(paymentRequestItems)
+        .where(eq(paymentRequestItems.payment_request_id, id));
+      
+      for (const item of items) {
+        await db
+          .update(services)
+          .set({ status: "faturado" })
+          .where(eq(services.id, item.service_id));
+      }
+    }
+    
+    // If rejected, update all associated services back to "completed"
+    if (status === "rejected") {
+      const items = await db
+        .select({
+          service_id: paymentRequestItems.service_id,
+        })
+        .from(paymentRequestItems)
+        .where(eq(paymentRequestItems.payment_request_id, id));
+      
+      for (const item of items) {
+        await db
+          .update(services)
+          .set({ status: "completed" })
+          .where(eq(services.id, item.service_id));
+      }
+    }
+    
+    return updatedRequest;
   }
 }
 

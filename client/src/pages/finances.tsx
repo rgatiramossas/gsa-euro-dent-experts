@@ -70,8 +70,10 @@ import {
 } from "recharts";
 import { ServiceListItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatRelativeDate } from "@/lib/utils";
 import { ServiceStatusBadge } from "@/components/common/ServiceStatusBadge";
+import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 // Esquema para o formulário de despesas
 const expenseFormSchema = z.object({
@@ -127,6 +129,11 @@ export default function Finances() {
     queryKey: ['/api/services'],
   });
   
+  // Get payment requests data
+  const { data: paymentRequests, isLoading: loadingPaymentRequests } = useQuery({
+    queryKey: ['/api/payment-requests'],
+  });
+  
   // Serviços do técnico logado com status "completed" (para pedidos de pagamento)
   const completedTechnicianServices = services?.filter(service => 
     service.status === "completed" && service.technician?.id === currentUser?.id
@@ -160,6 +167,36 @@ export default function Finances() {
     }
   });
   
+  // Mutation para atualizar status de pedido de pagamento (aprovar/rejeitar)
+  const updatePaymentRequestMutation = useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: number, status: string }) => {
+      return await apiRequest(`/api/payment-requests/${requestId}`, 'PATCH', { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/payment-requests'] });
+      toast({
+        title: "Pedido atualizado",
+        description: "O status do pedido foi atualizado com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar pedido",
+        description: `Ocorreu um erro: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleApprovePaymentRequest = (requestId: number) => {
+    updatePaymentRequestMutation.mutate({ requestId, status: "aprovado" });
+  };
+
+  const handleRejectPaymentRequest = (requestId: number) => {
+    updatePaymentRequestMutation.mutate({ requestId, status: "rejeitado" });
+  };
+
   const handleCreatePaymentRequest = () => {
     if (selectedServices.length === 0) {
       toast({
@@ -787,34 +824,128 @@ export default function Finances() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Pedidos de Pagamento</CardTitle>
-              <Button size="sm" variant="outline">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Novo Pedido
-              </Button>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Serviço</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      Nenhum pedido de pagamento encontrado
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              {loadingPaymentRequests ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : !paymentRequests || paymentRequests.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4">
+                  <p className="text-gray-500 mb-2">Nenhum pedido de pagamento encontrado</p>
+                </div>
+              ) : (
+                <div className="space-y-4 p-4">
+                  {paymentRequests.map((request: any) => (
+                    <div key={request.id} className="border rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 p-4 flex items-center justify-between">
+                        <div>
+                          <span className="font-medium">Pedido #{request.id}</span>
+                          <span className="text-sm text-gray-500 ml-4">
+                            {formatRelativeDate(request.created_at)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge className={
+                            request.status === "aguardando_aprovacao" ? "bg-amber-600" :
+                            request.status === "aprovado" ? "bg-green-600" :
+                            request.status === "rejeitado" ? "bg-red-600" :
+                            "bg-gray-600"
+                          }>
+                            {request.status === "aguardando_aprovacao" ? "Aguardando Aprovação" :
+                             request.status === "aprovado" ? "Aprovado" :
+                             request.status === "rejeitado" ? "Rejeitado" : request.status}
+                          </Badge>
+                          {request.status === "aguardando_aprovacao" && (
+                            <div className="flex space-x-2">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="text-green-600 hover:text-green-700 border-green-600 hover:border-green-700 hover:bg-green-50">
+                                    Aprovar
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Aprovar Pedido de Pagamento</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Tem certeza que deseja aprovar este pedido de pagamento? Esta ação irá marcar os serviços relacionados como "faturado".
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleApprovePaymentRequest(request.id)}>
+                                      Confirmar
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 border-red-600 hover:border-red-700 hover:bg-red-50">
+                                    Rejeitar
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Rejeitar Pedido de Pagamento</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Tem certeza que deseja rejeitar este pedido de pagamento? Esta ação irá marcar os serviços relacionados como "completed" novamente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleRejectPaymentRequest(request.id)}>
+                                      Confirmar
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <div className="mb-2">
+                          <span className="font-medium">Técnico: </span>
+                          <span>{request.technician?.name || 'N/A'}</span>
+                        </div>
+                        
+                        <div className="border rounded-md mt-4">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>OS</TableHead>
+                                <TableHead>Cliente</TableHead>
+                                <TableHead>Serviço</TableHead>
+                                <TableHead className="text-right">Valor</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {request.services?.map((service: any) => (
+                                <TableRow key={service.id}>
+                                  <TableCell>#{service.id}</TableCell>
+                                  <TableCell>{service.client?.name}</TableCell>
+                                  <TableCell>{service.serviceType?.name}</TableCell>
+                                  <TableCell className="text-right">{formatCurrency(service.total || 0)}</TableCell>
+                                </TableRow>
+                              ))}
+                              <TableRow>
+                                <TableCell colSpan={3} className="text-right font-medium">Total:</TableCell>
+                                <TableCell className="text-right font-semibold">
+                                  {formatCurrency(
+                                    request.services?.reduce((sum: number, s: any) => sum + (s.total || 0), 0) || 0
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

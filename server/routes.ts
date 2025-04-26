@@ -684,6 +684,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+  
+  // Rotas de Pedidos de Pagamento
+  app.get("/api/payment-requests", requireAuth, async (req, res) => {
+    try {
+      // Técnicos só podem ver seus próprios pedidos
+      const technicianId = req.session.userRole === "technician" ? req.session.userId : undefined;
+      const paymentRequests = await storage.listPaymentRequests(technicianId);
+      res.json(paymentRequests);
+    } catch (error) {
+      console.error("Erro ao buscar pedidos de pagamento:", error);
+      res.status(500).json({ message: "Erro ao buscar pedidos de pagamento" });
+    }
+  });
+  
+  app.get("/api/payment-requests/:id", requireAuth, async (req, res) => {
+    try {
+      const requestId = Number(req.params.id);
+      const paymentRequest = await storage.getPaymentRequest(requestId);
+      
+      if (!paymentRequest) {
+        return res.status(404).json({ message: "Pedido de pagamento não encontrado" });
+      }
+      
+      // Técnicos só podem ver seus próprios pedidos
+      if (req.session.userRole === "technician" && paymentRequest.technician_id !== req.session.userId) {
+        return res.status(403).json({ message: "Você não tem permissão para visualizar este pedido" });
+      }
+      
+      res.json(paymentRequest);
+    } catch (error) {
+      console.error("Erro ao buscar pedido de pagamento:", error);
+      res.status(500).json({ message: "Erro ao buscar pedido de pagamento" });
+    }
+  });
+  
+  app.post("/api/payment-requests", requireAuth, async (req, res) => {
+    if (req.session.userRole !== "technician") {
+      return res.status(403).json({ message: "Apenas técnicos podem criar pedidos de pagamento" });
+    }
+    
+    try {
+      const { service_ids } = req.body;
+      
+      if (!service_ids || !Array.isArray(service_ids) || service_ids.length === 0) {
+        return res.status(400).json({ message: "É necessário selecionar pelo menos um serviço" });
+      }
+      
+      const technicianId = Number(req.session.userId);
+      const paymentRequest = await storage.createPaymentRequest(technicianId, service_ids);
+      
+      res.status(201).json(paymentRequest);
+    } catch (error) {
+      console.error("Erro ao criar pedido de pagamento:", error);
+      res.status(500).json({ message: "Erro ao criar pedido de pagamento" });
+    }
+  });
+  
+  app.put("/api/payment-requests/:id/status", requireAuth, async (req, res) => {
+    if (req.session.userRole !== "admin") {
+      return res.status(403).json({ message: "Apenas administradores podem alterar o status de pedidos de pagamento" });
+    }
+    
+    try {
+      const requestId = Number(req.params.id);
+      const { status } = req.body;
+      
+      if (!status || !["approved", "rejected"].includes(status)) {
+        return res.status(400).json({ message: "Status inválido" });
+      }
+      
+      const updatedRequest = await storage.updatePaymentRequestStatus(requestId, status);
+      
+      if (!updatedRequest) {
+        return res.status(404).json({ message: "Pedido de pagamento não encontrado" });
+      }
+      
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Erro ao atualizar status do pedido:", error);
+      res.status(500).json({ message: "Erro ao atualizar status do pedido" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
