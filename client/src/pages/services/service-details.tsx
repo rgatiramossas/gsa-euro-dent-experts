@@ -381,8 +381,15 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         formData.append('photos_to_remove', JSON.stringify(photosToRemove));
       }
       
-      // Enviar o FormData para o servidor
-      updateServiceMutation.mutate(formData);
+      // Tentar enviar como JSON normal se não houver fotos
+      if (!beforePhotos && !afterPhotos && photosToRemove.length === 0) {
+        console.log("Enviando como JSON:", updateData);
+        updateServiceMutation.mutate(updateData);
+      } else {
+        // Enviar o FormData para o servidor se houver fotos
+        console.log("Enviando como FormData");
+        updateServiceMutation.mutate(formData);
+      }
     })();
   };
   

@@ -427,13 +427,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/services/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`PATCH /api/services/${id} - Headers:`, req.headers);
+      console.log(`PATCH /api/services/${id} - Body:`, req.body);
+      
       const service = await storage.getService(id);
+      console.log(`Serviço encontrado:`, service);
       
       if (!service) {
         return res.status(404).json({ message: "Service not found" });
       }
       
-      const updates = req.body;
+      let updates = req.body;
+      
+      // Se o content type for multipart/form-data, a forma como os dados são recebidos é diferente
+      if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
+        // Apenas para debug
+        console.log("Recebido como multipart/form-data. Campos:", Object.keys(updates));
+        
+        // Converter strings para números onde necessário
+        if (updates.price) {
+          updates.price = Number(updates.price);
+        }
+        if (updates.displacement_fee) {
+          updates.displacement_fee = Number(updates.displacement_fee);
+        }
+      }
       
       // Verificação para garantir que temos dados para atualizar
       if (Object.keys(updates).length === 0) {
