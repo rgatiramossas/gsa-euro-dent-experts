@@ -296,6 +296,20 @@ export class DatabaseStorage implements IStorage {
   }
   
   async updateService(id: number, serviceData: Partial<Service>): Promise<Service | undefined> {
+    // Verificar se o serviço existe
+    const service = await this.getService(id);
+    if (!service) {
+      return undefined;
+    }
+    
+    // Verificar se há dados para atualizar
+    if (!serviceData || Object.keys(serviceData).length === 0) {
+      console.log(`Nenhum dado fornecido para atualizar o serviço ID: ${id}. Retornando serviço atual.`);
+      return service;
+    }
+    
+    console.log(`Atualizando serviço ID ${id} com dados:`, serviceData);
+    
     // Clone o objeto para não modificar o original
     const updatedData = { ...serviceData };
     
@@ -312,11 +326,16 @@ export class DatabaseStorage implements IStorage {
       updatedData.completion_date = new Date(updatedData.completion_date);
     }
     
-    const [updatedService] = await db.update(services)
-      .set(updatedData)
-      .where(eq(services.id, id))
-      .returning();
-    return updatedService;
+    try {
+      const [updatedService] = await db.update(services)
+        .set(updatedData)
+        .where(eq(services.id, id))
+        .returning();
+      return updatedService;
+    } catch (error) {
+      console.error('Erro ao atualizar serviço:', error);
+      throw error;
+    }
   }
   
   async listServices(filters?: Partial<{ status: string, technicianId: number, clientId: number }>): Promise<Service[]> {

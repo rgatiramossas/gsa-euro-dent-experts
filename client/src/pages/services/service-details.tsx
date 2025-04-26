@@ -266,12 +266,69 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   // Função para salvar as alterações
   const handleSaveChanges = () => {
     editForm.handleSubmit((data) => {
-      // Preparar o objeto de dados para envio
-      const updateData = {
-        service_type_id: data.service_type_id,
-        price: data.price,
-        displacement_fee: data.displacement_fee,
-      };
+      console.log("Dados do formulário:", data);
+      
+      // Verificar se o serviço existe
+      if (!service) {
+        console.error("Serviço não encontrado");
+        toast({
+          title: "Erro",
+          description: "Serviço não encontrado",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Preparar o objeto de dados para envio com todos os campos possíveis
+      const updateData: Record<string, any> = {};
+      
+      // Verificar se houve mudança em cada campo
+      if (data.service_type_id !== service.service_type_id) {
+        updateData.service_type_id = data.service_type_id;
+      }
+      
+      if (data.technician_id !== service.technician_id) {
+        updateData.technician_id = data.technician_id;
+      }
+      
+      if (data.price !== service.price) {
+        updateData.price = data.price;
+      }
+      
+      if (data.displacement_fee !== service.displacement_fee) {
+        updateData.displacement_fee = data.displacement_fee;
+      }
+      
+      if (data.description !== service.description) {
+        updateData.description = data.description;
+      }
+      
+      if (data.notes !== service.notes) {
+        updateData.notes = data.notes;
+      }
+      
+      if (data.location_type !== service.location_type) {
+        updateData.location_type = data.location_type;
+      }
+      
+      if (data.address !== service.address) {
+        updateData.address = data.address;
+      }
+      
+      console.log("Dados a serem atualizados:", updateData);
+      
+      // Verificar se existem dados para atualizar
+      const hasChanges = Object.keys(updateData).length > 0;
+      const hasPhotos = beforePhotos || afterPhotos || photosToRemove.length > 0;
+      
+      if (!hasChanges && !hasPhotos) {
+        toast({
+          title: "Nenhuma alteração detectada",
+          description: "Nenhuma informação foi alterada para este serviço",
+        });
+        setIsEditing(false);
+        return;
+      }
       
       // Criar o FormData para o envio
       const formData = new FormData();
