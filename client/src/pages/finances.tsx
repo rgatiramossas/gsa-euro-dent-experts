@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/common/PageHeader";
 import { 
   Card, 
@@ -101,8 +103,11 @@ type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 export default function Finances() {
   const [period, setPeriod] = useState("month");
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [paymentRequestDialogOpen, setPaymentRequestDialogOpen] = useState(false);
+  const [selectedServices, setSelectedServices] = useState<number[]>([]);
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "admin";
+  const { toast } = useToast();
   
   // Formulário de despesas
   const expenseForm = useForm<ExpenseFormValues>({
@@ -122,7 +127,62 @@ export default function Finances() {
     queryKey: ['/api/services'],
   });
   
-  if (!isAdmin) {
+  // Serviços do técnico logado com status "completed" (para pedidos de pagamento)
+  const completedTechnicianServices = services?.filter(service => 
+    service.status === "completed" && service.technician?.id === currentUser?.id
+  );
+  
+  // Mutation para criar pedido de pagamento
+  const createPaymentRequestMutation = useMutation({
+    mutationFn: async (serviceIds: number[]) => {
+      return await apiRequest('/api/payment-requests', 'POST', { 
+        service_ids: serviceIds 
+      });
+    },
+    onSuccess: () => {
+      // Invalidar cache para atualizar dados de serviços e pedidos
+      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/payment-requests'] });
+      
+      setSelectedServices([]);
+      setPaymentRequestDialogOpen(false);
+      toast({
+        title: "Pedido de pagamento criado",
+        description: "Seu pedido foi enviado para aprovação.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao criar pedido",
+        description: `Ocorreu um erro: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const handleCreatePaymentRequest = () => {
+    if (selectedServices.length === 0) {
+      toast({
+        title: "Nenhum serviço selecionado",
+        description: "Selecione pelo menos um serviço para solicitar pagamento.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createPaymentRequestMutation.mutate(selectedServices);
+  };
+  
+  // Toggle seleção de serviço para pagamento
+  const toggleServiceSelection = (serviceId: number) => {
+    setSelectedServices(prev => 
+      prev.includes(serviceId) 
+        ? prev.filter(id => id !== serviceId) 
+        : [...prev, serviceId]
+    );
+  };
+  
+  if (!isAdmin && !completedTechnicianServices?.length) {
     return (
       <div className="py-6 px-4 sm:px-6 lg:px-8">
         <PageHeader
@@ -130,14 +190,162 @@ export default function Finances() {
           description="Estatísticas e relatórios financeiros"
         />
         
-        <Card className="mt-6">
-          <CardContent className="py-10 text-center">
-            <h3 className="text-lg font-medium text-gray-900">Acesso Restrito</h3>
-            <p className="mt-2 text-gray-500">
-              Você não tem permissão para acessar esta página.
-            </p>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="payment_requests" className="space-y-6">
+          <TabsList className="mb-4">
+            <TabsTrigger value="payment_requests">Pedidos de Pagamento</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="payment_requests">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Pedidos de Pagamento</CardTitle>
+                <div className="text-sm text-muted-foreground">
+                  Você não tem serviços concluídos para solicitar pagamento.
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="flex justify-center items-center py-10 text-gray-500">
+                  Nenhum serviço disponível para solicitar pagamento.
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  }
+  
+  // Interface para técnicos (apenas Pedidos de Pagamento)
+  if (!isAdmin) {
+    return (
+      <div className="py-6 px-4 sm:px-6 lg:px-8">
+        <PageHeader
+          title="Financeiro"
+          description="Solicite pagamentos para serviços concluídos"
+        />
+        
+        <Tabs defaultValue="payment_requests" className="space-y-6">
+          <TabsList className="mb-4">
+            <TabsTrigger value="payment_requests">Pedidos de Pagamento</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="payment_requests">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Pedidos de Pagamento</CardTitle>
+                <Button 
+                  size="sm" 
+                  onClick={() => setPaymentRequestDialogOpen(true)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Novo Pedido
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Serviço</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                        Nenhum pedido de pagamento encontrado
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+        
+        {/* Modal para criar pedido de pagamento */}
+        <Dialog open={paymentRequestDialogOpen} onOpenChange={setPaymentRequestDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Novo Pedido de Pagamento</DialogTitle>
+              <DialogDescription>
+                Selecione os serviços concluídos para os quais deseja solicitar pagamento.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : completedTechnicianServices?.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Você não tem serviços concluídos para solicitar pagamento.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {completedTechnicianServices?.map(service => (
+                    <div 
+                      key={service.id} 
+                      className="flex items-center space-x-2 p-3 border rounded-md hover:bg-gray-50 cursor-pointer"
+                      onClick={() => toggleServiceSelection(service.id)}
+                    >
+                      <input 
+                        type="checkbox" 
+                        className="h-5 w-5 rounded" 
+                        checked={selectedServices.includes(service.id)}
+                        onChange={() => toggleServiceSelection(service.id)}
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium">
+                          {service.client.name} - {service.serviceType?.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {formatDate(service.completion_date || service.created_at)} - OS #{service.id}
+                        </div>
+                      </div>
+                      <div className="font-semibold">
+                        {formatCurrency(service.total || 0)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-between items-center border-t pt-4 mt-4">
+              <div>
+                <span className="font-medium">Total selecionado: </span>
+                {formatCurrency(
+                  completedTechnicianServices
+                    ?.filter(service => selectedServices.includes(service.id))
+                    .reduce((sum, service) => sum + (service.total || 0), 0) || 0
+                )}
+              </div>
+              <div className="space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setPaymentRequestDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleCreatePaymentRequest}
+                  disabled={selectedServices.length === 0 || createPaymentRequestMutation.isPending}
+                >
+                  {createPaymentRequestMutation.isPending ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      Enviando...
+                    </div>
+                  ) : "Enviar Pedido"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

@@ -174,3 +174,31 @@ export type InsertEventType = z.infer<typeof insertEventTypeSchema>;
 
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
+
+// Payment Requests
+export const paymentRequests = pgTable("payment_requests", {
+  id: serial("id").primaryKey(),
+  technician_id: integer("technician_id").notNull().references(() => users.id),
+  created_at: timestamp("created_at").defaultNow(),
+  status: text("status").notNull().default("pending"),
+});
+
+export const paymentRequestItems = pgTable("payment_request_items", {
+  id: serial("id").primaryKey(),
+  payment_request_id: integer("payment_request_id").notNull().references(() => paymentRequests.id),
+  service_id: integer("service_id").notNull().references(() => services.id),
+});
+
+export const insertPaymentRequestSchema = createInsertSchema(paymentRequests).omit({
+  id: true,
+  created_at: true,
+});
+
+export const insertPaymentRequestItemSchema = createInsertSchema(paymentRequestItems).omit({
+  id: true,
+});
+
+export type PaymentRequest = typeof paymentRequests.$inferSelect;
+export type InsertPaymentRequest = z.infer<typeof insertPaymentRequestSchema>;
+export type PaymentRequestItem = typeof paymentRequestItems.$inferSelect;
+export type InsertPaymentRequestItem = z.infer<typeof insertPaymentRequestItemSchema>;
