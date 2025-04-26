@@ -278,7 +278,9 @@ export class DatabaseStorage implements IStorage {
   }
   
   async listServices(filters?: Partial<{ status: string, technicianId: number, clientId: number }>): Promise<Service[]> {
-    let query = db.select().from(services);
+    let query = db.select().from(services)
+      // Sempre filtra os serviços com status "deleted"
+      .where(sql`${services.status} != 'deleted'`);
     
     if (filters) {
       if (filters.status) {
@@ -358,12 +360,22 @@ export class DatabaseStorage implements IStorage {
     // Count pending services
     const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)
-      .where(eq(services.status, 'pending'));
+      .where(
+        and(
+          eq(services.status, 'pending'),
+          sql`${services.status} != 'deleted'`
+        )
+      );
     
     // Count in-progress services
     const [inProgressResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)
-      .where(eq(services.status, 'in_progress'));
+      .where(
+        and(
+          eq(services.status, 'in_progress'),
+          sql`${services.status} != 'deleted'`
+        )
+      );
     
     // Count services completed today
     const today = new Date();
@@ -374,7 +386,8 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(services.status, 'completed'),
-          sql`DATE(${services.completion_date}) = CURRENT_DATE`
+          sql`DATE(${services.completion_date}) = CURRENT_DATE`,
+          sql`${services.status} != 'deleted'`
         )
       );
     
@@ -389,7 +402,8 @@ export class DatabaseStorage implements IStorage {
     .where(
       and(
         eq(services.status, 'completed'),
-        sql`${services.completion_date} >= ${thirtyDaysAgo}`
+        sql`${services.completion_date} >= ${thirtyDaysAgo}`,
+        sql`${services.status} != 'deleted'`
       )
     );
     
@@ -406,9 +420,14 @@ export class DatabaseStorage implements IStorage {
     
     const results = await Promise.all(
       technicians.map(async (tech) => {
-        // All services assigned to this technician
+        // All services assigned to this technician (excluding deleted)
         const allServices = await db.select().from(services)
-          .where(eq(services.technician_id, tech.id));
+          .where(
+            and(
+              eq(services.technician_id, tech.id),
+              sql`${services.status} != 'deleted'`
+            )
+          );
         
         // Completed services by this technician
         const completedServices = allServices.filter(
