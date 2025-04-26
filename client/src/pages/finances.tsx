@@ -94,7 +94,6 @@ const expenseFormSchema = z.object({
   }),
   provider: z.string().optional(),
   notes: z.string().optional(),
-  is_recurring: z.boolean().default(false),
 });
 
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
@@ -114,8 +113,7 @@ export default function Finances() {
       date: new Date().toISOString().split('T')[0],
       category: "operacional",
       provider: "",
-      notes: "",
-      is_recurring: false
+      notes: ""
     }
   });
   
@@ -801,28 +799,7 @@ export default function Finances() {
                 )}
               />
 
-              <FormField
-                control={expenseForm.control}
-                name="is_recurring"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        className="form-checkbox h-5 w-5"
-                        checked={field.value}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Despesa Recorrente</FormLabel>
-                      <FormDescription>
-                        Marque esta opção para despesas que se repetem mensalmente
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
+
 
               <DialogFooter>
                 <Button 
