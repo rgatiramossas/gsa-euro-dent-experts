@@ -1456,14 +1456,14 @@ export default function Budget() {
     };
     
     return (
-      <div className={`p-2 border rounded-md space-y-3 ${damage.selected ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
-        <div className="font-medium text-sm text-center border-b pb-1 mb-1">
+      <div className={`p-2 border rounded-md ${damage.selected ? 'border-primary bg-blue-50' : 'border-gray-200'}`}>
+        <div className="font-medium text-sm text-center border-b pb-1 mb-1 truncate">
           {label}
         </div>
         
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <label htmlFor={`${partKey}-diameter20`} className="text-xs">20mm:</label>
+            <label htmlFor={`${partKey}-diameter20`} className="text-xs flex-shrink-0 mr-1">20mm:</label>
             <Input
               id={`${partKey}-diameter20`}
               type="text"
@@ -1477,7 +1477,7 @@ export default function Budget() {
               }}
               onFocus={handleFocus}
               autoComplete="off"
-              className="w-16 h-7 text-xs"
+              className="w-16 h-7 text-xs flex-shrink-0"
               ref={(el) => {
                 inputRefs.current[`${partKey}-diameter20`] = el;
               }}
@@ -1487,7 +1487,7 @@ export default function Budget() {
           </div>
           
           <div className="flex items-center justify-between">
-            <label htmlFor={`${partKey}-diameter30`} className="text-xs">30mm:</label>
+            <label htmlFor={`${partKey}-diameter30`} className="text-xs flex-shrink-0 mr-1">30mm:</label>
             <Input
               id={`${partKey}-diameter30`}
               type="text"
@@ -1501,7 +1501,7 @@ export default function Budget() {
               }}
               onFocus={handleFocus}
               autoComplete="off"
-              className="w-16 h-7 text-xs"
+              className="w-16 h-7 text-xs flex-shrink-0"
               ref={(el) => {
                 inputRefs.current[`${partKey}-diameter30`] = el;
               }}
@@ -1511,7 +1511,7 @@ export default function Budget() {
           </div>
           
           <div className="flex items-center justify-between">
-            <label htmlFor={`${partKey}-diameter40`} className="text-xs">40mm:</label>
+            <label htmlFor={`${partKey}-diameter40`} className="text-xs flex-shrink-0 mr-1">40mm:</label>
             <Input
               id={`${partKey}-diameter40`}
               type="text"
@@ -1525,7 +1525,7 @@ export default function Budget() {
               }}
               onFocus={handleFocus}
               autoComplete="off"
-              className="w-16 h-7 text-xs"
+              className="w-16 h-7 text-xs flex-shrink-0"
               ref={(el) => {
                 inputRefs.current[`${partKey}-diameter40`] = el;
               }}
@@ -1535,10 +1535,11 @@ export default function Budget() {
           </div>
           
           {/* Checkboxes A, K, P */}
-          <div className="flex justify-between pt-1 border-t mt-2">
+          <div className="flex justify-between pt-1 border-t mt-1">
             <div className="flex items-center gap-1">
               <Checkbox 
                 id={`${partKey}-optionA`} 
+                className="h-3 w-3"
                 checked={damage.optionA}
                 onCheckedChange={(checked) => {
                   if (isViewMode) return; // Não permitir alterações no modo de visualização
@@ -1569,7 +1570,8 @@ export default function Budget() {
             
             <div className="flex items-center gap-1">
               <Checkbox 
-                id={`${partKey}-optionK`} 
+                id={`${partKey}-optionK`}
+                className="h-3 w-3"
                 checked={damage.optionK}
                 onCheckedChange={(checked) => {
                   if (isViewMode) return; // Não permitir alterações no modo de visualização
@@ -1600,7 +1602,8 @@ export default function Budget() {
             
             <div className="flex items-center gap-1">
               <Checkbox 
-                id={`${partKey}-optionP`} 
+                id={`${partKey}-optionP`}
+                className="h-3 w-3"
                 checked={damage.optionP}
                 onCheckedChange={(checked) => {
                   if (isViewMode) return; // Não permitir alterações no modo de visualização
