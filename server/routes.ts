@@ -441,7 +441,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", requireAuth, async (req, res) => {
     try {
       // Validate input
-      const userInput = insertUserSchema.parse(req.body);
+      const { clientIds, ...userData } = req.body;
+      const userInput = insertUserSchema.parse(userData);
       
       // Check if user is admin when creating another user
       if (req.session.userRole !== "admin") {
@@ -452,10 +453,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS || "12");
       const hashedPassword = await bcrypt.hash(userInput.password, saltRounds);
       
+      // Criar o usuário
       const user = await storage.createUser({
         ...userInput,
         password: hashedPassword
       });
+      
+      // Se for um gestor e houver clientIds, associar aos clientes
+      if (user.role === "gestor" && clientIds && Array.isArray(clientIds) && clientIds.length > 0) {
+        console.log(`Associando gestor ${user.id} aos clientes:`, clientIds);
+        
+        // Associar cada cliente ao gestor
+        const clientAssignments = await Promise.all(
+          clientIds.map(async (clientId) => {
+            try {
+              // Verificar se o cliente existe
+              const client = await storage.getClient(Number(clientId));
+              if (!client) {
+                console.warn(`Cliente ${clientId} não encontrado, pulando atribuição`);
+                return null;
+              }
+              
+              // Fazer a associação
+              return await storage.assignClientToManager(user.id, Number(clientId));
+            } catch (err) {
+              console.error(`Erro ao associar cliente ${clientId} ao gestor ${user.id}:`, err);
+              return null;
+            }
+          })
+        );
+        
+        // Filtrar associações válidas
+        const validAssignments = clientAssignments.filter(a => a !== null);
+        console.log(`${validAssignments.length} clientes associados ao gestor ${user.id}`);
+      }
       
       res.status(201).json({
         id: user.id,
