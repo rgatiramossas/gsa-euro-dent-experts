@@ -1204,9 +1204,9 @@ export default function Finances() {
                   completableServices
                     ?.filter(service => selectedServices.includes(service.id))
                     .reduce((sum, service) => {
-                      // Para técnicos, mostrar apenas a soma dos valores do serviço (sem taxas administrativas)
-                      // Para admin, mostrar a soma dos valores totais
-                      const valueToAdd = isAdmin ? (service.total || 0) : (service.price || 0);
+                      // Sempre usar o valor do técnico (price) para o cálculo do pedido de pagamento
+                      // Este é o valor que será pago ao técnico
+                      const valueToAdd = service.price || 0;
                       return sum + valueToAdd;
                     }, 0) || 0
                 )}
