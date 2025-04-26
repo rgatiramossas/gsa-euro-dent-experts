@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -68,7 +69,8 @@ const formSchema = insertServiceSchema.extend({
   status: z.string().default("pending"),
   price: z.number().optional().nullable(),
   displacement_fee: z.number().optional().nullable().default(0),
-  // Removido o campo de fotos
+  // Campo para upload de fotos (apenas para o formulário, não é enviado diretamente)
+  photos: z.any().optional(), // z.any() para permitir FileList
   // Garantir que campos opcionais não causem problemas
   address: z.string().optional().nullable(),
   latitude: z.number().optional().nullable(),
@@ -85,6 +87,7 @@ export default function NewService() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const [photos, setPhotos] = useState<FileList | null>(null);
   
   // Queries
   const { data: clients } = useQuery<Client[]>({
@@ -200,7 +203,7 @@ export default function NewService() {
       formattedData.total = price + displacementFee;
       
       // Remover parâmetros desnecessários dos dados
-      const { scheduled_time, ...serviceData } = formattedData;
+      const { scheduled_time, photos, ...serviceData } = formattedData;
       
       // Log de depuração
       console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
@@ -211,9 +214,9 @@ export default function NewService() {
         const createdService = await res.json();
         console.log("Resposta do servidor:", createdService);
         
-        // Retornar o serviço criado sem preocupações com fotos
-        console.log("Serviço criado com sucesso, pulando upload de fotos");
-        /* Desabilitando temporariamente o upload de fotos para depuração
+        // Processar upload de fotos se houver
+        console.log("Serviço criado com sucesso, verificando fotos para upload");
+        
         if (photos && photos.length > 0) {
           try {
             const serviceId = createdService.id;
@@ -250,8 +253,9 @@ export default function NewService() {
             console.error("Erro ao processar fotos:", photoError);
             // Não lança erro para não impedir a criação do serviço
           }
+        } else {
+          console.log("Nenhuma foto selecionada para upload");
         }
-        */
         
         return createdService;
       } catch (error: any) {
@@ -587,19 +591,37 @@ export default function NewService() {
             </CardContent>
           </Card>
           
-          {/* Photos - Temporariamente desativado */}
+          {/* Photos Upload */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle>Registro Fotográfico</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="p-4 border border-dashed rounded-md text-center">
-                  <p className="text-sm text-muted-foreground">
-                    O upload de fotos está temporariamente desativado.
-                    As fotos poderão ser adicionadas depois que o serviço for criado.
-                  </p>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="photos"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fotos do serviço (até 4 fotos)</FormLabel>
+                      <FormControl>
+                        <PhotoUpload
+                          label="fotos-servico"
+                          multiple={true}
+                          maxFiles={4}
+                          onChange={(files) => {
+                            field.onChange(files);
+                            setPhotos(files);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Adicione fotos mostrando o dano para facilitar a análise do serviço.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </CardContent>
           </Card>
