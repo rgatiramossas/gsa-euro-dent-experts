@@ -10,7 +10,15 @@ import { Button } from "@/components/ui/button";
 import { PhotoUpload } from "@/components/common/PhotoUpload";
 import { LocationSelector } from "@/components/common/LocationSelector";
 import { useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
+import { 
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -574,22 +582,42 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         {/* Photos */}
                         <Card>
                           <CardHeader className="pb-3">
-                            <CardTitle>Fotos</CardTitle>
+                            <CardTitle>Registro Fotográfico</CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Fotos <span className="text-red-500">*</span></label>
-                              <PhotoUpload
-                                label="edit-photos"
-                                onChange={(files) => {
-                                  console.log("Arquivos selecionados:", files.length, "fotos");
-                                }}
-                                multiple
-                                maxFiles={5}
+                            <div className="space-y-4">
+                              <FormField
+                                control={editForm.control}
+                                name="photos"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Fotos do Dano <span className="text-red-500">*</span></FormLabel>
+                                    <FormControl>
+                                      <PhotoUpload
+                                        label="damage-photos-edit"
+                                        onChange={(files) => {
+                                          if (files.length > 0) {
+                                            // Em uma aplicação real, faríamos upload desses arquivos para um servidor
+                                            console.log("Arquivos selecionados:", files.length, "fotos");
+                                            editForm.setValue("photos", files, { shouldValidate: true });
+                                            toast({
+                                              title: "Fotos selecionadas com sucesso",
+                                              description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
+                                              variant: "default",
+                                            });
+                                          }
+                                        }}
+                                        multiple
+                                        maxFiles={5}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
+                                    </p>
+                                  </FormItem>
+                                )}
                               />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
-                              </p>
                             </div>
                           </CardContent>
                         </Card>
