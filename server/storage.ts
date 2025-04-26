@@ -500,12 +500,16 @@ export class DatabaseStorage implements IStorage {
       )
     );
     
-    return {
-      pendingServices: pendingResult.count,
-      inProgressServices: inProgressResult.count,
-      completedToday: completedTodayResult.count,
-      monthlyRevenue: revenueResult.sum
+    // Converter para o formato esperado pelo frontend
+    const stats = {
+      pendingServices: parseInt(pendingResult.count) || 0,
+      inProgressServices: parseInt(inProgressResult.count) || 0,
+      completedToday: parseInt(completedTodayResult.count) || 0,
+      monthlyRevenue: revenueResult.sum || 0
     };
+    
+    console.log('Stats formatados para envio:', stats);
+    return stats;
   }
   
   async getTechnicianPerformance(): Promise<any> {
