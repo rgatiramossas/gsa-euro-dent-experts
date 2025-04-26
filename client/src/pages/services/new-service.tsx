@@ -420,9 +420,11 @@ export default function NewService() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="1">Amassado de Rua</SelectItem>
-                        <SelectItem value="2">Granizo</SelectItem>
-                        <SelectItem value="3">Outro</SelectItem>
+                        {serviceTypes?.map((type) => (
+                          <SelectItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
