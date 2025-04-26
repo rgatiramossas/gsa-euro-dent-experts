@@ -68,7 +68,7 @@ const formSchema = insertServiceSchema.extend({
   status: z.string().default("pending"),
   price: z.number().optional().nullable(),
   displacement_fee: z.number().optional().nullable().default(0),
-  photos: z.any().optional(),
+  // Removido o campo de fotos
   // Garantir que campos opcionais não causem problemas
   address: z.string().optional().nullable(),
   latitude: z.number().optional().nullable(),
@@ -117,7 +117,7 @@ export default function NewService() {
       location_type: "client_location",
       price: 0,
       displacement_fee: 0,
-      photos: undefined,
+      // photos removido
       address: "",
       latitude: null,
       longitude: null,
@@ -199,8 +199,8 @@ export default function NewService() {
       
       formattedData.total = price + displacementFee;
       
-      // Separar fotos do resto dos dados
-      const { scheduled_time, photos, ...serviceData } = formattedData;
+      // Remover parâmetros desnecessários dos dados
+      const { scheduled_time, ...serviceData } = formattedData;
       
       // Log de depuração
       console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
@@ -587,44 +587,19 @@ export default function NewService() {
             </CardContent>
           </Card>
           
-          {/* Photos */}
+          {/* Photos - Temporariamente desativado */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle>Registro Fotográfico</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="photos"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Fotos do Dano</FormLabel>
-                      <FormControl>
-                        <PhotoUpload
-                          label="damage-photos"
-                          onChange={(files) => {
-                            console.log("Arquivos selecionados:", files.length, "fotos");
-                            form.setValue("photos", files, { shouldValidate: true });
-                            if (files.length > 0) {
-                              toast({
-                                title: "Fotos selecionadas com sucesso",
-                                description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
-                                variant: "default",
-                              });
-                            }
-                          }}
-                          multiple
-                          maxFiles={5}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
-                      </p>
-                    </FormItem>
-                  )}
-                />
+                <div className="p-4 border border-dashed rounded-md text-center">
+                  <p className="text-sm text-muted-foreground">
+                    O upload de fotos está temporariamente desativado.
+                    As fotos poderão ser adicionadas depois que o serviço for criado.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
