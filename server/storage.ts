@@ -309,6 +309,33 @@ export class DatabaseStorage implements IStorage {
       return service;
     }
     
+    // Verificar se o serviço está em um estado que não permite alterações (aguardando_aprovacao, faturado, pago)
+    if (['aguardando_aprovacao', 'faturado', 'pago'].includes(service.status)) {
+      // Permitir apenas atualizações de status pelo fluxo automático
+      if (serviceData.status && serviceData.status !== service.status) {
+        // Se for uma atualização de status, permitir apenas o que segue o fluxo:
+        // aguardando_aprovacao -> faturado -> pago
+        const statusFlow = {
+          'aguardando_aprovacao': ['faturado'],
+          'faturado': ['pago']
+        };
+        
+        // @ts-ignore - Estamos verificando se o status existe acima
+        if (!statusFlow[service.status]?.includes(serviceData.status)) {
+          console.log(`Transição de status inválida para serviço em pedido de pagamento: ${service.status} -> ${serviceData.status}`);
+          throw new Error(`Este serviço está em um pedido de pagamento e não pode mudar para o status ${serviceData.status}`);
+        }
+        
+        // Se chegar aqui, é uma transição de status válida
+        // Permitir apenas a atualização do status, removendo todas as outras propriedades
+        serviceData = { status: serviceData.status };
+      } else if (Object.keys(serviceData).length > 0 && !serviceData.status) {
+        // Se não for atualização de status, não permitir nenhuma alteração
+        console.log(`Tentativa de atualizar serviço com ID ${id} que está em um pedido de pagamento (${service.status})`);
+        throw new Error(`Este serviço está em um pedido de pagamento e não pode ser alterado`);
+      }
+    }
+    
     console.log(`Atualizando serviço ID ${id} com dados:`, serviceData);
     
     // Clone o objeto para não modificar o original

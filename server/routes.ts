@@ -491,6 +491,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Service not found" });
       }
       
+      // Verificar se o serviço está em um estado que não permite alterações completas
+      if (['aguardando_aprovacao', 'faturado', 'pago'].includes(service.status)) {
+        // Se for apenas uma atualização de status pelo fluxo automático, permitimos
+        if (req.body.status && Object.keys(req.body).length === 1) {
+          const statusFlow = {
+            'aguardando_aprovacao': ['faturado'],
+            'faturado': ['pago']
+          };
+          
+          // @ts-ignore
+          if (statusFlow[service.status]?.includes(req.body.status)) {
+            // Status válido, continua o fluxo
+          } else {
+            return res.status(400).json({ 
+              message: `Este serviço está em um pedido de pagamento e não pode mudar para o status ${req.body.status}` 
+            });
+          }
+        } 
+        // Se não for atualização de status ou tiver outros campos além do status
+        else if (Object.keys(req.body).length > 0) {
+          return res.status(403).json({ 
+            message: "Este serviço está em um pedido de pagamento e não pode ser alterado" 
+          });
+        }
+      }
+      
       let updates = req.body;
       
       // Se o content type for multipart/form-data, a forma como os dados são recebidos é diferente
@@ -546,6 +572,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedService);
     } catch (error) {
       console.error("Error updating service:", error);
+      // Verificar se é erro de validação do serviço em pedido de pagamento
+      if (error instanceof Error && error.message && (
+        error.message.includes("pedido de pagamento") || 
+        error.message.includes("não pode ser alterado")
+      )) {
+        return res.status(403).json({ message: error.message });
+      }
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -560,12 +593,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Service not found" });
       }
       
+      // Verificar se o serviço está em um pedido de pagamento
+      if (['aguardando_aprovacao', 'faturado', 'pago'].includes(service.status)) {
+        return res.status(403).json({ 
+          message: "Este serviço está em um pedido de pagamento e não pode ser excluído" 
+        });
+      }
+      
       // Em uma implementação real, você implementaria um método de exclusão no storage
       // Por enquanto, vamos simular a exclusão usando o updateService com um status "deleted"
       const updatedService = await storage.updateService(id, { status: "deleted" });
       res.status(200).json({ message: "Service deleted successfully" });
     } catch (error) {
       console.error("Error deleting service:", error);
+      // Verificar se é erro de validação do serviço em pedido de pagamento
+      if (error instanceof Error && error.message && (
+        error.message.includes("pedido de pagamento") || 
+        error.message.includes("não pode ser alterado")
+      )) {
+        return res.status(403).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to delete service" });
     }
   });
