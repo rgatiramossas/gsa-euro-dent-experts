@@ -113,6 +113,7 @@ const hailCalculation = (
 ) => {
   // Log para debug
   console.log(`hailCalculation: tamanho=${size}mm, amassados=${dents}, vertical=${isVertical}`);
+  
   const baseData: OrientationTable = {
     horizontal: {
       20: { 1: 6, 2: 7, 3: 8, 4: 9, 5: 10, 6: 11, 7: 12, 8: 13, 9: 14, 10: 15,
@@ -228,28 +229,28 @@ const hailCalculation = (
       // Divisão da diferença por 2 (metade)
       const halfDifference = awDifference / 2;
       
-      // Calculando a proximidade para determinar qual valor usar como base
+      // Calculando a distância para determinar qual valor usar como base
       const distToLower = dents - lowerKey;
       const distToHigher = higherKey - dents;
+      
+      console.log(`Calculando entre ${lowerKey}(${lowerAW} AW) e ${higherKey}(${higherAW} AW), diferença=${awDifference} AW, metade=${halfDifference} AW`);
       
       // Decisão baseada na proximidade
       if (distToLower < distToHigher) {
         // Está mais próximo do valor anterior
         aw = lowerAW + halfDifference;
-        console.log(`Interpolação: ${dents} amassados mais próximo de ${lowerKey} (${lowerAW} AW) + ${halfDifference} = ${aw} AW`);
+        console.log(`Mais próximo do valor anterior: ${lowerAW} + ${halfDifference} = ${aw} AW`);
       } 
       else if (distToLower > distToHigher) {
         // Está mais próximo do valor posterior
         aw = higherAW - halfDifference;
-        console.log(`Interpolação: ${dents} amassados mais próximo de ${higherKey} (${higherAW} AW) - ${halfDifference} = ${aw} AW`);
+        console.log(`Mais próximo do valor posterior: ${higherAW} - ${halfDifference} = ${aw} AW`);
       } 
       else {
         // Está exatamente no meio, usar o valor posterior como base
-        aw = higherAW + halfDifference;
-        console.log(`Interpolação: ${dents} amassados exatamente no meio, usando ${higherKey} (${higherAW} AW) + ${halfDifference} = ${aw} AW`);
+        aw = higherAW;
+        console.log(`Exatamente no meio, usando valor posterior: ${higherAW} AW`);
       }
-      
-      console.log(`Interpolação específica: ${dents} amassados entre ${lowerKey} (${lowerAW} AW) e ${higherKey} (${higherAW} AW) = ${aw} AW`);
     } 
     // Casos onde só temos um valor de referência
     else if (lowerKey === undefined && higherKey !== undefined) {
