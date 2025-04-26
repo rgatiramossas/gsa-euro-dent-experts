@@ -128,7 +128,7 @@ function AppRoutes() {
         )}
       </Route>
       
-      {/* Clients routes - apenas administradores podem criar novos clientes */}
+      {/* Clients routes - técnicos e administradores podem acessar */}
       <Route path="/clients">
         <RequireAuth>
           <MainLayout>
@@ -139,22 +139,22 @@ function AppRoutes() {
       
       <Route path="/clients/new">
         <RequireAuth>
-          <RequireAdmin>
+          <RequireTechnician>
             <MainLayout>
               <NewClient />
             </MainLayout>
-          </RequireAdmin>
+          </RequireTechnician>
         </RequireAuth>
       </Route>
       
       <Route path="/clients/:id/vehicle/new">
         {(params) => (
           <RequireAuth>
-            <RequireAdmin>
+            <RequireTechnician>
               <MainLayout>
                 <NewVehicle clientId={params.id} />
               </MainLayout>
-            </RequireAdmin>
+            </RequireTechnician>
           </RequireAuth>
         )}
       </Route>
