@@ -196,6 +196,14 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
+      <Route path="/eventos">
+        <RequireAuth>
+          <MainLayout>
+            <Eventos />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      
       {/* Redirect root to dashboard */}
       <Route path="/">
         <RequireAuth>

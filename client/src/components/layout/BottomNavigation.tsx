@@ -5,7 +5,8 @@ import {
   Home, 
   Briefcase, 
   Users, 
-  FileText 
+  FileText,
+  Calendar 
 } from "lucide-react";
 
 export function BottomNavigation() {
@@ -31,13 +32,18 @@ export function BottomNavigation() {
       name: "Orçamentos",
       path: "/budget",
       icon: <FileText className="h-6 w-6" />,
+    },
+    {
+      name: "Eventos",
+      path: "/eventos",
+      icon: <Calendar className="h-6 w-6" />,
     }
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">
       <div className="bg-gray-900 shadow-lg">
-        <div className="grid grid-cols-4 h-16">
+        <div className="grid grid-cols-5 h-16">
           {mobileNavItems.map((item) => {
             const isActive = location === item.path || 
                             (item.path !== "/dashboard" && location.startsWith(item.path));
