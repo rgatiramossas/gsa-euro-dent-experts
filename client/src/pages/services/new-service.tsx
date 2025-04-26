@@ -68,12 +68,7 @@ const formSchema = insertServiceSchema.extend({
   status: z.string().default("pending"),
   price: z.number().optional().nullable(),
   displacement_fee: z.number().optional().nullable().default(0),
-  photos: z.any().refine(val => {
-    // Verificar se há pelo menos uma foto selecionada
-    return val && val.length > 0;
-  }, {
-    message: "Pelo menos uma foto do dano é obrigatória"
-  }),
+  photos: z.any().optional(),
   // Garantir que campos opcionais não causem problemas
   address: z.string().optional().nullable(),
   latitude: z.number().optional().nullable(),
