@@ -862,14 +862,6 @@ export default function Budget() {
         photoContainer.style.backgroundColor = '#f8f9fa';
         photoContainer.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
         
-        const photoIcon = document.createElement('div');
-        photoIcon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect opacity="0.5" x="2" y="4" width="20" height="16" rx="2" stroke="#1E40AF" stroke-width="1.5"/>
-          <circle cx="8.5" cy="8.5" r="2.5" stroke="#1E40AF" stroke-width="1.5"/>
-          <path d="M14.5 11.5C14.5 11.5 15.5 10.25 17 10.25C18.5 10.25 19.5 11.5 19.5 11.5V18H14.5V11.5Z" stroke="#1E40AF" stroke-width="1.5"/>
-          <path d="M4.5 18V13.5C4.5 13.5 5.5 12 7 12C8.5 12 9.5 13.5 9.5 13.5L12.5 15.5" stroke="#1E40AF" stroke-width="1.5"/>
-        </svg>`;
-        
         // Título da foto
         const photoTitle = document.createElement('div');
         photoTitle.textContent = "Veículo";
@@ -878,15 +870,42 @@ export default function Budget() {
         photoTitle.style.color = '#1E40AF';
         photoTitle.style.marginBottom = '4px';
         
-        const photoText = document.createElement('div');
-        photoText.textContent = "Foto disponível no sistema";
-        photoText.style.marginTop = '6px';
-        photoText.style.fontSize = '8px';
-        photoText.style.color = '#555';
+        // Verificar se temos uma foto
+        const photoUrl = targetBudget.photo_url;
         
-        photoContainer.appendChild(photoTitle);
-        photoContainer.appendChild(photoIcon);
-        photoContainer.appendChild(photoText);
+        if (photoUrl) {
+          // Se temos um URL de foto (base64 ou blob), exibimos a imagem
+          const img = document.createElement('img');
+          img.src = photoUrl;
+          img.alt = "Foto do veículo";
+          img.style.maxWidth = "100%";
+          img.style.maxHeight = "80px";
+          img.style.objectFit = "contain";
+          img.style.borderRadius = "3px";
+          
+          photoContainer.appendChild(photoTitle);
+          photoContainer.appendChild(img);
+        } else {
+          // Se não temos foto, mostramos o ícone e texto
+          const photoIcon = document.createElement('div');
+          photoIcon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect opacity="0.5" x="2" y="4" width="20" height="16" rx="2" stroke="#1E40AF" stroke-width="1.5"/>
+            <circle cx="8.5" cy="8.5" r="2.5" stroke="#1E40AF" stroke-width="1.5"/>
+            <path d="M14.5 11.5C14.5 11.5 15.5 10.25 17 10.25C18.5 10.25 19.5 11.5 19.5 11.5V18H14.5V11.5Z" stroke="#1E40AF" stroke-width="1.5"/>
+            <path d="M4.5 18V13.5C4.5 13.5 5.5 12 7 12C8.5 12 9.5 13.5 9.5 13.5L12.5 15.5" stroke="#1E40AF" stroke-width="1.5"/>
+          </svg>`;
+          
+          const photoText = document.createElement('div');
+          photoText.textContent = "Foto não disponível";
+          photoText.style.marginTop = '6px';
+          photoText.style.fontSize = '8px';
+          photoText.style.color = '#555';
+          
+          photoContainer.appendChild(photoTitle);
+          photoContainer.appendChild(photoIcon);
+          photoContainer.appendChild(photoText);
+        }
+        
         return photoContainer;
       };
       
@@ -1077,7 +1096,8 @@ export default function Budget() {
       total_aw: totalAw,
       total_value: totalValue,
       note,
-      damaged_parts: damagedParts
+      damaged_parts: damagedParts,
+      photo_url: photoUrl // Adicionar foto ao orçamento atualizado
     };
     
     // Atualizar a lista de orçamentos
@@ -1348,25 +1368,55 @@ export default function Budget() {
       return;
     }
     
-    // Verificar o tamanho do arquivo (máximo de 5MB por exemplo)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Verificar o tamanho do arquivo (máximo de 2MB)
+    const maxSize = 2 * 1024 * 1024; // 2MB para não sobrecarregar o localStorage
     if (file.size > maxSize) {
       toast({
         title: "Arquivo muito grande",
-        description: "O tamanho máximo permitido é 5MB.",
+        description: "O tamanho máximo permitido é 2MB.",
         variant: "destructive",
       });
       return;
     }
     
-    // Criar uma URL para o arquivo selecionado
-    const fileUrl = URL.createObjectURL(file);
-    setPhotoUrl(fileUrl);
-    
+    // Exibir toast de carregamento
     toast({
-      title: "Foto adicionada",
-      description: "A foto foi adicionada ao orçamento com sucesso.",
+      title: "Processando imagem",
+      description: "Aguarde enquanto a imagem é processada...",
     });
+    
+    // Converter a imagem para base64
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64String = e.target?.result as string;
+      
+      // Verificar se a string base64 foi gerada com sucesso
+      if (base64String) {
+        setPhotoUrl(base64String);
+        
+        toast({
+          title: "Foto adicionada",
+          description: "A foto foi adicionada ao orçamento com sucesso.",
+        });
+      } else {
+        toast({
+          title: "Erro ao processar a imagem",
+          description: "Não foi possível processar a imagem selecionada.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    reader.onerror = () => {
+      toast({
+        title: "Erro ao processar a imagem",
+        description: "Ocorreu um erro ao processar o arquivo. Tente novamente.",
+        variant: "destructive",
+      });
+    };
+    
+    // Iniciar a leitura do arquivo como Data URL (base64)
+    reader.readAsDataURL(file);
     
     // Limpar o valor do input para permitir selecionar o mesmo arquivo novamente
     event.target.value = '';
