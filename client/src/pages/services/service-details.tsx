@@ -144,8 +144,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data: { status: ServiceStatus; notes?: string }) => {
-      const res = await apiRequest('PATCH', `/api/services/${id}`, data);
-      return res.json();
+      return await apiRequest(`/api/services/${id}`, 'PATCH', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: [`/api/services/${id}`]});
@@ -362,17 +361,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         }
       });
       
-      // Adicionar fotos "antes" se houver
+      // Adicionar fotos do serviço se houver (usando novo formato 'service')
       if (beforePhotos) {
         Array.from(beforePhotos).forEach((file: File) => {
-          formData.append('before_photos', file);
+          formData.append('photos', file);
         });
       }
       
-      // Adicionar fotos "depois" se houver
+      // Manter compatibilidade com sistema antigo - caso exista
       if (afterPhotos) {
         Array.from(afterPhotos).forEach((file: File) => {
-          formData.append('after_photos', file);
+          formData.append('photos', file);
         });
       }
       
@@ -395,8 +394,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const deleteServiceMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('DELETE', `/api/services/${id}`);
-      return res.ok;
+      return await apiRequest(`/api/services/${id}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ['/api/services']});

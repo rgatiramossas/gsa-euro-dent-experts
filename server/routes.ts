@@ -33,6 +33,7 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 // Create subdirectories for service photos
 const beforeDir = path.join(UPLOADS_DIR, "before");
 const afterDir = path.join(UPLOADS_DIR, "after");
+const serviceDir = path.join(UPLOADS_DIR, "service");
 
 // Ensure directories exist
 if (!fs.existsSync(beforeDir)) {
@@ -40,6 +41,9 @@ if (!fs.existsSync(beforeDir)) {
 }
 if (!fs.existsSync(afterDir)) {
   fs.mkdirSync(afterDir, { recursive: true });
+}
+if (!fs.existsSync(serviceDir)) {
+  fs.mkdirSync(serviceDir, { recursive: true });
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -643,8 +647,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const storage_config = multer.diskStorage({
     destination: function (req, file, cb) {
       // Determine photo type based on URL parameter
-      const photoType = req.body.photo_type || 'before';
-      const destDir = photoType === 'after' ? afterDir : beforeDir;
+      const photoType = req.body.photo_type || 'service';
+      
+      // Determine destination directory based on photo type
+      let destDir;
+      if (photoType === 'after') {
+        destDir = afterDir;
+      } else if (photoType === 'service') {
+        destDir = serviceDir;
+      } else {
+        destDir = beforeDir; // default to 'before' for backward compatibility
+      }
+      
       cb(null, destDir);
     },
     filename: function (req, file, cb) {
@@ -673,7 +687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/services/:id/photos", requireAuth, upload.array('photos', 5), async (req, res) => {
     try {
       const serviceId = parseInt(req.params.id);
-      const photoType = req.body.photo_type || 'before';
+      const photoType = req.body.photo_type || 'service';
       
       // Validate service exists
       const service = await storage.getService(serviceId);
@@ -692,7 +706,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const photoUrl = `/uploads/${photoType}/${file.filename}`;
         return await storage.addServicePhoto({
           service_id: serviceId,
-          photo_type: photoType as 'before' | 'after',
+          photo_type: photoType as 'before' | 'after' | 'service',
           photo_url: photoUrl
         });
       });
