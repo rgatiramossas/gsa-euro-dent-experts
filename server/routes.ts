@@ -46,6 +46,43 @@ if (!fs.existsSync(serviceDir)) {
   fs.mkdirSync(serviceDir, { recursive: true });
 }
 
+// Configure multer for file storage
+const storage_config = multer.diskStorage({
+  destination: function (req, file, cb) {
+    // Determine destination directory based on field name
+    let destDir;
+    if (file.fieldname === 'photos_after') {
+      destDir = path.join(UPLOADS_DIR, "after");
+    } else if (file.fieldname === 'photos_service') {
+      destDir = path.join(UPLOADS_DIR, "service");
+    } else {
+      destDir = path.join(UPLOADS_DIR, "before"); // default to 'before' for photos_before
+    }
+    
+    cb(null, destDir);
+  },
+  filename: function (req, file, cb) {
+    // Create unique filename
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage: storage_config,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only images
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session middleware
   app.use(
@@ -504,7 +541,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/services/:id", requireAuth, async (req, res) => {
+  app.patch("/api/services/:id", requireAuth, upload.fields([
+    { name: 'photos_service', maxCount: 4 },
+    { name: 'photos_before', maxCount: 4 },
+    { name: 'photos_after', maxCount: 4 }
+  ]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       console.log(`PATCH /api/services/${id} - Headers:`, req.headers);
@@ -757,45 +798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Configure multer for file storage
-  const storage_config = multer.diskStorage({
-    destination: function (req, file, cb) {
-      // Determine photo type based on URL parameter
-      const photoType = req.body.photo_type || 'service';
-      
-      // Determine destination directory based on photo type
-      let destDir;
-      if (photoType === 'after') {
-        destDir = afterDir;
-      } else if (photoType === 'service') {
-        destDir = serviceDir;
-      } else {
-        destDir = beforeDir; // default to 'before' for backward compatibility
-      }
-      
-      cb(null, destDir);
-    },
-    filename: function (req, file, cb) {
-      // Create unique filename
-      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
-      cb(null, uniqueName);
-    }
-  });
-
-  const upload = multer({
-    storage: storage_config,
-    limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB limit
-    },
-    fileFilter: (req, file, cb) => {
-      // Accept only images
-      if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
-      } else {
-        cb(new Error('Only image files are allowed'));
-      }
-    }
-  });
+  // A configuração do multer foi movida para o início do arquivo
 
   // Service photo endpoints
   app.post("/api/services/:id/photos", requireAuth, upload.array('photos', 4), async (req, res) => {
