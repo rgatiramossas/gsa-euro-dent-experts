@@ -587,61 +587,100 @@ export default function Budget() {
         return;
       }
       
-      // Criar um clone do conteúdo do diálogo
+      // Criar um clone do conteúdo do diálogo com design melhorado
       const printContainer = document.createElement('div');
       printContainer.style.width = '650px';
-      printContainer.style.padding = '15px';
+      printContainer.style.padding = '18px';
       printContainer.style.backgroundColor = 'white';
       printContainer.style.position = 'absolute';
       printContainer.style.left = '-9999px';
       printContainer.style.fontFamily = 'Arial, sans-serif';
       printContainer.style.fontSize = '10px';
+      printContainer.style.color = '#333';
+      printContainer.style.boxSizing = 'border-box';
       
-      // Copiar o conteúdo visual do diálogo atual
+      // Cabeçalho com estilo empresarial
       const header = document.createElement('div');
+      header.style.borderBottom = '2px solid #1E40AF'; // Borda azul
+      header.style.paddingBottom = '8px';
+      header.style.marginBottom = '12px';
       header.innerHTML = `
-        <h2 style="font-size: 16px; margin-bottom: 2px;">Orçamento #${targetBudget.id}</h2>
-        <p style="font-size: 10px; margin-bottom: 8px;">Detalhes do orçamento para ${targetBudget.client_name}.</p>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 style="font-size: 16px; margin: 0; color: #1E40AF;">Orçamento #${targetBudget.id}</h2>
+            <p style="font-size: 10px; margin: 3px 0 0 0; color: #555;">Euro Dent Experts</p>
+          </div>
+          <div style="font-size: 10px; text-align: right; color: #555;">
+            Data de emissão: ${new Date().toLocaleDateString()}
+          </div>
+        </div>
       `;
       printContainer.appendChild(header);
       
-      // Criar seção de dados do cliente e veículo
+      // Detalhes do cliente
+      const clientTitle = document.createElement('p');
+      clientTitle.textContent = 'Detalhes do orçamento para:';
+      clientTitle.style.fontSize = '10px';
+      clientTitle.style.marginBottom = '6px';
+      clientTitle.style.fontWeight = 'bold';
+      clientTitle.style.color = '#555';
+      printContainer.appendChild(clientTitle);
+      
+      // Criar seção de dados do cliente e veículo com visual melhorado
       const clientSection = document.createElement('div');
       clientSection.style.display = 'grid';
       clientSection.style.gridTemplateColumns = '1fr 1fr';
-      clientSection.style.gap = '8px';
-      clientSection.style.marginBottom = '10px';
+      clientSection.style.gap = '10px';
+      clientSection.style.marginBottom = '15px';
+      clientSection.style.backgroundColor = '#f8f9fa';
+      clientSection.style.padding = '10px';
+      clientSection.style.borderRadius = '5px';
       
       clientSection.innerHTML = `
         <div>
-          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Data</p>
-          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${formatDate(targetBudget.date) || ""}</div>
+          <p style="font-weight: 600; margin: 0 0 3px 0; font-size: 9px; color: #1E40AF;">DATA</p>
+          <div style="border: 1px solid #e0e0e0; padding: 5px; border-radius: 3px; font-size: 9px; background-color: white;">${formatDate(targetBudget.date) || ""}</div>
         </div>
         <div>
-          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Cliente</p>
-          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${targetBudget.client_name || ""}</div>
+          <p style="font-weight: 600; margin: 0 0 3px 0; font-size: 9px; color: #1E40AF;">CLIENTE</p>
+          <div style="border: 1px solid #e0e0e0; padding: 5px; border-radius: 3px; font-size: 9px; background-color: white;">${targetBudget.client_name || ""}</div>
         </div>
         <div>
-          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Veículo</p>
-          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${targetBudget.vehicle_info || ""}</div>
+          <p style="font-weight: 600; margin: 0 0 3px 0; font-size: 9px; color: #1E40AF;">VEÍCULO</p>
+          <div style="border: 1px solid #e0e0e0; padding: 5px; border-radius: 3px; font-size: 9px; background-color: white;">${targetBudget.vehicle_info || ""}</div>
         </div>
         <div>
-          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Placa</p>
-          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${targetBudget.plate || licensePlate || ""}</div>
+          <p style="font-weight: 600; margin: 0 0 3px 0; font-size: 9px; color: #1E40AF;">PLACA</p>
+          <div style="border: 1px solid #e0e0e0; padding: 5px; border-radius: 3px; font-size: 9px; background-color: white;">${targetBudget.plate || licensePlate || ""}</div>
         </div>
         <div style="grid-column: span 2;">
-          <p style="font-weight: bold; margin-bottom: 2px; font-size: 10px;">Chassi</p>
-          <div style="border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 9px;">${targetBudget.chassisNumber || chassisNumber || ""}</div>
+          <p style="font-weight: 600; margin: 0 0 3px 0; font-size: 9px; color: #1E40AF;">CHASSI</p>
+          <div style="border: 1px solid #e0e0e0; padding: 5px; border-radius: 3px; font-size: 9px; background-color: white;">${targetBudget.chassisNumber || chassisNumber || ""}</div>
         </div>
       `;
       printContainer.appendChild(clientSection);
       
-      // Título da seção de danos
-      const damageTitle = document.createElement('h3');
-      damageTitle.textContent = 'Danos do Veículo';
-      damageTitle.style.fontSize = '12px';
-      damageTitle.style.margin = '8px 0 6px 0';
-      damageTitle.style.fontWeight = 'bold';
+      // Título da seção de danos com estilo aprimorado
+      const damageTitle = document.createElement('div');
+      damageTitle.style.display = 'flex';
+      damageTitle.style.alignItems = 'center';
+      damageTitle.style.marginBottom = '10px';
+      
+      const damageTitleIcon = document.createElement('div');
+      damageTitleIcon.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M19 9L12 16L5 9" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+      damageTitleIcon.style.marginRight = '5px';
+      
+      const damageTitleText = document.createElement('h3');
+      damageTitleText.textContent = 'Danos do Veículo';
+      damageTitleText.style.fontSize = '12px';
+      damageTitleText.style.margin = '0';
+      damageTitleText.style.fontWeight = 'bold';
+      damageTitleText.style.color = '#1E40AF';
+      
+      damageTitle.appendChild(damageTitleIcon);
+      damageTitle.appendChild(damageTitleText);
       printContainer.appendChild(damageTitle);
       
       // Grid de peças danificadas em linhas e colunas específicas
@@ -683,25 +722,27 @@ export default function Budget() {
         lateralDireita: "Lateral Direita"
       };
       
-      // Criar uma peça com todos os detalhes
+      // Criar uma peça com todos os detalhes e design aprimorado
       const createPartElement = (partKey: string, displayName: string, isSelected: boolean): HTMLElement => {
         const part = document.createElement('div');
-        part.style.border = `1px solid ${isSelected ? '#1E40AF' : '#ddd'}`;
-        part.style.borderRadius = '4px';
+        part.style.border = `1px solid ${isSelected ? '#1E40AF' : '#e0e0e0'}`;
+        part.style.borderRadius = '5px';
         part.style.padding = '6px';
-        part.style.backgroundColor = isSelected ? '#EFF6FF' : 'white'; // azul claro se selecionado
+        part.style.backgroundColor = isSelected ? '#EFF6FF' : 'white';
+        part.style.boxShadow = isSelected ? '0 1px 3px rgba(0,0,0,0.12)' : 'none';
         
         const title = document.createElement('div');
         title.textContent = displayName;
         title.style.fontWeight = 'bold';
-        title.style.borderBottom = '1px solid #ddd';
+        title.style.borderBottom = '1px solid #e0e0e0';
         title.style.paddingBottom = '3px';
         title.style.marginBottom = '3px';
         title.style.textAlign = 'center';
         title.style.fontSize = '9px';
+        title.style.color = isSelected ? '#1E40AF' : '#444';
         part.appendChild(title);
         
-        // Adicionar campos de diâmetro
+        // Adicionar campos de diâmetro com visual aprimorado
         ['20mm', '30mm', '40mm'].forEach(diameter => {
           const row = document.createElement('div');
           row.style.display = 'flex';
@@ -712,26 +753,34 @@ export default function Budget() {
           const label = document.createElement('span');
           label.textContent = diameter + ':';
           label.style.fontSize = '9px';
+          label.style.color = '#555';
+          label.style.fontWeight = '500';
           
           const input = document.createElement('div');
           input.style.width = '50px';
           input.style.height = '16px';
-          input.style.border = '1px solid #ddd';
-          input.style.borderRadius = '2px';
-          input.style.backgroundColor = 'white';
+          input.style.border = '1px solid #e0e0e0';
+          input.style.borderRadius = '3px';
+          input.style.backgroundColor = '#fafafa';
           
           row.appendChild(label);
           row.appendChild(input);
           part.appendChild(row);
         });
         
-        // Adicionar checkboxes A, K, P
+        // Adicionar checkboxes A, K, P com visual aprimorado
         const optionsRow = document.createElement('div');
         optionsRow.style.display = 'flex';
         optionsRow.style.justifyContent = 'space-between';
-        optionsRow.style.borderTop = '1px solid #ddd';
+        optionsRow.style.borderTop = '1px solid #e0e0e0';
         optionsRow.style.paddingTop = '3px';
         optionsRow.style.marginTop = '2px';
+        
+        const optionColors = {
+          'A': '#fca5a5', // Vermelho claro para Alumínio
+          'K': '#a5b4fc', // Azul claro para Cola
+          'P': '#86efac'  // Verde claro para Pintura
+        };
         
         ['A', 'K', 'P'].forEach(option => {
           const optionGroup = document.createElement('div');
@@ -741,14 +790,19 @@ export default function Budget() {
           const checkbox = document.createElement('div');
           checkbox.style.width = '10px';
           checkbox.style.height = '10px';
-          checkbox.style.border = '1px solid #ddd';
+          checkbox.style.border = '1px solid #ccc';
           checkbox.style.borderRadius = '2px';
           checkbox.style.marginRight = '2px';
           checkbox.style.backgroundColor = 'white';
           
           const label = document.createElement('span');
-          label.textContent = `(${option})`;
+          label.textContent = option;
           label.style.fontSize = '8px';
+          label.style.fontWeight = 'bold';
+          label.style.color = '#555';
+          label.style.backgroundColor = optionColors[option as keyof typeof optionColors];
+          label.style.borderRadius = '3px';
+          label.style.padding = '1px 3px';
           
           optionGroup.appendChild(checkbox);
           optionGroup.appendChild(label);
@@ -759,25 +813,35 @@ export default function Budget() {
         return part;
       };
       
-      // Criar componente de foto para a posição central
+      // Criar componente de foto para a posição central com visual aprimorado
       const createPhotoElement = (): HTMLElement => {
         const photoContainer = document.createElement('div');
-        photoContainer.style.border = '1px solid #ddd';
-        photoContainer.style.borderRadius = '4px';
+        photoContainer.style.border = '1px solid #e0e0e0';
+        photoContainer.style.borderRadius = '5px';
         photoContainer.style.padding = '6px';
         photoContainer.style.textAlign = 'center';
         photoContainer.style.display = 'flex';
         photoContainer.style.flexDirection = 'column';
         photoContainer.style.justifyContent = 'center';
         photoContainer.style.alignItems = 'center';
+        photoContainer.style.backgroundColor = '#f8f9fa';
+        photoContainer.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
         
         const photoIcon = document.createElement('div');
-        photoIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect opacity="0.5" x="2" y="4" width="20" height="16" rx="2" stroke="#888888" stroke-width="2"/>
-          <circle cx="8.5" cy="8.5" r="2.5" stroke="#888888" stroke-width="1.5"/>
-          <path d="M14.5 11.5C14.5 11.5 15.5 10.25 17 10.25C18.5 10.25 19.5 11.5 19.5 11.5V18H14.5V11.5Z" stroke="#888888" stroke-width="1.5"/>
-          <path d="M4.5 18V13.5C4.5 13.5 5.5 12 7 12C8.5 12 9.5 13.5 9.5 13.5L12.5 15.5" stroke="#888888" stroke-width="1.5"/>
+        photoIcon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect opacity="0.5" x="2" y="4" width="20" height="16" rx="2" stroke="#1E40AF" stroke-width="1.5"/>
+          <circle cx="8.5" cy="8.5" r="2.5" stroke="#1E40AF" stroke-width="1.5"/>
+          <path d="M14.5 11.5C14.5 11.5 15.5 10.25 17 10.25C18.5 10.25 19.5 11.5 19.5 11.5V18H14.5V11.5Z" stroke="#1E40AF" stroke-width="1.5"/>
+          <path d="M4.5 18V13.5C4.5 13.5 5.5 12 7 12C8.5 12 9.5 13.5 9.5 13.5L12.5 15.5" stroke="#1E40AF" stroke-width="1.5"/>
         </svg>`;
+        
+        // Título da foto
+        const photoTitle = document.createElement('div');
+        photoTitle.textContent = "Veículo";
+        photoTitle.style.fontWeight = 'bold';
+        photoTitle.style.fontSize = '9px';
+        photoTitle.style.color = '#1E40AF';
+        photoTitle.style.marginBottom = '4px';
         
         const photoText = document.createElement('div');
         photoText.textContent = "Foto disponível no sistema";
@@ -785,6 +849,7 @@ export default function Budget() {
         photoText.style.fontSize = '8px';
         photoText.style.color = '#555';
         
+        photoContainer.appendChild(photoTitle);
         photoContainer.appendChild(photoIcon);
         photoContainer.appendChild(photoText);
         return photoContainer;
@@ -807,46 +872,86 @@ export default function Budget() {
       
       printContainer.appendChild(partsGrid);
       
-      // Rodapé com legenda
+      // Rodapé com legenda elegante
       const footer = document.createElement('div');
-      footer.style.marginTop = '15px';
-      footer.style.borderTop = '1px solid #ddd';
-      footer.style.paddingTop = '10px';
+      footer.style.marginTop = '20px';
+      footer.style.borderTop = '2px solid #e0e0e0';
+      footer.style.paddingTop = '12px';
+      
+      // Título dos materiais
+      const legendContainer = document.createElement('div');
+      legendContainer.style.backgroundColor = '#f8f9fa';
+      legendContainer.style.padding = '10px 12px';
+      legendContainer.style.borderRadius = '5px';
+      legendContainer.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+      
+      const legendHeader = document.createElement('div');
+      legendHeader.style.display = 'flex';
+      legendHeader.style.alignItems = 'center';
+      legendHeader.style.marginBottom = '8px';
+      
+      const legendIcon = document.createElement('div');
+      legendIcon.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 4V20M12 4L6 10M12 4L18 10" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+      legendIcon.style.marginRight = '5px';
       
       const legendTitle = document.createElement('div');
-      legendTitle.textContent = 'Materiais Especiais:';
+      legendTitle.textContent = 'Materiais Especiais';
       legendTitle.style.fontWeight = 'bold';
       legendTitle.style.fontSize = '10px';
-      legendTitle.style.marginBottom = '6px';
-      footer.appendChild(legendTitle);
+      legendTitle.style.color = '#1E40AF';
       
-      // Criar caixas destacadas para cada material
+      legendHeader.appendChild(legendIcon);
+      legendHeader.appendChild(legendTitle);
+      legendContainer.appendChild(legendHeader);
+      
+      // Criar caixas coloridas destacadas para cada material
       const materialsContainer = document.createElement('div');
       materialsContainer.style.display = 'flex';
       materialsContainer.style.justifyContent = 'space-around';
       materialsContainer.style.width = '100%';
       
       const materials = [
-        { code: 'A', desc: 'ALUMÍNIO' },
-        { code: 'K', desc: 'COLA' },
-        { code: 'P', desc: 'PINTURA' }
+        { code: 'A', desc: 'ALUMÍNIO', color: '#fca5a5' }, // Vermelho claro
+        { code: 'K', desc: 'COLA', color: '#a5b4fc' },     // Azul claro
+        { code: 'P', desc: 'PINTURA', color: '#86efac' }   // Verde claro
       ];
       
       materials.forEach(material => {
         const materialBox = document.createElement('div');
-        materialBox.style.padding = '4px 8px';
-        materialBox.style.backgroundColor = '#f0f0f0';
-        materialBox.style.border = '1px solid #ddd';
-        materialBox.style.borderRadius = '4px';
-        materialBox.style.fontWeight = 'bold';
-        materialBox.style.fontSize = '9px';
-        materialBox.style.display = 'inline-block';
+        materialBox.style.display = 'flex';
+        materialBox.style.alignItems = 'center';
         materialBox.style.margin = '0 5px';
-        materialBox.textContent = `${material.code} = ${material.desc}`;
+        
+        const codeCircle = document.createElement('div');
+        codeCircle.textContent = material.code;
+        codeCircle.style.width = '16px';
+        codeCircle.style.height = '16px';
+        codeCircle.style.borderRadius = '50%';
+        codeCircle.style.backgroundColor = material.color;
+        codeCircle.style.color = '#333';
+        codeCircle.style.fontWeight = 'bold';
+        codeCircle.style.fontSize = '9px';
+        codeCircle.style.display = 'flex';
+        codeCircle.style.justifyContent = 'center';
+        codeCircle.style.alignItems = 'center';
+        codeCircle.style.marginRight = '5px';
+        codeCircle.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+        
+        const descText = document.createElement('span');
+        descText.textContent = material.desc;
+        descText.style.fontSize = '9px';
+        descText.style.fontWeight = '500';
+        descText.style.color = '#444';
+        
+        materialBox.appendChild(codeCircle);
+        materialBox.appendChild(descText);
         materialsContainer.appendChild(materialBox);
       });
       
-      footer.appendChild(materialsContainer);
+      legendContainer.appendChild(materialsContainer);
+      footer.appendChild(legendContainer);
       printContainer.appendChild(footer);
       
       // Observações removidas conforme solicitado
