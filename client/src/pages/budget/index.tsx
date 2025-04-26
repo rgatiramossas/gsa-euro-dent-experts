@@ -77,6 +77,37 @@ interface Budget {
   note?: string;
 }
 
+// Estilo CSS para remover setas de inputs numéricos - adicionado globalmente
+const GlobalNoSpinnerStyles = () => (
+  <style>{`
+    /* Remove spinner para Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Remove spinner para Firefox */
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  `}</style>
+);
+
+const noSpinnerStyle = `
+  /* Remove spinner para Chrome, Safari, Edge, Opera */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Remove spinner para Firefox */
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+`;
+
 export default function Budget() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
@@ -404,6 +435,8 @@ export default function Budget() {
     setPhotoUrl("https://via.placeholder.com/150");
   };
 
+
+
   // Componente para renderizar cada item de peça
   const DamagedPartItem = ({ partKey, label }: { partKey: string, label: string }) => {
     const damage = partDamages[partKey];
@@ -465,6 +498,7 @@ export default function Budget() {
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
+      <GlobalNoSpinnerStyles />
       <PageHeader
         title="Orçamentos"
         description="Gerencie orçamentos para seus clientes"
