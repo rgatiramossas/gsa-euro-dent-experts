@@ -435,6 +435,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updates = req.body;
       
+      // Verificação para garantir que temos dados para atualizar
+      if (Object.keys(updates).length === 0) {
+        console.log("Nenhum dado de atualização fornecido, retornando o serviço atual");
+        return res.json(service);
+      }
+      
+      console.log("Atualizando serviço com dados:", updates);
+      
       // Recalculate total if price or displacement_fee is updated
       if (updates.price !== undefined || updates.displacement_fee !== undefined) {
         const price = updates.price !== undefined ? updates.price : service.price || 0;
