@@ -6,8 +6,12 @@ import { TechnicianPerformance } from "@/components/dashboard/TechnicianPerforma
 import { RecentServicesTable } from "@/components/dashboard/RecentServicesTable";
 import { PageHeader } from "@/components/common/PageHeader";
 import { formatCurrency } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  
   // Fetch dashboard stats
   const { 
     data: stats, 
@@ -16,12 +20,13 @@ export default function Dashboard() {
     queryKey: ['/api/dashboard/stats'],
   });
 
-  // Fetch technician performance
+  // Fetch technician performance (only for admins)
   const { 
     data: techPerformance, 
     isLoading: isLoadingPerformance 
   } = useQuery<TechnicianPerformanceType[]>({
     queryKey: ['/api/dashboard/technician-performance'],
+    enabled: isAdmin, // Só busca os dados se for administrador
   });
 
   // Fetch recent services
@@ -89,20 +94,22 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Recent Services */}
-        <div className="lg:col-span-2">
+        <div className={isAdmin ? "lg:col-span-2" : "lg:col-span-3"}>
           <RecentServicesTable
             services={services || []}
             isLoading={isLoadingServices}
           />
         </div>
         
-        {/* Technician Performance */}
-        <div>
-          <TechnicianPerformance
-            technicians={techPerformance || []}
-            isLoading={isLoadingPerformance}
-          />
-        </div>
+        {/* Technician Performance - visível apenas para administradores */}
+        {isAdmin && (
+          <div>
+            <TechnicianPerformance
+              technicians={techPerformance || []}
+              isLoading={isLoadingPerformance}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
