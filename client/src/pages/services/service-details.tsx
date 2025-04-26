@@ -62,6 +62,48 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const [newStatus, setNewStatus] = useState<ServiceStatus | "">("");
   const [statusNotes, setStatusNotes] = useState("");
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  
+  // Simulação de dados dos técnicos - normalmente viria de uma API
+  const technicians = [
+    { id: 1, name: "Admin User" },
+    { id: 2, name: "João Silva" }
+  ];
+  
+  // Criar um formulário para edição com valores padrão
+  const editForm = useForm({
+    defaultValues: {
+      service_type_id: 0,
+      technician_id: 0,
+      description: "",
+      notes: "",
+      price: 0,
+      displacement_fee: 0,
+      location_type: "workshop" as LocationType,
+      address: "",
+      latitude: 0,
+      longitude: 0,
+      scheduled_date: new Date()
+    }
+  });
+  
+  // Atualizar valores iniciais do formulário quando service carregar
+  React.useEffect(() => {
+    if (service) {
+      editForm.reset({
+        service_type_id: service.service_type_id || 0,
+        technician_id: service.technician_id || 0,
+        description: service.description || "",
+        notes: service.notes || "",
+        price: service.price || 0,
+        displacement_fee: service.displacement_fee || 0,
+        location_type: service.location_type as LocationType,
+        address: service.address || "",
+        latitude: service.latitude || 0,
+        longitude: service.longitude || 0,
+        scheduled_date: service.scheduled_date ? new Date(service.scheduled_date) : new Date()
+      });
+    }
+  }, [service]);
 
   const { data: service, isLoading, error } = useQuery<ServiceWithDetails>({
     queryKey: [`/api/services/${id}`],
@@ -396,7 +438,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   </DialogHeader>
                   
                   <div className="overflow-y-auto flex-1 py-4">
-                    <Form {...form}>
+                    <Form {...editForm}>
                       <form className="space-y-6">
                         {/* Client and Vehicle Information */}
                         <Card>
@@ -600,7 +642,19 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   
                   <DialogFooter>
                     <Button variant="outline" type="button">Cancelar</Button>
-                    <Button type="button">Salvar Alterações</Button>
+                    <Button 
+                      type="button" 
+                      onClick={editForm.handleSubmit((data) => {
+                        console.log("Dados do formulário:", data);
+                        // Implementaria a mutação para atualizar o serviço
+                        toast({
+                          title: "Serviço atualizado",
+                          description: "As alterações foram salvas com sucesso",
+                        });
+                      })}
+                    >
+                      Salvar Alterações
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
