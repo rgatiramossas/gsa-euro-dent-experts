@@ -300,63 +300,58 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         return;
       }
       
-      // Preparar o objeto de dados para envio com todos os campos possíveis
-      const updateData: Record<string, any> = {};
+      // Sempre usaremos FormData para simplificar e unificar o processo
+      const formData = new FormData();
       
-      // Verificar se houve mudança em cada campo
+      // Verificar e adicionar campos que foram modificados
       if (data.service_type_id !== service.service_type_id) {
-        updateData.service_type_id = data.service_type_id;
+        formData.append('service_type_id', data.service_type_id.toString());
       }
       
       if (data.technician_id !== service.technician_id) {
-        updateData.technician_id = data.technician_id;
+        formData.append('technician_id', data.technician_id.toString());
       }
       
-      // Para valores numéricos, precisamos garantir que a comparação seja correta
-      // Converter para números para evitar problemas de tipo string vs number
+      // Processar valores numéricos
       const dataPrice = typeof data.price === 'string' ? parseFloat(data.price) : data.price;
       const servicePrice = typeof service.price === 'string' ? parseFloat(service.price) : service.price;
       
       if (dataPrice !== servicePrice) {
-        console.log("Preço alterado de", servicePrice, "para", dataPrice);
-        updateData.price = dataPrice;
+        formData.append('price', dataPrice.toString());
       }
       
       const dataDisplacementFee = typeof data.displacement_fee === 'string' ? parseFloat(data.displacement_fee) : data.displacement_fee;
       const serviceDisplacementFee = typeof service.displacement_fee === 'string' ? parseFloat(service.displacement_fee) : service.displacement_fee;
       
       if (dataDisplacementFee !== serviceDisplacementFee) {
-        console.log("Taxa de deslocamento alterada de", serviceDisplacementFee, "para", dataDisplacementFee);
-        updateData.displacement_fee = dataDisplacementFee;
+        formData.append('displacement_fee', dataDisplacementFee.toString());
       }
       
       if (data.description !== service.description) {
-        updateData.description = data.description;
+        formData.append('description', data.description || '');
       }
       
       if (data.notes !== service.notes) {
-        updateData.notes = data.notes;
+        formData.append('notes', data.notes || '');
       }
       
       if (data.location_type !== service.location_type) {
-        updateData.location_type = data.location_type;
+        formData.append('location_type', data.location_type);
       }
       
       if (data.address !== service.address) {
-        updateData.address = data.address;
+        formData.append('address', data.address || '');
       }
       
-      console.log("Dados a serem atualizados:", updateData);
+      // Verificar se existem alterações de fotos
+      const hasPhotoAdditions = servicePhotos && servicePhotos.length > 0;
+      const hasPhotoRemovals = photosToRemove.length > 0;
+      const hasPhotoChanges = hasPhotoAdditions || hasPhotoRemovals;
       
-      // Verificar se existem dados para atualizar
-      const hasChanges = Object.keys(updateData).length > 0;
-      // Incluir também servicePhotos para a verificação
-      const hasPhotos = (servicePhotos && servicePhotos.length > 0) || 
-                      (beforePhotos && beforePhotos.length > 0) || 
-                      (afterPhotos && afterPhotos.length > 0) || 
-                      photosToRemove.length > 0;
+      // Verificar se existem alterações nos campos de texto/números
+      const hasFieldChanges = Array.from(formData.entries()).length > 0;
       
-      if (!hasChanges && !hasPhotos) {
+      if (!hasFieldChanges && !hasPhotoChanges) {
         toast({
           title: "Nenhuma alteração detectada",
           description: "Nenhuma informação foi alterada para este serviço",
@@ -365,66 +360,30 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         return;
       }
       
-      // Adicionar pelo menos um campo ao updateData para garantir que o servidor processe a solicitação
-      if (!hasChanges && hasPhotos) {
-        // Se não há alterações nos campos mas há fotos, precisamos enviar algo para o servidor processar
-        updateData._hasPhotoChanges = true;
+      // Se só temos alterações de fotos, precisamos sinalizar isso para o servidor
+      if (!hasFieldChanges && hasPhotoChanges) {
+        formData.append('_hasPhotoChangesOnly', 'true');
       }
       
-      // Criar o FormData para o envio
-      const formData = new FormData();
-      
-      // Adicionar os dados do serviço
-      Object.entries(updateData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          formData.append(key, value.toString());
-        }
-      });
-      
-      let hasAddedPhoto = false;
-      
-      // Nova abordagem unificada - fotos de serviço
-      if (servicePhotos && servicePhotos.length > 0) {
+      // Adicionar novas fotos (apenas abordagem unificada 'service')
+      if (hasPhotoAdditions) {
         Array.from(servicePhotos).forEach((file: File) => {
           formData.append('photos_service', file);
-          hasAddedPhoto = true;
-        });
-      }
-      
-      // Manter suporte a tipos anteriores para compatibilidade durante a transição
-      if (beforePhotos && beforePhotos.length > 0) {
-        Array.from(beforePhotos).forEach((file: File) => {
-          formData.append('photos_before', file);
-          hasAddedPhoto = true;
-        });
-      }
-      
-      if (afterPhotos && afterPhotos.length > 0) {
-        Array.from(afterPhotos).forEach((file: File) => {
-          formData.append('photos_after', file);
-          hasAddedPhoto = true;
         });
       }
       
       // Adicionar IDs das fotos para remover
-      if (photosToRemove.length > 0) {
+      if (hasPhotoRemovals) {
         formData.append('photos_to_remove', JSON.stringify(photosToRemove));
       }
       
-      // Se houver fotos adicionadas ou para remover, precisamos garantir que o servidor saiba disso
-      if (hasPhotos) {
+      // Sinalizar que há alterações de fotos para o servidor
+      if (hasPhotoChanges) {
         formData.append('has_photo_changes', 'true');
       }
       
-      // Tentar enviar como JSON normal se não houver fotos
-      if (!hasAddedPhoto && photosToRemove.length === 0) {
-        console.log("Enviando como JSON:", updateData);
-        updateServiceMutation.mutate(updateData);
-      } else {
-        // Enviar o FormData para o servidor se houver fotos
-        console.log("Enviando como FormData");
-        updateServiceMutation.mutate(formData);
-      }
+      console.log("Enviando atualização do serviço com FormData");
+      updateServiceMutation.mutate(formData);
     })();
   };
   
@@ -550,7 +509,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   // Função para receber novas fotos do tipo "service" (abordagem unificada)
   const handleServicePhotoChange = (files: FileList) => {
-    if (files.length === 0) return;
+    if (files.length === 0 || !service) return;
     
     // Verificar quantas fotos já existem no servidor menos as marcadas para remoção
     const existingPhotosOnServer = 
@@ -606,7 +565,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       toast({
         title: "Algumas fotos não foram adicionadas",
         description: `Apenas ${newFiles.length} de ${files.length} fotos foram adicionadas devido ao limite de 4 fotos por serviço.`,
-        variant: "warning",
+        variant: "destructive",
       });
     } else {
       toast({
