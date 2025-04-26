@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -418,34 +418,27 @@ export default function Budget() {
   // Componente para renderizar cada item de peça
   const DamagedPartItem = ({ partKey, label }: { partKey: string, label: string }) => {
     const damage = partDamages[partKey];
-    const [keepFocus, setKeepFocus] = useState<string | null>(null);
     
-    // Efeito para manter o foco quando necessário
-    useEffect(() => {
-      if (keepFocus) {
-        const inputElement = document.getElementById(keepFocus);
-        if (inputElement) {
-          inputElement.focus();
-          setKeepFocus(null);
-        }
-      }
-    }, [keepFocus, damage]);
-    
-    // Função para selecionar todo o texto no input quando receber foco
+    // Função para evitar perda de foco e selecionar todo o texto
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
       e.target.select();
     };
     
-    // Função para lidar com a mudança de valor nos campos de diâmetro
-    const handleInputChange = (diameter: 'diameter20' | 'diameter30' | 'diameter40', value: string) => {
+    // Função otimizada para lidar com a mudança nos inputs 
+    // mantendo o foco ativo no campo atual
+    const handleInputChange = (diameter: 'diameter20' | 'diameter30' | 'diameter40', value: string, e: React.ChangeEvent<HTMLInputElement>) => {
       const numValue = parseInt(value) || 0;
-      
-      // Salvar ID do elemento para restaurar o foco após a atualização do estado
-      const inputId = `${partKey}-${diameter}`;
-      setKeepFocus(inputId);
+      const currentInput = e.target;
       
       // Atualizar o valor no estado
       handleDiameterChange(partKey, diameter, numValue);
+      
+      // Usar um timeout para garantir que o estado já foi atualizado
+      setTimeout(() => {
+        // Manter foco e selecionar o texto
+        currentInput.focus();
+        currentInput.select();
+      }, 0);
     };
     
     return (
@@ -462,7 +455,7 @@ export default function Budget() {
               type="number"
               min="0"
               value={damage.diameter20}
-              onChange={(e) => handleInputChange('diameter20', e.target.value)}
+              onChange={(e) => handleInputChange('diameter20', e.target.value, e)}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
@@ -476,7 +469,7 @@ export default function Budget() {
               type="number"
               min="0"
               value={damage.diameter30}
-              onChange={(e) => handleInputChange('diameter30', e.target.value)}
+              onChange={(e) => handleInputChange('diameter30', e.target.value, e)}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
@@ -490,7 +483,7 @@ export default function Budget() {
               type="number"
               min="0"
               value={damage.diameter40}
-              onChange={(e) => handleInputChange('diameter40', e.target.value)}
+              onChange={(e) => handleInputChange('diameter40', e.target.value, e)}
               onFocus={handleFocus}
               autoComplete="off"
               className="w-16 h-7 text-xs"
