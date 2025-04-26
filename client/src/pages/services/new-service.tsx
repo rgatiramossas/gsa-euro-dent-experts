@@ -210,8 +210,7 @@ export default function NewService() {
       
       try {
         // 1. Criar serviço
-        const res = await apiRequest('POST', '/api/services', serviceData);
-        const createdService = await res.json();
+        const createdService = await apiRequest('/api/services', 'POST', serviceData);
         console.log("Resposta do servidor:", createdService);
         
         // Processar upload de fotos se houver
