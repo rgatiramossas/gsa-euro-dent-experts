@@ -736,11 +736,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {serviceTypes?.map((type) => (
-                              <SelectItem key={type.id} value={type.id.toString()}>
-                                {type.name}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="1">Amassado de Rua</SelectItem>
+                            <SelectItem value="2">Granizo</SelectItem>
+                            <SelectItem value="3">Outro</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -816,86 +814,89 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 <CardHeader className="pb-3">
                   <CardTitle>Registro Fotográfico</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Antes do Serviço</h3>
-                    <div className="mb-4">
-                      <PhotoUpload
-                        label="Adicionar fotos (máx. 5)"
-                        onChange={(files) => handleBeforePhotoChange(files)}
-                        className="mt-1"
-                        accept="image/*"
-                        multiple={true}
-                        maxFiles={5}
-                        preview={beforePhotoPreview || undefined}
-                      />
-                    </div>
-                    
-                    {/* Exibição das fotos existentes com opção de remoção */}
-                    {service.photos?.before && service.photos.before.length > 0 && (
-                      <div className="mt-4">
-                        <div className="text-sm font-medium mb-2">Fotos existentes</div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                          {service.photos.before.map((photo) => (
-                            <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
-                              <img 
-                                src={photo.photo_url} 
-                                alt="Foto do dano" 
-                                className="object-cover w-full h-full"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleRemovePhoto(photo.id)}
-                                className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                              >
-                                <Trash2 className="h-6 w-6 text-white" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                <CardContent>
+                  <div className="space-y-4">
+                    <FormField
+                      control={editForm.control}
+                      name="photos"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fotos do Dano <span className="text-red-500">*</span></FormLabel>
+                          <FormControl>
+                            <PhotoUpload
+                              label="damage-photos"
+                              onChange={(files) => {
+                                if (files.length > 0) {
+                                  editForm.setValue("photos", files, { shouldValidate: true });
+                                  handleBeforePhotoChange(files);
+                                  toast({
+                                    title: "Fotos selecionadas com sucesso",
+                                    description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
+                                    variant: "default",
+                                  });
+                                }
+                              }}
+                              multiple
+                              maxFiles={5}
+                              preview={beforePhotoPreview || undefined}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Tire até 5 fotos que mostrem claramente o dano para facilitar a avaliação.
+                          </p>
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Fotos Após Serviço</h3>
-                    <div className="mb-4">
-                      <PhotoUpload
-                        label="Adicionar fotos (máx. 5)"
-                        onChange={(files) => handleAfterPhotoChange(files)}
-                        className="mt-1"
-                        accept="image/*"
-                        multiple={true}
-                        maxFiles={5}
-                        preview={afterPhotoPreview || undefined}
-                      />
-                    </div>
-                    
-                    {/* Exibição das fotos existentes com opção de remoção */}
-                    {service.photos?.after && service.photos.after.length > 0 && (
-                      <div className="mt-4">
-                        <div className="text-sm font-medium mb-2">Fotos existentes</div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                          {service.photos.after.map((photo) => (
-                            <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
-                              <img 
-                                src={photo.photo_url} 
-                                alt="Foto após reparo" 
-                                className="object-cover w-full h-full"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleRemovePhoto(photo.id)}
-                                className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                              >
-                                <Trash2 className="h-6 w-6 text-white" />
-                              </button>
+
+                  {/* Exibição das fotos existentes */}
+                  {(service.photos?.before && service.photos.before.length > 0) || 
+                   (service.photos?.after && service.photos.after.length > 0) ? (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-medium mb-2">Fotos existentes</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                        {/* Fotos Antes */}
+                        {service.photos?.before && service.photos.before.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
+                            <img 
+                              src={photo.photo_url} 
+                              alt="Foto do dano" 
+                              className="object-cover w-full h-full"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePhoto(photo.id)}
+                              className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                            >
+                              <Trash2 className="h-6 w-6 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                        
+                        {/* Fotos Depois */}
+                        {service.photos?.after && service.photos.after.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
+                            <img 
+                              src={photo.photo_url} 
+                              alt="Foto após reparo" 
+                              className="object-cover w-full h-full"
+                            />
+                            <div className="absolute top-0 right-0 bg-green-500 text-white text-xs px-1 py-0.5">
+                              Após
                             </div>
-                          ))}
-                        </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePhoto(photo.id)}
+                              className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                            >
+                              <Trash2 className="h-6 w-6 text-white" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
               
