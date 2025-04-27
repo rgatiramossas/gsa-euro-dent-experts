@@ -446,6 +446,28 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(vehicles).where(eq(vehicles.client_id, clientId));
   }
   
+  // Expense methods
+  async listExpenses(): Promise<Expense[]> {
+    try {
+      return db.select().from(expenses).orderBy(desc(expenses.date));
+    } catch (error) {
+      console.error("Error listing expenses:", error);
+      return [];
+    }
+  }
+  
+  async createExpense(expenseData: Partial<Expense>): Promise<Expense> {
+    try {
+      const result = await db.insert(expenses).values(expenseData);
+      const expenseId = Number(result.insertId);
+      const [expense] = await db.select().from(expenses).where(eq(expenses.id, expenseId));
+      return expense;
+    } catch (error) {
+      console.error("Error creating expense:", error);
+      throw error;
+    }
+  }
+  
   // Service Type methods
   async getServiceType(id: number): Promise<ServiceType | undefined> {
     const [serviceType] = await db.select().from(serviceTypes).where(eq(serviceTypes.id, id));
