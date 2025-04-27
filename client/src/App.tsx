@@ -114,14 +114,12 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      {/* Services routes - técnicos e administradores podem acessar */}
+      {/* Services routes - técnicos, gestores e administradores podem acessar */}
       <Route path="/services">
         <RequireAuth>
-          <RequireTechnician>
-            <MainLayout>
-              <ServicesList />
-            </MainLayout>
-          </RequireTechnician>
+          <MainLayout>
+            <ServicesList />
+          </MainLayout>
         </RequireAuth>
       </Route>
       
@@ -138,11 +136,9 @@ function AppRoutes() {
       <Route path="/services/:id">
         {(params) => (
           <RequireAuth>
-            <RequireTechnician>
-              <MainLayout>
-                <ServiceDetails id={params.id} />
-              </MainLayout>
-            </RequireTechnician>
+            <MainLayout>
+              <ServiceDetails id={params.id} />
+            </MainLayout>
           </RequireAuth>
         )}
       </Route>

@@ -511,6 +511,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", requireAuth, async (req, res) => {
     try {
       const query = req.query.q as string | undefined;
+      const userRole = req.session.userRole;
+      const userId = req.session.userId;
+      
+      // Se for gestor, mostrar apenas os clientes associados
+      if (userRole === "gestor") {
+        console.log("Listando clientes apenas para o gestor ID:", userId);
+        const clients = await storage.getManagerClients(Number(userId));
+        return res.json(clients);
+      }
+      
+      // Para outros usuários (admin, técnico), mostrar todos os clientes
       const clients = query
         ? await storage.searchClients(query)
         : await storage.listClients();

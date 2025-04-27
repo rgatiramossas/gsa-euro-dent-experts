@@ -14,6 +14,7 @@ export function BottomNavigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const isGestor = user?.role === "gestor";
 
   // Itens padrões para todos os usuários
   let mobileNavItems = [
@@ -50,11 +51,32 @@ export function BottomNavigation() {
       }
     ];
   }
+  
+  // Para gestores, apenas mostra o dashboard, clientes e serviços (sem orçamentos)
+  if (isGestor) {
+    mobileNavItems = [
+      {
+        name: "Início",
+        path: "/manager-dashboard",
+        icon: <Home className="h-6 w-6" />,
+      },
+      {
+        name: "Clientes",
+        path: "/clients",
+        icon: <Users className="h-6 w-6" />,
+      },
+      {
+        name: "Serviços",
+        path: "/services",
+        icon: <Briefcase className="h-6 w-6" />,
+      }
+    ];
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">
       <div className="bg-gray-900 shadow-lg">
-        <div className="grid grid-cols-4 h-16">
+        <div className={`grid ${isGestor ? 'grid-cols-3' : 'grid-cols-4'} h-16`}>
           {mobileNavItems.map((item) => {
             const isActive = location === item.path || 
                             (item.path !== "/dashboard" && location.startsWith(item.path));
