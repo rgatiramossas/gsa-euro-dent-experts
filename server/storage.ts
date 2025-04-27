@@ -342,13 +342,40 @@ export class DatabaseStorage implements IStorage {
   }
   
   async listClients(): Promise<Client[]> {
-    return db.select().from(clients);
+    try {
+      // Selecionamos apenas as colunas que temos certeza que existem
+      return db.select({
+        id: clients.id,
+        name: clients.name,
+        email: clients.email,
+        phone: clients.phone,
+        address: clients.address,
+        notes: clients.notes,
+        created_at: clients.created_at,
+      }).from(clients);
+    } catch (error) {
+      console.error("Erro ao listar clientes:", error);
+      return [];
+    }
   }
   
   async searchClients(query: string): Promise<Client[]> {
-    return db.select().from(clients).where(
-      like(clients.name, `%${query}%`)
-    );
+    try {
+      return db.select({
+        id: clients.id,
+        name: clients.name,
+        email: clients.email,
+        phone: clients.phone,
+        address: clients.address,
+        notes: clients.notes,
+        created_at: clients.created_at,
+      }).from(clients).where(
+        like(clients.name, `%${query}%`)
+      );
+    } catch (error) {
+      console.error("Erro ao buscar clientes:", error);
+      return [];
+    }
   }
   
   // Vehicle methods
@@ -1539,15 +1566,27 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getManagerClients(managerId: number): Promise<Client[]> {
-    // Busca todos os clientes atribuídos a um gestor específico
-    const assignments = await db.select({
-      client: clients
-    })
-    .from(managerClientAssignments)
-    .innerJoin(clients, eq(managerClientAssignments.client_id, clients.id))
-    .where(eq(managerClientAssignments.manager_id, managerId));
-    
-    return assignments.map(a => a.client);
+    try {
+      // Busca todos os clientes atribuídos a um gestor específico
+      // Selecionando explicitamente as colunas que sabemos que existem no MySQL
+      const assignments = await db.select({
+        id: clients.id,
+        name: clients.name,
+        email: clients.email,
+        phone: clients.phone,
+        address: clients.address,
+        notes: clients.notes,
+        created_at: clients.created_at
+      })
+      .from(managerClientAssignments)
+      .innerJoin(clients, eq(managerClientAssignments.client_id, clients.id))
+      .where(eq(managerClientAssignments.manager_id, managerId));
+      
+      return assignments;
+    } catch (error) {
+      console.error("Erro ao buscar clientes do gestor:", error);
+      return [];
+    }
   }
   
   async getClientManagers(clientId: number): Promise<User[]> {

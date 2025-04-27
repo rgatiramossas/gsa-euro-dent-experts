@@ -39,7 +39,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
   }, [managerMode, location]);
   
   // Query para buscar os clientes
-  const { data: clients, isLoading } = useQuery<Client[]>({
+  const { data: clients = [], isLoading } = useQuery<Client[]>({
     queryKey: managerMode && managerId ? ['/api/managers', managerId, 'clients'] : ['/api/clients'],
     queryFn: async () => {
       if (managerMode && managerId) {
@@ -58,16 +58,37 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
           return [];
         }
       }
-      return fetch('/api/clients').then(res => res.json());
+      try {
+        const response = await fetch('/api/clients');
+        if (!response.ok) {
+          console.error('Erro ao carregar clientes, status:', response.status);
+          return [];
+        }
+        const data = await response.json();
+        // Verificar se o dado retornado é um array
+        if (!Array.isArray(data)) {
+          console.error('Dados de clientes não é um array:', data);
+          return [];
+        }
+        return data;
+      } catch (error: any) {
+        console.error('Erro ao buscar clientes:', error);
+        toast({
+          title: "Erro",
+          description: `Erro ao carregar clientes: ${error.message}`,
+          variant: "destructive",
+        });
+        return [];
+      }
     },
   });
 
   // Filter clients based on search term
-  const filteredClients = clients?.filter(client => 
+  const filteredClients = Array.isArray(clients) ? clients.filter(client => 
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (client.phone && client.phone.includes(searchTerm))
-  );
+  ) : [];
 
   const navigateToClientDetails = (id: number) => {
     setLocation(`/clients/${id}`);
