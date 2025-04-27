@@ -438,8 +438,23 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createVehicle(insertVehicle: InsertVehicle): Promise<Vehicle> {
-    const [vehicle] = await db.insert(vehicles).values(insertVehicle).returning();
-    return vehicle;
+    try {
+      // No MySQL não temos o método returning()
+      const result = await db.insert(vehicles).values(insertVehicle);
+      // Obter o ID do veículo recém-criado
+      const vehicleId = Number(result.insertId);
+      // Buscar o veículo pelo ID
+      const vehicle = await this.getVehicle(vehicleId);
+      
+      if (!vehicle) {
+        throw new Error(`Veículo criado mas não encontrado com ID ${vehicleId}`);
+      }
+      
+      return vehicle;
+    } catch (error) {
+      console.error("Erro ao criar veículo:", error);
+      throw error;
+    }
   }
   
   async listVehiclesByClient(clientId: number): Promise<Vehicle[]> {
@@ -475,8 +490,20 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createServiceType(insertServiceType: InsertServiceType): Promise<ServiceType> {
-    const [serviceType] = await db.insert(serviceTypes).values(insertServiceType).returning();
-    return serviceType;
+    try {
+      const result = await db.insert(serviceTypes).values(insertServiceType);
+      const serviceTypeId = Number(result.insertId);
+      const serviceType = await this.getServiceType(serviceTypeId);
+      
+      if (!serviceType) {
+        throw new Error(`Tipo de serviço criado mas não encontrado com ID ${serviceTypeId}`);
+      }
+      
+      return serviceType;
+    } catch (error) {
+      console.error("Erro ao criar tipo de serviço:", error);
+      throw error;
+    }
   }
   
   async listServiceTypes(): Promise<ServiceType[]> {
@@ -531,26 +558,39 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createService(insertService: InsertService): Promise<Service> {
-    // Clone o objeto para não modificar o original
-    const serviceData = { ...insertService };
-    
-    // Converter campos de data de string para Date para o PostgreSQL
-    if (serviceData.scheduled_date && typeof serviceData.scheduled_date === 'string') {
-      serviceData.scheduled_date = new Date(serviceData.scheduled_date);
+    try {
+      // Clone o objeto para não modificar o original
+      const serviceData = { ...insertService };
+      
+      // Converter campos de data de string para Date para o MySQL
+      if (serviceData.scheduled_date && typeof serviceData.scheduled_date === 'string') {
+        serviceData.scheduled_date = new Date(serviceData.scheduled_date);
+      }
+      
+      if (serviceData.start_date && typeof serviceData.start_date === 'string') {
+        serviceData.start_date = new Date(serviceData.start_date);
+      }
+      
+      if (serviceData.completion_date && typeof serviceData.completion_date === 'string') {
+        serviceData.completion_date = new Date(serviceData.completion_date);
+      }
+      
+      console.log("Dados formatados para DB:", serviceData);
+      
+      // No MySQL não temos o método returning()
+      const result = await db.insert(services).values(serviceData);
+      const serviceId = Number(result.insertId);
+      const service = await this.getService(serviceId);
+      
+      if (!service) {
+        throw new Error(`Serviço criado mas não encontrado com ID ${serviceId}`);
+      }
+      
+      return service;
+    } catch (error) {
+      console.error("Erro ao criar serviço:", error);
+      throw error;
     }
-    
-    if (serviceData.start_date && typeof serviceData.start_date === 'string') {
-      serviceData.start_date = new Date(serviceData.start_date);
-    }
-    
-    if (serviceData.completion_date && typeof serviceData.completion_date === 'string') {
-      serviceData.completion_date = new Date(serviceData.completion_date);
-    }
-    
-    console.log("Dados formatados para DB:", serviceData);
-    
-    const [service] = await db.insert(services).values(serviceData).returning();
-    return service;
   }
   
   async updateService(id: number, serviceData: Partial<Service>): Promise<Service | undefined> {
@@ -625,11 +665,13 @@ export class DatabaseStorage implements IStorage {
     }
     
     try {
-      const [updatedService] = await db.update(services)
+      // No MySQL não temos o método returning()
+      await db.update(services)
         .set(updatedData)
-        .where(eq(services.id, id))
-        .returning();
-      return updatedService;
+        .where(eq(services.id, id));
+      
+      // Buscamos o serviço atualizado
+      return await this.getService(id);
     } catch (error) {
       console.error('Erro ao atualizar serviço:', error);
       throw error;
@@ -735,8 +777,23 @@ export class DatabaseStorage implements IStorage {
   
   // Service Photos methods
   async addServicePhoto(insertPhoto: InsertServicePhoto): Promise<ServicePhoto> {
-    const [photo] = await db.insert(servicePhotos).values(insertPhoto).returning();
-    return photo;
+    try {
+      // No MySQL não temos o método returning()
+      const result = await db.insert(servicePhotos).values(insertPhoto);
+      const photoId = Number(result.insertId);
+      
+      // Buscar a foto recém inserida
+      const [photo] = await db.select().from(servicePhotos).where(eq(servicePhotos.id, photoId));
+      
+      if (!photo) {
+        throw new Error(`Foto adicionada mas não encontrada com ID ${photoId}`);
+      }
+      
+      return photo;
+    } catch (error) {
+      console.error("Erro ao adicionar foto de serviço:", error);
+      throw error;
+    }
   }
   
   async getServicePhotos(serviceId: number, type?: string): Promise<ServicePhoto[]> {
@@ -769,10 +826,11 @@ export class DatabaseStorage implements IStorage {
       console.log(`Removendo foto ${photoId} do banco de dados: ${photo.photo_url}`);
       
       // Remove do banco de dados
-      const result = await db.delete(servicePhotos).where(eq(servicePhotos.id, photoId)).returning();
+      // No MySQL, não temos o método returning()
+      const result = await db.delete(servicePhotos).where(eq(servicePhotos.id, photoId));
       
       // Se a remoção no banco de dados for bem-sucedida, tente remover o arquivo físico
-      if (result.length > 0) {
+      if (result.rowsAffected > 0) {
         try {
           // Opcional: remover o arquivo físico do sistema de arquivos
           // Isso requer o módulo 'fs' e o caminho base do projeto
