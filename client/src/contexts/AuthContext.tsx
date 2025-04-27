@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  updateUser: (user: AuthUser) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,6 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return logoutMutation.mutateAsync();
   };
 
+  const updateUser = (updatedUser: AuthUser) => {
+    setUser(updatedUser);
+    queryClient.setQueryData(['/api/auth/me'], updatedUser);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -71,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error: error as Error | null,
         login,
         logout,
+        updateUser,
         isAuthenticated: !!user,
       }}
     >

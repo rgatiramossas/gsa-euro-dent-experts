@@ -40,6 +40,7 @@ import Budget from "@/pages/budget/index";
 import Schedule from "@/pages/schedule";
 import Finances from "@/pages/finances";
 import Settings from "@/pages/settings";
+import Configuracoes from "@/pages/configuracoes";
 import Eventos from "@/pages/eventos";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -244,6 +245,14 @@ function AppRoutes() {
         <RequireAuth>
           <MainLayout>
             <Eventos />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+
+      <Route path="/configuracoes">
+        <RequireAuth>
+          <MainLayout>
+            <Configuracoes />
           </MainLayout>
         </RequireAuth>
       </Route>
