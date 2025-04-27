@@ -1606,8 +1606,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rotas para orçamentos (budgets)
   app.get("/api/budgets", requireAuth, async (req, res) => {
     try {
-      const budgets = await storage.listBudgets();
-      res.json(budgets);
+      // Se for gestor, mostra apenas orçamentos dos seus clientes
+      if (req.session.userRole === "gestor") {
+        const managerId = Number(req.session.userId);
+        
+        // Obter IDs dos clientes atribuídos a este gestor
+        const clients = await storage.getManagerClients(managerId);
+        const clientIds = clients.map(client => client.id);
+        
+        console.log(`Listando orçamentos apenas dos clientes do gestor ${managerId}:`, clientIds);
+        
+        if (clientIds.length === 0) {
+          return res.json([]);
+        }
+        
+        // Filtrar orçamentos por clientes
+        const allBudgets = await storage.listBudgets();
+        const filteredBudgets = allBudgets.filter(budget => 
+          clientIds.includes(budget.client_id)
+        );
+        
+        res.json(filteredBudgets);
+      } else {
+        // Admin e técnicos veem todos os orçamentos
+        const budgets = await storage.listBudgets();
+        res.json(budgets);
+      }
     } catch (error) {
       console.error("Erro ao listar orçamentos:", error);
       res.status(500).json({ message: "Erro ao listar orçamentos" });
@@ -1621,6 +1645,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!budget) {
         return res.status(404).json({ message: "Orçamento não encontrado" });
+      }
+      
+      // Verificar acesso para gestores
+      if (req.session.userRole === "gestor") {
+        const managerId = Number(req.session.userId);
+        
+        // Obter clientes atribuídos ao gestor
+        const clients = await storage.getManagerClients(managerId);
+        const clientIds = clients.map(client => client.id);
+        
+        // Verificar se o orçamento pertence a um cliente do gestor
+        if (!clientIds.includes(budget.client_id)) {
+          console.log(`Acesso negado: Gestor ${managerId} tentou acessar orçamento ${id} do cliente ${budget.client_id}`);
+          return res.status(403).json({ message: "Acesso negado: Este orçamento não pertence a um cliente atribuído a você" });
+        }
       }
       
       res.json(budget);
