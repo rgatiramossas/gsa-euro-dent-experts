@@ -310,6 +310,7 @@ export default function BudgetPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isGestor = user?.role === 'gestor' || user?.role === 'manager';
+  const isTechnician = user?.role === 'technician';
   
   // Estados para o formulário
   const [showDialog, setShowDialog] = useState(false);
@@ -512,10 +513,10 @@ export default function BudgetPage() {
       setIsViewMode(true);
       
       // Abre o dialog adequado dependendo do tipo de usuário
-      if (isGestor) {
-        setShowViewDialog(true); // Diálogo de visualização para gestores
+      if (isGestor || isTechnician) {
+        setShowViewDialog(true); // Diálogo de visualização para gestores e técnicos
       } else {
-        setShowDialog(true); // Diálogo principal para técnicos/admin
+        setShowDialog(true); // Diálogo principal para admin
       }
     }
   };
@@ -534,8 +535,8 @@ export default function BudgetPage() {
           <p className="text-muted-foreground">Gerencie orçamentos para seus clientes</p>
         </div>
         
-        {/* Botão "Novo Orçamento" aparece apenas para não-gestores */}
-        {!isGestor && (
+        {/* Botão "Novo Orçamento" aparece apenas para admin, não para gestores e técnicos */}
+        {!isGestor && !isTechnician && (
           <Dialog open={showDialog} onOpenChange={(open) => {
             if (!open) {
               setIsViewMode(false);
@@ -987,8 +988,8 @@ export default function BudgetPage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Veículo</TableHead>
                   <TableHead>Data</TableHead>
-                  {!isGestor && <TableHead>Total AW</TableHead>}
-                  {!isGestor && <TableHead className="text-right">Valor</TableHead>}
+                  {!isGestor && !isTechnician && <TableHead>Total AW</TableHead>}
+                  {!isGestor && !isTechnician && <TableHead className="text-right">Valor</TableHead>}
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -1012,8 +1013,8 @@ export default function BudgetPage() {
                       <TableCell>{budget.client_name}</TableCell>
                       <TableCell>{budget.vehicle_info}</TableCell>
                       <TableCell>{formatDate(budget.date)}</TableCell>
-                      {!isGestor && <TableCell>{Math.round(budget.total_aw || 0)}</TableCell>}
-                      {!isGestor && <TableCell className="text-right">{formatCurrency(Number((budget.total_value || 0).toFixed(2)))}</TableCell>}
+                      {!isGestor && !isTechnician && <TableCell>{Math.round(budget.total_aw || 0)}</TableCell>}
+                      {!isGestor && !isTechnician && <TableCell className="text-right">{formatCurrency(Number((budget.total_value || 0).toFixed(2)))}</TableCell>}
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
