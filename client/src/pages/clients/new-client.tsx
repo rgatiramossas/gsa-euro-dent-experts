@@ -64,8 +64,7 @@ export default function NewClient() {
   // Create client mutation
   const createClientMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const res = await apiRequest('POST', '/api/clients', data);
-      return res.json();
+      return await apiRequest('/api/clients', 'POST', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
