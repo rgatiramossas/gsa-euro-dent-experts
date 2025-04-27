@@ -355,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Dashboard Stats Request - Role:', userRole, 'User ID:', userId);
       
       // Se for um gestor, retornar estatísticas baseadas nos clientes associados
-      if (userRole === "gestor") {
+      if (userRole === "manager" || userRole === "gestor") {
         // Obter clientes do gestor
         const clientesGestor = await storage.getManagerClients(Number(userId));
         
@@ -516,7 +516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
       
       // Se for gestor, mostrar apenas os clientes associados
-      if (userRole === "gestor") {
+      if (userRole === "manager" || userRole === "gestor") {
         console.log("Listando clientes apenas para o gestor ID:", userId);
         const clients = await storage.getManagerClients(Number(userId));
         return res.json(clients);
@@ -610,7 +610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se o usuário for um técnico, restringe para mostrar apenas seus serviços
       if (userRole === "technician") {
         filters.technicianId = userId;
-      } else if (userRole === "gestor") {
+      } else if (userRole === "manager" || userRole === "gestor") {
         // Se for gestor, pegar a lista de clientes atribuídos a ele
         const clientesGestor = await storage.getManagerClients(Number(userId));
         
@@ -642,7 +642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filters.status = req.query.status as string;
       }
       
-      if (req.query.clientId && userRole !== "gestor") {
+      if (req.query.clientId && userRole !== "gestor" && userRole !== "manager") {
         filters.clientId = parseInt(req.query.clientId as string);
       }
       
@@ -716,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
       
       // Verificar se o usuário é gestor e se tem acesso a este serviço
-      if (userRole === "gestor") {
+      if (userRole === "manager" || userRole === "gestor") {
         // Obter o serviço para verificar o cliente
         const service = await storage.getService(id);
         if (!service) {
@@ -739,7 +739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Se for um gestor, remover campos financeiros
-      if (userRole === "gestor") {
+      if (userRole === "manager" || userRole === "gestor") {
         // Remover campos financeiros sensíveis
         const { price, displacement_fee, administrative_fee, total, ...filteredDetails } = serviceDetails;
         return res.json(filteredDetails);
