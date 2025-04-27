@@ -37,6 +37,9 @@ export function Header() {
     }
   };
 
+  // Verificar se o usuário é gestor (suporta tanto 'gestor' quanto 'manager')
+  const isGestor = user?.role === 'gestor' || user?.role === 'manager';
+  
   return (
     <header className="bg-primary text-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -55,15 +58,17 @@ export function Header() {
         </div>
         
         <div className="flex items-center space-x-3">
-          {/* Ícone Financeiro - disponível para todos */}
-          <div>
-            <button 
-              onClick={() => setLocation("/finances")}
-              className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
-            >
-              <DollarSign className="h-6 w-6" />
-            </button>
-          </div>
+          {/* Ícone Financeiro - não disponível para gestores */}
+          {!isGestor && (
+            <div>
+              <button 
+                onClick={() => setLocation("/finances")}
+                className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
+              >
+                <DollarSign className="h-6 w-6" />
+              </button>
+            </div>
+          )}
           
           {/* Ícone Eventos - disponível para todos */}
           <div>
