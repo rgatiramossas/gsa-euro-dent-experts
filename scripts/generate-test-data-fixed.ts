@@ -144,9 +144,14 @@ async function generateTestData() {
     // Criar tipos de serviço
     const serviceTypeIds = await createServiceTypes();
     
-    // Criar 10 clientes
-    const clientIds = [];
-    for (let i = 0; i < 10; i++) {
+    // Usar clientes existentes e criar novos até atingir 10 no total
+    const clientIds = existingClients.map(client => client.id);
+    
+    // Se já existem 10 ou mais clientes, não criar novos
+    const clientsToCreate = Math.max(0, 10 - existingClients.length);
+    console.log(`Criando ${clientsToCreate} novos clientes para completar 10...`);
+    
+    for (let i = 0; i < clientsToCreate; i++) {
       const firstName = randomItem(names).split(' ')[0];
       const lastName = randomItem(surnames);
       const clientName = `${firstName} ${lastName}`;
@@ -164,40 +169,65 @@ async function generateTestData() {
       const [newClient] = await db.insert(clients).values([clientData]).returning();
       clientIds.push(newClient.id);
       console.log(`Cliente criado: ${newClient.name}`);
+    }
+    
+    console.log(`Processando orçamentos e serviços para ${clientIds.length} clientes...`);
+    
+    // Para cada cliente existente ou novo
+    for (const clientId of clientIds) {
+      // Obter os dados do cliente
+      const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
+      if (!client) {
+        console.log(`Cliente ID ${clientId} não encontrado, pulando...`);
+        continue;
+      }
       
-      // Criar 2-3 veículos para cada cliente
-      const vehicleCount = Math.floor(2 + Math.random() * 2);
-      const vehicleIds = [];
+      console.log(`Processando cliente: ${client.name} (ID: ${client.id})`);
       
-      for (let j = 0; j < vehicleCount; j++) {
-        const brand = randomItem(carBrands);
-        const model = randomItem(carModels);
-        const year = randomYear();
-        const color = randomItem(colors);
+      // Verificar se o cliente já tem veículos
+      const existingVehicles = await db.select().from(vehicles).where(eq(vehicles.client_id, client.id));
+      console.log(`  ${existingVehicles.length} veículos encontrados para este cliente`);
+      
+      const vehicleIds = existingVehicles.map(vehicle => vehicle.id);
+      
+      // Se não houver veículos suficientes, criar novos (até o total de 2-3)
+      const targetVehicleCount = Math.floor(2 + Math.random() * 2);
+      const vehiclesToCreate = Math.max(0, targetVehicleCount - existingVehicles.length);
+      
+      if (vehiclesToCreate > 0) {
+        console.log(`  Criando ${vehiclesToCreate} novos veículos...`);
         
-        const vehicleData = {
-          client_id: newClient.id,
-          make: brand,
-          model,
-          color,
-          license_plate: randomLicensePlate(),
-          vin: randomChassisNumber(),
-          notes: `${brand} ${model} ${year} ${color}`,
-        };
-        
-        const [newVehicle] = await db.insert(vehicles).values([vehicleData]).returning();
-        vehicleIds.push(newVehicle.id);
-        console.log(`  Veículo criado: ${newVehicle.make} ${newVehicle.model}`);
+        for (let j = 0; j < vehiclesToCreate; j++) {
+          const brand = randomItem(carBrands);
+          const model = randomItem(carModels);
+          const year = randomYear();
+          const color = randomItem(colors);
+          
+          const vehicleData = {
+            client_id: client.id,
+            make: brand,
+            model,
+            color,
+            license_plate: randomLicensePlate(),
+            vin: randomChassisNumber(),
+            notes: `${brand} ${model} ${year} ${color}`,
+          };
+          
+          const [newVehicle] = await db.insert(vehicles).values([vehicleData]).returning();
+          vehicleIds.push(newVehicle.id);
+          console.log(`  Veículo criado: ${newVehicle.make} ${newVehicle.model}`);
+        }
       }
       
       // Criar 2 orçamentos para cada cliente
+      console.log(`  Criando orçamentos para o cliente...`);
       for (let j = 0; j < 2; j++) {
         const totalAw = Math.floor(100 + Math.random() * 200);
         const totalValue = parseFloat((totalAw * 2.8).toFixed(2));
         const randomImg = await getRandomImageAsBase64();
         
         const budgetData = {
-          client_id: newClient.id,
+          client_id: client.id,
           vehicle_info: `${randomItem(carBrands)} ${randomItem(carModels)} ${randomYear()}`,
           date: formatDate(randomDate(new Date('2023-01-01'), new Date())),
           total_aw: totalAw,
@@ -213,6 +243,7 @@ async function generateTestData() {
       }
       
       // Criar 2 serviços para cada cliente (1 para cada veículo, se possível)
+      console.log(`  Criando serviços para o cliente...`);
       for (let j = 0; j < Math.min(2, vehicleIds.length); j++) {
         const technicianId = randomItem(existingUsers).id;
         const serviceTypeId = randomItem(serviceTypeIds);
@@ -225,7 +256,7 @@ async function generateTestData() {
         const status = randomItem(statusOptions);
         
         const serviceData = {
-          client_id: newClient.id,
+          client_id: client.id,
           vehicle_id: vehicleIds[j],
           technician_id: technicianId,
           service_type_id: serviceTypeId,
