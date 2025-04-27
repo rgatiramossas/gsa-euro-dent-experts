@@ -1582,6 +1582,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao registrar pagamento" });
     }
   });
+  
+  // Rota para o gestor obter seus clientes atribuídos
+  app.get("/api/my-clients", requireAuth, async (req, res) => {
+    try {
+      // Verificar se é um gestor
+      if (req.session.userRole !== "gestor") {
+        return res.status(403).json({ message: "Permissão negada" });
+      }
+      
+      const managerId = Number(req.session.userId);
+      const clients = await storage.getManagerClients(managerId);
+      
+      res.json(clients);
+    } catch (error) {
+      console.error("Erro ao obter clientes do gestor:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
