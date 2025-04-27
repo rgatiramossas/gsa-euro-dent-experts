@@ -535,8 +535,8 @@ export default function BudgetPage() {
           <p className="text-muted-foreground">Gerencie orçamentos para seus clientes</p>
         </div>
         
-        {/* Botão "Novo Orçamento" aparece apenas para admin, não para gestores e técnicos */}
-        {!isGestor && !isTechnician && (
+        {/* Botão "Novo Orçamento" aparece para admin e técnicos, mas não para gestores */}
+        {(!isGestor || isTechnician) && (
           <Dialog open={showDialog} onOpenChange={(open) => {
             if (!open) {
               setIsViewMode(false);
@@ -988,21 +988,21 @@ export default function BudgetPage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Veículo</TableHead>
                   <TableHead>Data</TableHead>
-                  {!isGestor && !isTechnician && <TableHead>Total AW</TableHead>}
-                  {!isGestor && !isTechnician && <TableHead className="text-right">Valor</TableHead>}
+                  {!isGestor && <TableHead>Total AW</TableHead>}
+                  {!isGestor && <TableHead className="text-right">Valor</TableHead>}
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={(isGestor || isTechnician) ? 5 : 7} className="text-center py-4">
+                    <TableCell colSpan={isGestor ? 5 : 7} className="text-center py-4">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 ) : budgets.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={(isGestor || isTechnician) ? 5 : 7} className="text-center py-4">
+                    <TableCell colSpan={isGestor ? 5 : 7} className="text-center py-4">
                       Nenhum orçamento encontrado.
                     </TableCell>
                   </TableRow>
@@ -1013,8 +1013,8 @@ export default function BudgetPage() {
                       <TableCell>{budget.client_name}</TableCell>
                       <TableCell>{budget.vehicle_info}</TableCell>
                       <TableCell>{formatDate(budget.date)}</TableCell>
-                      {!isGestor && !isTechnician && <TableCell>{Math.round(budget.total_aw || 0)}</TableCell>}
-                      {!isGestor && !isTechnician && <TableCell className="text-right">{formatCurrency(Number((budget.total_value || 0).toFixed(2)))}</TableCell>}
+                      {!isGestor && <TableCell>{Math.round(budget.total_aw || 0)}</TableCell>}
+                      {!isGestor && <TableCell className="text-right">{formatCurrency(Number((budget.total_value || 0).toFixed(2)))}</TableCell>}
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -1025,7 +1025,7 @@ export default function BudgetPage() {
                             <EyeIcon className="h-4 w-4" />
                           </Button>
                           
-                          {!isGestor && !isTechnician && (
+                          {!isGestor && (
                             <>
                               <Button
                                 variant="outline"
