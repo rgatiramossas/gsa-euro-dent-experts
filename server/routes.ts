@@ -477,6 +477,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+  
+  // Rota para obter um usuário específico por ID
+  app.get("/api/users/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = Number(req.params.id);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "ID de usuário inválido" });
+      }
+      
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Se for um gestor, buscar também os clientes atribuídos
+      let client_ids = undefined;
+      if (user.role === "gestor") {
+        const clientsOfManager = await storage.getManagerClients(userId);
+        client_ids = clientsOfManager.map(client => client.id);
+      }
+      
+      // Retornar os dados do usuário
+      res.json({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        profile_image: user.profile_image,
+        active: user.active,
+        created_at: user.created_at,
+        client_ids: client_ids
+      });
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
 
   app.post("/api/users", requireAuth, async (req, res) => {
     try {
