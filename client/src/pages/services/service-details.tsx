@@ -937,7 +937,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="mb-4">
-                    {currentUser?.role === 'admin' && (
+                    {isAdmin && (
                       <>
                         <div className="flex justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600">Valor do serviço</span>
@@ -961,7 +961,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       </>
                     )}
                     
-                    {currentUser?.role === 'technician' && (
+                    {isTechnician && (
                       <div className="flex justify-between py-2 font-medium mt-2">
                         <span className="text-gray-700">Valor para o técnico</span>
                         <span className="text-primary text-lg">{formatCurrency(service.price)}</span>
@@ -1085,7 +1085,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         )}
                       />
                       
-                      {currentUser?.role === 'admin' && (
+                      {isAdmin && (
                         <>
                           <FormField
                             control={editForm.control}
@@ -1114,7 +1114,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       )}
                     </div>
                     
-                    {currentUser?.role === 'admin' ? (
+                    {isAdmin ? (
                       <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
                         <span className="text-gray-700">Total</span>
                         <span className="text-primary text-lg">
