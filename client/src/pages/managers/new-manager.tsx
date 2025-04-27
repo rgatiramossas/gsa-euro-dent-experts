@@ -43,13 +43,21 @@ const formSchema = insertUserSchema.extend({
 
 type FormData = z.infer<typeof formSchema>;
 
-export default function NewManager() {
-  const [_, setLocation] = useLocation();
+interface NewManagerProps {
+  isEditMode?: boolean;
+}
+
+export default function NewManager({ isEditMode = false }: NewManagerProps) {
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "admin";
   const [selectedClientIds, setSelectedClientIds] = useState<number[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Obter o ID do gestor da URL se estivermos no modo de edição
+  const managerId = isEditMode ? location.split('/')[2] : null;
   
   // Form definition
   const form = useForm<FormData>({
@@ -66,24 +74,84 @@ export default function NewManager() {
     },
   });
   
-  // Create manager mutation
-  const createManagerMutation = useMutation({
+  // Carregar dados do gestor quando estiver em modo de edição
+  React.useEffect(() => {
+    if (isEditMode && managerId) {
+      setLoading(true);
+      
+      const fetchManagerData = async () => {
+        try {
+          const response = await fetch(`/api/users/${managerId}`);
+          if (!response.ok) {
+            throw new Error('Falha ao carregar dados do gestor');
+          }
+          
+          const managerData = await response.json();
+          
+          // Preencher o formulário com os dados existentes
+          form.reset({
+            name: managerData.name || "",
+            username: managerData.username || "",
+            email: managerData.email || "",
+            phone: managerData.phone || "",
+            password: "",  // Deixe a senha em branco para edição
+            confirmPassword: "",  // Deixe a confirmação de senha em branco
+            role: "gestor",
+            active: managerData.active,
+          });
+          
+          // Carregar clientes atribuídos a este gestor
+          if (managerData.client_ids && Array.isArray(managerData.client_ids)) {
+            setSelectedClientIds(managerData.client_ids);
+          }
+        } catch (error: any) {
+          console.error('Erro ao carregar gestor:', error);
+          toast({
+            title: "Erro",
+            description: `Erro ao carregar dados do gestor: ${error.message}`,
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchManagerData();
+    }
+  }, [isEditMode, managerId, form, toast]);
+  
+  // Mutation para criar ou atualizar gestor
+  const managerMutation = useMutation({
     mutationFn: async (data: Omit<FormData, "confirmPassword"> & { clientIds?: number[] }) => {
+      // Se estiver em modo de edição, atualiza o gestor existente
+      if (isEditMode && managerId) {
+        // Se a senha estiver vazia em modo de edição, remova-a para não atualizá-la
+        if (!data.password) {
+          const { password, ...restData } = data;
+          return await apiRequest(`/api/users/${managerId}`, 'PATCH', restData);
+        }
+        
+        return await apiRequest(`/api/users/${managerId}`, 'PATCH', data);
+      }
+      
+      // Caso contrário, cria um novo gestor
       return await apiRequest('/api/users', 'POST', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       toast({
-        title: "Gestor cadastrado",
-        description: "O gestor foi cadastrado com sucesso",
+        title: isEditMode ? "Gestor atualizado" : "Gestor cadastrado",
+        description: isEditMode 
+          ? "O gestor foi atualizado com sucesso" 
+          : "O gestor foi cadastrado com sucesso",
       });
       setLocation('/managers');
     },
     onError: (error) => {
-      console.error('Error creating manager:', error);
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} manager:`, error);
       toast({
-        title: "Erro ao cadastrar gestor",
-        description: "Ocorreu um erro ao cadastrar o gestor. Verifique os dados e tente novamente.",
+        title: `Erro ao ${isEditMode ? 'atualizar' : 'cadastrar'} gestor`,
+        description: `Ocorreu um erro ao ${isEditMode ? 'atualizar' : 'cadastrar'} o gestor. Verifique os dados e tente novamente.`,
         variant: "destructive",
       });
     }
@@ -93,7 +161,7 @@ export default function NewManager() {
     // Remove confirmPassword from the data before sending to the API
     const { confirmPassword, ...managerData } = data;
     // Adicione os IDs dos clientes selecionados
-    createManagerMutation.mutate({ 
+    managerMutation.mutate({ 
       ...managerData, 
       clientIds: selectedClientIds.length > 0 ? selectedClientIds : undefined 
     });

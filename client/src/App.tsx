@@ -216,6 +216,26 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
+      <Route path="/managers/:id/edit">
+        <RequireAuth>
+          <RequireAdmin>
+            <MainLayout>
+              <NewManager isEditMode={true} />
+            </MainLayout>
+          </RequireAdmin>
+        </RequireAuth>
+      </Route>
+      
+      <Route path="/managers/:id/clients">
+        <RequireAuth>
+          <RequireAdmin>
+            <MainLayout>
+              <ClientsList managerMode={true} />
+            </MainLayout>
+          </RequireAdmin>
+        </RequireAuth>
+      </Route>
+      
       {/* Other routes */}
       <Route path="/schedule">
         <RequireAuth>
