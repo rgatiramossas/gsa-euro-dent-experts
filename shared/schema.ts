@@ -26,13 +26,13 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export const clients = pgTable("clients", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  email: text("email").notNull(),
-  phone: text("phone").notNull(),
+  email: text("email"),
+  phone: text("phone"),
   address: text("address"),
-  city: text("city"),
-  state: text("state"),
-  zip: text("zip"),
-  notes: text("notes"),
+  cnpj: text("cnpj"),
+  cpf: text("cpf"),
+  company_name: text("company_name"),
+  type: text("type"),
   created_at: timestamp("created_at").defaultNow(),
 });
 
