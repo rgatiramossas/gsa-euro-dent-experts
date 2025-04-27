@@ -76,7 +76,7 @@ export interface Service {
   latitude?: number;
   longitude?: number;
   price?: number;
-  displacement_fee?: number;
+  /* Taxa de deslocamento removida */
   administrative_fee?: number;
   total?: number;
   notes?: string;

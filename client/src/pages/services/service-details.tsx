@@ -330,7 +330,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         formData.append('price', dataPrice.toString());
       }
       
-      // Campo displacement_fee removido
+      /* Campo displacement_fee removido */
       
       const dataAdministrativeFee = typeof data.administrative_fee === 'string' ? parseFloat(data.administrative_fee) : data.administrative_fee;
       const serviceAdministrativeFee = typeof service.administrative_fee === 'string' ? parseFloat(service.administrative_fee) : service.administrative_fee;
@@ -950,10 +950,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                           <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
                         </div>
                         
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                          <span className="text-gray-600">Taxa de deslocamento</span>
-                          <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
-                        </div>
+                        {/* Taxa de deslocamento removida */}
                         
                         <div className="flex justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600">Taxa administrativa</span>
@@ -1127,6 +1124,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                           {formatCurrency(
                             (editForm.watch('price') || 0) + 
                             (editForm.watch('administrative_fee') || 0)
+                            /* Taxa de deslocamento removida */
                           )}
                         </span>
                       </div>
