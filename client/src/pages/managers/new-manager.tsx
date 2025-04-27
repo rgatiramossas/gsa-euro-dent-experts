@@ -122,7 +122,7 @@ export default function NewManager({ isEditMode = false }: NewManagerProps) {
   
   // Mutation para criar ou atualizar gestor
   const managerMutation = useMutation({
-    mutationFn: async (data: Omit<FormData, "confirmPassword"> & { clientIds?: number[] }) => {
+    mutationFn: async (data: Omit<FormData, "confirmPassword"> & { client_ids?: number[] }) => {
       // Se estiver em modo de edição, atualiza o gestor existente
       if (isEditMode && managerId) {
         // Se a senha estiver vazia em modo de edição, remova-a para não atualizá-la
@@ -163,7 +163,7 @@ export default function NewManager({ isEditMode = false }: NewManagerProps) {
     // Adicione os IDs dos clientes selecionados
     managerMutation.mutate({ 
       ...managerData, 
-      clientIds: selectedClientIds.length > 0 ? selectedClientIds : undefined 
+      client_ids: selectedClientIds.length > 0 ? selectedClientIds : undefined 
     });
   };
   

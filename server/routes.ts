@@ -581,7 +581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", requireAuth, async (req, res) => {
     try {
       // Validate input
-      const { clientIds, ...userData } = req.body;
+      const { client_ids, ...userData } = req.body;
       const userInput = insertUserSchema.parse(userData);
       
       // Check if user is admin when creating another user
@@ -599,13 +599,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword
       });
       
-      // Se for um gestor e houver clientIds, associar aos clientes
-      if (user.role === "gestor" && clientIds && Array.isArray(clientIds) && clientIds.length > 0) {
-        console.log(`Associando gestor ${user.id} aos clientes:`, clientIds);
+      // Se for um gestor e houver client_ids, associar aos clientes
+      if (user.role === "gestor" && client_ids && Array.isArray(client_ids) && client_ids.length > 0) {
+        console.log(`Associando gestor ${user.id} aos clientes:`, client_ids);
         
         // Associar cada cliente ao gestor
         const clientAssignments = await Promise.all(
-          clientIds.map(async (clientId) => {
+          client_ids.map(async (clientId) => {
             try {
               // Verificar se o cliente existe
               const client = await storage.getClient(Number(clientId));
