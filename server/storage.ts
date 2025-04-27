@@ -100,7 +100,7 @@ export interface IStorage {
   listBudgets(): Promise<Budget[]>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Usar tipagem any para evitar erros com session.SessionStore
 }
 
 export class DatabaseStorage implements IStorage {
@@ -209,6 +209,17 @@ export class DatabaseStorage implements IStorage {
         email: "pedro@eurodent.com",
         phone: "(11) 97654-3210",
         role: "technician",
+        active: true
+      });
+      
+      // Create manager user
+      await this.createUser({
+        username: "gestor",
+        password: adminPassword,
+        name: "Carlos Oliveira",
+        email: "gestor@eurodent.com",
+        phone: "(11) 98765-4321",
+        role: "gestor",
         active: true
       });
       
