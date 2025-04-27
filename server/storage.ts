@@ -474,10 +474,13 @@ export class DatabaseStorage implements IStorage {
         completion_date: services.completion_date,
         location_type: services.location_type,
         address: services.address,
-        price: services.price,
-        administrative_fee: services.administrative_fee,
+        aw_value: services.aw_value,
         total: services.total,
         notes: services.notes,
+        dents: services.dents,
+        size: services.size,
+        is_vertical: services.is_vertical,
+        is_aluminum: services.is_aluminum,
         created_at: services.created_at
       };
       
@@ -623,10 +626,13 @@ export class DatabaseStorage implements IStorage {
         completion_date: services.completion_date,
         location_type: services.location_type,
         address: services.address,
-        price: services.price,
-        administrative_fee: services.administrative_fee,
+        aw_value: services.aw_value,
         total: services.total,
         notes: services.notes,
+        dents: services.dents,
+        size: services.size,
+        is_vertical: services.is_vertical,
+        is_aluminum: services.is_aluminum,
         created_at: services.created_at
       };
       
@@ -814,7 +820,7 @@ export class DatabaseStorage implements IStorage {
 
     // 4. Valores de serviços concluídos que ainda não foram pedidos pagamento
     const unpaidCompletedValue = completed.reduce((sum, service) => 
-      sum + (service.price || 0), 0);
+      sum + (service.aw_value || 0), 0);
     
     // Resumir valores por mês nos últimos 6 meses
     const today = new Date();
@@ -956,13 +962,13 @@ export class DatabaseStorage implements IStorage {
     
     // Calcular o valor de acordo com o tipo de usuário
     if (technicianId) {
-      // Para técnicos: apenas a soma do valor do serviço (price)
+      // Para técnicos: apenas a soma do valor do serviço (aw_value)
       totalRevenue = completedServices.reduce((sum, service) => 
-        sum + (service.price || 0), 0);
+        sum + (service.aw_value || 0), 0);
     } else {
-      // Para administradores: soma do valor do serviço (price) + taxa administrativa (administrative_fee)
+      // Para administradores: soma do valor total do serviço (total ou aw_value)
       totalRevenue = completedServices.reduce((sum, service) => 
-        sum + (service.price || 0) + (service.administrative_fee || 0), 0);
+        sum + (service.total || service.aw_value || 0), 0);
     }
     
     // Converter para o formato esperado pelo frontend
