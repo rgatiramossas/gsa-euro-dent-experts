@@ -244,3 +244,26 @@ export const insertManagerClientAssignmentSchema = createInsertSchema(managerCli
 
 export type ManagerClientAssignment = typeof managerClientAssignments.$inferSelect;
 export type InsertManagerClientAssignment = z.infer<typeof insertManagerClientAssignmentSchema>;
+
+// Budgets (orçamentos)
+export const budgets = pgTable("budgets", {
+  id: serial("id").primaryKey(),
+  client_id: integer("client_id").notNull().references(() => clients.id),
+  vehicle_info: text("vehicle_info").notNull(),
+  date: text("date").notNull(),
+  total_aw: integer("total_aw"),
+  total_value: doublePrecision("total_value"),
+  photo_url: text("photo_url"),
+  note: text("note"),
+  plate: text("plate"),
+  chassisNumber: text("chassis_number"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertBudgetSchema = createInsertSchema(budgets).omit({
+  id: true,
+  created_at: true
+});
+
+export type Budget = typeof budgets.$inferSelect;
+export type InsertBudget = z.infer<typeof insertBudgetSchema>;
