@@ -88,7 +88,6 @@ export const services = pgTable("services", {
   latitude: doublePrecision("latitude"),
   longitude: doublePrecision("longitude"),
   price: doublePrecision("price"),
-  displacement_fee: doublePrecision("displacement_fee").default(0),
   administrative_fee: doublePrecision("administrative_fee").default(0), // Comissão para o administrador
   total: doublePrecision("total"),
   notes: text("notes"),
