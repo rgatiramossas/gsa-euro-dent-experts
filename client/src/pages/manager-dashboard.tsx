@@ -38,7 +38,7 @@ export default function ManagerDashboard() {
   });
   
   // Obter orçamentos
-  const { data: budgets = [], isLoading: budgetsLoading } = useQuery({
+  const { data: budgets = [], isLoading: budgetsLoading } = useQuery<any[]>({
     queryKey: ['/api/budgets'],
   });
   
@@ -82,7 +82,9 @@ export default function ManagerDashboard() {
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="services">Ordens de Serviço</TabsTrigger>
           <TabsTrigger value="clients">Meus Clientes</TabsTrigger>
-          <TabsTrigger value="budgets">Orçamentos</TabsTrigger>
+          <Link to="/budgets" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm hover:bg-gray-100">
+            Orçamentos
+          </Link>
         </TabsList>
         
         {/* Visão Geral */}
@@ -302,77 +304,7 @@ export default function ManagerDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
-        
-        {/* Orçamentos */}
-        <TabsContent value="budgets" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Orçamentos</CardTitle>
-                  <CardDescription>
-                    Orçamentos dos clientes sob sua gestão
-                  </CardDescription>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Select 
-                    value={clientFilter} 
-                    onValueChange={setClientFilter}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filtrar por cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os clientes</SelectItem>
-                      {!clientsLoading && clients && clients.map((client: any) => (
-                        <SelectItem key={client.id} value={client.id.toString()}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {budgetsLoading ? (
-                <div className="space-y-2">
-                  {Array(5).fill(0).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : budgets && budgets.length > 0 ? (
-                <div className="space-y-3">
-                  {budgets.map((budget: any) => (
-                    <div key={budget.id} className="flex justify-between items-center border rounded-md p-3">
-                      <div className="flex flex-col">
-                        <div className="font-medium">{budget.client?.name || "Cliente não especificado"}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {budget.vehicle?.make} {budget.vehicle?.model} - {budget.service_type?.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Criado em: {new Date(budget.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(budget.status)}>
-                          {translateStatus(budget.status)}
-                        </Badge>
-                        <Link to={`/budgets/${budget.id}`}>
-                          <Button variant="outline" size="sm">Ver Detalhes</Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  Nenhum orçamento encontrado para os critérios selecionados.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+
       </Tabs>
     </div>
   );
