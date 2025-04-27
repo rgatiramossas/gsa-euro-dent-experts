@@ -64,23 +64,67 @@ async function createEssentialTables() {
         )
       `);
       
-      // Inserir tipo de serviço padrão
+      console.log("Tabela service_types criada com sucesso");
+    }
+    
+    // Atualizar tipos de serviço com os novos nomes solicitados
+    console.log("Atualizando nomes dos tipos de serviço existentes...");
+    
+    // Verificar tipos de serviço existentes
+    const [existingTypes] = await pool.query("SELECT * FROM service_types ORDER BY id");
+    
+    if (existingTypes.length === 0) {
+      // Se não existirem tipos, criar novos
+      console.log("Nenhum tipo de serviço encontrado, criando novos...");
       await pool.query(`
-        INSERT INTO service_types (name, description, base_price)
-        VALUES ('Reparo Simples', 'Serviço básico de reparo', 100.00)
+        INSERT INTO service_types (name, description, base_price) VALUES 
+        ('Amassado de Rua', 'Serviço de reparo de amassados simples encontrados em estacionamentos ou rua', 100.00),
+        ('Granizo', 'Reparo de danos causados por granizo', 200.00),
+        ('Outros', 'Outros tipos de restauração e serviços', 150.00)
       `);
-      console.log("Tabela service_types criada com tipo padrão adicionado");
     } else {
-      // Verificar se há pelo menos um tipo de serviço
-      const [serviceTypesCount] = await pool.query("SELECT COUNT(*) as count FROM service_types");
-      if (serviceTypesCount[0].count === 0) {
-        await pool.query(`
-          INSERT INTO service_types (name, description, base_price)
-          VALUES ('Reparo Simples', 'Serviço básico de reparo', 100.00)
-        `);
-        console.log("Tipo de serviço padrão adicionado");
+      // Se existirem, atualizar os nomes mantendo os IDs
+      console.log("Atualizando tipos de serviço existentes...");
+      
+      // Mapear os novos nomes baseados nas posições (assumindo que a ordem dos IDs é consistente)
+      const typeUpdates = [
+        { name: 'Amassado de Rua', description: 'Serviço de reparo de amassados simples encontrados em estacionamentos ou rua' },
+        { name: 'Granizo', description: 'Reparo de danos causados por granizo' },
+        { name: 'Outros', description: 'Outros tipos de restauração e serviços' }
+      ];
+      
+      // Atualizar cada tipo, preservando os IDs existentes
+      for (let i = 0; i < Math.min(existingTypes.length, typeUpdates.length); i++) {
+        const typeId = existingTypes[i].id;
+        const update = typeUpdates[i];
+        
+        await pool.query(
+          "UPDATE service_types SET name = ?, description = ? WHERE id = ?",
+          [update.name, update.description, typeId]
+        );
+        
+        console.log(`Tipo de serviço ID ${typeId} atualizado para: ${update.name}`);
+      }
+      
+      // Se tivermos menos tipos que o necessário, adicionar os faltantes
+      if (existingTypes.length < typeUpdates.length) {
+        for (let i = existingTypes.length; i < typeUpdates.length; i++) {
+          const update = typeUpdates[i];
+          await pool.query(
+            "INSERT INTO service_types (name, description, base_price) VALUES (?, ?, ?)",
+            [update.name, update.description, 100 + i * 50]
+          );
+          console.log(`Novo tipo de serviço adicionado: ${update.name}`);
+        }
       }
     }
+    
+    // Verificar tipos criados
+    const [types] = await pool.query("SELECT * FROM service_types");
+    console.log("Tipos de serviço atualizados:");
+    types.forEach(type => {
+      console.log(`- ID ${type.id}: ${type.name}`);
+    });
     
     // Verificar se a tabela vehicles existe
     const [vehiclesResult] = await pool.query("SHOW TABLES LIKE 'vehicles'");
@@ -1236,25 +1280,96 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log("Adicionando foto de serviço com dados:", insertPhoto);
       
-      // No MySQL não temos o método returning()
-      const result = await db.insert(servicePhotos).values(insertPhoto);
-      const photoId = Number(result.insertId);
-      
-      if (!photoId || isNaN(photoId) || photoId <= 0) {
-        throw new Error(`ID de foto inválido ou não retornado pelo banco de dados: ${photoId}`);
+      // Inserção direta via SQL
+      try {
+        // Verificar se a tabela service_photos existe
+        const [tableResult] = await pool.query("SHOW TABLES LIKE 'service_photos'");
+        if (!tableResult.length) {
+          console.log("Tabela service_photos não existe, criando...");
+          await pool.query(`
+            CREATE TABLE IF NOT EXISTS service_photos (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              service_id INT NOT NULL,
+              photo_url VARCHAR(255) NOT NULL,
+              photo_type VARCHAR(50),
+              description TEXT,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+            )
+          `);
+          console.log("Tabela service_photos criada com sucesso");
+        }
+        
+        // Preparar valores para query
+        const fields = Object.keys(insertPhoto).join(', ');
+        const placeholders = Object.keys(insertPhoto).map(() => '?').join(', ');
+        const values = Object.values(insertPhoto);
+        
+        console.log(`Executando inserção direta: INSERT INTO service_photos (${fields}) VALUES (${placeholders})`);
+        console.log("Valores:", values);
+        
+        // Executar query usando a conexão direta
+        const query = `INSERT INTO service_photos (${fields}) VALUES (${placeholders})`;
+        const [resultHeader] = await pool.query(query, values);
+        
+        console.log("Resultado da inserção via conexão direta:", JSON.stringify(resultHeader));
+        
+        // No MySQL, o insertId é uma propriedade direta do objeto de resultado
+        const insertId = resultHeader?.insertId;
+        
+        console.log("InsertId extraído:", insertId, "Tipo:", typeof insertId);
+        
+        if (insertId === undefined || insertId === null) {
+          throw new Error("Falha ao obter ID via inserção direta");
+        }
+        
+        const photoId = Number(insertId);
+        
+        if (isNaN(photoId) || photoId <= 0) {
+          throw new Error(`ID de foto inválido: ${photoId}`);
+        }
+        
+        console.log(`Foto criada com ID via inserção direta: ${photoId}`);
+        
+        // Buscar foto criada
+        const [photoResult] = await pool.query(`SELECT * FROM service_photos WHERE id = ?`, [photoId]);
+        const photo = photoResult[0];
+        
+        if (!photo) {
+          throw new Error(`Foto criada mas não encontrada com ID ${photoId}`);
+        }
+        
+        console.log("Foto recuperada com sucesso:", photo);
+        return photo as ServicePhoto;
+      } catch (directError) {
+        console.error("Erro na inserção direta de foto:", directError);
+        
+        // Fallback para Drizzle ORM
+        console.log("Tentando com Drizzle ORM como fallback");
+        
+        // No MySQL não temos o método returning()
+        const result = await db.insert(servicePhotos).values(insertPhoto);
+        
+        console.log("Resultado da inserção via Drizzle:", result);
+        
+        const photoId = Number(result?.insertId);
+        
+        if (!photoId || isNaN(photoId) || photoId <= 0) {
+          throw new Error(`ID de foto inválido ou não retornado pelo banco de dados: ${photoId}`);
+        }
+        
+        console.log(`Foto adicionada com ID: ${photoId}, buscando dados completos`);
+        
+        // Buscar a foto recém inserida
+        const [photo] = await db.select().from(servicePhotos).where(eq(servicePhotos.id, photoId));
+        
+        if (!photo) {
+          throw new Error(`Foto adicionada mas não encontrada com ID ${photoId}`);
+        }
+        
+        console.log("Foto recuperada com sucesso:", photo);
+        return photo;
       }
-      
-      console.log(`Foto adicionada com ID: ${photoId}, buscando dados completos`);
-      
-      // Buscar a foto recém inserida
-      const [photo] = await db.select().from(servicePhotos).where(eq(servicePhotos.id, photoId));
-      
-      if (!photo) {
-        throw new Error(`Foto adicionada mas não encontrada com ID ${photoId}`);
-      }
-      
-      console.log("Foto recuperada com sucesso:", photo);
-      return photo;
     } catch (error) {
       console.error("Erro ao adicionar foto de serviço:", error);
       throw error;
