@@ -544,17 +544,24 @@ export class DatabaseStorage implements IStorage {
       .from(services)
       .where(
         and(
-          eq(services.status, 'pending'),
+          or(
+            eq(services.status, 'pending'),
+            eq(services.status, 'aguardando')
+          ),
           ...baseConditions
         )
       );
     
-    // 2. Total de OS Faturadas (mudou de in_progress para faturado)
+    // 2. Total de OS em progresso
     const [faturadoResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)
       .where(
         and(
-          eq(services.status, 'faturado'),
+          or(
+            eq(services.status, 'in_progress'),
+            eq(services.status, 'em_progresso'),
+            eq(services.status, 'faturado')
+          ),
           ...baseConditions
         )
       );
@@ -566,6 +573,7 @@ export class DatabaseStorage implements IStorage {
         and(
           or(
             eq(services.status, 'completed'),
+            eq(services.status, 'concluido'),
             eq(services.status, 'aguardando_aprovacao'),
             eq(services.status, 'faturado'),
             eq(services.status, 'pago')
@@ -587,6 +595,7 @@ export class DatabaseStorage implements IStorage {
         and(
           or(
             eq(services.status, 'completed'),
+            eq(services.status, 'concluido'),
             eq(services.status, 'aguardando_aprovacao'),
             eq(services.status, 'faturado'),
             eq(services.status, 'pago')
