@@ -40,14 +40,28 @@ export function BottomNavigation() {
     }
   ];
   
-  // Se for administrador, substitui o último item pelo menu de gestores
+  // Se for administrador, adiciona o item de gestores como quarto item, mantendo Orcamento
   if (isAdmin) {
     mobileNavItems = [
-      ...mobileNavItems.slice(0, 3),
       {
-        name: "Gestores",
-        path: "/managers",
-        icon: <UserCog className="h-6 w-6" />,
+        name: "Início",
+        path: "/dashboard",
+        icon: <Home className="h-6 w-6" />,
+      },
+      {
+        name: "Clientes",
+        path: "/clients",
+        icon: <Users className="h-6 w-6" />,
+      },
+      {
+        name: "Serviços",
+        path: "/services",
+        icon: <Briefcase className="h-6 w-6" />,
+      },
+      {
+        name: "Orcamento",
+        path: "/budget",
+        icon: <FileText className="h-6 w-6" />,
       }
     ];
   }
