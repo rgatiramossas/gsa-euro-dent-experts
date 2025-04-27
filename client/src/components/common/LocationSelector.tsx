@@ -51,27 +51,47 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        
-        // Use reverse geocoding para obter o endereço real
-        // Portugal está geralmente em torno de latitude 38-42, longitude -9 a -6
-        // Vamos ajustar as coordenadas para um intervalo mais razoável para Portugal
-        const adjustedLatitude = 38.7 + (latitude % 3); // Ajusta para 38.7-41.7
-        const adjustedLongitude = -9.1 + (longitude % 3); // Ajusta para -9.1 a -6.1
-        
-        // Podemos usar Nominatim para geocodificação reversa, mas como não temos acesso,
-        // vamos criar um endereço genérico baseado nas coordenadas ajustadas
-        const endereco = `Rua Portugal, ${Math.floor(adjustedLatitude * 100) % 200} - Lisboa`;
-        
-        onChange({
-          ...value,
-          address: endereco,
-          latitude: adjustedLatitude,    // Usa as coordenadas ajustadas para Portugal
-          longitude: adjustedLongitude,  // Usa as coordenadas ajustadas para Portugal
-        });
-        
-        setIsGettingLocation(false);
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          
+          // Usar as coordenadas reais obtidas do dispositivo
+          console.log(`Localização obtida: ${latitude}, ${longitude}`);
+          
+          // Tentar obter o endereço usando a API Nominatim (OpenStreetMap)
+          let endereco = "";
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+              { headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' } }
+            );
+            const data = await response.json();
+            
+            if (data && data.display_name) {
+              endereco = data.display_name;
+              console.log("Endereço obtido:", endereco);
+            } else {
+              // Caso não conseguirmos obter o endereço, usar coordenadas
+              endereco = `Localização: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+              console.log("Endereço não encontrado, usando coordenadas");
+            }
+          } catch (error) {
+            console.error("Erro ao obter endereço:", error);
+            endereco = `Localização: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+          }
+          
+          onChange({
+            ...value,
+            address: endereco,
+            latitude: latitude,     // Usa as coordenadas reais
+            longitude: longitude,   // Usa as coordenadas reais
+          });
+        } catch (error) {
+          console.error("Erro ao processar localização:", error);
+          setLocationError("Erro ao processar dados de localização");
+        } finally {
+          setIsGettingLocation(false);
+        }
       },
       (error) => {
         let errorMessage;
