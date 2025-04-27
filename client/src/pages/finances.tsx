@@ -136,10 +136,13 @@ export default function Finances() {
   const isAdmin = currentUser?.role === "admin";
   const { toast } = useToast();
   
-  // Obter dados financeiros do técnico
+  // Obter dados financeiros do técnico com auto-refresh
   const { data: techFinanceStats, isLoading: isLoadingFinanceStats, error: techFinanceError } = useQuery({
     queryKey: ['/api/technician/financial-stats'],
     enabled: !isAdmin && currentUser?.role === 'technician',
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
     queryFn: () => fetch('/api/technician/financial-stats').then(res => {
       if (!res.ok) throw new Error('Erro ao obter dados financeiros');
       return res.json();
@@ -170,14 +173,26 @@ export default function Finances() {
     }
   });
   
-  // Get all services for financial data
+  // Get all services for financial data with auto-refresh
   const { data: services, isLoading } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services'],
+    // Refetch data automatically every 5 seconds
+    refetchInterval: 5000,
+    // Continue to refresh on background
+    refetchIntervalInBackground: true,
+    // Refetch when window regains focus
+    refetchOnWindowFocus: true,
   });
   
-  // Get all expenses
+  // Get all expenses with auto-refresh
   const { data: expenses, isLoading: loadingExpenses } = useQuery<Expense[]>({
     queryKey: ['/api/expenses'],
+    // Refetch data automatically every 5 seconds
+    refetchInterval: 5000,
+    // Continue to refresh on background
+    refetchIntervalInBackground: true,
+    // Refetch when window regains focus
+    refetchOnWindowFocus: true,
   });
   
   interface Expense {
@@ -206,9 +221,15 @@ export default function Finances() {
     services?: ServiceListItem[];
   }
 
-  // Get payment requests data
+  // Get payment requests data with auto-refresh
   const { data: paymentRequests, isLoading: loadingPaymentRequests } = useQuery<PaymentRequest[]>({
     queryKey: ['/api/payment-requests'],
+    // Refetch data automatically every 5 seconds
+    refetchInterval: 5000,
+    // Continue to refresh on background
+    refetchIntervalInBackground: true,
+    // Refetch when window regains focus
+    refetchOnWindowFocus: true,
   });
   
   // Get all technicians for admin payment request selection
