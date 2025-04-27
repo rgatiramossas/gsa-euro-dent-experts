@@ -27,6 +27,7 @@ import NewService from "@/pages/services/new-service";
 import ClientsList from "@/pages/clients/index";
 import NewClient from "@/pages/clients/new-client";
 import NewVehicle from "@/pages/clients/new-vehicle";
+import ManagerClientsList from "@/pages/managers/manager-clients-list";
 
 // Import technician related pages
 import TechniciansList from "@/pages/technicians/index";
@@ -226,15 +227,8 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      <Route path="/managers/:id/clients">
-        <RequireAuth>
-          <RequireAdmin>
-            <MainLayout>
-              <ClientsList managerMode={true} />
-            </MainLayout>
-          </RequireAdmin>
-        </RequireAuth>
-      </Route>
+      {/* Rota para clientes de um gestor específico */}
+      <Route path="/managers/:id/clients" component={ManagerClientsList} />
       
       {/* Other routes */}
       <Route path="/schedule">

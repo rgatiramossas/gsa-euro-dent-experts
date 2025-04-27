@@ -298,26 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Rota para listar clientes de um gestor
-  app.get("/api/managers/:managerId/clients", requireAuth, async (req, res) => {
-    try {
-      const { managerId } = req.params;
-      const userId = req.session.userId;
-      const userRole = req.session.userRole;
-      
-      // Se não for admin e não for o próprio gestor solicitando, negar acesso
-      if (userRole !== "admin" && Number(managerId) !== userId) {
-        return res.status(403).json({ message: "Acesso negado" });
-      }
-      
-      // Buscar clientes do gestor
-      const clients = await storage.getManagerClients(Number(managerId));
-      res.json(clients);
-    } catch (error) {
-      console.error("Erro ao buscar clientes do gestor:", error);
-      res.status(500).json({ message: "Erro ao buscar clientes do gestor" });
-    }
-  });
+  // Esta rota foi movida para cima, então removemos esta duplicação
   
   // Rota para obter os clientes do gestor atual (útil para o frontend)
   app.get("/api/my-clients", requireAuth, async (req, res) => {
