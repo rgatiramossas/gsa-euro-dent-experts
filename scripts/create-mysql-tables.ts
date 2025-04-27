@@ -34,10 +34,6 @@ async function createTables() {
         email VARCHAR(255),
         phone VARCHAR(255),
         address VARCHAR(255),
-        cnpj VARCHAR(255),
-        cpf VARCHAR(255),
-        company_name VARCHAR(255),
-        type VARCHAR(50),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `));

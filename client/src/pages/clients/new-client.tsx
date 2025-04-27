@@ -38,10 +38,6 @@ const formSchema = insertClientSchema.extend({
     .regex(phoneRegex, "Número de telefone deve estar no formato internacional (ex: +5511987654321)")
     .optional()
     .or(z.literal("")),
-  cnpj: z.string().optional().or(z.literal("")),
-  cpf: z.string().optional().or(z.literal("")),
-  company_name: z.string().optional().or(z.literal("")),
-  type: z.string().optional().or(z.literal("")),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -61,10 +57,6 @@ export default function NewClient() {
       email: "",
       phone: "",
       address: "",
-      cnpj: "",
-      cpf: "",
-      company_name: "",
-      type: "",
     },
   });
   
@@ -289,65 +281,7 @@ export default function NewClient() {
                 )}
               />
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="cnpj"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CNPJ</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="CNPJ (se for empresa)" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="cpf"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CPF</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="CPF (se for pessoa física)" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="company_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Razão Social</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Razão Social (se for empresa)" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Cliente</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Pessoa Física, Empresa, etc." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
             </CardContent>
           </Card>
           
