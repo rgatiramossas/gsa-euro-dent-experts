@@ -34,7 +34,7 @@ export function BottomNavigation() {
       icon: <Briefcase className="h-6 w-6" />,
     },
     {
-      name: "Orçamentos",
+      name: "Orcamento",
       path: "/budget",
       icon: <FileText className="h-6 w-6" />,
     }
