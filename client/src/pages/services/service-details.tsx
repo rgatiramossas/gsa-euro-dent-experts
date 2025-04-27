@@ -659,67 +659,69 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       <PageHeader
         title={`Serviço #${service.id}`}
         description="Detalhes do serviço de martelinho de ouro"
-        actions={
+        actions={(
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleBack}>
               Voltar
             </Button>
-            <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  Atualizar Status
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Atualizar Status do Serviço</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Status atual</label>
-                    <ServiceStatusBadge status={service.status} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Novo status</label>
-                    <Select
-                      value={newStatus}
-                      onValueChange={(value) => setNewStatus(value as ServiceStatus)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o novo status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pendente</SelectItem>
-                        <SelectItem value="completed">Concluída</SelectItem>
-                        <SelectItem value="aguardando_aprovacao">Aguardando Aprovação</SelectItem>
-                        <SelectItem value="faturado">Faturado</SelectItem>
-                        <SelectItem value="pago">Pago</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Observações (opcional)</label>
-                    <Textarea
-                      value={statusNotes}
-                      onChange={(e) => setStatusNotes(e.target.value)}
-                      placeholder="Informe detalhes sobre a mudança de status"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowStatusDialog(false)}>Cancelar</Button>
-                  <Button 
-                    onClick={handleStatusUpdate} 
-                    disabled={!newStatus || updateStatusMutation.isPending}
-                  >
-                    {updateStatusMutation.isPending ? "Salvando..." : "Salvar"}
+            {canUpdateStatus && (
+              <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    Atualizar Status
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Atualizar Status do Serviço</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Status atual</label>
+                      <ServiceStatusBadge status={service.status} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Novo status</label>
+                      <Select
+                        value={newStatus}
+                        onValueChange={(value) => setNewStatus(value as ServiceStatus)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o novo status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pendente</SelectItem>
+                          <SelectItem value="completed">Concluída</SelectItem>
+                          <SelectItem value="aguardando_aprovacao">Aguardando Aprovação</SelectItem>
+                          <SelectItem value="faturado">Faturado</SelectItem>
+                          <SelectItem value="pago">Pago</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Observações (opcional)</label>
+                      <Textarea
+                        value={statusNotes}
+                        onChange={(e) => setStatusNotes(e.target.value)}
+                        placeholder="Informe detalhes sobre a mudança de status"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowStatusDialog(false)}>Cancelar</Button>
+                    <Button 
+                      onClick={handleStatusUpdate} 
+                      disabled={!newStatus || updateStatusMutation.isPending}
+                    >
+                      {updateStatusMutation.isPending ? "Salvando..." : "Salvar"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
-        }
+        )}
       />
       
       <div className="space-y-6">
@@ -775,9 +777,11 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-center">
                   <CardTitle>Detalhes do Serviço</CardTitle>
-                  <Button variant="outline" size="sm" onClick={handleStartEditing}>
-                    Editar Serviço
-                  </Button>
+                  {canEditService && (
+                    <Button variant="outline" size="sm" onClick={handleStartEditing}>
+                      Editar Serviço
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
