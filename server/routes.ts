@@ -1160,7 +1160,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
-      console.log("Atualizando serviço com dados filtrados:", filteredUpdates);
+      // Tratar campos especiais antes de enviar para atualização
+      
+      // Verificar se technician_id é válido (não pode ser 0 devido à chave estrangeira)
+      if (filteredUpdates.technician_id !== undefined) {
+        // Se for 0 ou string "0", remover este campo para manter o valor atual
+        if (filteredUpdates.technician_id === 0 || filteredUpdates.technician_id === '0') {
+          console.log('Removendo technician_id=0 para evitar erro de chave estrangeira');
+          delete filteredUpdates.technician_id;
+        } else {
+          // Converter para número se for uma string
+          filteredUpdates.technician_id = Number(filteredUpdates.technician_id);
+        }
+      }
+      
+      console.log("Atualizando serviço com dados filtrados após tratamento:", filteredUpdates);
       
       // Recalculate total if price is updated
       if (filteredUpdates.price !== undefined || filteredUpdates.administrative_fee !== undefined) {
