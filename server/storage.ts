@@ -17,14 +17,27 @@ import type {
   ManagerClientAssignment, InsertManagerClientAssignment,
   Budget, InsertBudget
 } from "@shared/schema";
-import { db } from "./db";
+import { initDb } from "./db-mysql";
 import { eq, and, like, desc, or, sql, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
+import memorystore from "memorystore";
 
-const PostgresSessionStore = connectPg(session);
+// Inicializamos a conexão e o DB durante a inicialização
+let db: any;
+let pool: any;
+
+// Esta função deve ser chamada no inicio do servidor
+export const initializeDatabase = async () => {
+  const connection = await initDb();
+  db = connection.db;
+  pool = connection.pool;
+  console.log("Database initialized successfully");
+  return { db, pool };
+};
+
+// Usar MemoryStore como alternativa temporária para sessões até configurar MySQL
+const MemoryStore = memorystore(session);
 
 export interface IStorage {
   // User methods
@@ -107,12 +120,23 @@ export class DatabaseStorage implements IStorage {
   sessionStore: any; // Corrigir erro de tipagem do session.SessionStore
   
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true,
-      tableName: 'session' 
+    // Usar MemoryStore como armazenamento temporário de sessão
+    // Isso é apenas para desenvolvimento, em produção vamos configurar o MySQL para sessões
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
     });
-    this.initializeSampleData();
+    
+    // Não inicializamos dados de exemplo no construtor
+    // Isso será feito após a conexão com o banco ser estabelecida
+  }
+  
+  // Método para inicializar dados após a conexão ser estabelecida
+  async initialize() {
+    if (db) {
+      await this.initializeSampleData();
+    } else {
+      console.warn("Database not initialized yet. Sample data will not be created.");
+    }
   }
   
   // Budget methods
