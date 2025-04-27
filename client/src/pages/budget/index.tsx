@@ -163,7 +163,6 @@ function DamagedPartItem({
     <div className="border rounded-md p-2 space-y-2 overflow-hidden">
       <div className="text-center mb-2 text-sm font-medium truncate">
         {label}
-        {isHorizontal && <span className="text-xs text-muted-foreground ml-1">(H)</span>}
       </div>
       <div className="space-y-2">
         <div className="flex justify-between items-center gap-1">
