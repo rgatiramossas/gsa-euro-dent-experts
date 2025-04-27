@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
   ClipboardList,
-  Users
+  Users,
+  FileText
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -15,7 +16,7 @@ import { Link } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { ServiceListItem, DashboardStats } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
@@ -34,6 +35,11 @@ export default function ManagerDashboard() {
   // Obter serviços dos clientes do gestor
   const { data: services = [], isLoading: servicesLoading } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services', { clientId: clientFilter !== "all" ? clientFilter : undefined }],
+  });
+  
+  // Obter orçamentos
+  const { data: budgets = [], isLoading: budgetsLoading } = useQuery({
+    queryKey: ['/api/budgets'],
   });
   
   // Função para selecionar a cor do status
@@ -76,6 +82,7 @@ export default function ManagerDashboard() {
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="services">Ordens de Serviço</TabsTrigger>
           <TabsTrigger value="clients">Meus Clientes</TabsTrigger>
+          <TabsTrigger value="budgets">Orçamentos</TabsTrigger>
         </TabsList>
         
         {/* Visão Geral */}
@@ -290,6 +297,77 @@ export default function ManagerDashboard() {
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
                   Nenhum cliente atribuído à sua gestão.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Orçamentos */}
+        <TabsContent value="budgets" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Orçamentos</CardTitle>
+                  <CardDescription>
+                    Orçamentos dos clientes sob sua gestão
+                  </CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Select 
+                    value={clientFilter} 
+                    onValueChange={setClientFilter}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filtrar por cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os clientes</SelectItem>
+                      {!clientsLoading && clients && clients.map((client: any) => (
+                        <SelectItem key={client.id} value={client.id.toString()}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {budgetsLoading ? (
+                <div className="space-y-2">
+                  {Array(5).fill(0).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : budgets && budgets.length > 0 ? (
+                <div className="space-y-3">
+                  {budgets.map((budget: any) => (
+                    <div key={budget.id} className="flex justify-between items-center border rounded-md p-3">
+                      <div className="flex flex-col">
+                        <div className="font-medium">{budget.client?.name || "Cliente não especificado"}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {budget.vehicle?.make} {budget.vehicle?.model} - {budget.service_type?.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Criado em: {new Date(budget.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={getStatusColor(budget.status)}>
+                          {translateStatus(budget.status)}
+                        </Badge>
+                        <Link to={`/budgets/${budget.id}`}>
+                          <Button variant="outline" size="sm">Ver Detalhes</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  Nenhum orçamento encontrado para os critérios selecionados.
                 </div>
               )}
             </CardContent>
