@@ -314,7 +314,8 @@ export default function Budget() {
   
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
-  // Consultas para clientes e veículos
+  // Consultas para clientes e veículos - agora usando a API de clientes específica para o perfil logado
+  // (para admin trará todos, para gestor trará apenas os associados)
   const { data: clients, isLoading: clientsLoading } = useQuery<Client[]>({
     queryKey: ['/api/clients'],
   });
@@ -325,9 +326,10 @@ export default function Budget() {
     enabled: !!selectedClient, // Só executa se o cliente estiver selecionado
   });
 
-  // Simulação de dados de orçamentos (normalmente viriam de uma API)
+  // Dados de orçamentos com filtragem por cliente
+  // Para gestores, só devem aparecer os orçamentos dos clientes que eles gerenciam
   const { data: budgets, isLoading: budgetsLoading } = useQuery<Budget[]>({
-    queryKey: ['/api/budgets'],
+    queryKey: ['/api/budgets', clients],
     queryFn: async () => {
       // Em uma implementação real, faríamos uma chamada à API
       // const response = await apiRequest('GET', '/api/budgets');
@@ -335,41 +337,53 @@ export default function Budget() {
       
       // Verificar se existe uma lista de orçamentos no localStorage
       const savedBudgets = localStorage.getItem('eurodent_budgets');
+      let budgetsList = [];
+      
       if (savedBudgets) {
-        return JSON.parse(savedBudgets);
+        budgetsList = JSON.parse(savedBudgets);
+      } else {
+        // Orçamentos iniciais (só usados na primeira vez)
+        budgetsList = [
+          {
+            id: 1001,
+            client_name: "Alexsandro Figueiredo",
+            vehicle_info: "BMW X5 2022 (ABC-1234)",
+            date: "2023-10-15",
+            damaged_parts: ["paraLamaEsquerdo", "portaDianteiraEsquerda"],
+            total_aw: 2,
+            total_value: 350.00,
+            created_at: new Date().toISOString(),
+            note: "Orçamento para reparo de amassado na porta dianteira"
+          },
+          {
+            id: 1002,
+            client_name: "Maria Silva",
+            vehicle_info: "Mercedes C180 2021 (XYZ-4567)",
+            date: "2023-10-20",
+            damaged_parts: ["capo", "paraLamaDireito"],
+            total_aw: 3,
+            total_value: 420.00,
+            created_at: new Date().toISOString(),
+            note: ""
+          }
+        ];
+        
+        // Salvar no localStorage para persistência
+        localStorage.setItem('eurodent_budgets', JSON.stringify(budgetsList));
       }
       
-      // Orçamentos iniciais (só usados na primeira vez)
-      const initialBudgets = [
-        {
-          id: 1001,
-          client_name: "Alexsandro Figueiredo",
-          vehicle_info: "BMW X5 2022 (ABC-1234)",
-          date: "2023-10-15",
-          damaged_parts: ["paraLamaEsquerdo", "portaDianteiraEsquerda"],
-          total_aw: 2,
-          total_value: 350.00,
-          created_at: new Date().toISOString(),
-          note: "Orçamento para reparo de amassado na porta dianteira"
-        },
-        {
-          id: 1002,
-          client_name: "Maria Silva",
-          vehicle_info: "Mercedes C180 2021 (XYZ-4567)",
-          date: "2023-10-20",
-          damaged_parts: ["capo", "paraLamaDireito"],
-          total_aw: 3,
-          total_value: 420.00,
-          created_at: new Date().toISOString(),
-          note: ""
-        }
-      ];
+      // Se temos clientes, filtramos a lista de orçamentos pelos clientes disponíveis
+      // (gestores terão apenas seus clientes, admin terá todos)
+      if (clients && clients.length > 0) {
+        const clientNames = clients.map(c => c.name.toLowerCase());
+        budgetsList = budgetsList.filter(budget => 
+          clientNames.includes(budget.client_name.toLowerCase())
+        );
+      }
       
-      // Salvar no localStorage para persistência
-      localStorage.setItem('eurodent_budgets', JSON.stringify(initialBudgets));
-      
-      return initialBudgets;
+      return budgetsList;
     },
+    enabled: !!clients, // Só busca os orçamentos quando a lista de clientes estiver disponível
   });
 
   const createBudgetMutation = useMutation({
