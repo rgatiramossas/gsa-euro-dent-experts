@@ -61,8 +61,7 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
   // Create vehicle mutation
   const createVehicleMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const res = await apiRequest('POST', '/api/vehicles', data);
-      return res.json();
+      return await apiRequest('/api/vehicles', 'POST', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}/vehicles`] });
