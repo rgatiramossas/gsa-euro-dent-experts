@@ -658,7 +658,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
         title={`Serviço #${service.id}`}
-        description="Detalhes do serviço de martelinho de ouro"
+        description="Detalhes do serviço de reparo sem pintura"
         actions={(
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleBack}>
