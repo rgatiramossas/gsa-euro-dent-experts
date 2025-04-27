@@ -308,11 +308,18 @@ export class DatabaseStorage implements IStorage {
   }
   
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
-    const [updatedUser] = await db.update(users)
-      .set(userData)
-      .where(eq(users.id, id))
-      .returning();
-    return updatedUser;
+    try {
+      // No MySQL não temos o método returning()
+      await db.update(users)
+        .set(userData)
+        .where(eq(users.id, id));
+      
+      // Buscamos o usuário atualizado
+      return this.getUser(id);
+    } catch (error) {
+      console.error("Erro ao atualizar usuário:", error);
+      return undefined;
+    }
   }
   
   async listUsers(role?: string): Promise<User[]> {
@@ -329,22 +336,45 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createClient(insertClient: InsertClient): Promise<Client> {
-    const [client] = await db.insert(clients).values(insertClient).returning();
-    return client;
+    try {
+      // No MySQL o método returning() não é suportado
+      const result = await db.insert(clients).values(insertClient);
+      // Obter o ID do cliente recém-criado
+      const clientId = Number(result.insertId);
+      // Buscar o cliente pelo ID
+      const client = await this.getClient(clientId);
+      
+      if (!client) {
+        throw new Error(`Cliente criado mas não encontrado com ID ${clientId}`);
+      }
+      
+      return client;
+    } catch (error) {
+      console.error("Erro ao criar cliente:", error);
+      throw error;
+    }
   }
   
   async updateClient(id: number, clientData: Partial<Client>): Promise<Client | undefined> {
-    const [updatedClient] = await db.update(clients)
-      .set(clientData)
-      .where(eq(clients.id, id))
-      .returning();
-    return updatedClient;
+    try {
+      // No MySQL não temos o método returning()
+      await db.update(clients)
+        .set(clientData)
+        .where(eq(clients.id, id));
+      
+      // Buscar o cliente atualizado
+      return this.getClient(id);
+    } catch (error) {
+      console.error("Erro ao atualizar cliente:", error);
+      return undefined;
+    }
   }
   
   async listClients(): Promise<Client[]> {
     try {
-      // Selecionamos apenas as colunas que temos certeza que existem
-      return db.select({
+      // Verificando quais colunas existem na tabela MySQL
+      console.log("Selecionando clientes com colunas existentes");
+      const result = await db.select({
         id: clients.id,
         name: clients.name,
         email: clients.email,
@@ -352,7 +382,14 @@ export class DatabaseStorage implements IStorage {
         address: clients.address,
         notes: clients.notes,
         created_at: clients.created_at,
+        // Adicionamos defaults para as colunas que não existem no MySQL
+        // mas são esperadas pelo tipo Client
+        city: sql`NULL`.as("city"),
+        state: sql`NULL`.as("state"),
+        zip: sql`NULL`.as("zip")
       }).from(clients);
+      
+      return result;
     } catch (error) {
       console.error("Erro ao listar clientes:", error);
       return [];
@@ -369,6 +406,10 @@ export class DatabaseStorage implements IStorage {
         address: clients.address,
         notes: clients.notes,
         created_at: clients.created_at,
+        // Adicionando campos que podem não existir no MySQL
+        city: sql`NULL`.as("city"),
+        state: sql`NULL`.as("state"),
+        zip: sql`NULL`.as("zip")
       }).from(clients).where(
         like(clients.name, `%${query}%`)
       );
@@ -1576,7 +1617,11 @@ export class DatabaseStorage implements IStorage {
         phone: clients.phone,
         address: clients.address,
         notes: clients.notes,
-        created_at: clients.created_at
+        created_at: clients.created_at,
+        // Adicionando campos que podem não existir no MySQL
+        city: sql`NULL`.as("city"),
+        state: sql`NULL`.as("state"),
+        zip: sql`NULL`.as("zip")
       })
       .from(managerClientAssignments)
       .innerJoin(clients, eq(managerClientAssignments.client_id, clients.id))
