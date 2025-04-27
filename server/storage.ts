@@ -363,39 +363,75 @@ export class DatabaseStorage implements IStorage {
       
       console.log("Dados limpos:", cleanData);
       
-      // No MySQL o método returning() não é suportado
-      const result = await db.insert(clients).values(cleanData);
-      
-      if (!result || !result.insertId) {
-        throw new Error("Falha ao inserir cliente no banco de dados. ID não retornado.");
-      }
-      
-      // Obter o ID do cliente recém-criado
-      const clientId = Number(result.insertId);
-      console.log(`Cliente criado com ID: ${clientId}`);
-      
-      // Buscar o cliente usando o ID
+      // Tentar usar query direta para o MySQL
       try {
-        const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
+        // Preparar valores para query
+        const fields = Object.keys(cleanData).join(', ');
+        const placeholders = Object.keys(cleanData).map(() => '?').join(', ');
+        const values = Object.values(cleanData);
+        
+        console.log(`Executando inserção direta: INSERT INTO clients (${fields}) VALUES (${placeholders})`);
+        console.log("Valores:", values);
+        
+        // Executar query usando a conexão direta
+        const query = `INSERT INTO clients (${fields}) VALUES (${placeholders})`;
+        const result = await pool.query(query, values);
+        
+        console.log("Resultado da inserção via conexão direta:", result);
+        
+        // Obter ID inserido
+        const insertId = result[0]?.insertId;
+        
+        if (!insertId) {
+          throw new Error("Falha ao obter ID via inserção direta");
+        }
+        
+        const clientId = Number(insertId);
+        console.log(`Cliente criado com ID via inserção direta: ${clientId}`);
+        
+        // Buscar cliente criado
+        const [clientResult] = await pool.query(`SELECT * FROM clients WHERE id = ?`, [clientId]);
+        const client = clientResult[0];
         
         if (!client) {
-          throw new Error(`Cliente criado com ID ${clientId} mas não encontrado na consulta subsequente`);
+          throw new Error(`Cliente criado mas não encontrado com ID ${clientId}`);
         }
         
         console.log("Cliente recuperado com sucesso:", client);
-        return client;
-      } catch (selectError) {
-        console.error(`Erro ao recuperar o cliente após criação (ID: ${clientId}):`, selectError);
+        return client as Client;
+      } catch (directError) {
+        console.error("Erro na inserção direta:", directError);
         
-        // Retorna um objeto cliente mínimo com o ID para evitar falha completa
-        return {
-          id: clientId,
-          name: cleanData.name || '',
-          email: cleanData.email || null,
-          phone: cleanData.phone || null,
-          address: cleanData.address || null,
-          created_at: new Date()
-        } as Client;
+        // Fallback para Drizzle ORM
+        console.log("Tentando com Drizzle ORM como fallback");
+        const result = await db.insert(clients).values(cleanData);
+        
+        console.log("Resultado da inserção via Drizzle:", result);
+        
+        if (!result || !result.insertId) {
+          throw new Error("Falha ao inserir cliente. ID não retornado.");
+        }
+        
+        // Obter o ID do cliente recém-criado
+        const clientId = Number(result.insertId);
+        console.log(`Cliente criado com ID via Drizzle: ${clientId}`);
+        
+        // Buscar o cliente usando o ID
+        const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
+        
+        if (!client) {
+          // Criar objeto mínimo
+          return {
+            id: clientId,
+            name: cleanData.name || '',
+            email: cleanData.email || null,
+            phone: cleanData.phone || null,
+            address: cleanData.address || null,
+            created_at: new Date()
+          } as Client;
+        }
+        
+        return client;
       }
     } catch (error) {
       console.error("Erro ao criar cliente:", error);
