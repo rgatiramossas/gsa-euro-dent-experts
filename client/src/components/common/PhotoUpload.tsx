@@ -84,33 +84,65 @@ export function PhotoUpload({
   };
   
   const handleFiles = (files: FileList) => {
-    // Se o componente já tem arquivos selecionados, verificamos a soma total
-    const existingCount = selectedFiles ? selectedFiles.length : 0;
-    const newCount = files.length;
-    const totalCount = existingCount + newCount;
-    
-    // Verificar se o número total de arquivos excede o limite
-    if (multiple && totalCount > maxFiles) {
-      toast({
-        title: "Limite de arquivos excedido",
-        description: `Você pode selecionar no máximo ${maxFiles} fotos no total. Você já selecionou ${existingCount} foto(s).`,
-        variant: "destructive",
+    try {
+      // Validar os arquivos selecionados
+      const validFiles: File[] = [];
+      const invalidFiles: string[] = [];
+      
+      // Verificar se os arquivos são de tipos válidos (imagens)
+      Array.from(files).forEach(file => {
+        if (file.type.startsWith('image/')) {
+          // Verificar tamanho (máximo 5MB)
+          if (file.size <= 5 * 1024 * 1024) {
+            validFiles.push(file);
+          } else {
+            invalidFiles.push(`${file.name} (tamanho excede 5MB)`);
+          }
+        } else {
+          invalidFiles.push(`${file.name} (tipo inválido: ${file.type || 'desconhecido'})`);
+        }
       });
-      return;
-    }
-    
-    // Se estivermos combinando arquivos existentes com novos arquivos
-    if (selectedFiles && existingCount > 0) {
+      
+      // Alertar sobre arquivos inválidos, se houver
+      if (invalidFiles.length > 0) {
+        toast({
+          title: "Alguns arquivos não foram aceitos",
+          description: `Arquivos inválidos: ${invalidFiles.join(', ')}. Apenas imagens até 5MB são permitidas.`,
+          variant: "destructive",
+        });
+        
+        // Se não tiver nenhum arquivo válido, saia da função
+        if (validFiles.length === 0) return;
+      }
+      
+      // Se o componente já tem arquivos selecionados, verificamos a soma total
+      const existingCount = selectedFiles ? selectedFiles.length : 0;
+      const newCount = validFiles.length;
+      const totalCount = existingCount + newCount;
+      
+      // Verificar se o número total de arquivos excede o limite
+      if (multiple && totalCount > maxFiles) {
+        toast({
+          title: "Limite de arquivos excedido",
+          description: `Você pode selecionar no máximo ${maxFiles} fotos no total. Você já selecionou ${existingCount} foto(s).`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Criar um novo DataTransfer para combinar os arquivos
       const dataTransfer = new DataTransfer();
       
-      // Adicionar arquivos existentes
-      Array.from(selectedFiles).forEach(file => {
-        dataTransfer.items.add(file);
-      });
+      // Se estivermos combinando arquivos existentes com novos arquivos
+      if (selectedFiles && existingCount > 0) {
+        // Adicionar arquivos existentes
+        Array.from(selectedFiles).forEach(file => {
+          dataTransfer.items.add(file);
+        });
+      }
       
-      // Adicionar novos arquivos
-      Array.from(files).forEach(file => {
+      // Adicionar novos arquivos válidos
+      validFiles.forEach(file => {
         dataTransfer.items.add(file);
       });
       
@@ -118,29 +150,38 @@ export function PhotoUpload({
       const combinedFiles = dataTransfer.files;
       setSelectedFiles(combinedFiles);
       onChange(combinedFiles);
-    } else {
-      // Caso não tenha arquivos anteriores, apenas use os novos
-      setSelectedFiles(files);
-      onChange(files);
-    }
-    
-    // Limpar previews antigos
-    previewUrls.forEach(url => URL.revokeObjectURL(url));
-    
-    // Criar URLs de preview para cada arquivo
-    const newPreviewUrls: string[] = [];
-    
-    if (multiple) {
-      // Gerar previews para todos os arquivos no caso de múltiplos arquivos
-      for (let i = 0; i < files.length; i++) {
-        newPreviewUrls.push(URL.createObjectURL(files[i]));
+      
+      // Limpar previews antigos
+      previewUrls.forEach(url => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      // Criar URLs de preview para cada arquivo
+      const newPreviewUrls: string[] = [];
+      
+      if (multiple) {
+        // Gerar previews para todos os arquivos no caso de múltiplos arquivos
+        for (let i = 0; i < combinedFiles.length; i++) {
+          newPreviewUrls.push(URL.createObjectURL(combinedFiles[i]));
+        }
+      } else if (combinedFiles[0]) {
+        // Apenas um preview para um único arquivo
+        newPreviewUrls.push(URL.createObjectURL(combinedFiles[0]));
       }
-    } else if (files[0]) {
-      // Apenas um preview para um único arquivo
-      newPreviewUrls.push(URL.createObjectURL(files[0]));
+      
+      setPreviewUrls(newPreviewUrls);
+      
+      console.log(`${validFiles.length} arquivos válidos processados`);
+    } catch (error) {
+      console.error("Erro ao processar arquivos:", error);
+      toast({
+        title: "Erro ao processar arquivos",
+        description: "Ocorreu um erro ao processar os arquivos selecionados. Tente novamente.",
+        variant: "destructive",
+      });
     }
-    
-    setPreviewUrls(newPreviewUrls);
   };
   
   return (
