@@ -64,24 +64,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { 
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
+// Importações do Recharts já feitas acima
 import { ServiceListItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, formatDate, formatRelativeDate } from "@/lib/utils";
 import { ServiceStatusBadge } from "@/components/common/ServiceStatusBadge";
 import { Badge } from "@/components/ui/badge";
+import { TechnicianPaymentsPieChart, MonthlyPaymentsChart } from "@/components/finance/TechnicianCharts";
 
 // Esquema para o formulário de despesas
 const expenseFormSchema = z.object({
@@ -395,14 +384,96 @@ export default function Finances() {
     );
   }
   
-  // Interface para técnicos (apenas Pedidos de Pagamento)
+  // Obter dados financeiros do técnico
+  const { data: techFinanceStats, isLoading: isLoadingFinanceStats } = useQuery({
+    queryKey: ['/api/technician/financial-stats'],
+    enabled: !isAdmin && currentUser?.role === 'technician',
+  });
+
+  // Interface para técnicos (Dashboard Financeiro e Pedidos de Pagamento)
   if (!isAdmin) {
     return (
       <div className="py-6 px-4 sm:px-6 lg:px-8">
         <PageHeader
           title="Financeiro"
-          description="Solicite pagamentos para serviços concluídos"
+          description="Estatísticas financeiras e solicitação de pagamentos"
         />
+        
+        {/* Cards de resumo para técnicos */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">Valores Recebidos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isLoadingFinanceStats ? "..." : formatCurrency(techFinanceStats?.receivedValue || 0)}</div>
+              <div className="text-xs text-gray-500">Pagamentos já realizados</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">Valores Faturados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isLoadingFinanceStats ? "..." : formatCurrency(techFinanceStats?.invoicedValue || 0)}</div>
+              <div className="text-xs text-gray-500">Pagamentos aprovados</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">Em Aprovação</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isLoadingFinanceStats ? "..." : formatCurrency(techFinanceStats?.pendingValue || 0)}</div>
+              <div className="text-xs text-gray-500">Pedidos pendentes</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">Não Solicitados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isLoadingFinanceStats ? "..." : formatCurrency(techFinanceStats?.unpaidCompletedValue || 0)}</div>
+              <div className="text-xs text-gray-500">Serviços concluídos não solicitados</div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Gráficos para técnicos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Visão Geral de Pagamentos</CardTitle>
+            </CardHeader>
+            <CardContent className="h-72">
+              {isLoadingFinanceStats ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <TechnicianPaymentsPieChart financialStats={techFinanceStats} />
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Pagamentos por Mês</CardTitle>
+            </CardHeader>
+            <CardContent className="h-72">
+              {isLoadingFinanceStats ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <MonthlyPaymentsChart monthlyData={techFinanceStats?.monthlyData || []} />
+              )}
+            </CardContent>
+          </Card>
+        </div>
         
         <Tabs defaultValue="payment_requests" className="space-y-6">
           <TabsList className="mb-4">
