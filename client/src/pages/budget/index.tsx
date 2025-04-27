@@ -342,10 +342,7 @@ export default function BudgetPage() {
   // Mutations
   const createBudgetMutation = useMutation({
     mutationFn: async (budgetData: any) => {
-      return await apiRequest('/api/budgets', {
-        method: 'POST',
-        data: budgetData,
-      });
+      return await apiRequest('/api/budgets', 'POST', budgetData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/budgets'] });
@@ -367,10 +364,7 @@ export default function BudgetPage() {
 
   const updateBudgetMutation = useMutation({
     mutationFn: async (budgetData: any) => {
-      return await apiRequest(`/api/budgets/${selectedBudget?.id}`, {
-        method: 'PATCH',
-        data: budgetData,
-      });
+      return await apiRequest(`/api/budgets/${selectedBudget?.id}`, 'PATCH', budgetData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/budgets'] });
@@ -392,9 +386,7 @@ export default function BudgetPage() {
 
   const deleteBudgetMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest(`/api/budgets/${id}`, {
-        method: 'DELETE',
-      });
+      return await apiRequest(`/api/budgets/${id}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/budgets'] });

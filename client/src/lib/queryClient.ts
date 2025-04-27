@@ -38,6 +38,15 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
+  
+  // Para o caso de DELETE, que pode não retornar JSON
+  if (method === 'DELETE') {
+    if (res.status === 204) {
+      return true; // No content
+    }
+    return res.status < 400; // Success if status is < 400
+  }
+  
   return await res.json();
 }
 
