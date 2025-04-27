@@ -78,6 +78,11 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
+  
+  // Variáveis auxiliares para melhorar a legibilidade e evitar erros de tipagem
+  const isGestor = currentUser?.role === 'gestor';
+  const isAdmin = currentUser?.role === 'admin';
+  const isTechnician = currentUser?.role === 'technician';
   const [newStatus, setNewStatus] = useState<ServiceStatus | "">("");
   const [statusNotes, setStatusNotes] = useState("");
   const [showStatusDialog, setShowStatusDialog] = useState(false);
@@ -924,86 +929,83 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
               </CardContent>
             </Card>
             
-            {/* Financial Section - View Mode */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Valores</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Valor do serviço</span>
-                    <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
-                  </div>
-                  
-                  {currentUser?.role === 'admin' && (
-                    <>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Taxa de deslocamento</span>
-                        <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
-                      </div>
-                      
-                      {/* Taxa administrativa visível apenas para administradores */}
-                      {currentUser?.role === 'admin' && (
+            {/* Financial Section - View Mode (visível apenas para admin e técnicos) */}
+            {!isGestor && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Valores</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    {currentUser?.role === 'admin' && (
+                      <>
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600">Valor do serviço</span>
+                          <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600">Taxa de deslocamento</span>
+                          <span className="text-gray-800 font-medium">{formatCurrency(service.displacement_fee)}</span>
+                        </div>
+                        
                         <div className="flex justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600">Taxa administrativa</span>
                           <span className="text-gray-800 font-medium">{formatCurrency(service.administrative_fee || 0)}</span>
                         </div>
-                      )}
-                      
-                      {/* Total diferente para admin e gestor/técnico */}
-                      {currentUser?.role === 'admin' ? (
+                        
                         <div className="flex justify-between py-2 font-medium">
                           <span className="text-gray-700">Total</span>
                           <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
                         </div>
-                      ) : (
-                        <div className="flex justify-between py-2 font-medium">
-                          <span className="text-gray-700">Valor do Serviço</span>
-                          <span className="text-primary text-lg">{formatCurrency(service.price)}</span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  
-                  {currentUser?.role !== 'admin' && (
-                    <div className="flex justify-between py-2 font-medium mt-2">
-                      <span className="text-gray-700">Valor para o técnico</span>
-                      <span className="text-primary text-lg">{formatCurrency(service.price)}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="border-t pt-4">
-                <div className="flex gap-2">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Excluir Serviço
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir serviço</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => deleteServiceMutation.mutate()}
-                          disabled={deleteServiceMutation.isPending}
-                        >
-                          {deleteServiceMutation.isPending ? "Excluindo..." : "Excluir"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardFooter>
-            </Card>
+                      </>
+                    )}
+                    
+                    {currentUser?.role === 'technician' && (
+                      <div className="flex justify-between py-2 font-medium mt-2">
+                        <span className="text-gray-700">Valor para o técnico</span>
+                        <span className="text-primary text-lg">{formatCurrency(service.price)}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Card Footer and Actions */}
+            {!isEditing && !isGestor && (
+              <Card>
+                <CardFooter className="border-t pt-4">
+                  <div className="flex gap-2">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir Serviço
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir serviço</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => deleteServiceMutation.mutate()}
+                            disabled={deleteServiceMutation.isPending}
+                          >
+                            {deleteServiceMutation.isPending ? "Excluindo..." : "Excluir"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardFooter>
+              </Card>
+            )}
           </>
         ) : (
           /* Edit Mode - Using the same structure as the new-service form but only for editable fields */
@@ -1054,83 +1056,85 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 </CardContent>
               </Card>
               
-              {/* Financial Information */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle>Valores</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={editForm.control}
-                      name="price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Valor do Serviço (Técnico) (€)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder="0,00"
-                              {...field}
-                              onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {currentUser?.role === 'admin' && (
-                      <>
-                        <FormField
-                          control={editForm.control}
-                          name="administrative_fee"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Taxa Administrativa (€)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  placeholder="0,00"
-                                  {...field}
-                                  onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                Comissão para o administrador (apenas visível para administradores)
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
-                  </div>
-                  
-                  {currentUser?.role === 'admin' ? (
-                    <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
-                      <span className="text-gray-700">Total</span>
-                      <span className="text-primary text-lg">
-                        {formatCurrency(
-                          (editForm.watch('price') || 0) + 
-                          (editForm.watch('administrative_fee') || 0)
+              {/* Financial Information - não mostrar para gestores */}
+              {!isGestor && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle>Valores</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={editForm.control}
+                        name="price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Valor do Serviço (Técnico) (€)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="0,00"
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </span>
+                      />
+                      
+                      {currentUser?.role === 'admin' && (
+                        <>
+                          <FormField
+                            control={editForm.control}
+                            name="administrative_fee"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Taxa Administrativa (€)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="0,00"
+                                    {...field}
+                                    onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  Comissão para o administrador (apenas visível para administradores)
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
                     </div>
-                  ) : (
-                    <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
-                      <span className="text-gray-700">Valor para o técnico</span>
-                      <span className="text-primary text-lg">
-                        {formatCurrency(editForm.watch('price') || 0)}
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    
+                    {currentUser?.role === 'admin' ? (
+                      <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
+                        <span className="text-gray-700">Total</span>
+                        <span className="text-primary text-lg">
+                          {formatCurrency(
+                            (editForm.watch('price') || 0) + 
+                            (editForm.watch('administrative_fee') || 0)
+                          )}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between py-2 font-medium mt-4 border-t pt-4">
+                        <span className="text-gray-700">Valor para o técnico</span>
+                        <span className="text-primary text-lg">
+                          {formatCurrency(editForm.watch('price') || 0)}
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
               
               {/* Photos */}
               <Card>
