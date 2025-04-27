@@ -1541,6 +1541,138 @@ export class DatabaseStorage implements IStorage {
     
     return assignments.map(a => a.manager);
   }
+  
+  async getTechnicianFinancialStats(technicianId: number) {
+    console.log(`Buscando estatísticas financeiras para o técnico ID: ${technicianId}`);
+    
+    // Buscar todos os serviços deste técnico
+    const technicianServices = await db.select()
+      .from(services)
+      .where(eq(services.technician_id, technicianId));
+    
+    console.log(`Encontrados ${technicianServices.length} serviços para o técnico ID: ${technicianId}`);
+    
+    // Buscar pagamentos solicitados
+    const paymentRequests = await db.select()
+      .from(paymentRequests_)
+      .where(eq(paymentRequests_.technician_id, technicianId));
+    
+    console.log(`Encontrados ${paymentRequests.length} pedidos de pagamento para o técnico ID: ${technicianId}`);
+    
+    // Buscar a relação entre serviços e pagamentos
+    const servicePaymentRelations = await db.select()
+      .from(servicePaymentRequests)
+      .where(
+        inArray(
+          servicePaymentRequests.payment_request_id, 
+          paymentRequests.map(pr => pr.id)
+        )
+      );
+    
+    console.log(`Encontradas ${servicePaymentRelations.length} relações serviço-pagamento`);
+    
+    // IDs de serviços com pedido de pagamento
+    const servicesWithPaymentRequest = new Set(
+      servicePaymentRelations.map(spr => spr.service_id)
+    );
+    
+    // Cálculo dos valores por status
+    let pendingValue = 0;          // Em aprovação 
+    let invoicedValue = 0;         // Faturados
+    let receivedValue = 0;         // Recebidos
+    let unpaidCompletedValue = 0;  // Serviços concluídos mas sem solicitação
+    
+    // Dados de pagamentos por mês
+    const lastSixMonths: { month: string, value: number }[] = [];
+    const today = new Date();
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(today.getMonth() - i);
+      
+      const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
+      const year = date.getFullYear();
+      
+      lastSixMonths.push({
+        month: `${monthName}/${year}`,
+        value: 0
+      });
+    }
+    
+    // Processar pedidos de pagamento
+    for (const request of paymentRequests) {
+      const requestDate = new Date(request.created_at);
+      const requestMonth = requestDate.getMonth();
+      const requestYear = requestDate.getFullYear();
+      
+      // Buscar os serviços deste pedido
+      const requestServiceIds = servicePaymentRelations
+        .filter(spr => spr.payment_request_id === request.id)
+        .map(spr => spr.service_id);
+      
+      const requestServices = technicianServices.filter(
+        service => requestServiceIds.includes(service.id)
+      );
+      
+      // Calcular valor total deste pedido
+      const requestValue = requestServices.reduce(
+        (sum, service) => sum + (service.price || 0), 
+        0
+      );
+      
+      // Atualizar estatísticas com base no status
+      switch(request.status) {
+        case 'aguardando_aprovacao':
+          pendingValue += requestValue;
+          break;
+        case 'aprovado':
+          invoicedValue += requestValue;
+          break;
+        case 'pago':
+          receivedValue += requestValue;
+          
+          // Atualizar dados de pagamentos mensais
+          for (let i = 0; i < lastSixMonths.length; i++) {
+            const monthData = lastSixMonths[i];
+            const monthDate = new Date(today);
+            monthDate.setMonth(today.getMonth() - (5 - i));
+            
+            if (
+              requestDate.getMonth() === monthDate.getMonth() && 
+              requestDate.getFullYear() === monthDate.getFullYear()
+            ) {
+              monthData.value += requestValue;
+              break;
+            }
+          }
+          break;
+      }
+    }
+    
+    // Calcular valor de serviços concluídos sem solicitação de pagamento
+    unpaidCompletedValue = technicianServices
+      .filter(service => 
+        service.status === 'concluido' && 
+        !servicesWithPaymentRequest.has(service.id)
+      )
+      .reduce((sum, service) => sum + (service.price || 0), 0);
+    
+    console.log(`Estatísticas calculadas para o técnico ID ${technicianId}:`, {
+      pendingValue,
+      invoicedValue,
+      receivedValue,
+      unpaidCompletedValue,
+      monthlyData: lastSixMonths
+    });
+    
+    return {
+      pendingValue,         // Em aprovação
+      invoicedValue,        // Faturados
+      receivedValue,        // Recebidos
+      unpaidCompletedValue, // Não solicitados
+      monthlyData: lastSixMonths // Dados mensais para o gráfico
+    };
+  }
 }
 
 export const storage = new DatabaseStorage();

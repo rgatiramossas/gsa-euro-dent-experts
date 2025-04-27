@@ -385,10 +385,16 @@ export default function Finances() {
   }
   
   // Obter dados financeiros do técnico
-  const { data: techFinanceStats, isLoading: isLoadingFinanceStats } = useQuery({
+  const { data: techFinanceStats, isLoading: isLoadingFinanceStats, error: techFinanceError } = useQuery({
     queryKey: ['/api/technician/financial-stats'],
     enabled: !isAdmin && currentUser?.role === 'technician',
   });
+  
+  // Logs para diagnóstico
+  console.log("Usuário:", currentUser);
+  console.log("Perfil técnico?", currentUser?.role === 'technician');
+  console.log("Dados financeiros:", techFinanceStats);
+  console.log("Erro na requisição:", techFinanceError);
 
   // Interface para técnicos (Dashboard Financeiro e Pedidos de Pagamento)
   if (!isAdmin) {
