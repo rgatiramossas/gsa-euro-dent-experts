@@ -578,10 +578,14 @@ export class DatabaseStorage implements IStorage {
         const query = `INSERT INTO vehicles (${fields}) VALUES (${placeholders})`;
         const result = await pool.query(query, values);
         
-        console.log("Resultado da inserção via conexão direta:", result);
+        console.log("Resultado da inserção via conexão direta:", JSON.stringify(result));
         
-        // Obter ID inserido
-        const insertId = result[0]?.insertId;
+        // Acessar o insertId que no MySQL está na primeira posição do resultado
+        // Estrutura típica: [ResultSetHeader, ColumnDefinition]
+        const resultHeader = result[0];
+        const insertId = resultHeader?.insertId;
+        
+        console.log("InsertId extraído:", insertId, "Tipo:", typeof insertId);
         
         if (!insertId) {
           throw new Error("Falha ao obter ID via inserção direta");
@@ -644,7 +648,33 @@ export class DatabaseStorage implements IStorage {
   }
   
   async listVehiclesByClient(clientId: number): Promise<Vehicle[]> {
-    return db.select().from(vehicles).where(eq(vehicles.client_id, clientId));
+    try {
+      console.log(`Buscando veículos para cliente ID: ${clientId}`);
+      
+      // Verificar se a tabela vehicles existe
+      const [tablesResult] = await pool.query("SHOW TABLES LIKE 'vehicles'");
+      if (!tablesResult.length) {
+        console.log("Tabela de veículos não existe, retornando lista vazia");
+        return [];
+      }
+      
+      // Buscar veículos usando query direta
+      const [result] = await pool.query(`SELECT * FROM vehicles WHERE client_id = ?`, [clientId]);
+      console.log(`Encontrados ${result.length} veículos para cliente ID ${clientId}`);
+      
+      return result as Vehicle[];
+    } catch (error) {
+      console.error(`Erro ao listar veículos para cliente ID ${clientId}:`, error);
+      
+      // Tentar fallback para Drizzle ORM
+      try {
+        console.log("Tentando listar veículos com Drizzle ORM como fallback");
+        return db.select().from(vehicles).where(eq(vehicles.client_id, clientId));
+      } catch (drizzleError) {
+        console.error("Erro no fallback para Drizzle:", drizzleError);
+        return [];
+      }
+    }
   }
   
   // Expense methods
