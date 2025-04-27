@@ -4,92 +4,92 @@
 
 :root {
   --background: 0 0% 100%;
-  --foreground: 20 14.3% 4.1%;
-  --muted: 60 4.8% 95.9%;
-  --muted-foreground: 25 5.3% 44.7%;
+  --foreground: 0 0% 10%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
   --popover: 0 0% 100%;
-  --popover-foreground: 20 14.3% 4.1%;
+  --popover-foreground: 0 0% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 20 14.3% 4.1%;
-  --border: 20 5.9% 90%;
-  --input: 20 5.9% 90%;
-  --primary: 210 75% 28%; /* Euro Dent Experts blue */
-  --primary-foreground: 211 100% 99%;
-  --secondary: 201 75% 47%; /* Lighter blue */
-  --secondary-foreground: 24 9.8% 10%;
-  --accent: 35 93% 52%; /* Euro Dent Experts amber */
-  --accent-foreground: 24 9.8% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 60 9.1% 97.8%;
-  --ring: 20 14.3% 4.1%;
+  --card-foreground: 0 0% 10%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --primary: 0 85% 35%; /* Euro Dent Experts Red */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 20%; /* Dark gray/black */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 0 85% 45%; /* Lighter red */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 85% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 0 85% 35%;
   --radius: 0.5rem;
   
   /* Custom colors */
   --success: 145 63% 40%;
   --warning: 35 93% 52%;
-  --error: 0 84.2% 60.2%;
+  --error: 0 85% 60%;
   
   /* Chart colors */
-  --chart-1: 210 75% 28%;
-  --chart-2: 201 75% 47%;
-  --chart-3: 35 93% 52%;
-  --chart-4: 145 63% 40%;
-  --chart-5: 0 84.2% 60.2%;
+  --chart-1: 0 85% 35%; /* Red */
+  --chart-2: 0 0% 20%; /* Black */
+  --chart-3: 0 0% 80%; /* Light gray */
+  --chart-4: 0 60% 50%; /* Medium red */
+  --chart-5: 0 0% 60%; /* Medium gray */
   
   /* Sidebar colors */
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 20 14.3% 4.1%;
-  --sidebar-primary: 210 75% 28%;
-  --sidebar-primary-foreground: 211 100% 99%;
-  --sidebar-accent: 35 93% 52%;
-  --sidebar-accent-foreground: 24 9.8% 10%;
-  --sidebar-border: 20 5.9% 90%;
-  --sidebar-ring: 20 14.3% 4.1%;
+  --sidebar-background: 0 0% 15%; /* Dark gray/black */
+  --sidebar-foreground: 0 0% 100%; /* White */
+  --sidebar-primary: 0 85% 35%; /* Red */
+  --sidebar-primary-foreground: 0 0% 100%; /* White */
+  --sidebar-accent: 0 85% 50%; /* Lighter red */
+  --sidebar-accent-foreground: 0 0% 100%; /* White */
+  --sidebar-border: 0 0% 20%; /* Darker gray */
+  --sidebar-ring: 0 85% 35%; /* Red */
 }
 
 .dark {
-  --background: 240 10% 3.9%;
+  --background: 0 0% 10%;
   --foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --popover: 240 10% 3.9%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+  --popover: 0 0% 10%;
   --popover-foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
+  --card: 0 0% 13%;
   --card-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --primary: 210 75% 40%; /* Adjusted for dark mode */
-  --primary-foreground: 211 100% 99%;
-  --secondary: 201 75% 47%; /* Lighter blue */
-  --secondary-foreground: 0 0% 98%;
-  --accent: 35 93% 52%; /* Euro Dent Experts amber */
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --ring: 240 4.9% 83.9%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --primary: 0 85% 45%; /* Brighter red for dark mode */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 25%; /* Dark gray */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 0 85% 55%; /* Lighter red */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 85% 65%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 0 85% 45%;
   --radius: 0.5rem;
   
   /* Custom colors - dark mode adjustments */
-  --success: 145 63% 30%;
-  --warning: 35 93% 42%;
-  --error: 0 84.2% 50.2%;
+  --success: 145 63% 35%;
+  --warning: 35 93% 50%;
+  --error: 0 85% 55%;
   
   /* Chart colors - dark mode */
-  --chart-1: 210 75% 40%;
-  --chart-2: 201 75% 57%;
-  --chart-3: 35 93% 62%;
-  --chart-4: 145 63% 50%;
-  --chart-5: 0 84.2% 70.2%;
+  --chart-1: 0 85% 50%; /* Brighter red */
+  --chart-2: 0 0% 80%; /* Light gray */
+  --chart-3: 0 0% 40%; /* Medium gray */
+  --chart-4: 0 60% 60%; /* Medium-bright red */
+  --chart-5: 0 0% 60%; /* Medium gray */
   
   /* Sidebar colors - dark mode */
-  --sidebar-background: 240 10% 3.9%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 210 75% 40%;
-  --sidebar-primary-foreground: 211 100% 99%;
-  --sidebar-accent: 35 93% 52%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 240 4.9% 83.9%;
+  --sidebar-background: 0 0% 5%; /* Very dark gray/black */
+  --sidebar-foreground: 0 0% 100%; /* White */
+  --sidebar-primary: 0 85% 45%; /* Red */
+  --sidebar-primary-foreground: 0 0% 100%; /* White */
+  --sidebar-accent: 0 85% 55%; /* Lighter red */
+  --sidebar-accent-foreground: 0 0% 100%; /* White */
+  --sidebar-border: 0 0% 15%; /* Very dark gray */
+  --sidebar-ring: 0 85% 45%; /* Red */
 }
 
 @layer base {
