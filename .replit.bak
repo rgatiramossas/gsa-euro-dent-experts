@@ -1,0 +1,63 @@
+entrypoint = "index.js"
+hidden = [".config", "package-lock.json"]
+compile = "npm run build"
+run = "npm start"
+
+[nix]
+channel = "stable-23_11"
+
+[deployment]
+run = ["sh", "-c", "npm run start"]
+deploymentTarget = "cloudrun"
+ignorePorts = false
+
+[[ports]]
+localPort = 5000
+containerPort = 5000
+
+[[ports]]
+localPort = 3000
+containerPort = 3000
+externalPort = 80
+
+[[ports]]
+localPort = 4200
+containerPort = 4200
+externalPort = 4200
+
+[environments.production]
+run = "npm run start"
+deploy = true
+
+[environments.development]
+run = "npm run dev"
+deploy = false
+
+[[hints]]
+regex = "Error \\[ERR_REQUIRE_ESM\\]"
+message = "We see that you are using require(...) inside your code. We currently do not support this syntax. Please use 'import' instead when using external modules. (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import)"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix", ".config", "package.json", "package-lock.json"]
+
+[debugger]
+logLevel = "verbose"
+
+[env]
+POSTGRES_URL = "$POSTGRES_URL"
+XDG_CONFIG_HOME = "/home/runner/.config"
+PATH = "/home/runner/$REPL_SLUG/.config/npm/node_global/bin:/home/runner/$REPL_SLUG/node_modules/.bin"
+npm_config_prefix = "/home/runner/$REPL_SLUG/.config/npm/node_global"
+
+# Workflows configuration
+[executors."Project Setup"]
+command = "node scripts/setup-project.js"
+description = "Run the project setup script"
+language = "nodejs"
+onBoot = false
+
+[executors."Start application"]
+command = "npm run dev"
+description = "Start the application development server"
+language = "nodejs"
+onBoot = false
