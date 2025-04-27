@@ -15,6 +15,7 @@ export function BottomNavigation() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const isGestor = user?.role === "gestor" || user?.role === "manager";
+  const isTechnician = user?.role === "technician";
 
   // Itens padrões para todos os usuários
   let mobileNavItems = [
@@ -72,11 +73,23 @@ export function BottomNavigation() {
       }
     ];
   }
+  
+  // Para técnicos, adiciona o item "Orçamentos" ao menu fixo
+  if (isTechnician) {
+    mobileNavItems = [
+      ...mobileNavItems, // Mantém os itens padrão
+      {
+        name: "Orçamentos",
+        path: "/budgets",
+        icon: <FileText className="h-6 w-6" />,
+      }
+    ];
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">
       <div className="bg-gray-900 shadow-lg">
-        <div className={`grid ${isAdmin || isGestor ? 'grid-cols-4' : 'grid-cols-3'} h-16`}>
+        <div className={`grid ${isAdmin || isGestor || isTechnician ? 'grid-cols-4' : 'grid-cols-3'} h-16`}>
           {mobileNavItems.map((item) => {
             const isActive = location === item.path || 
                             (item.path !== "/dashboard" && location.startsWith(item.path));
