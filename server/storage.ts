@@ -17,7 +17,7 @@ import type {
   ManagerClientAssignment, InsertManagerClientAssignment
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, desc, or, sql } from "drizzle-orm";
+import { eq, and, like, desc, or, sql, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -416,7 +416,8 @@ export class DatabaseStorage implements IStorage {
       
       // Suporte para filtrar por múltiplos IDs de clientes (para gestores)
       if (filters.clientIds && filters.clientIds.length > 0) {
-        query = query.where(sql`${services.client_id} IN (${filters.clientIds.join(',')})`);
+        // Usar o operador 'inArray' para comparar com uma lista de IDs
+        query = query.where(inArray(services.client_id, filters.clientIds));
       }
     }
     
@@ -644,9 +645,11 @@ export class DatabaseStorage implements IStorage {
     
     // Condições base para todos os filtros (excluir serviços deletados)
     const baseConditions = [
-      sql`${services.status} != 'deleted'`,
-      sql`${services.client_id} IN (${clientIds.join(',')})`
+      sql`${services.status} != 'deleted'`
     ];
+    
+    // Adicionar condição de clientes com inArray
+    baseConditions.push(inArray(services.client_id, clientIds));
     
     // 1. Total de OS pendentes dos clientes do gestor
     const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
