@@ -145,7 +145,8 @@ async function generateTestData() {
       is_vertical: false,
       is_aluminum: false,
       notes: "Capô danificado por tempestade de granizo",
-      vehicle_info: "Toyota Corolla 2022 - Prata"
+      vehicle_info: "Toyota Corolla 2022 - Prata",
+      date: new Date().toISOString().split('T')[0]
     },
     {
       client_id: createdClients[0].id,
@@ -158,7 +159,8 @@ async function generateTestData() {
       is_vertical: true,
       is_aluminum: false,
       notes: "Porta motorista amassada",
-      vehicle_info: "Honda Civic 2021 - Preto"
+      vehicle_info: "Honda Civic 2021 - Preto",
+      date: new Date().toISOString().split('T')[0]
     },
     // Orçamentos para Transportes Rápidos
     {
@@ -171,7 +173,9 @@ async function generateTestData() {
       size: 1, // pequeno
       is_vertical: false,
       is_aluminum: false,
-      notes: "Teto com múltiplos amassados"
+      notes: "Teto com múltiplos amassados",
+      vehicle_info: "Volkswagen Amarok 2023 - Branco",
+      date: new Date().toISOString().split('T')[0]
     },
     {
       client_id: createdClients[1].id,
@@ -183,7 +187,9 @@ async function generateTestData() {
       size: 0, // não aplicável
       is_vertical: false,
       is_aluminum: false,
-      notes: "Repintura de porta lateral"
+      notes: "Repintura de porta lateral",
+      vehicle_info: "Mercedes-Benz Sprinter 2020 - Branco",
+      date: new Date().toISOString().split('T')[0]
     },
     // Orçamentos para Construtora Horizonte
     {
@@ -196,7 +202,9 @@ async function generateTestData() {
       size: 4, // muito grande
       is_vertical: true,
       is_aluminum: true,
-      notes: "Lateral da caçamba amassada"
+      notes: "Lateral da caçamba amassada",
+      vehicle_info: "Ford F-4000 2021 - Amarelo",
+      date: new Date().toISOString().split('T')[0]
     },
     {
       client_id: createdClients[2].id,
@@ -208,7 +216,8 @@ async function generateTestData() {
       size: 2, // médio
       is_vertical: false,
       is_aluminum: false,
-      notes: "Capô, teto e porta-malas com danos de granizo"
+      notes: "Capô, teto e porta-malas com danos de granizo",
+      vehicle_info: "Toyota Hilux 2022 - Prata"
     }
   ];
 
