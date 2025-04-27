@@ -299,7 +299,9 @@ function calculateValue(aw: number) {
   // Taxa base por AW (valor em euros)
   const ratePerAw = 2.8;
   
-  return aw * ratePerAw;
+  // Arredonda para 2 casas decimais e depois para um número inteiro se for um valor exato
+  const value = Math.round((aw * ratePerAw) * 100) / 100;
+  return value;
 }
 
 export default function BudgetPage() {
@@ -736,7 +738,7 @@ export default function BudgetPage() {
                         type="number"
                         min="0"
                         max="99999"
-                        value={totalAw}
+                        value={Math.round(totalAw)}
                         onChange={(e) => setTotalAw(Number(e.target.value))}
                         onFocus={(e) => e.target.select()}
                         autoComplete="off"
@@ -752,7 +754,7 @@ export default function BudgetPage() {
                         type="number"
                         min="0"
                         max="9999999"
-                        value={totalValue}
+                        value={totalValue.toFixed(2)}
                         onChange={(e) => setTotalValue(Number(e.target.value))}
                         onFocus={(e) => e.target.select()}
                         autoComplete="off"
@@ -852,8 +854,8 @@ export default function BudgetPage() {
                       <TableCell>{budget.client_name}</TableCell>
                       <TableCell>{budget.vehicle_info}</TableCell>
                       <TableCell>{formatDate(budget.date)}</TableCell>
-                      {!isGestor && <TableCell>{budget.total_aw}</TableCell>}
-                      {!isGestor && <TableCell className="text-right">{formatCurrency(budget.total_value || 0)}</TableCell>}
+                      {!isGestor && <TableCell>{Math.round(budget.total_aw || 0)}</TableCell>}
+                      {!isGestor && <TableCell className="text-right">{formatCurrency(Number((budget.total_value || 0).toFixed(2)))}</TableCell>}
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
