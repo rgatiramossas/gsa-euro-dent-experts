@@ -34,7 +34,7 @@ export default function ManagerDashboard() {
   });
   
   // Obter serviços dos clientes do gestor
-  const { data: services, isLoading: servicesLoading } = useQuery<ServiceListItem[]>({
+  const { data: services = [], isLoading: servicesLoading } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services', { clientId: clientFilter !== "all" ? clientFilter : undefined }],
   });
   
