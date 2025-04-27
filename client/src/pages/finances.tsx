@@ -388,6 +388,10 @@ export default function Finances() {
   const { data: techFinanceStats, isLoading: isLoadingFinanceStats, error: techFinanceError } = useQuery({
     queryKey: ['/api/technician/financial-stats'],
     enabled: !isAdmin && currentUser?.role === 'technician',
+    queryFn: () => fetch('/api/technician/financial-stats').then(res => {
+      if (!res.ok) throw new Error('Erro ao obter dados financeiros');
+      return res.json();
+    })
   });
   
   // Logs para diagnóstico

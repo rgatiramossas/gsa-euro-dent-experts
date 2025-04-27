@@ -1561,10 +1561,10 @@ export class DatabaseStorage implements IStorage {
     
     // Buscar a relação entre serviços e pagamentos
     const servicePaymentRelations = await db.select()
-      .from(servicePaymentRequests)
+      .from(paymentRequestItems)
       .where(
         inArray(
-          servicePaymentRequests.payment_request_id, 
+          paymentRequestItems.payment_request_id, 
           paymentRequestsList.map(pr => pr.id)
         )
       );
