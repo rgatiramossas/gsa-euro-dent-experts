@@ -271,11 +271,9 @@ async function createServiceTypes() {
   
   // Tipos de serviço para inserir
   const typesToInsert = [
-    { name: 'Reparo de Granizo', description: 'Reparo de danos causados por granizo' },
-    { name: 'Pintura', description: 'Serviço de pintura automotiva' },
-    { name: 'Polimento', description: 'Polimento de carroceria' },
-    { name: 'Reparo de Amassados', description: 'Reparação de amassados sem danificar a pintura' },
-    { name: 'Manutenção Preventiva', description: 'Verificação geral e manutenção preventiva' }
+    { name: 'Amassado de Rua', description: 'Reparo de amassados de rua sem pintura', base_price: 150 },
+    { name: 'Granizo', description: 'Reparo de danos causados por granizo', base_price: 250 },
+    { name: 'Outros', description: 'Outros tipos de reparos sem pintura', base_price: 350 }
   ];
   
   const insertedTypes = [];

@@ -307,9 +307,9 @@ async function createServiceTypes() {
   
   // Tipos de serviço para inserir (isto não será executado pois já temos tipos de serviço)
   const typesToInsert = [
-    { name: 'Martelinho de Ouro - Pequeno', description: 'Reparo de amassados pequenos sem pintura' },
-    { name: 'Martelinho de Ouro - Médio', description: 'Reparo de amassados médios sem pintura' },
-    { name: 'Martelinho de Ouro - Grande', description: 'Reparo de amassados grandes sem pintura' }
+    { name: 'Amassado de Rua', description: 'Reparo de amassados de rua sem pintura', base_price: 150 },
+    { name: 'Granizo', description: 'Reparo de danos causados por granizo', base_price: 250 },
+    { name: 'Outros', description: 'Outros tipos de reparos sem pintura', base_price: 350 }
   ];
   
   const insertedIds: number[] = [];

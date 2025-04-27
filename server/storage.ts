@@ -225,20 +225,20 @@ export class DatabaseStorage implements IStorage {
       
       // Create service types
       await this.createServiceType({
-        name: "Martelinho de Ouro - Pequeno",
-        description: "Reparo de amassados pequenos sem pintura",
+        name: "Amassado de Rua",
+        description: "Reparo de amassados de rua sem pintura",
         base_price: 150
       });
       
       await this.createServiceType({
-        name: "Martelinho de Ouro - Médio",
-        description: "Reparo de amassados médios sem pintura",
+        name: "Granizo",
+        description: "Reparo de danos causados por granizo",
         base_price: 250
       });
       
       await this.createServiceType({
-        name: "Martelinho de Ouro - Grande",
-        description: "Reparo de amassados grandes sem pintura",
+        name: "Outros",
+        description: "Outros tipos de reparos sem pintura",
         base_price: 350
       });
       
