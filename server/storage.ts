@@ -1,7 +1,7 @@
 import { 
   users, clients, vehicles, serviceTypes, services, servicePhotos, 
   eventTypes, events, paymentRequests, paymentRequestItems, expenses,
-  managerClientAssignments
+  managerClientAssignments, budgets
 } from "@shared/schema";
 import type { 
   User, InsertUser, 
@@ -14,7 +14,8 @@ import type {
   Event, InsertEvent,
   PaymentRequest, PaymentRequestItem,
   Expense, InsertExpense,
-  ManagerClientAssignment, InsertManagerClientAssignment
+  ManagerClientAssignment, InsertManagerClientAssignment,
+  Budget, InsertBudget
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, desc, or, sql, inArray } from "drizzle-orm";
@@ -103,7 +104,7 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Corrigir erro de tipagem do session.SessionStore
   
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 
@@ -112,6 +113,64 @@ export class DatabaseStorage implements IStorage {
       tableName: 'session' 
     });
     this.initializeSampleData();
+  }
+  
+  // Budget methods
+  async getBudget(id: number): Promise<Budget | undefined> {
+    const [budget] = await db.select().from(budgets).where(eq(budgets.id, id));
+    
+    if (budget) {
+      // Buscar informações adicionais do cliente
+      const [client] = await db.select().from(clients).where(eq(clients.id, budget.client_id));
+      
+      return {
+        ...budget,
+        client_name: client?.name || 'Cliente não encontrado'
+      } as any;
+    }
+    
+    return budget;
+  }
+  
+  async createBudget(insertBudget: InsertBudget): Promise<Budget> {
+    const [budget] = await db.insert(budgets).values(insertBudget).returning();
+    return budget;
+  }
+  
+  async updateBudget(id: number, budgetData: Partial<Budget>): Promise<Budget | undefined> {
+    const [updatedBudget] = await db.update(budgets)
+      .set(budgetData)
+      .where(eq(budgets.id, id))
+      .returning();
+    return updatedBudget;
+  }
+  
+  async deleteBudget(id: number): Promise<boolean> {
+    const result = await db.delete(budgets).where(eq(budgets.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+  
+  async listBudgets(): Promise<Budget[]> {
+    // Buscar orçamentos com informações dos clientes
+    const budgetsList = await db.select({
+      id: budgets.id,
+      client_id: budgets.client_id,
+      vehicle_info: budgets.vehicle_info,
+      date: budgets.date,
+      total_aw: budgets.total_aw,
+      total_value: budgets.total_value,
+      photo_url: budgets.photo_url,
+      note: budgets.note,
+      plate: budgets.plate,
+      chassisNumber: budgets.chassisNumber,
+      created_at: budgets.created_at,
+      client_name: clients.name
+    })
+    .from(budgets)
+    .leftJoin(clients, eq(budgets.client_id, clients.id))
+    .orderBy(desc(budgets.date));
+    
+    return budgetsList;
   }
   
   private async initializeSampleData(): Promise<void> {

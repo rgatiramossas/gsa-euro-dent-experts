@@ -18,6 +18,7 @@ import {
   insertServicePhotoSchema,
   insertEventTypeSchema,
   insertEventSchema,
+  insertBudgetSchema,
   expenses
 } from "@shared/schema";
 import { z } from "zod";
@@ -1599,6 +1600,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Erro ao obter clientes do gestor:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Rotas para orçamentos (budgets)
+  app.get("/api/budgets", requireAuth, async (req, res) => {
+    try {
+      const budgets = await storage.listBudgets();
+      res.json(budgets);
+    } catch (error) {
+      console.error("Erro ao listar orçamentos:", error);
+      res.status(500).json({ message: "Erro ao listar orçamentos" });
+    }
+  });
+  
+  app.get("/api/budgets/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const budget = await storage.getBudget(Number(id));
+      
+      if (!budget) {
+        return res.status(404).json({ message: "Orçamento não encontrado" });
+      }
+      
+      res.json(budget);
+    } catch (error) {
+      console.error(`Erro ao buscar orçamento ID ${req.params.id}:`, error);
+      res.status(500).json({ message: "Erro ao buscar orçamento" });
+    }
+  });
+  
+  app.post("/api/budgets", requireAuth, async (req, res) => {
+    try {
+      const budgetData = insertBudgetSchema.parse(req.body);
+      const budget = await storage.createBudget(budgetData);
+      res.status(201).json(budget);
+    } catch (error) {
+      console.error("Erro ao criar orçamento:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Dados inválidos para criação de orçamento", 
+          errors: error.errors 
+        });
+      }
+      
+      res.status(500).json({ message: "Erro ao criar orçamento" });
+    }
+  });
+  
+  app.patch("/api/budgets/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const budgetData = req.body;
+      
+      // Verificar se o orçamento existe
+      const existingBudget = await storage.getBudget(Number(id));
+      if (!existingBudget) {
+        return res.status(404).json({ message: "Orçamento não encontrado" });
+      }
+      
+      const updatedBudget = await storage.updateBudget(Number(id), budgetData);
+      res.json(updatedBudget);
+    } catch (error) {
+      console.error(`Erro ao atualizar orçamento ID ${req.params.id}:`, error);
+      res.status(500).json({ message: "Erro ao atualizar orçamento" });
+    }
+  });
+  
+  app.delete("/api/budgets/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verificar se o orçamento existe
+      const existingBudget = await storage.getBudget(Number(id));
+      if (!existingBudget) {
+        return res.status(404).json({ message: "Orçamento não encontrado" });
+      }
+      
+      const deleted = await storage.deleteBudget(Number(id));
+      
+      if (deleted) {
+        res.status(200).json({ message: "Orçamento excluído com sucesso" });
+      } else {
+        res.status(500).json({ message: "Erro ao excluir orçamento" });
+      }
+    } catch (error) {
+      console.error(`Erro ao excluir orçamento ID ${req.params.id}:`, error);
+      res.status(500).json({ message: "Erro ao excluir orçamento" });
     }
   });
 
