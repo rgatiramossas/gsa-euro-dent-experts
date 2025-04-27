@@ -3,23 +3,23 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import * as schema from "@shared/schema";
 
 // Verificar se todas as variáveis de ambiente necessárias estão definidas
-if (!process.env.AWS_DB_HOST || 
-    !process.env.AWS_DB_USER || 
-    !process.env.AWS_DB_PASSWORD || 
-    !process.env.AWS_DB_NAME || 
-    !process.env.AWS_DB_PORT) {
+if (!process.env.MYSQL_HOST || 
+    !process.env.MYSQL_USER || 
+    !process.env.MYSQL_PASSWORD || 
+    !process.env.MYSQL_DATABASE || 
+    !process.env.MYSQL_PORT) {
   throw new Error(
-    "AWS_DB_HOST, AWS_DB_USER, AWS_DB_PASSWORD, AWS_DB_NAME e AWS_DB_PORT devem estar configurados."
+    "MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE e MYSQL_PORT devem estar configurados."
   );
 }
 
 // Configuração da conexão MySQL
 const connectionConfig = {
-  host: process.env.AWS_DB_HOST,
-  user: process.env.AWS_DB_USER,
-  password: process.env.AWS_DB_PASSWORD,
-  database: process.env.AWS_DB_NAME,
-  port: parseInt(process.env.AWS_DB_PORT || '3306'),
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: parseInt(process.env.MYSQL_PORT || '3306'),
   ssl: false // Desabilitar SSL para desenvolvimento
 };
 
