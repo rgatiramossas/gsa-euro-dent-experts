@@ -47,7 +47,7 @@ export function BottomNavigation() {
     ];
   }
   
-  // Para gestores, mostra o menu padrão: Início, Clientes, Serviços (sem acesso a financeiro)
+  // Para gestores, mostra o menu fixo: Início, Clientes, Serviços, Orçamentos
   if (isGestor) {
     mobileNavItems = [
       {
@@ -64,6 +64,11 @@ export function BottomNavigation() {
         name: "Serviços",
         path: "/services",
         icon: <Briefcase className="h-6 w-6" />,
+      },
+      {
+        name: "Orçamentos",
+        path: "/budget",
+        icon: <FileText className="h-6 w-6" />,
       }
     ];
   }
@@ -71,7 +76,7 @@ export function BottomNavigation() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">
       <div className="bg-gray-900 shadow-lg">
-        <div className={`grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} h-16`}>
+        <div className={`grid ${isAdmin || isGestor ? 'grid-cols-4' : 'grid-cols-3'} h-16`}>
           {mobileNavItems.map((item) => {
             const isActive = location === item.path || 
                             (item.path !== "/dashboard" && location.startsWith(item.path));

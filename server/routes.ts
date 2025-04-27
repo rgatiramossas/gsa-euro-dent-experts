@@ -1780,7 +1780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/budgets", requireAuth, async (req, res) => {
     try {
       // Se for gestor, mostra apenas orçamentos dos seus clientes
-      if (req.session.userRole === "gestor") {
+      if (req.session.userRole === "gestor" || req.session.userRole === "manager") {
         const managerId = Number(req.session.userId);
         
         // Obter IDs dos clientes atribuídos a este gestor
@@ -1821,7 +1821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verificar acesso para gestores
-      if (req.session.userRole === "gestor") {
+      if (req.session.userRole === "gestor" || req.session.userRole === "manager") {
         const managerId = Number(req.session.userId);
         
         // Obter clientes atribuídos ao gestor
