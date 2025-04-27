@@ -313,6 +313,7 @@ export default function BudgetPage() {
   
   // Estados para o formulário
   const [showDialog, setShowDialog] = useState(false);
+  const [showViewDialog, setShowViewDialog] = useState(false); // Dialog separado para visualização
   const [isViewMode, setIsViewMode] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   
@@ -509,7 +510,13 @@ export default function BudgetPage() {
       setLicensePlate(budget.plate || '');
       setChassisNumber(budget.chassisNumber || '');
       setIsViewMode(true);
-      setShowDialog(true);
+      
+      // Abre o dialog adequado dependendo do tipo de usuário
+      if (isGestor) {
+        setShowViewDialog(true); // Diálogo de visualização para gestores
+      } else {
+        setShowDialog(true); // Diálogo principal para técnicos/admin
+      }
     }
   };
 
@@ -809,6 +816,163 @@ export default function BudgetPage() {
           </Dialog>
         )}
       </div>
+      
+      {/* Dialog de Visualização para Gestores */}
+      <Dialog open={showViewDialog} onOpenChange={(open) => {
+        if (!open) {
+          setIsViewMode(false);
+          setSelectedBudget(null);
+        }
+        setShowViewDialog(open);
+      }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              Visualizar Orçamento #{selectedBudget?.id}
+            </DialogTitle>
+            <DialogDescription>
+              Detalhes do orçamento para {selectedBudget?.client_name}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto">
+            {/* Formulário simplificado */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date-view">Data</Label>
+                  <Input
+                    id="date-view"
+                    type="date"
+                    value={date}
+                    readOnly
+                    disabled
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="client-view">Cliente</Label>
+                  <Input
+                    id="client-view"
+                    value={selectedBudget?.client_name || ""}
+                    readOnly
+                    disabled
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="vehicleInfo-view">Veículo</Label>
+                  <Input
+                    id="vehicleInfo-view"
+                    value={manualVehicleInfo}
+                    readOnly
+                    disabled
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="licensePlate-view">Placa</Label>
+                  <Input
+                    id="licensePlate-view"
+                    value={licensePlate}
+                    readOnly
+                    disabled
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="chassisNumber-view">Chassi</Label>
+                  <Input
+                    id="chassisNumber-view"
+                    value={chassisNumber}
+                    readOnly
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Grid de Peças do Carro */}
+            <div className="space-y-4">
+              <Label>Danos do Veículo</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {/* Linha 1 */}
+                <DamagedPartItem partKey="paraLamaEsquerdo" label="Para-lama Esquerdo" isViewMode={true} />
+                <DamagedPartItem partKey="capo" label="Capô" isHorizontal={true} isViewMode={true} />
+                <DamagedPartItem partKey="paraLamaDireito" label="Para-lama Direito" isViewMode={true} />
+                
+                {/* Linha 2 */}
+                <DamagedPartItem partKey="colunaEsquerda" label="Coluna Esquerda" isViewMode={true} />
+                <DamagedPartItem partKey="teto" label="Teto" isHorizontal={true} isViewMode={true} />
+                <DamagedPartItem partKey="colunaDireita" label="Coluna Direita" isViewMode={true} />
+                
+                {/* Linha 3 */}
+                <DamagedPartItem partKey="portaDianteiraEsquerda" label="Porta Dianteira Esq." isViewMode={true} />
+                
+                <div className="flex justify-center items-center p-2 border rounded-md">
+                  {photoUrl ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px]">
+                      <img 
+                        src={photoUrl} 
+                        alt="Foto do veículo" 
+                        className="max-h-[135px] max-w-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] text-gray-400">
+                      <CameraIcon className="h-10 w-10 mb-2" />
+                      <span className="text-sm">Sem foto</span>
+                    </div>
+                  )}
+                </div>
+                
+                <DamagedPartItem partKey="portaDianteiraDireita" label="Porta Dianteira Dir." isViewMode={true} />
+                
+                {/* Linha 4 */}
+                <DamagedPartItem partKey="portaTraseiraEsquerda" label="Porta Traseira Esq." isViewMode={true} />
+                <DamagedPartItem partKey="portaMalasSuperior" label="Porta Malas Superior" isHorizontal={true} isViewMode={true} />
+                <DamagedPartItem partKey="portaTraseiraDireita" label="Porta Traseira Dir." isViewMode={true} />
+                
+                {/* Linha 5 */}
+                <DamagedPartItem partKey="lateralEsquerda" label="Lateral Esquerda" isViewMode={true} />
+                <DamagedPartItem partKey="portaMalasInferior" label="Porta Malas Inferior" isViewMode={true} />
+                <DamagedPartItem partKey="lateralDireita" label="Lateral Direita" isViewMode={true} />
+              </div>
+            </div>
+            
+            {/* Materiais Especiais */}
+            <div className="space-y-2">
+              <Label>Materiais Especiais</Label>
+              <div className="text-sm border p-2 rounded bg-muted">
+                <strong>MATERIAIS ESPECIAIS:</strong><br />
+                A= ALUMÍNIO   K= COLA   P= PINTURA
+              </div>
+            </div>
+            
+            {/* Observações */}
+            <div className="space-y-2">
+              <Label htmlFor="note-view">Observações</Label>
+              <Textarea
+                id="note-view"
+                value={note}
+                readOnly
+                disabled
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowViewDialog(false)}
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <div className="grid gap-6 mt-6">
         <Card>
