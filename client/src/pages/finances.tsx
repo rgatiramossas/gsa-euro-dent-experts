@@ -123,6 +123,16 @@ export default function Finances() {
   const isAdmin = currentUser?.role === "admin";
   const { toast } = useToast();
   
+  // Obter dados financeiros do técnico
+  const { data: techFinanceStats, isLoading: isLoadingFinanceStats, error: techFinanceError } = useQuery({
+    queryKey: ['/api/technician/financial-stats'],
+    enabled: !isAdmin && currentUser?.role === 'technician',
+    queryFn: () => fetch('/api/technician/financial-stats').then(res => {
+      if (!res.ok) throw new Error('Erro ao obter dados financeiros');
+      return res.json();
+    })
+  });
+  
   // Formulário de despesas
   const expenseForm = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
@@ -384,21 +394,9 @@ export default function Finances() {
     );
   }
   
-  // Obter dados financeiros do técnico
-  const { data: techFinanceStats, isLoading: isLoadingFinanceStats, error: techFinanceError } = useQuery({
-    queryKey: ['/api/technician/financial-stats'],
-    enabled: !isAdmin && currentUser?.role === 'technician',
-    queryFn: () => fetch('/api/technician/financial-stats').then(res => {
-      if (!res.ok) throw new Error('Erro ao obter dados financeiros');
-      return res.json();
-    })
-  });
-  
   // Logs para diagnóstico
   console.log("Usuário:", currentUser);
   console.log("Perfil técnico?", currentUser?.role === 'technician');
-  console.log("Dados financeiros:", techFinanceStats);
-  console.log("Erro na requisição:", techFinanceError);
 
   // Interface para técnicos (Dashboard Financeiro e Pedidos de Pagamento)
   if (!isAdmin) {
