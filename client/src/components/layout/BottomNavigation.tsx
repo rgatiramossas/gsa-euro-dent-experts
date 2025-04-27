@@ -32,11 +32,6 @@ export function BottomNavigation() {
       name: "Serviços",
       path: "/services",
       icon: <Briefcase className="h-6 w-6" />,
-    },
-    {
-      name: "Orcamento",
-      path: "/budget",
-      icon: <FileText className="h-6 w-6" />,
     }
   ];
   
@@ -52,7 +47,7 @@ export function BottomNavigation() {
     ];
   }
   
-  // Para gestores, mostra o menu padrão: Início, Clientes, Serviços, Orcamento (sem acesso a financeiro)
+  // Para gestores, mostra o menu padrão: Início, Clientes, Serviços (sem acesso a financeiro)
   if (isGestor) {
     mobileNavItems = [
       {
@@ -69,11 +64,6 @@ export function BottomNavigation() {
         name: "Serviços",
         path: "/services",
         icon: <Briefcase className="h-6 w-6" />,
-      },
-      {
-        name: "Orcamento",
-        path: "/budget",
-        icon: <FileText className="h-6 w-6" />,
       }
     ];
   }
