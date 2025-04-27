@@ -334,8 +334,19 @@ export class DatabaseStorage implements IStorage {
   
   // Client methods
   async getClient(id: number): Promise<Client | undefined> {
-    const [client] = await db.select().from(clients).where(eq(clients.id, id));
-    return client;
+    try {
+      // Verificar se o ID é válido
+      if (!id || isNaN(id) || id <= 0) {
+        console.error(`ID de cliente inválido: ${id}`);
+        return undefined;
+      }
+      
+      const [client] = await db.select().from(clients).where(eq(clients.id, id));
+      return client;
+    } catch (error) {
+      console.error(`Erro ao obter cliente ID ${id}:`, error);
+      return undefined;
+    }
   }
   
   async createClient(insertClient: InsertClient): Promise<Client> {
@@ -433,8 +444,19 @@ export class DatabaseStorage implements IStorage {
   
   // Vehicle methods
   async getVehicle(id: number): Promise<Vehicle | undefined> {
-    const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, id));
-    return vehicle;
+    try {
+      // Verificar se o ID é válido
+      if (!id || isNaN(id) || id <= 0) {
+        console.error(`ID de veículo inválido: ${id}`);
+        return undefined;
+      }
+      
+      const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, id));
+      return vehicle;
+    } catch (error) {
+      console.error(`Erro ao obter veículo ID ${id}:`, error);
+      return undefined;
+    }
   }
   
   async createVehicle(insertVehicle: InsertVehicle): Promise<Vehicle> {
@@ -513,6 +535,12 @@ export class DatabaseStorage implements IStorage {
   // Service methods
   async getService(id: number): Promise<Service | undefined> {
     try {
+      // Verificar se o ID é válido
+      if (!id || isNaN(id) || id <= 0) {
+        console.error(`ID de serviço inválido: ${id}`);
+        return undefined;
+      }
+      
       // Selecionar apenas colunas que existem na tabela MySQL
       const selectColumns = {
         id: services.id,
@@ -552,7 +580,7 @@ export class DatabaseStorage implements IStorage {
       
       return service;
     } catch (error) {
-      console.error("Erro ao obter serviço:", error);
+      console.error(`Erro ao obter serviço ID ${id}:`, error);
       return undefined;
     }
   }
