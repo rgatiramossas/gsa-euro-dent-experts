@@ -1473,14 +1473,14 @@ export default function Finances() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ) : !expenses || expenses.length === 0 ? (
+                  ) : !filteredExpenses || filteredExpenses.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                        Nenhuma despesa encontrada
+                        Nenhuma despesa encontrada para o período selecionado
                       </TableCell>
                     </TableRow>
                   ) : (
-                    expenses.map((expense) => (
+                    filteredExpenses.map((expense) => (
                       <TableRow key={expense.id} className="hover:bg-gray-50">
                         <TableCell>{formatDate(expense.date)}</TableCell>
                         <TableCell>{expense.description}</TableCell>
