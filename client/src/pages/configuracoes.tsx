@@ -11,12 +11,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { apiRequest } from "@/lib/queryClient";
+import { AuthUser } from "@/types";
+import { Link } from "wouter";
+import { UserPlusIcon, Users, Settings } from "lucide-react";
 
 // Schema para validação do formulário de perfil
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres" }),
   email: z.string().email({ message: "Por favor, digite um e-mail válido" }),
-  phone: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -36,6 +38,7 @@ type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 export default function ConfiguracoesPage() {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
+  const isAdmin = user?.role === 'admin';
 
   // Formulário de perfil
   const profileForm = useForm<ProfileFormValues>({
@@ -43,7 +46,6 @@ export default function ConfiguracoesPage() {
     defaultValues: {
       name: user?.name || "",
       email: user?.email || "",
-      phone: user?.phone || "",
     },
   });
 
@@ -67,7 +69,6 @@ export default function ConfiguracoesPage() {
           ...user,
           name: data.name,
           email: data.email,
-          phone: data.phone,
         });
       }
 
@@ -161,20 +162,7 @@ export default function ConfiguracoesPage() {
                     )}
                   />
                   
-                  <FormField
-                    control={profileForm.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telefone</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormDescription>Opcional</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
                   
                   <div className="flex justify-end pt-4">
                     <Button 
@@ -257,6 +245,35 @@ export default function ConfiguracoesPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {isAdmin && (
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Opções de Administrador</CardTitle>
+              <CardDescription>
+                Gerencie técnicos e gestores do sistema.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/technicians">
+                  <Button className="w-full sm:w-auto">
+                    <UserPlusIcon className="mr-2 h-4 w-4" />
+                    Gerenciar Técnicos
+                  </Button>
+                </Link>
+                <Link href="/managers">
+                  <Button className="w-full sm:w-auto">
+                    <Users className="mr-2 h-4 w-4" />
+                    Gerenciar Gestores
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
