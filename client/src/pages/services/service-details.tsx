@@ -123,7 +123,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       description: "",
       notes: "",
       price: 0,
-      displacement_fee: 0,
+      /* Taxa de deslocamento removida */
       administrative_fee: 0,
       location_type: "workshop" as "client_location" | "workshop",
       address: "",
@@ -143,7 +143,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         description: service.description || "",
         notes: service.notes || "",
         price: service.price || 0,
-        displacement_fee: service.displacement_fee || 0,
+        /* Taxa de deslocamento removida */
         administrative_fee: service.administrative_fee || 0,
         location_type: service.location_type as "client_location" | "workshop",
         address: service.address || "",
@@ -272,7 +272,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         description: service.description || "",
         notes: service.notes || "",
         price: service.price || 0,
-        displacement_fee: service.displacement_fee || 0,
+        /* Taxa de deslocamento removida */
         administrative_fee: service.administrative_fee || 0,
         location_type: service.location_type as "client_location" | "workshop",
         address: service.address || "",
