@@ -69,8 +69,7 @@ export default function NewManager() {
   // Create manager mutation
   const createManagerMutation = useMutation({
     mutationFn: async (data: Omit<FormData, "confirmPassword"> & { clientIds?: number[] }) => {
-      const res = await apiRequest('POST', '/api/users', data);
-      return res.json();
+      return await apiRequest('/api/users', 'POST', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });

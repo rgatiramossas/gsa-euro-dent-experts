@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
-import { DollarSign, Calendar } from "lucide-react";
+import { DollarSign, Calendar, Settings } from "lucide-react";
 
 // Não precisamos mais da interface HeaderProps já que não temos mais o sidebar
 export function Header() {
@@ -113,7 +113,11 @@ export function Header() {
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {/* Bloco para configurações removido conforme solicitado */}
+                <DropdownMenuItem onSelect={() => setLocation("/configuracoes")}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configurações
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={handleLogout}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
