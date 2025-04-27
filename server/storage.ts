@@ -372,22 +372,27 @@ export class DatabaseStorage implements IStorage {
   
   async listClients(): Promise<Client[]> {
     try {
-      // Verificando quais colunas existem na tabela MySQL
-      console.log("Selecionando clientes com colunas existentes");
-      const result = await db.select({
+      // Precisamos selecionar apenas campos que existem no MySQL
+      // e ajustar o resultado para incluir campos que podem não existir na tabela
+      console.log("Selecionando clientes apenas com colunas existentes");
+      
+      const basicResult = await db.select({
         id: clients.id,
         name: clients.name,
         email: clients.email,
         phone: clients.phone,
         address: clients.address,
         notes: clients.notes,
-        created_at: clients.created_at,
-        // Adicionamos defaults para as colunas que não existem no MySQL
-        // mas são esperadas pelo tipo Client
-        city: sql`NULL`.as("city"),
-        state: sql`NULL`.as("state"),
-        zip: sql`NULL`.as("zip")
+        created_at: clients.created_at
       }).from(clients);
+      
+      // Adicionar campos ausentes ao resultado
+      const result = basicResult.map(client => ({
+        ...client,
+        city: null,
+        state: null,
+        zip: null
+      }));
       
       return result;
     } catch (error) {
@@ -398,21 +403,27 @@ export class DatabaseStorage implements IStorage {
   
   async searchClients(query: string): Promise<Client[]> {
     try {
-      return db.select({
+      const basicResult = await db.select({
         id: clients.id,
         name: clients.name,
         email: clients.email,
         phone: clients.phone,
         address: clients.address,
         notes: clients.notes,
-        created_at: clients.created_at,
-        // Adicionando campos que podem não existir no MySQL
-        city: sql`NULL`.as("city"),
-        state: sql`NULL`.as("state"),
-        zip: sql`NULL`.as("zip")
+        created_at: clients.created_at
       }).from(clients).where(
         like(clients.name, `%${query}%`)
       );
+      
+      // Adicionar campos ausentes ao resultado
+      const result = basicResult.map(client => ({
+        ...client,
+        city: null,
+        state: null,
+        zip: null
+      }));
+      
+      return result;
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
       return [];
@@ -1610,22 +1621,26 @@ export class DatabaseStorage implements IStorage {
     try {
       // Busca todos os clientes atribuídos a um gestor específico
       // Selecionando explicitamente as colunas que sabemos que existem no MySQL
-      const assignments = await db.select({
+      const basicAssignments = await db.select({
         id: clients.id,
         name: clients.name,
         email: clients.email,
         phone: clients.phone,
         address: clients.address,
         notes: clients.notes,
-        created_at: clients.created_at,
-        // Adicionando campos que podem não existir no MySQL
-        city: sql`NULL`.as("city"),
-        state: sql`NULL`.as("state"),
-        zip: sql`NULL`.as("zip")
+        created_at: clients.created_at
       })
       .from(managerClientAssignments)
       .innerJoin(clients, eq(managerClientAssignments.client_id, clients.id))
       .where(eq(managerClientAssignments.manager_id, managerId));
+      
+      // Adicionar campos ausentes ao resultado
+      const assignments = basicAssignments.map(client => ({
+        ...client,
+        city: null,
+        state: null,
+        zip: null
+      }));
       
       return assignments;
     } catch (error) {
