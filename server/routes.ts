@@ -545,6 +545,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clientIds = userData.client_ids;
       delete userData.client_ids; // Remover do objeto de dados do usuário
       
+      // Se houver senha no corpo da requisição, fazer o hash dela
+      if (userData.password && userData.password.trim() !== '') {
+        const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS || "12");
+        userData.password = await bcrypt.hash(userData.password, saltRounds);
+      } else {
+        // Se a senha estiver vazia, não atualizar este campo
+        delete userData.password;
+      }
+      
       // Atualizar os dados básicos do usuário
       const updatedUser = await storage.updateUser(userId, userData);
       

@@ -33,10 +33,27 @@ import { ClientSelector } from "@/components/forms/ClientSelector";
 // Extend the schema with more validations
 const formSchema = insertUserSchema.extend({
   email: z.string().email("Email inválido"),
-  password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres"),
+  password: z.string().superRefine((val, ctx) => {
+    // Se estivermos no modo de edição e a senha estiver vazia, é ok
+    // No modo de criação, exigimos pelo menos 8 caracteres
+    if (val && val.length > 0 && val.length < 8) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_small,
+        minimum: 8,
+        type: "string",
+        inclusive: true,
+        message: "A senha deve ter no mínimo 8 caracteres"
+      });
+    }
+  }),
   confirmPassword: z.string(),
   active: z.boolean().default(true),
-}).refine((data) => data.password === data.confirmPassword, {
+}).refine((data) => {
+  // Se ambos os campos estiverem vazios, é válido
+  if (!data.password && !data.confirmPassword) return true;
+  // Caso contrário, verifique se correspondem
+  return data.password === data.confirmPassword;
+}, {
   message: "As senhas não conferem",
   path: ["confirmPassword"],
 });
