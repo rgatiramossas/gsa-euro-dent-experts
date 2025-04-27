@@ -818,14 +818,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se for um gestor, remover campos financeiros
       if (userRole === "manager" || userRole === "gestor") {
         // Remover campos financeiros sensíveis
-        const { price, displacement_fee, administrative_fee, total, ...filteredDetails } = serviceDetails;
+        const { price, administrative_fee, total, ...filteredDetails } = serviceDetails;
         return res.json(filteredDetails);
       } else if (userRole === "technician" && Number(userId) !== serviceDetails.technician_id) {
         // Se for um técnico visualizando serviço de outro técnico
         // Remover taxa administrativa, mas manter o preço
         const { administrative_fee, ...filteredDetails } = serviceDetails;
         // Recalcular o total sem a taxa administrativa
-        filteredDetails.total = (serviceDetails.price || 0) + (serviceDetails.displacement_fee || 0);
+        filteredDetails.total = (serviceDetails.price || 0);
         return res.json(filteredDetails);
       }
       
@@ -871,8 +871,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const serviceInput = insertServiceSchema.parse(req.body);
         
-        // Calculate total
-        const total = (serviceInput.price || 0) + (serviceInput.displacement_fee || 0);
+        // Calculate total (price + administrative fee)
+        const total = (serviceInput.price || 0) + (serviceInput.administrative_fee || 0);
         
         console.log("Criando serviço com dados validados:", {
           ...serviceInput,
