@@ -247,6 +247,15 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
+      <Route path="/budgets">
+        <RequireAuth>
+          <MainLayout>
+            <Budget />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      
+      {/* Manter a rota antiga temporariamente para compatibilidade */}
       <Route path="/budget">
         <RequireAuth>
           <MainLayout>

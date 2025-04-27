@@ -67,7 +67,7 @@ export function BottomNavigation() {
       },
       {
         name: "Orçamentos",
-        path: "/budget",
+        path: "/budgets",
         icon: <FileText className="h-6 w-6" />,
       }
     ];
