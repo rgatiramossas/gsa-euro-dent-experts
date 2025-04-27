@@ -80,53 +80,192 @@ interface CarPart {
   damage: PartDamage;
 }
 
+// Definição dos dados iniciais para cada peça
+const initialDamagedParts: Record<string, PartDamage> = {
+  // Peças horizontais
+  capo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: true },
+  teto: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: true },
+  portaMalasSuperior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: true },
+  
+  // Peças verticais (padrão)
+  paraLamaEsquerdo: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  paraLamaDireito: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  colunaEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  colunaDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  portaDianteiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  portaDianteiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  portaTraseiraEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  portaTraseiraDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  lateralEsquerda: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  lateralDireita: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+  portaMalasInferior: { selected: false, diameter20: 0, diameter30: 0, diameter40: 0, optionA: false, optionK: false, optionP: false, isHorizontal: false },
+};
+
 // Definição do componente de peça danificada
-function DamagedPartItem({ partKey, label }: { partKey: string; label: string }) {
+function DamagedPartItem({ 
+  partKey, 
+  label, 
+  isHorizontal = false, 
+  isViewMode = false,
+  onChange
+}: { 
+  partKey: string; 
+  label: string; 
+  isHorizontal?: boolean; 
+  isViewMode?: boolean;
+  onChange?: (key: string, value: PartDamage) => void;
+}) {
+  const [damage, setDamage] = useState<PartDamage>(initialDamagedParts[partKey] || { 
+    selected: false, 
+    diameter20: 0, 
+    diameter30: 0, 
+    diameter40: 0, 
+    optionA: false, 
+    optionK: false, 
+    optionP: false, 
+    isHorizontal: isHorizontal 
+  });
+  
+  const updateDamage = (field: keyof PartDamage, value: any) => {
+    const updatedDamage = { ...damage, [field]: value };
+    
+    // Se algum campo for preenchido, marcamos a peça como selecionada
+    if (field === 'diameter20' || field === 'diameter30' || field === 'diameter40') {
+      const numValue = parseInt(value) || 0;
+      updatedDamage[field] = numValue;
+      
+      // Marca como selecionado se tiver algum valor
+      if (numValue > 0 || updatedDamage.optionA || updatedDamage.optionK || updatedDamage.optionP) {
+        updatedDamage.selected = true;
+      } else if (
+        updatedDamage.diameter20 === 0 && 
+        updatedDamage.diameter30 === 0 && 
+        updatedDamage.diameter40 === 0 &&
+        !updatedDamage.optionA && 
+        !updatedDamage.optionK && 
+        !updatedDamage.optionP
+      ) {
+        updatedDamage.selected = false;
+      }
+    }
+    
+    // Atualiza o estado local
+    setDamage(updatedDamage);
+    
+    // Notifica o componente pai sobre a mudança
+    if (onChange) {
+      onChange(partKey, updatedDamage);
+    }
+  };
+  
   return (
     <div className="border rounded-md p-2 space-y-2">
-      <div className="text-center mb-2">{label}</div>
+      <div className="text-center mb-2">
+        {label}
+        {isHorizontal && <span className="text-xs text-muted-foreground ml-1">(Horizontal)</span>}
+      </div>
       <div className="space-y-2">
         <div className="flex justify-between items-center">
           <span className="text-sm">20mm:</span>
           <Input 
-            type="text" 
+            type="number" 
             className="w-28"
-            readOnly={false}
+            readOnly={isViewMode}
+            disabled={isViewMode}
+            value={damage.diameter20 > 0 ? damage.diameter20.toString() : ''}
+            onChange={(e) => updateDamage('diameter20', e.target.value)}
+            min="0"
           />
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm">30mm:</span>
           <Input 
-            type="text" 
+            type="number" 
             className="w-28"
-            readOnly={false}
+            readOnly={isViewMode}
+            disabled={isViewMode}
+            value={damage.diameter30 > 0 ? damage.diameter30.toString() : ''}
+            onChange={(e) => updateDamage('diameter30', e.target.value)}
+            min="0"
           />
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm">40mm:</span>
           <Input 
-            type="text" 
+            type="number" 
             className="w-28"
-            readOnly={false}
+            readOnly={isViewMode}
+            disabled={isViewMode}
+            value={damage.diameter40 > 0 ? damage.diameter40.toString() : ''}
+            onChange={(e) => updateDamage('diameter40', e.target.value)}
+            min="0"
           />
         </div>
         <div className="flex justify-between pt-1">
           <div className="flex items-center gap-1">
-            <Checkbox id={`${partKey}-a`} />
+            <Checkbox 
+              id={`${partKey}-a`} 
+              checked={damage.optionA}
+              disabled={isViewMode}
+              onCheckedChange={(checked) => updateDamage('optionA', !!checked)}
+            />
             <Label htmlFor={`${partKey}-a`} className="rounded px-1 bg-red-100">A</Label>
           </div>
           <div className="flex items-center gap-1">
-            <Checkbox id={`${partKey}-k`} />
+            <Checkbox 
+              id={`${partKey}-k`} 
+              checked={damage.optionK}
+              disabled={isViewMode}
+              onCheckedChange={(checked) => updateDamage('optionK', !!checked)}
+            />
             <Label htmlFor={`${partKey}-k`} className="rounded px-1 bg-blue-100">K</Label>
           </div>
           <div className="flex items-center gap-1">
-            <Checkbox id={`${partKey}-p`} />
+            <Checkbox 
+              id={`${partKey}-p`} 
+              checked={damage.optionP}
+              disabled={isViewMode}
+              onCheckedChange={(checked) => updateDamage('optionP', !!checked)}
+            />
             <Label htmlFor={`${partKey}-p`} className="rounded px-1 bg-green-100">P</Label>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+// Função de cálculo do valor AW baseado nos danos das peças
+function calculateAw(parts: Record<string, PartDamage>) {
+  let totalAw = 0;
+  
+  // Itera sobre todas as peças
+  Object.values(parts).forEach(part => {
+    if (part.selected) {
+      // Calcula AW para cada diâmetro
+      const aw20 = part.isHorizontal ? part.diameter20 * 2 : part.diameter20;
+      const aw30 = part.isHorizontal ? part.diameter30 * 3 : part.diameter30 * 1.5;
+      const aw40 = part.isHorizontal ? part.diameter40 * 4 : part.diameter40 * 2;
+      
+      // Soma o AW de todos os diâmetros
+      totalAw += aw20 + aw30 + aw40;
+      
+      // Adiciona valor adicional para opções especiais
+      if (part.optionA) totalAw += 10; // Adicional para alumínio
+      if (part.optionK) totalAw += 5;  // Adicional para cola
+      if (part.optionP) totalAw += 15; // Adicional para pintura
+    }
+  });
+  
+  return Math.round(totalAw); // Arredonda para o número inteiro mais próximo
+}
+
+// Função de cálculo do valor monetário baseado no AW
+function calculateValue(aw: number) {
+  // Taxa base por AW (valor em euros)
+  const ratePerAw = 15;
+  
+  return aw * ratePerAw;
 }
 
 export default function BudgetPage() {
@@ -149,6 +288,7 @@ export default function BudgetPage() {
   const [note, setNote] = useState('');
   const [licensePlate, setLicensePlate] = useState('');
   const [chassisNumber, setChassisNumber] = useState('');
+  const [damagedParts, setDamagedParts] = useState<Record<string, PartDamage>>(initialDamagedParts);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Consultas
@@ -235,6 +375,24 @@ export default function BudgetPage() {
     },
   });
 
+  // Atualização quando uma peça é modificada
+  const handlePartChange = (key: string, updatedPart: PartDamage) => {
+    // Atualiza o estado das peças
+    const updatedParts = { 
+      ...damagedParts, 
+      [key]: updatedPart 
+    };
+    setDamagedParts(updatedParts);
+    
+    // Recalcula o AW total
+    const newAw = calculateAw(updatedParts);
+    setTotalAw(newAw);
+    
+    // Recalcula o valor monetário
+    const newValue = calculateValue(newAw);
+    setTotalValue(newValue);
+  };
+
   // Funções auxiliares
   const resetForm = () => {
     setDate(new Date().toISOString().split('T')[0]);
@@ -246,6 +404,7 @@ export default function BudgetPage() {
     setNote('');
     setLicensePlate('');
     setChassisNumber('');
+    setDamagedParts(initialDamagedParts);
     setIsViewMode(false);
     setSelectedBudget(null);
   };
@@ -452,17 +611,17 @@ export default function BudgetPage() {
                   <Label>Danos do Veículo</Label>
                   <div className="grid grid-cols-3 gap-2">
                     {/* Linha 1 */}
-                    <DamagedPartItem partKey="paraLamaEsquerdo" label="Para-lama Esquerdo" />
-                    <DamagedPartItem partKey="capo" label="Capô" />
-                    <DamagedPartItem partKey="paraLamaDireito" label="Para-lama Direito" />
+                    <DamagedPartItem partKey="paraLamaEsquerdo" label="Para-lama Esquerdo" isViewMode={isViewMode} onChange={handlePartChange} />
+                    <DamagedPartItem partKey="capo" label="Capô" isHorizontal={true} isViewMode={isViewMode} onChange={handlePartChange} />
+                    <DamagedPartItem partKey="paraLamaDireito" label="Para-lama Direito" isViewMode={isViewMode} onChange={handlePartChange} />
                     
                     {/* Linha 2 */}
-                    <DamagedPartItem partKey="colunaEsquerda" label="Coluna Esquerda" />
-                    <DamagedPartItem partKey="teto" label="Teto" />
-                    <DamagedPartItem partKey="colunaDireita" label="Coluna Direita" />
+                    <DamagedPartItem partKey="colunaEsquerda" label="Coluna Esquerda" isViewMode={isViewMode} onChange={handlePartChange} />
+                    <DamagedPartItem partKey="teto" label="Teto" isHorizontal={true} isViewMode={isViewMode} onChange={handlePartChange} />
+                    <DamagedPartItem partKey="colunaDireita" label="Coluna Direita" isViewMode={isViewMode} onChange={handlePartChange} />
                     
                     {/* Linha 3 */}
-                    <DamagedPartItem partKey="portaDianteiraEsquerda" label="Porta Dianteira Esq." />
+                    <DamagedPartItem partKey="portaDianteiraEsquerda" label="Porta Dianteira Esq." isViewMode={isViewMode} onChange={handlePartChange} />
                     
                     <div className="flex justify-center items-center p-2 border rounded-md">
                       {/* Input file oculto */}
@@ -510,17 +669,17 @@ export default function BudgetPage() {
                       )}
                     </div>
                     
-                    <DamagedPartItem partKey="portaDianteiraDireita" label="Porta Dianteira Dir." />
+                    <DamagedPartItem partKey="portaDianteiraDireita" label="Porta Dianteira Dir." isViewMode={isViewMode} onChange={handlePartChange} />
                     
                     {/* Linha 4 */}
-                    <DamagedPartItem partKey="portaTraseiraEsquerda" label="Porta Traseira Esq." />
-                    <DamagedPartItem partKey="portaMalasSuperior" label="Porta Malas Superior" />
-                    <DamagedPartItem partKey="portaTraseiraDireita" label="Porta Traseira Dir." />
+                    <DamagedPartItem partKey="portaTraseiraEsquerda" label="Porta Traseira Esq." isViewMode={isViewMode} onChange={handlePartChange} />
+                    <DamagedPartItem partKey="portaMalasSuperior" label="Porta Malas Superior" isHorizontal={true} isViewMode={isViewMode} onChange={handlePartChange} />
+                    <DamagedPartItem partKey="portaTraseiraDireita" label="Porta Traseira Dir." isViewMode={isViewMode} onChange={handlePartChange} />
                     
                     {/* Linha 5 */}
-                    <DamagedPartItem partKey="lateralEsquerda" label="Lateral Esquerda" />
-                    <DamagedPartItem partKey="portaMalasInferior" label="Porta Malas Inferior" />
-                    <DamagedPartItem partKey="lateralDireita" label="Lateral Direita" />
+                    <DamagedPartItem partKey="lateralEsquerda" label="Lateral Esquerda" isViewMode={isViewMode} onChange={handlePartChange} />
+                    <DamagedPartItem partKey="portaMalasInferior" label="Porta Malas Inferior" isViewMode={isViewMode} onChange={handlePartChange} />
+                    <DamagedPartItem partKey="lateralDireita" label="Lateral Direita" isViewMode={isViewMode} onChange={handlePartChange} />
                   </div>
                 </div>
                 
