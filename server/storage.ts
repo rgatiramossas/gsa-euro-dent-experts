@@ -1060,7 +1060,7 @@ export class DatabaseStorage implements IStorage {
     
     // 4. Faturamento total (não será mostrado para o gestor, mas calculamos para manter a estrutura de dados)
     const [revenueResult] = await db.select({
-      total: sql<number>`SUM(${services.price})`
+      total: sql<number>`SUM(${services.aw_value})`
     })
     .from(services)
     .where(
@@ -1307,7 +1307,7 @@ export class DatabaseStorage implements IStorage {
       sum + (service.total || 0), 0);
     
     const technicianTotalValue = servicesDetails.reduce((sum, service) => 
-      sum + (service.price || 0), 0);
+      sum + (service.aw_value || 0), 0);
     
     return {
       ...paymentRequest[0],
@@ -1377,7 +1377,7 @@ export class DatabaseStorage implements IStorage {
       // CORREÇÃO: sempre usar o valor do técnico (price) nos pedidos de pagamento
       // Este é o valor que o técnico receberá, não o valor total incluindo taxas administrativas
       const technicianTotalValue = servicesDetails.reduce((sum, service) => 
-        sum + (service.price || 0), 0);
+        sum + (service.aw_value || 0), 0);
       
       // Para o admin, também calculamos o valor total (com taxas) para referência
       const serviceTotalValue = servicesDetails.reduce((sum, service) => 
@@ -1540,7 +1540,7 @@ export class DatabaseStorage implements IStorage {
               .where(eq(services.id, serviceId));
               
             if (serviceData) {
-              technicianValue += serviceData.price || 0;
+              technicianValue += serviceData.aw_value || 0;
               serviceDetails.push(serviceId);
             }
           }
@@ -1808,7 +1808,7 @@ export class DatabaseStorage implements IStorage {
       
       // Calcular valor total deste pedido
       const requestValue = requestServices.reduce(
-        (sum, service) => sum + (service.price || 0), 
+        (sum, service) => sum + (service.aw_value || 0), 
         0
       );
       
@@ -1847,7 +1847,7 @@ export class DatabaseStorage implements IStorage {
         service.status === 'concluido' && 
         !servicesWithPaymentRequest.has(service.id)
       )
-      .reduce((sum, service) => sum + (service.price || 0), 0);
+      .reduce((sum, service) => sum + (service.aw_value || 0), 0);
     
     console.log(`Estatísticas calculadas para o técnico ID ${technicianId}:`, {
       pendingValue,
