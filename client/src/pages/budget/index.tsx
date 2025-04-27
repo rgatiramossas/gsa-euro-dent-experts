@@ -6,6 +6,7 @@ import { Client, Vehicle, User, ServiceType } from "@/types";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate, formatCompleteDateOnly } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
@@ -270,6 +271,7 @@ const hailCalculation = (
 export default function Budget() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [isViewMode, setIsViewMode] = useState(false);
@@ -282,6 +284,9 @@ export default function Budget() {
   const [licensePlate, setLicensePlate] = useState("");
   const [chassisNumber, setChassisNumber] = useState("");
   const [note, setNote] = useState("");
+  
+  // Verificar se o usuário é gestor (suporta tanto 'gestor' quanto 'manager')
+  const isGestor = user?.role === 'gestor' || user?.role === 'manager';
   
   // Estado para busca (busca única em todos os campos)
   const [searchQuery, setSearchQuery] = useState("");
@@ -1856,40 +1861,42 @@ export default function Budget() {
                   </div>
                 </div>
                 
-                {/* Totais */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="totalAw">Total de AW</Label>
-                    <Input
-                      id="totalAw"
-                      type="number"
-                      min="0"
-                      max="99999"
-                      value={totalAw}
-                      onChange={(e) => setTotalAw(Number(e.target.value))}
-                      onFocus={(e) => e.target.select()}
-                      autoComplete="off"
-                      readOnly={isViewMode}
-                      disabled={isViewMode}
-                    />
-                  </div>
+                {/* Totais - não mostrados para gestores */}
+                {!isGestor && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="totalAw">Total de AW</Label>
+                      <Input
+                        id="totalAw"
+                        type="number"
+                        min="0"
+                        max="99999"
+                        value={totalAw}
+                        onChange={(e) => setTotalAw(Number(e.target.value))}
+                        onFocus={(e) => e.target.select()}
+                        autoComplete="off"
+                        readOnly={isViewMode}
+                        disabled={isViewMode}
+                      />
+                    </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="totalValue">Total em €</Label>
-                    <Input
-                      id="totalValue"
-                      type="number"
-                      min="0"
-                      max="9999999"
-                      value={totalValue}
-                      onChange={(e) => setTotalValue(Number(e.target.value))}
-                      onFocus={(e) => e.target.select()}
-                      autoComplete="off"
-                      readOnly={isViewMode}
-                      disabled={isViewMode}
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="totalValue">Total em €</Label>
+                      <Input
+                        id="totalValue"
+                        type="number"
+                        min="0"
+                        max="9999999"
+                        value={totalValue}
+                        onChange={(e) => setTotalValue(Number(e.target.value))}
+                        onFocus={(e) => e.target.select()}
+                        autoComplete="off"
+                        readOnly={isViewMode}
+                        disabled={isViewMode}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 {/* Materiais Especiais */}
                 <div className="space-y-2">
@@ -1979,8 +1986,12 @@ export default function Budget() {
                   <TableHead>ID</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Veículo</TableHead>
-                  <TableHead>Total (AW)</TableHead>
-                  <TableHead>Total (€)</TableHead>
+                  {!isGestor && (
+                    <>
+                      <TableHead>Total (AW)</TableHead>
+                      <TableHead>Total (€)</TableHead>
+                    </>
+                  )}
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -1991,8 +2002,12 @@ export default function Budget() {
                       <TableCell className="font-medium">{budget.id}</TableCell>
                       <TableCell>{budget.client_name}</TableCell>
                       <TableCell>{budget.vehicle_info}</TableCell>
-                      <TableCell>{budget.total_aw}</TableCell>
-                      <TableCell>{formatCurrency(budget.total_value || 0)}</TableCell>
+                      {!isGestor && (
+                        <>
+                          <TableCell>{budget.total_aw}</TableCell>
+                          <TableCell>{formatCurrency(budget.total_value || 0)}</TableCell>
+                        </>
+                      )}
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button 
@@ -2025,7 +2040,7 @@ export default function Budget() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6 text-gray-500 italic">
+                    <TableCell colSpan={isGestor ? 4 : 6} className="text-center py-6 text-gray-500 italic">
                       {budgets && budgets.length > 0 && searchQuery 
                         ? `Nenhum orçamento encontrado para "${searchQuery}".` 
                         : "Nenhum orçamento encontrado. Crie um novo orçamento para começar."}
