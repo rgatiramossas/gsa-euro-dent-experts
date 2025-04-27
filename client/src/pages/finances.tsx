@@ -10,6 +10,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  Legend, 
+  Tooltip, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid 
+} from 'recharts';
+import { 
   Table, 
   TableBody, 
   TableCell, 
