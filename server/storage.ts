@@ -533,27 +533,110 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log("Criando veículo com dados:", insertVehicle);
       
-      // No MySQL não temos o método returning()
-      const result = await db.insert(vehicles).values(insertVehicle);
+      // Garantir que não existam propriedades undefined ou nulas
+      const cleanData = Object.entries(insertVehicle).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, any>);
       
-      // Obter o ID do veículo recém-criado
-      const vehicleId = Number(result.insertId);
+      console.log("Dados limpos:", cleanData);
       
-      if (!vehicleId || isNaN(vehicleId) || vehicleId <= 0) {
-        throw new Error(`ID de veículo inválido ou não retornado pelo banco de dados: ${vehicleId}`);
+      // Tentar usar query direta para o MySQL
+      try {
+        // Verificar se a tabela vehicles existe
+        const [tablesResult] = await pool.query("SHOW TABLES LIKE 'vehicles'");
+        if (!tablesResult.length) {
+          console.log("Tabela de veículos não existe, criando...");
+          await pool.query(`
+            CREATE TABLE IF NOT EXISTS vehicles (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              client_id INT NOT NULL,
+              make VARCHAR(255) NOT NULL,
+              model VARCHAR(255) NOT NULL,
+              color VARCHAR(255),
+              license_plate VARCHAR(255),
+              vin VARCHAR(255),
+              notes TEXT,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (client_id) REFERENCES clients(id)
+            )
+          `);
+          console.log("Tabela de veículos criada com sucesso");
+        }
+      
+        // Preparar valores para query
+        const fields = Object.keys(cleanData).join(', ');
+        const placeholders = Object.keys(cleanData).map(() => '?').join(', ');
+        const values = Object.values(cleanData);
+        
+        console.log(`Executando inserção direta: INSERT INTO vehicles (${fields}) VALUES (${placeholders})`);
+        console.log("Valores:", values);
+        
+        // Executar query usando a conexão direta
+        const query = `INSERT INTO vehicles (${fields}) VALUES (${placeholders})`;
+        const result = await pool.query(query, values);
+        
+        console.log("Resultado da inserção via conexão direta:", result);
+        
+        // Obter ID inserido
+        const insertId = result[0]?.insertId;
+        
+        if (!insertId) {
+          throw new Error("Falha ao obter ID via inserção direta");
+        }
+        
+        const vehicleId = Number(insertId);
+        console.log(`Veículo criado com ID via inserção direta: ${vehicleId}`);
+        
+        // Buscar veículo criado
+        const [vehicleResult] = await pool.query(`SELECT * FROM vehicles WHERE id = ?`, [vehicleId]);
+        const vehicle = vehicleResult[0];
+        
+        if (!vehicle) {
+          throw new Error(`Veículo criado mas não encontrado com ID ${vehicleId}`);
+        }
+        
+        console.log("Veículo recuperado com sucesso:", vehicle);
+        return vehicle as Vehicle;
+      } catch (directError) {
+        console.error("Erro na inserção direta:", directError);
+        
+        // Fallback para Drizzle ORM
+        console.log("Tentando com Drizzle ORM como fallback");
+        const result = await db.insert(vehicles).values(cleanData);
+        
+        console.log("Resultado da inserção via Drizzle:", result);
+        
+        if (!result || !result.insertId) {
+          throw new Error("Falha ao inserir veículo. ID não retornado.");
+        }
+        
+        // Obter o ID do veículo recém-criado
+        const vehicleId = Number(result.insertId);
+        console.log(`Veículo criado com ID via Drizzle: ${vehicleId}`);
+        
+        // Buscar o veículo usando o ID
+        const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, vehicleId));
+        
+        if (!vehicle) {
+          // Criar objeto mínimo
+          return {
+            id: vehicleId,
+            client_id: cleanData.client_id,
+            make: cleanData.make || '',
+            model: cleanData.model || '',
+            color: cleanData.color || null,
+            license_plate: cleanData.license_plate || null,
+            vin: cleanData.vin || null,
+            notes: cleanData.notes || null,
+            created_at: new Date()
+          } as Vehicle;
+        }
+        
+        return vehicle;
       }
-      
-      console.log(`Veículo criado com ID: ${vehicleId}, buscando dados completos`);
-      
-      // Buscar o veículo diretamente do banco de dados
-      const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, vehicleId));
-      
-      if (!vehicle) {
-        throw new Error(`Veículo criado mas não encontrado com ID ${vehicleId}`);
-      }
-      
-      console.log("Veículo recuperado com sucesso:", vehicle);
-      return vehicle;
     } catch (error) {
       console.error("Erro ao criar veículo:", error);
       throw error;
