@@ -186,7 +186,6 @@ export class DatabaseStorage implements IStorage {
       photo_url: budgets.photo_url,
       note: budgets.note,
       plate: budgets.plate,
-      chassisNumber: budgets.chassisNumber,
       created_at: budgets.created_at,
       client_name: clients.name
     })
@@ -883,116 +882,127 @@ export class DatabaseStorage implements IStorage {
 
   // Dashboard data
   async getDashboardStats(technicianId?: number): Promise<any> {
-    // Condições base para todos os filtros (excluir serviços deletados)
-    const baseConditions = [sql`${services.status} != 'deleted'`];
+    try {
+      // Condições base para todos os filtros (excluir serviços deletados)
+      const baseConditions = [sql`${services.status} != 'deleted'`];
+      
+      // O administrador deve ver TODOS os serviços, enquanto os técnicos veem apenas os seus próprios
+      if (technicianId) {
+        console.log('Aplicando filtro de técnico ID:', technicianId);
+        baseConditions.push(eq(services.technician_id, technicianId));
+      } else {
+        // Se não tem technicianId, significa que é um administrador vendo todos os dados
+        console.log('Administrador visualizando estatísticas de todos os técnicos');
+      }
     
-    // O administrador deve ver TODOS os serviços, enquanto os técnicos veem apenas os seus próprios
-    if (technicianId) {
-      console.log('Aplicando filtro de técnico ID:', technicianId);
-      baseConditions.push(eq(services.technician_id, technicianId));
-    } else {
-      // Se não tem technicianId, significa que é um administrador vendo todos os dados
-      console.log('Administrador visualizando estatísticas de todos os técnicos');
+      // 1. Total de OS pendentes
+      const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
+        .from(services)
+        .where(
+          and(
+            or(
+              eq(services.status, 'pending'),
+              eq(services.status, 'aguardando')
+            ),
+            ...baseConditions
+          )
+        );
+      
+      // 2. Total de OS em progresso
+      const [faturadoResult] = await db.select({ count: sql<number>`count(*)` })
+        .from(services)
+        .where(
+          and(
+            or(
+              eq(services.status, 'in_progress'),
+              eq(services.status, 'em_progresso'),
+              eq(services.status, 'faturado')
+            ),
+            ...baseConditions
+          )
+        );
+      
+      // 3. Total de OS concluídas (todas, em qualquer período)
+      const [completedResult] = await db.select({ count: sql<number>`count(*)` })
+        .from(services)
+        .where(
+          and(
+            or(
+              eq(services.status, 'completed'),
+              eq(services.status, 'concluido'),
+              eq(services.status, 'aguardando_aprovacao'),
+              eq(services.status, 'faturado'),
+              eq(services.status, 'pago')
+            ),
+            ...baseConditions
+          )
+        );
+      
+      // 4. Faturamento total (todas as OS concluídas, em qualquer período)
+      // Admin vê valor total (preço + taxa administrativa), técnico vê apenas seu valor (price)
+      console.log('Calculando faturamento para:', technicianId ? `Técnico ID ${technicianId}` : 'Admin');
+      
+      let totalRevenue = 0;
+      
+      // Obter todos os serviços concluídos que correspondem aos filtros
+      const completedServices = await db.select()
+        .from(services)
+        .where(
+          and(
+            or(
+              eq(services.status, 'completed'),
+              eq(services.status, 'concluido'),
+              eq(services.status, 'aguardando_aprovacao'),
+              eq(services.status, 'faturado'),
+              eq(services.status, 'pago')
+            ),
+            ...baseConditions
+          )
+        );
+      
+      // Calcular o valor de acordo com o tipo de usuário
+      if (technicianId) {
+        // Para técnicos: apenas a soma do valor do serviço (aw_value)
+        totalRevenue = completedServices.reduce((sum, service) => 
+          sum + (service.aw_value || 0), 0);
+      } else {
+        // Para administradores: soma do valor total do serviço (total ou aw_value)
+        totalRevenue = completedServices.reduce((sum, service) => 
+          sum + (service.total || service.aw_value || 0), 0);
+      }
+      
+      // Converter para o formato esperado pelo frontend
+      const totalPendingServices = typeof pendingResult.count === 'string' 
+        ? parseInt(pendingResult.count) 
+        : (pendingResult.count || 0);
+      
+      const totalFaturadoServices = typeof faturadoResult.count === 'string' 
+        ? parseInt(faturadoResult.count) 
+        : (faturadoResult.count || 0);
+      
+      const totalCompletedServices = typeof completedResult.count === 'string' 
+        ? parseInt(completedResult.count) 
+        : (completedResult.count || 0);
+      
+      const stats = {
+        totalPendingServices,
+        totalInProgressServices: totalFaturadoServices, // Mudou de in_progress para faturado, mantendo o nome da prop para compatibilidade
+        totalCompletedServices,
+        totalRevenue: totalRevenue
+      };
+      
+      console.log('Stats formatados para envio:', stats);
+      return stats;
+      
+    } catch (error) {
+      console.error('Erro ao obter estatísticas do dashboard:', error);
+      return {
+        totalPendingServices: 0,
+        totalInProgressServices: 0,
+        totalCompletedServices: 0,
+        totalRevenue: 0
+      };
     }
-    
-    // 1. Total de OS pendentes
-    const [pendingResult] = await db.select({ count: sql<number>`count(*)` })
-      .from(services)
-      .where(
-        and(
-          or(
-            eq(services.status, 'pending'),
-            eq(services.status, 'aguardando')
-          ),
-          ...baseConditions
-        )
-      );
-    
-    // 2. Total de OS em progresso
-    const [faturadoResult] = await db.select({ count: sql<number>`count(*)` })
-      .from(services)
-      .where(
-        and(
-          or(
-            eq(services.status, 'in_progress'),
-            eq(services.status, 'em_progresso'),
-            eq(services.status, 'faturado')
-          ),
-          ...baseConditions
-        )
-      );
-    
-    // 3. Total de OS concluídas (todas, em qualquer período)
-    const [completedResult] = await db.select({ count: sql<number>`count(*)` })
-      .from(services)
-      .where(
-        and(
-          or(
-            eq(services.status, 'completed'),
-            eq(services.status, 'concluido'),
-            eq(services.status, 'aguardando_aprovacao'),
-            eq(services.status, 'faturado'),
-            eq(services.status, 'pago')
-          ),
-          ...baseConditions
-        )
-      );
-    
-    // 4. Faturamento total (todas as OS concluídas, em qualquer período)
-    // Admin vê valor total (preço + taxa administrativa), técnico vê apenas seu valor (price)
-    console.log('Calculando faturamento para:', technicianId ? `Técnico ID ${technicianId}` : 'Admin');
-    
-    let totalRevenue = 0;
-    
-    // Obter todos os serviços concluídos que correspondem aos filtros
-    const completedServices = await db.select()
-      .from(services)
-      .where(
-        and(
-          or(
-            eq(services.status, 'completed'),
-            eq(services.status, 'concluido'),
-            eq(services.status, 'aguardando_aprovacao'),
-            eq(services.status, 'faturado'),
-            eq(services.status, 'pago')
-          ),
-          ...baseConditions
-        )
-      );
-    
-    // Calcular o valor de acordo com o tipo de usuário
-    if (technicianId) {
-      // Para técnicos: apenas a soma do valor do serviço (aw_value)
-      totalRevenue = completedServices.reduce((sum, service) => 
-        sum + (service.aw_value || 0), 0);
-    } else {
-      // Para administradores: soma do valor total do serviço (total ou aw_value)
-      totalRevenue = completedServices.reduce((sum, service) => 
-        sum + (service.total || service.aw_value || 0), 0);
-    }
-    
-    // Converter para o formato esperado pelo frontend
-    const totalPendingServices = typeof pendingResult.count === 'string' 
-      ? parseInt(pendingResult.count) 
-      : (pendingResult.count || 0);
-    
-    const totalFaturadoServices = typeof faturadoResult.count === 'string' 
-      ? parseInt(faturadoResult.count) 
-      : (faturadoResult.count || 0);
-    
-    const totalCompletedServices = typeof completedResult.count === 'string' 
-      ? parseInt(completedResult.count) 
-      : (completedResult.count || 0);
-    
-    const stats = {
-      totalPendingServices,
-      totalInProgressServices: totalFaturadoServices, // Mudou de in_progress para faturado, mantendo o nome da prop para compatibilidade
-      totalCompletedServices,
-      totalRevenue: totalRevenue
-    };
-    
-    console.log('Stats formatados para envio:', stats);
-    return stats;
   }
   
   // Método específico para obter estatísticas para gestores
@@ -1112,7 +1122,23 @@ export class DatabaseStorage implements IStorage {
     const results = await Promise.all(
       technicians.map(async (tech) => {
         // All services assigned to this technician (excluding deleted)
-        const allServices = await db.select().from(services)
+        const allServices = await db.select({
+          id: services.id,
+          client_id: services.client_id,
+          vehicle_id: services.vehicle_id,
+          service_type_id: services.service_type_id,
+          technician_id: services.technician_id,
+          status: services.status,
+          scheduled_date: services.scheduled_date,
+          start_date: services.start_date,
+          completion_date: services.completion_date,
+          location_type: services.location_type,
+          address: services.address,
+          aw_value: services.aw_value,
+          total: services.total,
+          notes: services.notes,
+          created_at: services.created_at
+        }).from(services)
           .where(
             and(
               eq(services.technician_id, tech.id),
