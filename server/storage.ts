@@ -462,8 +462,48 @@ export class DatabaseStorage implements IStorage {
   
   // Service methods
   async getService(id: number): Promise<Service | undefined> {
-    const [service] = await db.select().from(services).where(eq(services.id, id));
-    return service;
+    try {
+      // Selecionar apenas colunas que existem na tabela MySQL
+      const selectColumns = {
+        id: services.id,
+        client_id: services.client_id,
+        vehicle_id: services.vehicle_id,
+        service_type_id: services.service_type_id,
+        technician_id: services.technician_id,
+        status: services.status,
+        scheduled_date: services.scheduled_date,
+        start_date: services.start_date,
+        completion_date: services.completion_date,
+        location_type: services.location_type,
+        address: services.address,
+        latitude: services.latitude,
+        longitude: services.longitude,
+        price: services.price,
+        administrative_fee: services.administrative_fee,
+        total: services.total,
+        notes: services.notes,
+        created_at: services.created_at
+      };
+      
+      const [basicService] = await db.select(selectColumns)
+        .from(services)
+        .where(eq(services.id, id));
+      
+      if (!basicService) {
+        return undefined;
+      }
+      
+      // Adicionar campos ausentes
+      const service: Service = {
+        ...basicService,
+        description: null // Campo que existe no PostgreSQL mas não no MySQL
+      };
+      
+      return service;
+    } catch (error) {
+      console.error("Erro ao obter serviço:", error);
+      return undefined;
+    }
   }
   
   async createService(insertService: InsertService): Promise<Service> {
@@ -573,31 +613,64 @@ export class DatabaseStorage implements IStorage {
   }
   
   async listServices(filters?: Partial<{ status: string, technicianId: number, clientId: number, clientIds?: number[] }>): Promise<Service[]> {
-    let query = db.select().from(services)
-      // Sempre filtra os serviços com status "deleted"
-      .where(sql`${services.status} != 'deleted'`);
-    
-    if (filters) {
-      if (filters.status) {
-        query = query.where(eq(services.status, filters.status));
+    try {
+      // Selecionar apenas as colunas que sabemos que existem no MySQL
+      const selectColumns = {
+        id: services.id,
+        client_id: services.client_id,
+        vehicle_id: services.vehicle_id,
+        service_type_id: services.service_type_id,
+        technician_id: services.technician_id,
+        status: services.status,
+        scheduled_date: services.scheduled_date,
+        start_date: services.start_date,
+        completion_date: services.completion_date,
+        location_type: services.location_type,
+        address: services.address,
+        latitude: services.latitude,
+        longitude: services.longitude,
+        price: services.price,
+        administrative_fee: services.administrative_fee,
+        total: services.total,
+        notes: services.notes,
+        created_at: services.created_at
+      };
+      
+      let query = db.select(selectColumns).from(services)
+        // Sempre filtra os serviços com status "deleted"
+        .where(sql`${services.status} != 'deleted'`);
+      
+      if (filters) {
+        if (filters.status) {
+          query = query.where(eq(services.status, filters.status));
+        }
+        
+        if (filters.technicianId) {
+          query = query.where(eq(services.technician_id, filters.technicianId));
+        }
+        
+        if (filters.clientId) {
+          query = query.where(eq(services.client_id, filters.clientId));
+        }
+        
+        // Suporte para filtrar por múltiplos IDs de clientes (para gestores)
+        if (filters.clientIds && filters.clientIds.length > 0) {
+          // Usar o operador 'inArray' para comparar com uma lista de IDs
+          query = query.where(inArray(services.client_id, filters.clientIds));
+        }
       }
       
-      if (filters.technicianId) {
-        query = query.where(eq(services.technician_id, filters.technicianId));
-      }
+      const result = await query.orderBy(desc(services.created_at));
       
-      if (filters.clientId) {
-        query = query.where(eq(services.client_id, filters.clientId));
-      }
-      
-      // Suporte para filtrar por múltiplos IDs de clientes (para gestores)
-      if (filters.clientIds && filters.clientIds.length > 0) {
-        // Usar o operador 'inArray' para comparar com uma lista de IDs
-        query = query.where(inArray(services.client_id, filters.clientIds));
-      }
+      // Adicionar a coluna description que não existe no MySQL
+      return result.map(service => ({
+        ...service,
+        description: null
+      }));
+    } catch (error) {
+      console.error("Erro ao listar serviços:", error);
+      return [];
     }
-    
-    return query.orderBy(desc(services.created_at));
   }
   
   async getServiceDetails(id: number): Promise<any> {
