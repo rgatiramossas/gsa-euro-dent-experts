@@ -14,7 +14,7 @@ export function BottomNavigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  const isGestor = user?.role === "gestor";
+  const isGestor = user?.role === "manager";
 
   // Itens padrões para todos os usuários
   let mobileNavItems = [
@@ -40,28 +40,14 @@ export function BottomNavigation() {
     }
   ];
   
-  // Se for administrador, adiciona o item de gestores como quarto item, mantendo Orcamento
+  // Se for administrador, adiciona o item de gestores como quinto item, mantendo Orcamento
   if (isAdmin) {
     mobileNavItems = [
+      ...mobileNavItems, // Mantém todos os itens padrão, incluindo Orcamento
       {
-        name: "Início",
-        path: "/dashboard",
-        icon: <Home className="h-6 w-6" />,
-      },
-      {
-        name: "Clientes",
-        path: "/clients",
-        icon: <Users className="h-6 w-6" />,
-      },
-      {
-        name: "Serviços",
-        path: "/services",
-        icon: <Briefcase className="h-6 w-6" />,
-      },
-      {
-        name: "Orcamento",
-        path: "/budget",
-        icon: <FileText className="h-6 w-6" />,
+        name: "Gestores",
+        path: "/managers",
+        icon: <UserCog className="h-6 w-6" />,
       }
     ];
   }
@@ -90,7 +76,7 @@ export function BottomNavigation() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">
       <div className="bg-gray-900 shadow-lg">
-        <div className={`grid ${isGestor ? 'grid-cols-3' : 'grid-cols-4'} h-16`}>
+        <div className={`grid ${isGestor ? 'grid-cols-3' : isAdmin ? 'grid-cols-5' : 'grid-cols-4'} h-16`}>
           {mobileNavItems.map((item) => {
             const isActive = location === item.path || 
                             (item.path !== "/dashboard" && location.startsWith(item.path));
