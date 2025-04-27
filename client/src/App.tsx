@@ -26,6 +26,7 @@ import NewService from "@/pages/services/new-service";
 // Import client related pages
 import ClientsList from "@/pages/clients/index";
 import NewClient from "@/pages/clients/new-client";
+import ClientDetail from "@/pages/clients/$id";
 import NewVehicle from "@/pages/clients/new-vehicle";
 import ManagerClientsList from "@/pages/managers/manager-clients-list";
 
@@ -161,6 +162,16 @@ function AppRoutes() {
             </MainLayout>
           </RequireTechnician>
         </RequireAuth>
+      </Route>
+      
+      <Route path="/clients/:id">
+        {(params) => (
+          <RequireAuth>
+            <MainLayout>
+              <ClientDetail id={params.id} />
+            </MainLayout>
+          </RequireAuth>
+        )}
       </Route>
       
       <Route path="/clients/:id/vehicle/new">
