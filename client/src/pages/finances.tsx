@@ -374,7 +374,13 @@ export default function Finances() {
     );
   };
   
-  if (!isAdmin && !completedTechnicianServices?.length) {
+  // Verifica se o técnico tem pedidos de pagamento
+  const hasTechnicianPaymentRequests = paymentRequests && 
+    Array.isArray(paymentRequests) && 
+    paymentRequests.some(req => req.technician_id === currentUser?.id);
+    
+  // Mostrar mensagem somente se não houver serviços completados E não houver pedidos
+  if (!isAdmin && !completedTechnicianServices?.length && !hasTechnicianPaymentRequests) {
     return (
       <div className="py-6 px-4 sm:px-6 lg:px-8">
         <PageHeader
