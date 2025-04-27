@@ -2,7 +2,7 @@ import {
   users, clients, vehicles, serviceTypes, services, servicePhotos, 
   eventTypes, events, paymentRequests, paymentRequestItems, expenses,
   managerClientAssignments, budgets
-} from "@shared/schema";
+} from "@shared/schema.mysql";
 import type { 
   User, InsertUser, 
   Client, InsertClient, 
@@ -16,7 +16,7 @@ import type {
   Expense, InsertExpense,
   ManagerClientAssignment, InsertManagerClientAssignment,
   Budget, InsertBudget
-} from "@shared/schema";
+} from "@shared/schema.mysql";
 import { initDb } from "./db-mysql";
 import { eq, and, like, desc, or, sql, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -58,6 +58,10 @@ export interface IStorage {
   getVehicle(id: number): Promise<Vehicle | undefined>;
   createVehicle(vehicle: InsertVehicle): Promise<Vehicle>;
   listVehiclesByClient(clientId: number): Promise<Vehicle[]>;
+  
+  // Expense methods
+  listExpenses(): Promise<Expense[]>;
+  createExpense(expense: Partial<Expense>): Promise<Expense>;
 
   // Service Type methods
   getServiceType(id: number): Promise<ServiceType | undefined>;

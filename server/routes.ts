@@ -8,7 +8,7 @@ import path from "path";
 import fs from "fs";
 import multer from "multer";
 import { fileURLToPath } from "url";
-import { db } from "./db";
+// import { db } from "./db"; // PostgreSQL
 import { desc } from "drizzle-orm";
 import { 
   insertUserSchema, 
@@ -20,7 +20,7 @@ import {
   insertEventSchema,
   insertBudgetSchema,
   expenses
-} from "@shared/schema";
+} from "@shared/schema.mysql";
 import { z } from "zod";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -186,11 +186,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Apenas administradores podem acessar despesas" });
       }
       
-      // Selecionar todas as despesas no banco de dados
-      const expensesList = await db
-        .select()
-        .from(expenses)
-        .orderBy(desc(expenses.date));
+      // Selecionar todas as despesas no banco de dados usando storage
+      const expensesList = await storage.listExpenses();
         
       res.json(expensesList);
     } catch (error) {
@@ -331,19 +328,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validar dados da requisição
       const expenseData = req.body;
       
-      // Inserir despesa no banco de dados
-      const [newExpense] = await db
-        .insert(expenses)
-        .values({
-          type: expenseData.type,
-          amount: expenseData.amount,
-          date: new Date(expenseData.date),
-          description: expenseData.description,
-          payment_method: expenseData.payment_method || "manual",
-          notes: expenseData.notes || null,
-          provider: expenseData.provider || null
-        })
-        .returning();
+      // Inserir despesa no banco de dados usando storage
+      const newExpense = await storage.createExpense({
+        type: expenseData.type,
+        amount: expenseData.amount,
+        date: new Date(expenseData.date),
+        description: expenseData.description,
+        payment_method: expenseData.payment_method || "manual",
+        notes: expenseData.notes || null,
+        provider: expenseData.provider || null
+      });
       
       res.status(201).json(newExpense);
     } catch (error) {
