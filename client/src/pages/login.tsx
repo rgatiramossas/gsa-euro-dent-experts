@@ -57,26 +57,18 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
-      <Card className="w-full max-w-md mx-auto">
-        <CardContent className="pt-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-gray-800 px-4 py-8">
+      <Card className="w-full max-w-md mx-auto shadow-2xl border-0">
+        <CardContent className="pt-8 px-8">
           <div className="text-center mb-8">
-            <div className="h-16 w-16 bg-primary rounded-full mx-auto mb-4 flex items-center justify-center">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-10 w-10 text-white" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              >
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-              </svg>
+            <div className="mx-auto mb-4 flex items-center justify-center">
+              <img 
+                src="/assets/euro-dent-logo.png" 
+                alt="Euro Dent Experts Logo" 
+                className="h-24 w-auto"
+              />
             </div>
-            <h1 className="text-2xl font-bold text-primary">Euro Dent Experts</h1>
-            <p className="text-gray-500 mt-1">Sistema de Gestão</p>
+            <p className="text-gray-500 mt-2">Sistema de Gestão</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -135,7 +127,7 @@ export default function Login() {
             
             <Button 
               type="submit" 
-              className="w-full py-6" 
+              className="w-full py-6 bg-red-600 hover:bg-red-700 text-white font-bold text-lg" 
               disabled={isSubmitting}
             >
               {isSubmitting ? "Entrando..." : "Entrar"}
