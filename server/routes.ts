@@ -766,16 +766,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (userRole === "admin" || 
               (userRole === "technician" && Number(userId) === service.technician_id)) {
             serviceData.price = service.price;
-            serviceData.displacement_fee = service.displacement_fee;
             serviceData.administrative_fee = service.administrative_fee;
             serviceData.total = service.total;
           } else if (userRole === "technician") {
             // Técnicos veem apenas o preço do serviço (sem taxas administrativas)
             serviceData.price = service.price;
-            serviceData.displacement_fee = service.displacement_fee;
             // Calcular total sem taxa administrativa
-            const subTotal = (service.price || 0) + (service.displacement_fee || 0);
-            serviceData.total = subTotal;
+            serviceData.total = service.price || 0;
           }
           
           return serviceData;
@@ -994,9 +991,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (updates.price) {
           updates.price = Number(updates.price);
         }
-        if (updates.displacement_fee) {
-          updates.displacement_fee = Number(updates.displacement_fee);
-        }
         
         // Processar fotos aqui
         if (hasServicePhotos || hasBeforePhotos || hasAfterPhotos) {
@@ -1106,17 +1100,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Atualizando serviço com dados filtrados:", filteredUpdates);
       
-      // Recalculate total if price or displacement_fee is updated
-      if (filteredUpdates.price !== undefined || filteredUpdates.displacement_fee !== undefined) {
+      // Recalculate total if price is updated
+      if (filteredUpdates.price !== undefined || filteredUpdates.administrative_fee !== undefined) {
         // Certificar-se de que os valores são numéricos
         let price = filteredUpdates.price !== undefined ? Number(filteredUpdates.price) : Number(service.price) || 0;
-        let displacementFee = filteredUpdates.displacement_fee !== undefined ? Number(filteredUpdates.displacement_fee) : Number(service.displacement_fee) || 0;
+        let adminFee = filteredUpdates.administrative_fee !== undefined ? Number(filteredUpdates.administrative_fee) : Number(service.administrative_fee) || 0;
         
-        console.log('Calculando total com:', { price, displacementFee, oldPrice: service.price, oldFee: service.displacement_fee });
+        console.log('Calculando total com:', { price, adminFee, oldPrice: service.price, oldAdminFee: service.administrative_fee });
         
         filteredUpdates.price = price;
-        filteredUpdates.displacement_fee = displacementFee;
-        filteredUpdates.total = price + displacementFee;
+        filteredUpdates.administrative_fee = adminFee;
+        filteredUpdates.total = price + adminFee;
         
         console.log('Novo total calculado:', filteredUpdates.total);
       }

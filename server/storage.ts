@@ -451,11 +451,7 @@ export class DatabaseStorage implements IStorage {
       updatedData.price = price;
     }
     
-    if (updatedData.displacement_fee !== undefined) {
-      const fee = Number(updatedData.displacement_fee);
-      console.log(`Convertendo taxa de deslocamento de ${updatedData.displacement_fee} (${typeof updatedData.displacement_fee}) para ${fee} (number)`);
-      updatedData.displacement_fee = fee;
-    }
+    // Taxa de deslocamento removida
     
     if (updatedData.total !== undefined) {
       updatedData.total = Number(updatedData.total);
