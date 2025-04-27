@@ -215,6 +215,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para obter os clientes de um gestor específico
+  app.get("/api/managers/:managerId/clients", requireAuth, async (req, res) => {
+    try {
+      if (req.session.userRole !== "admin" && Number(req.session.userId) !== Number(req.params.managerId)) {
+        return res.status(403).json({ message: "Acesso não autorizado" });
+      }
+      
+      const { managerId } = req.params;
+      
+      // Verificar se o gestor existe e tem a role correta
+      const manager = await storage.getUser(Number(managerId));
+      if (!manager || manager.role !== "gestor") {
+        return res.status(404).json({ message: "Gestor não encontrado" });
+      }
+      
+      // Obter a lista de clientes do gestor
+      const clients = await storage.getManagerClients(Number(managerId));
+      
+      res.json(clients);
+    } catch (error) {
+      console.error("Erro ao buscar clientes do gestor:", error);
+      res.status(500).json({ message: "Erro ao buscar clientes do gestor" });
+    }
+  });
+  
   // Rota para atribuir cliente a um gestor
   app.post("/api/managers/:managerId/clients", requireAuth, async (req, res) => {
     try {

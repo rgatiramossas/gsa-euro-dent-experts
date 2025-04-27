@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -17,20 +17,56 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Client } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
-export default function ClientsList() {
-  const [_, setLocation] = useLocation();
+interface ClientsListProps {
+  managerMode?: boolean;
+}
+
+export default function ClientsList({ managerMode = false }: ClientsListProps) {
+  const [location, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
+  const [managerId, setManagerId] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   
+  // Extrai o ID do gerente da URL se estivermos no modo gestor
+  useEffect(() => {
+    if (managerMode) {
+      const id = location.split('/')[2];
+      setManagerId(id);
+    }
+  }, [managerMode, location]);
+  
+  // Query para buscar os clientes
   const { data: clients, isLoading } = useQuery<Client[]>({
-    queryKey: ['/api/clients'],
+    queryKey: managerMode && managerId ? ['/api/managers', managerId, 'clients'] : ['/api/clients'],
+    queryFn: async () => {
+      if (managerMode && managerId) {
+        try {
+          const response = await fetch(`/api/managers/${managerId}/clients`);
+          if (!response.ok) {
+            throw new Error('Erro ao carregar clientes do gestor');
+          }
+          return response.json();
+        } catch (error: any) {
+          toast({
+            title: "Erro",
+            description: `Erro ao carregar clientes: ${error.message}`,
+            variant: "destructive",
+          });
+          return [];
+        }
+      }
+      return fetch('/api/clients').then(res => res.json());
+    },
   });
 
   // Filter clients based on search term
   const filteredClients = clients?.filter(client => 
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.phone.includes(searchTerm)
+    (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (client.phone && client.phone.includes(searchTerm))
   );
 
   const navigateToClientDetails = (id: number) => {
@@ -40,17 +76,25 @@ export default function ClientsList() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title="Clientes"
-        description="Gerencie os clientes e seus veículos"
+        title={managerMode ? "Clientes do Gestor" : "Clientes"}
+        description={managerMode 
+          ? "Visualize os clientes atribuídos a este gestor" 
+          : "Gerencie os clientes e seus veículos"}
         actions={
-          <Link href="/clients/new">
-            <Button>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Novo Cliente
+          managerMode ? (
+            <Button variant="outline" onClick={() => setLocation('/managers')}>
+              Voltar para Gestores
             </Button>
-          </Link>
+          ) : (
+            <Link href="/clients/new">
+              <Button>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Novo Cliente
+              </Button>
+            </Link>
+          )
         }
       />
       

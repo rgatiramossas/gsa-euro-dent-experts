@@ -190,8 +190,10 @@ export default function NewManager({ isEditMode = false }: NewManagerProps) {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title="Novo Gestor"
-        description="Cadastre um novo gestor para gerenciar clientes específicos"
+        title={isEditMode ? "Editar Gestor" : "Novo Gestor"}
+        description={isEditMode 
+          ? "Atualize as informações do gestor e seus clientes atribuídos" 
+          : "Cadastre um novo gestor para gerenciar clientes específicos"}
         actions={
           <Button variant="outline" onClick={() => setLocation('/managers')}>
             Cancelar
@@ -255,6 +257,11 @@ export default function NewManager({ isEditMode = false }: NewManagerProps) {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle>Credenciais de Acesso</CardTitle>
+              {isEditMode && (
+                <CardDescription>
+                  Deixe os campos de senha em branco para manter a senha atual
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -359,9 +366,11 @@ export default function NewManager({ isEditMode = false }: NewManagerProps) {
             <Button 
               type="submit" 
               className="flex-1"
-              disabled={createManagerMutation.isPending}
+              disabled={managerMutation.isPending}
             >
-              {createManagerMutation.isPending ? "Salvando..." : "Cadastrar Gestor"}
+              {managerMutation.isPending 
+                ? "Salvando..." 
+                : isEditMode ? "Atualizar Gestor" : "Cadastrar Gestor"}
             </Button>
           </div>
         </form>
