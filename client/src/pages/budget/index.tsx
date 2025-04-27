@@ -513,10 +513,10 @@ export default function BudgetPage() {
       setIsViewMode(true);
       
       // Abre o dialog adequado dependendo do tipo de usuário
-      if (isGestor || isTechnician) {
-        setShowViewDialog(true); // Diálogo de visualização para gestores e técnicos
+      if (isGestor) {
+        setShowViewDialog(true); // Diálogo de visualização somente para gestores
       } else {
-        setShowDialog(true); // Diálogo principal para admin
+        setShowDialog(true); // Diálogo principal para admin e técnicos
       }
     }
   };
