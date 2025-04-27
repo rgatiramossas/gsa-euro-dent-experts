@@ -7,6 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { hailCalculation } from '../../utils/hailCalculation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -240,20 +241,53 @@ function calculateAw(parts: Record<string, PartDamage>) {
   let totalAw = 0;
   
   // Itera sobre todas as peças
-  Object.values(parts).forEach(part => {
+  Object.entries(parts).forEach(([partKey, part]) => {
     if (part.selected) {
-      // Calcula AW para cada diâmetro
-      const aw20 = part.isHorizontal ? part.diameter20 * 2 : part.diameter20;
-      const aw30 = part.isHorizontal ? part.diameter30 * 3 : part.diameter30 * 1.5;
-      const aw40 = part.isHorizontal ? part.diameter40 * 4 : part.diameter40 * 2;
+      // Usar a função de cálculo avançada para cada diâmetro
+      if (part.diameter20 > 0) {
+        const result = hailCalculation(
+          20, // tamanho 20mm
+          part.diameter20, // quantidade
+          !part.isHorizontal, // isVertical (inverso de isHorizontal)
+          part.optionA, // isAluminum
+          part.optionK, // isGlueTechnique
+          false, // needsVordrucken (não usado na interface)
+          false, // needsHohlraum (não usado na interface)
+          15 // Taxa horária ajustada para 15€ para manter compatibilidade com o cálculo anterior
+        );
+        totalAw += result.aw;
+      }
       
-      // Soma o AW de todos os diâmetros
-      totalAw += aw20 + aw30 + aw40;
+      if (part.diameter30 > 0) {
+        const result = hailCalculation(
+          30, // tamanho 30mm  
+          part.diameter30, // quantidade
+          !part.isHorizontal, // isVertical
+          part.optionA, // isAluminum
+          part.optionK, // isGlueTechnique
+          false, // needsVordrucken
+          false, // needsHohlraum
+          15 // Taxa horária 
+        );
+        totalAw += result.aw;
+      }
       
-      // Adiciona valor adicional para opções especiais
-      if (part.optionA) totalAw += 10; // Adicional para alumínio
-      if (part.optionK) totalAw += 5;  // Adicional para cola
-      if (part.optionP) totalAw += 15; // Adicional para pintura
+      if (part.diameter40 > 0) {
+        const result = hailCalculation(
+          40, // tamanho 40mm
+          part.diameter40, // quantidade  
+          !part.isHorizontal, // isVertical
+          part.optionA, // isAluminum
+          part.optionK, // isGlueTechnique
+          false, // needsVordrucken
+          false, // needsHohlraum
+          15 // Taxa horária
+        );
+        totalAw += result.aw;
+      }
+      
+      // Se precisar de pintura, adicione valor extra
+      if (part.optionP) totalAw += 15; // Valor adicional para pintura
     }
   });
   
