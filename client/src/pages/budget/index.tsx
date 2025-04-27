@@ -527,6 +527,7 @@ export default function BudgetPage() {
           <p className="text-muted-foreground">Gerencie orçamentos para seus clientes</p>
         </div>
         
+        {/* Botão "Novo Orçamento" aparece apenas para não-gestores */}
         {!isGestor && (
           <Dialog open={showDialog} onOpenChange={(open) => {
             if (!open) {
