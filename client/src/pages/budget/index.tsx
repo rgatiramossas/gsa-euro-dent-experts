@@ -297,7 +297,7 @@ function calculateAw(parts: Record<string, PartDamage>) {
 // Função de cálculo do valor monetário baseado no AW
 function calculateValue(aw: number) {
   // Taxa base por AW (valor em euros)
-  const ratePerAw = 15;
+  const ratePerAw = 2.8;
   
   return aw * ratePerAw;
 }

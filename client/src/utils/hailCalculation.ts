@@ -6,7 +6,7 @@ export const hailCalculation = (
     isGlueTechnique: boolean = false,
     needsVordrucken: boolean = false,
     needsHohlraum: boolean = false,
-    hourlyRate: number = 28 // Taxa horária padrão de 28€
+    hourlyRate: number = 2.8 // Taxa horária padrão de 2.8€
 ): { aw: number; hours: number; cost: number } => {
     const baseData: Record<'horizontal' | 'vertical', Record<number, Record<number, number>>> = {
         horizontal: {
