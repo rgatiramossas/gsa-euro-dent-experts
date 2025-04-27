@@ -257,13 +257,13 @@ export default function ConfiguracoesPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/technicians">
+                <Link to="/technicians">
                   <Button className="w-full sm:w-auto">
                     <UserPlusIcon className="mr-2 h-4 w-4" />
                     Gerenciar Técnicos
                   </Button>
                 </Link>
-                <Link href="/managers">
+                <Link to="/managers">
                   <Button className="w-full sm:w-auto">
                     <Users className="mr-2 h-4 w-4" />
                     Gerenciar Gestores
