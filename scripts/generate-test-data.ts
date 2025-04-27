@@ -217,7 +217,8 @@ async function generateTestData() {
       is_vertical: false,
       is_aluminum: false,
       notes: "Capô, teto e porta-malas com danos de granizo",
-      vehicle_info: "Toyota Hilux 2022 - Prata"
+      vehicle_info: "Toyota Hilux 2022 - Prata",
+      date: new Date().toISOString().split('T')[0]
     }
   ];
 
