@@ -382,7 +382,6 @@ export class DatabaseStorage implements IStorage {
         email: clients.email,
         phone: clients.phone,
         address: clients.address,
-        notes: clients.notes,
         created_at: clients.created_at
       }).from(clients);
       
@@ -409,7 +408,6 @@ export class DatabaseStorage implements IStorage {
         email: clients.email,
         phone: clients.phone,
         address: clients.address,
-        notes: clients.notes,
         created_at: clients.created_at
       }).from(clients).where(
         like(clients.name, `%${query}%`)
@@ -476,8 +474,6 @@ export class DatabaseStorage implements IStorage {
         completion_date: services.completion_date,
         location_type: services.location_type,
         address: services.address,
-        latitude: services.latitude,
-        longitude: services.longitude,
         price: services.price,
         administrative_fee: services.administrative_fee,
         total: services.total,
@@ -627,8 +623,6 @@ export class DatabaseStorage implements IStorage {
         completion_date: services.completion_date,
         location_type: services.location_type,
         address: services.address,
-        latitude: services.latitude,
-        longitude: services.longitude,
         price: services.price,
         administrative_fee: services.administrative_fee,
         total: services.total,
