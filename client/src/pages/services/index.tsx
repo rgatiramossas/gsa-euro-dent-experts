@@ -124,12 +124,13 @@ export default function ServicesList() {
                     <TableHead>Técnico</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Data</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredServices?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                         Nenhum serviço encontrado
                       </TableCell>
                     </TableRow>
@@ -137,8 +138,7 @@ export default function ServicesList() {
                     filteredServices?.map((service) => (
                       <TableRow 
                         key={service.id} 
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => navigateToServiceDetails(service.id)}
+                        className="hover:bg-gray-50"
                       >
                         <TableCell className="font-medium">#{service.id}</TableCell>
                         <TableCell>{service.client.name}</TableCell>
@@ -152,6 +152,22 @@ export default function ServicesList() {
                         </TableCell>
                         <TableCell className="text-gray-500">
                           {formatDate(service.scheduled_date || service.created_at)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                              onClick={() => navigateToServiceDetails(service.id)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-eye">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                              <span>Detalhes</span>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
