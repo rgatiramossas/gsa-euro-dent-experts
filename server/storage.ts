@@ -351,17 +351,28 @@ export class DatabaseStorage implements IStorage {
   
   async createClient(insertClient: InsertClient): Promise<Client> {
     try {
+      console.log("Criando cliente com dados:", insertClient);
+      
       // No MySQL o método returning() não é suportado
       const result = await db.insert(clients).values(insertClient);
+      
       // Obter o ID do cliente recém-criado
       const clientId = Number(result.insertId);
-      // Buscar o cliente pelo ID
-      const client = await this.getClient(clientId);
+      
+      if (!clientId || isNaN(clientId) || clientId <= 0) {
+        throw new Error(`ID de cliente inválido ou não retornado pelo banco de dados: ${clientId}`);
+      }
+      
+      console.log(`Cliente criado com ID: ${clientId}, buscando dados completos`);
+      
+      // Buscar o cliente diretamente do banco de dados usando uma consulta SQL simples
+      const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
       
       if (!client) {
         throw new Error(`Cliente criado mas não encontrado com ID ${clientId}`);
       }
       
+      console.log("Cliente recuperado com sucesso:", client);
       return client;
     } catch (error) {
       console.error("Erro ao criar cliente:", error);
@@ -461,17 +472,28 @@ export class DatabaseStorage implements IStorage {
   
   async createVehicle(insertVehicle: InsertVehicle): Promise<Vehicle> {
     try {
+      console.log("Criando veículo com dados:", insertVehicle);
+      
       // No MySQL não temos o método returning()
       const result = await db.insert(vehicles).values(insertVehicle);
+      
       // Obter o ID do veículo recém-criado
       const vehicleId = Number(result.insertId);
-      // Buscar o veículo pelo ID
-      const vehicle = await this.getVehicle(vehicleId);
+      
+      if (!vehicleId || isNaN(vehicleId) || vehicleId <= 0) {
+        throw new Error(`ID de veículo inválido ou não retornado pelo banco de dados: ${vehicleId}`);
+      }
+      
+      console.log(`Veículo criado com ID: ${vehicleId}, buscando dados completos`);
+      
+      // Buscar o veículo diretamente do banco de dados
+      const [vehicle] = await db.select().from(vehicles).where(eq(vehicles.id, vehicleId));
       
       if (!vehicle) {
         throw new Error(`Veículo criado mas não encontrado com ID ${vehicleId}`);
       }
       
+      console.log("Veículo recuperado com sucesso:", vehicle);
       return vehicle;
     } catch (error) {
       console.error("Erro ao criar veículo:", error);
@@ -513,14 +535,24 @@ export class DatabaseStorage implements IStorage {
   
   async createServiceType(insertServiceType: InsertServiceType): Promise<ServiceType> {
     try {
+      console.log("Criando tipo de serviço com dados:", insertServiceType);
+      
       const result = await db.insert(serviceTypes).values(insertServiceType);
       const serviceTypeId = Number(result.insertId);
-      const serviceType = await this.getServiceType(serviceTypeId);
+      
+      if (!serviceTypeId || isNaN(serviceTypeId) || serviceTypeId <= 0) {
+        throw new Error(`ID de tipo de serviço inválido ou não retornado pelo banco de dados: ${serviceTypeId}`);
+      }
+      
+      console.log(`Tipo de serviço criado com ID: ${serviceTypeId}, buscando dados completos`);
+      
+      const [serviceType] = await db.select().from(serviceTypes).where(eq(serviceTypes.id, serviceTypeId));
       
       if (!serviceType) {
         throw new Error(`Tipo de serviço criado mas não encontrado com ID ${serviceTypeId}`);
       }
       
+      console.log("Tipo de serviço recuperado com sucesso:", serviceType);
       return serviceType;
     } catch (error) {
       console.error("Erro ao criar tipo de serviço:", error);
@@ -587,6 +619,8 @@ export class DatabaseStorage implements IStorage {
   
   async createService(insertService: InsertService): Promise<Service> {
     try {
+      console.log("Criando serviço com dados:", insertService);
+      
       // Clone o objeto para não modificar o original
       const serviceData = { ...insertService };
       
@@ -608,12 +642,21 @@ export class DatabaseStorage implements IStorage {
       // No MySQL não temos o método returning()
       const result = await db.insert(services).values(serviceData);
       const serviceId = Number(result.insertId);
+      
+      if (!serviceId || isNaN(serviceId) || serviceId <= 0) {
+        throw new Error(`ID de serviço inválido ou não retornado pelo banco de dados: ${serviceId}`);
+      }
+      
+      console.log(`Serviço criado com ID: ${serviceId}, buscando dados completos`);
+      
+      // Buscar o serviço diretamente
       const service = await this.getService(serviceId);
       
       if (!service) {
         throw new Error(`Serviço criado mas não encontrado com ID ${serviceId}`);
       }
       
+      console.log("Serviço recuperado com sucesso:", service);
       return service;
     } catch (error) {
       console.error("Erro ao criar serviço:", error);
@@ -806,9 +849,17 @@ export class DatabaseStorage implements IStorage {
   // Service Photos methods
   async addServicePhoto(insertPhoto: InsertServicePhoto): Promise<ServicePhoto> {
     try {
+      console.log("Adicionando foto de serviço com dados:", insertPhoto);
+      
       // No MySQL não temos o método returning()
       const result = await db.insert(servicePhotos).values(insertPhoto);
       const photoId = Number(result.insertId);
+      
+      if (!photoId || isNaN(photoId) || photoId <= 0) {
+        throw new Error(`ID de foto inválido ou não retornado pelo banco de dados: ${photoId}`);
+      }
+      
+      console.log(`Foto adicionada com ID: ${photoId}, buscando dados completos`);
       
       // Buscar a foto recém inserida
       const [photo] = await db.select().from(servicePhotos).where(eq(servicePhotos.id, photoId));
@@ -817,6 +868,7 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Foto adicionada mas não encontrada com ID ${photoId}`);
       }
       
+      console.log("Foto recuperada com sucesso:", photo);
       return photo;
     } catch (error) {
       console.error("Erro ao adicionar foto de serviço:", error);
