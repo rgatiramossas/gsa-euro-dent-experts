@@ -742,17 +742,23 @@ export class DatabaseStorage implements IStorage {
       .from(services)
       .where(
         and(
-          eq(services.status, 'pending'),
+          or(
+            eq(services.status, 'pending'),
+            eq(services.status, 'aguardando')
+          ),
           ...baseConditions
         )
       );
     
-    // 2. Total de OS Faturadas dos clientes do gestor
-    const [faturadoResult] = await db.select({ count: sql<number>`count(*)` })
+    // 2. Total de OS em progresso dos clientes do gestor
+    const [inProgressResult] = await db.select({ count: sql<number>`count(*)` })
       .from(services)
       .where(
         and(
-          eq(services.status, 'faturado'),
+          or(
+            eq(services.status, 'em_progresso'),
+            eq(services.status, 'in_progress')
+          ),
           ...baseConditions
         )
       );
@@ -764,6 +770,7 @@ export class DatabaseStorage implements IStorage {
         and(
           or(
             eq(services.status, 'completed'),
+            eq(services.status, 'concluido'),
             eq(services.status, 'aguardando_aprovacao'),
             eq(services.status, 'faturado'),
             eq(services.status, 'pago')
@@ -773,29 +780,50 @@ export class DatabaseStorage implements IStorage {
       );
     
     // 4. Faturamento total (não será mostrado para o gestor, mas calculamos para manter a estrutura de dados)
-    let totalRevenue = 0;
+    const [revenueResult] = await db.select({
+      total: sql<number>`SUM(${services.price})`
+    })
+    .from(services)
+    .where(
+      and(
+        or(
+          eq(services.status, 'completed'),
+          eq(services.status, 'concluido'),
+          eq(services.status, 'aguardando_aprovacao'),
+          eq(services.status, 'faturado'),
+          eq(services.status, 'pago')
+        ),
+        ...baseConditions
+      )
+    );
     
     // Converter para o formato esperado pelo frontend
     const totalPendingServices = typeof pendingResult.count === 'string' 
       ? parseInt(pendingResult.count) 
       : (pendingResult.count || 0);
     
-    const totalFaturadoServices = typeof faturadoResult.count === 'string' 
-      ? parseInt(faturadoResult.count) 
-      : (faturadoResult.count || 0);
+    const totalInProgressServices = typeof inProgressResult.count === 'string' 
+      ? parseInt(inProgressResult.count) 
+      : (inProgressResult.count || 0);
     
     const totalCompletedServices = typeof completedResult.count === 'string' 
       ? parseInt(completedResult.count) 
       : (completedResult.count || 0);
     
+    const totalRevenue = revenueResult.total ? Number(revenueResult.total) : 0;
+    
     const stats = {
       totalPendingServices,
-      totalInProgressServices: totalFaturadoServices,
+      totalInProgressServices,
       totalCompletedServices,
-      totalRevenue: totalRevenue // Será removido na rota antes de enviar para o frontend
+      totalRevenue
     };
     
-    console.log('Stats do gestor formatados para envio:', stats);
+    console.log('Stats do gestor:', {
+      totalPendingServices,
+      totalInProgressServices,
+      totalCompletedServices
+    });
     return stats;
   }
   
