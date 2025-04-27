@@ -602,6 +602,113 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
+  // Estatísticas financeiras para técnicos
+  async getTechnicianFinancialStats(technicianId: number): Promise<any> {
+    // Validar se o ID do técnico é fornecido
+    if (!technicianId) {
+      throw new Error('ID do técnico é obrigatório');
+    }
+
+    // Obter todos os serviços do técnico (excluindo deletados)
+    const allServices = await db.select().from(services)
+      .where(
+        and(
+          eq(services.technician_id, technicianId),
+          sql`${services.status} != 'deleted'`
+        )
+      );
+    
+    // Obter todos os pedidos de pagamento do técnico
+    const paymentRequestsData = await this.listPaymentRequests(technicianId);
+    
+    // Categorizar serviços por status
+    const pendingApproval = allServices.filter(s => s.status === 'aguardando_aprovacao');
+    const faturado = allServices.filter(s => s.status === 'faturado');
+    const pago = allServices.filter(s => s.status === 'pago');
+    const completed = allServices.filter(s => s.status === 'completed' || s.status === 'concluido');
+    
+    // Categorizar pedidos de pagamento por status
+    const pendingRequests = paymentRequestsData.filter(pr => pr.status === 'pendente');
+    const approvedRequests = paymentRequestsData.filter(pr => pr.status === 'aprovado');
+    const paidRequests = paymentRequestsData.filter(pr => pr.status === 'pago');
+    const rejectedRequests = paymentRequestsData.filter(pr => pr.status === 'rejeitado');
+    
+    // Calcular valores financeiros
+    // 1. Valores em aprovação (pedidos pendentes)
+    const pendingValue = pendingRequests.reduce((sum, pr) => 
+      sum + (pr.technicianValue || 0), 0);
+    
+    // 2. Valores faturados (pedidos aprovados)
+    const invoicedValue = approvedRequests.reduce((sum, pr) => 
+      sum + (pr.technicianValue || 0), 0);
+    
+    // 3. Valores recebidos (pedidos pagos)
+    const receivedValue = paidRequests.reduce((sum, pr) => 
+      sum + (pr.technicianValue || 0), 0);
+
+    // 4. Valores de serviços concluídos que ainda não foram pedidos pagamento
+    const unpaidCompletedValue = completed.reduce((sum, service) => 
+      sum + (service.price || 0), 0);
+    
+    // Resumir valores por mês nos últimos 6 meses
+    const today = new Date();
+    const monthlyData = [];
+    
+    for (let i = 0; i < 6; i++) {
+      const month = new Date(today);
+      month.setMonth(month.getMonth() - i);
+      month.setDate(1); // Primeiro dia do mês
+      month.setHours(0, 0, 0, 0);
+      
+      const nextMonth = new Date(month);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      
+      // Filtrar pagamentos deste mês
+      const monthPaidRequests = paidRequests.filter(pr => {
+        const paymentDate = pr.payment_date ? new Date(pr.payment_date) : null;
+        return paymentDate && paymentDate >= month && paymentDate < nextMonth;
+      });
+      
+      // Somar valores pagos no mês
+      const monthValue = monthPaidRequests.reduce((sum, pr) => 
+        sum + (pr.technicianValue || 0), 0);
+      
+      // Nome do mês em português
+      const monthNames = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ];
+      
+      monthlyData.push({
+        month: monthNames[month.getMonth()],
+        value: monthValue,
+        year: month.getFullYear()
+      });
+    }
+    
+    // Inverter para ordem cronológica (mais antigo primeiro)
+    monthlyData.reverse();
+    
+    return {
+      pendingValue,         // Valores em aprovação
+      invoicedValue,        // Valores faturados (aprovados)
+      receivedValue,        // Valores recebidos (pagos)
+      unpaidCompletedValue, // Valores de serviços concluídos sem pedido
+      
+      pendingCount: pendingRequests.length,
+      approvedCount: approvedRequests.length,
+      paidCount: paidRequests.length,
+      rejectedCount: rejectedRequests.length,
+      
+      pendingServicesCount: pendingApproval.length,
+      faturadoServicesCount: faturado.length,
+      pagoServicesCount: pago.length,
+      completedServicesCount: completed.length,
+      
+      monthlyData           // Dados mensais para gráfico
+    };
+  }
+
   // Dashboard data
   async getDashboardStats(technicianId?: number): Promise<any> {
     // Condições base para todos os filtros (excluir serviços deletados)

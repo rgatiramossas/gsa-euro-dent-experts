@@ -346,6 +346,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Rota para Estatísticas Financeiras do Técnico
+  app.get("/api/technician/financial-stats", requireAuth, async (req, res) => {
+    try {
+      // Verificar se o usuário é técnico ou admin
+      const userRole = req.session.userRole;
+      
+      if (userRole !== "technician" && userRole !== "admin") {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+      
+      // Se for técnico, pegar estatísticas do próprio técnico
+      if (userRole === "technician") {
+        const technicianId = Number(req.session.userId);
+        const stats = await storage.getTechnicianFinancialStats(technicianId);
+        return res.json(stats);
+      }
+      
+      // Se for admin, verificar se foi passado um ID de técnico
+      const technicianId = req.query.technicianId ? Number(req.query.technicianId) : undefined;
+      
+      if (!technicianId) {
+        return res.status(400).json({ message: "ID do técnico é obrigatório" });
+      }
+      
+      const stats = await storage.getTechnicianFinancialStats(technicianId);
+      return res.json(stats);
+    } catch (error) {
+      console.error("Erro ao buscar estatísticas financeiras do técnico:", error);
+      res.status(500).json({ message: "Erro ao buscar estatísticas financeiras" });
+    }
+  });
+
   // Dashboard routes
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
     try {
