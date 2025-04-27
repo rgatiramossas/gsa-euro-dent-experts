@@ -518,6 +518,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
+  
+  // Rota para atualizar um usuário existente (incluindo gestores)
+  app.patch("/api/users/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = Number(req.params.id);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "ID de usuário inválido" });
+      }
+      
+      // Verificar se o usuário existe
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Apenas administradores podem atualizar outros usuários
+      if (req.session.userRole !== "admin" && Number(req.session.userId) !== userId) {
+        return res.status(403).json({ message: "Permissão negada" });
+      }
+      
+      const userData = req.body;
+      
+      // Extrair client_ids do corpo da requisição se existir
+      const clientIds = userData.client_ids;
+      delete userData.client_ids; // Remover do objeto de dados do usuário
+      
+      // Atualizar os dados básicos do usuário
+      const updatedUser = await storage.updateUser(userId, userData);
+      
+      // Se for um gestor e temos client_ids, atualizar as atribuições de clientes
+      if (existingUser.role === "gestor" && Array.isArray(clientIds)) {
+        // Obter clientes atualmente atribuídos
+        const currentClients = await storage.getManagerClients(userId);
+        const currentClientIds = currentClients.map(client => client.id);
+        
+        // Identificar clientes a serem removidos (estão no atual mas não no novo)
+        const clientsToRemove = currentClientIds.filter(id => !clientIds.includes(id));
+        
+        // Identificar clientes a serem adicionados (estão no novo mas não no atual)
+        const clientsToAdd = clientIds.filter(id => !currentClientIds.includes(id));
+        
+        // Remover clientes que não estão mais na lista
+        for (const clientId of clientsToRemove) {
+          await storage.removeClientFromManager(userId, clientId);
+        }
+        
+        // Adicionar novos clientes
+        for (const clientId of clientsToAdd) {
+          await storage.assignClientToManager(userId, clientId);
+        }
+      }
+      
+      res.status(200).json(updatedUser);
+    } catch (error) {
+      console.error("Erro ao atualizar usuário:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
 
   app.post("/api/users", requireAuth, async (req, res) => {
     try {
