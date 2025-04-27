@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, time, jsonb } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -267,3 +268,110 @@ export const insertBudgetSchema = createInsertSchema(budgets).omit({
 
 export type Budget = typeof budgets.$inferSelect;
 export type InsertBudget = z.infer<typeof insertBudgetSchema>;
+
+// Define relations between tables
+export const usersRelations = relations(users, ({ many }) => ({
+  services: many(services),
+  events: many(events),
+  paymentRequests: many(paymentRequests),
+  managerClientAssignments: many(managerClientAssignments),
+}));
+
+export const clientsRelations = relations(clients, ({ many }) => ({
+  vehicles: many(vehicles),
+  services: many(services),
+  managerClientAssignments: many(managerClientAssignments),
+  budgets: many(budgets),
+}));
+
+export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
+  client: one(clients, {
+    fields: [vehicles.client_id],
+    references: [clients.id],
+  }),
+  services: many(services),
+}));
+
+export const serviceTypesRelations = relations(serviceTypes, ({ many }) => ({
+  services: many(services),
+}));
+
+export const servicesRelations = relations(services, ({ one, many }) => ({
+  client: one(clients, {
+    fields: [services.client_id],
+    references: [clients.id],
+  }),
+  vehicle: one(vehicles, {
+    fields: [services.vehicle_id],
+    references: [vehicles.id],
+  }),
+  serviceType: one(serviceTypes, {
+    fields: [services.service_type_id],
+    references: [serviceTypes.id],
+  }),
+  technician: one(users, {
+    fields: [services.technician_id],
+    references: [users.id],
+  }),
+  photos: many(servicePhotos),
+  paymentRequestItems: many(paymentRequestItems),
+}));
+
+export const servicePhotosRelations = relations(servicePhotos, ({ one }) => ({
+  service: one(services, {
+    fields: [servicePhotos.service_id],
+    references: [services.id],
+  }),
+}));
+
+export const eventTypesRelations = relations(eventTypes, ({ many }) => ({
+  events: many(events),
+}));
+
+export const eventsRelations = relations(events, ({ one }) => ({
+  eventType: one(eventTypes, {
+    fields: [events.event_type_id],
+    references: [eventTypes.id],
+  }),
+  technician: one(users, {
+    fields: [events.technician_id],
+    references: [users.id],
+  }),
+}));
+
+export const paymentRequestsRelations = relations(paymentRequests, ({ one, many }) => ({
+  technician: one(users, {
+    fields: [paymentRequests.technician_id],
+    references: [users.id],
+  }),
+  items: many(paymentRequestItems),
+}));
+
+export const paymentRequestItemsRelations = relations(paymentRequestItems, ({ one }) => ({
+  paymentRequest: one(paymentRequests, {
+    fields: [paymentRequestItems.payment_request_id],
+    references: [paymentRequests.id],
+  }),
+  service: one(services, {
+    fields: [paymentRequestItems.service_id],
+    references: [services.id],
+  }),
+}));
+
+export const managerClientAssignmentsRelations = relations(managerClientAssignments, ({ one }) => ({
+  manager: one(users, {
+    fields: [managerClientAssignments.manager_id],
+    references: [users.id],
+  }),
+  client: one(clients, {
+    fields: [managerClientAssignments.client_id],
+    references: [clients.id],
+  }),
+}));
+
+export const budgetsRelations = relations(budgets, ({ one }) => ({
+  client: one(clients, {
+    fields: [budgets.client_id],
+    references: [clients.id],
+  }),
+}));
