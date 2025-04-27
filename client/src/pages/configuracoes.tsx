@@ -121,6 +121,12 @@ export default function ConfiguracoesPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="password">Segurança</TabsTrigger>
+          {user?.role === "technician" && (
+            <TabsTrigger value="technician">Técnico</TabsTrigger>
+          )}
+          {user?.role === "gestor" && (
+            <TabsTrigger value="manager">Gestor</TabsTrigger>
+          )}
         </TabsList>
         
         <TabsContent value="profile">
@@ -241,6 +247,63 @@ export default function ConfiguracoesPage() {
                   </div>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Conteúdo da aba Técnico */}
+        <TabsContent value="technician">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Técnico</CardTitle>
+              <CardDescription>
+                Gerencie suas configurações específicas como técnico.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Serviços</h3>
+                <p className="text-sm text-gray-500">
+                  Visualize seus serviços atribuídos e gerencie seu calendário.
+                </p>
+                <div className="flex gap-4">
+                  <Link to="/services">
+                    <Button variant="outline">
+                      Meus Serviços
+                    </Button>
+                  </Link>
+                  <Link to="/events">
+                    <Button variant="outline">
+                      Meu Calendário
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Conteúdo da aba Gestor */}
+        <TabsContent value="manager">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Gestor</CardTitle>
+              <CardDescription>
+                Gerencie suas configurações específicas como gestor.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Clientes Atribuídos</h3>
+                <p className="text-sm text-gray-500">
+                  Visualize e gerencie os clientes que estão sob sua supervisão.
+                </p>
+                <Link to="/my-clients">
+                  <Button variant="outline">
+                    Meus Clientes
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
