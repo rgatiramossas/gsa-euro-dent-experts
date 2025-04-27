@@ -7,7 +7,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -77,6 +78,55 @@ interface CarPart {
   id: string;
   name: string;
   damage: PartDamage;
+}
+
+// Definição do componente de peça danificada
+function DamagedPartItem({ partKey, label }: { partKey: string; label: string }) {
+  return (
+    <div className="border rounded-md p-2 space-y-2">
+      <div className="text-center mb-2">{label}</div>
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-sm">20mm:</span>
+          <Input 
+            type="text" 
+            className="w-28"
+            readOnly={false}
+          />
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm">30mm:</span>
+          <Input 
+            type="text" 
+            className="w-28"
+            readOnly={false}
+          />
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm">40mm:</span>
+          <Input 
+            type="text" 
+            className="w-28"
+            readOnly={false}
+          />
+        </div>
+        <div className="flex justify-between pt-1">
+          <div className="flex items-center gap-1">
+            <Checkbox id={`${partKey}-a`} />
+            <Label htmlFor={`${partKey}-a`} className="rounded px-1 bg-red-100">A</Label>
+          </div>
+          <div className="flex items-center gap-1">
+            <Checkbox id={`${partKey}-k`} />
+            <Label htmlFor={`${partKey}-k`} className="rounded px-1 bg-blue-100">K</Label>
+          </div>
+          <div className="flex items-center gap-1">
+            <Checkbox id={`${partKey}-p`} />
+            <Label htmlFor={`${partKey}-p`} className="rounded px-1 bg-green-100">P</Label>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function BudgetPage() {
@@ -397,51 +447,89 @@ export default function BudgetPage() {
                   </div>
                 </div>
                 
-                {/* Imagem do veículo */}
-                <div className="space-y-2">
-                  <Label>Foto do Veículo</Label>
-                  <div className="flex justify-center items-center p-2 border rounded-md">
-                    <input 
-                      type="file"
-                      accept="image/*"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      style={{ display: 'none' }}
-                    />
+                {/* Grid de Peças do Carro */}
+                <div className="space-y-4">
+                  <Label>Danos do Veículo</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Linha 1 */}
+                    <DamagedPartItem partKey="paraLamaEsquerdo" label="Para-lama Esquerdo" />
+                    <DamagedPartItem partKey="capo" label="Capô" />
+                    <DamagedPartItem partKey="paraLamaDireito" label="Para-lama Direito" />
                     
-                    {photoUrl ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] relative">
-                        <img 
-                          src={photoUrl} 
-                          alt="Foto do veículo" 
-                          className="max-h-[135px] max-w-full object-contain"
-                        />
-                        {!isViewMode && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="absolute top-1 right-1"
-                            onClick={() => setPhotoUrl(null)}
-                          >
-                            <Trash2Icon className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : isViewMode ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] text-gray-400">
-                        <CameraIcon className="h-10 w-10 mb-2" />
-                        <span className="text-sm">Sem foto</span>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        className="w-full h-full flex flex-col items-center justify-center min-h-[135px]"
-                        onClick={handlePhotoUpload}
-                      >
-                        <CameraIcon className="h-10 w-10 mb-2" />
-                        <span className="text-sm">Adicionar Foto</span>
-                      </Button>
-                    )}
+                    {/* Linha 2 */}
+                    <DamagedPartItem partKey="colunaEsquerda" label="Coluna Esquerda" />
+                    <DamagedPartItem partKey="teto" label="Teto" />
+                    <DamagedPartItem partKey="colunaDireita" label="Coluna Direita" />
+                    
+                    {/* Linha 3 */}
+                    <DamagedPartItem partKey="portaDianteiraEsquerda" label="Porta Dianteira Esq." />
+                    
+                    <div className="flex justify-center items-center p-2 border rounded-md">
+                      {/* Input file oculto */}
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                      />
+                      
+                      {/* Exibir foto se existir ou mostrar botão/ícone */}
+                      {photoUrl ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] relative">
+                          <img 
+                            src={photoUrl} 
+                            alt="Foto do veículo" 
+                            className="max-h-[135px] max-w-full object-contain"
+                          />
+                          {!isViewMode && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-1 right-1"
+                              onClick={() => setPhotoUrl(null)}
+                            >
+                              <Trash2Icon className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ) : isViewMode ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] text-gray-400">
+                          <CameraIcon className="h-10 w-10 mb-2" />
+                          <span className="text-sm">Sem foto</span>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="w-full h-full flex flex-col items-center justify-center min-h-[135px]"
+                          onClick={handlePhotoUpload}
+                        >
+                          <CameraIcon className="h-10 w-10 mb-2" />
+                          <span className="text-sm">Adicionar Foto</span>
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <DamagedPartItem partKey="portaDianteiraDireita" label="Porta Dianteira Dir." />
+                    
+                    {/* Linha 4 */}
+                    <DamagedPartItem partKey="portaTraseiraEsquerda" label="Porta Traseira Esq." />
+                    <DamagedPartItem partKey="portaMalasSuperior" label="Porta Malas Superior" />
+                    <DamagedPartItem partKey="portaTraseiraDireita" label="Porta Traseira Dir." />
+                    
+                    {/* Linha 5 */}
+                    <DamagedPartItem partKey="lateralEsquerda" label="Lateral Esquerda" />
+                    <DamagedPartItem partKey="portaMalasInferior" label="Porta Malas Inferior" />
+                    <DamagedPartItem partKey="lateralDireita" label="Lateral Direita" />
+                  </div>
+                </div>
+                
+                {/* Materiais Especiais */}
+                <div className="space-y-2">
+                  <Label>Materiais Especiais</Label>
+                  <div className="text-sm border p-2 rounded bg-muted">
+                    <strong>MATERIAIS ESPECIAIS:</strong><br />
+                    A= ALUMÍNIO   K= COLA   P= PINTURA
                   </div>
                 </div>
                 
