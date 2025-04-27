@@ -80,9 +80,11 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const { user: currentUser } = useAuth();
   
   // Variáveis auxiliares para melhorar a legibilidade e evitar erros de tipagem
-  const isGestor = currentUser?.role === 'gestor';
+  const isGestor = currentUser?.role === 'gestor' || currentUser?.role === 'manager'; // Incluir ambas as variações
   const isAdmin = currentUser?.role === 'admin';
   const isTechnician = currentUser?.role === 'technician';
+  const canEditService = isAdmin || isTechnician; // Apenas admin e técnico podem editar
+  const canUpdateStatus = isAdmin || isTechnician; // Apenas admin e técnico podem atualizar status
   const [newStatus, setNewStatus] = useState<ServiceStatus | "">("");
   const [statusNotes, setStatusNotes] = useState("");
   const [showStatusDialog, setShowStatusDialog] = useState(false);

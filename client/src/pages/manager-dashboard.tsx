@@ -5,9 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
   ClipboardList,
-  Users,
-  Car,
-  Calendar
+  Users
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
