@@ -29,11 +29,123 @@ let pool: any;
 
 // Esta função deve ser chamada no inicio do servidor
 export const initializeDatabase = async () => {
-  const connection = await initDb();
-  db = connection.db;
-  pool = connection.pool;
-  console.log("Database initialized successfully");
-  return { db, pool };
+  try {
+    const connection = await initDb();
+    db = connection.db;
+    pool = connection.pool;
+    console.log("Database initialized successfully");
+    
+    // Verificar e criar tabelas essenciais
+    await createEssentialTables();
+    
+    return { db, pool };
+  } catch (error) {
+    console.error("Erro ao inicializar o banco de dados:", error);
+    throw error;
+  }
+};
+
+// Função para criar as tabelas essenciais
+async function createEssentialTables() {
+  try {
+    console.log("Verificando tabelas essenciais...");
+    
+    // Verificar se a tabela service_types existe
+    const [serviceTypesResult] = await pool.query("SHOW TABLES LIKE 'service_types'");
+    if (!serviceTypesResult.length) {
+      console.log("Criando tabela service_types...");
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS service_types (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          description TEXT,
+          base_price DECIMAL(10, 2),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      
+      // Inserir tipo de serviço padrão
+      await pool.query(`
+        INSERT INTO service_types (name, description, base_price)
+        VALUES ('Reparo Simples', 'Serviço básico de reparo', 100.00)
+      `);
+      console.log("Tabela service_types criada com tipo padrão adicionado");
+    } else {
+      // Verificar se há pelo menos um tipo de serviço
+      const [serviceTypesCount] = await pool.query("SELECT COUNT(*) as count FROM service_types");
+      if (serviceTypesCount[0].count === 0) {
+        await pool.query(`
+          INSERT INTO service_types (name, description, base_price)
+          VALUES ('Reparo Simples', 'Serviço básico de reparo', 100.00)
+        `);
+        console.log("Tipo de serviço padrão adicionado");
+      }
+    }
+    
+    // Verificar se a tabela vehicles existe
+    const [vehiclesResult] = await pool.query("SHOW TABLES LIKE 'vehicles'");
+    if (!vehiclesResult.length) {
+      console.log("Criando tabela vehicles...");
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS vehicles (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          client_id INT NOT NULL,
+          make VARCHAR(255) NOT NULL,
+          model VARCHAR(255) NOT NULL,
+          color VARCHAR(255),
+          license_plate VARCHAR(255),
+          vin VARCHAR(255),
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (client_id) REFERENCES clients(id)
+        )
+      `);
+      console.log("Tabela vehicles criada com sucesso");
+    }
+    
+    // Verificar se a tabela services existe
+    const [servicesResult] = await pool.query("SHOW TABLES LIKE 'services'");
+    if (!servicesResult.length) {
+      console.log("Criando tabela services...");
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS services (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          client_id INT NOT NULL,
+          vehicle_id INT NOT NULL,
+          service_type_id INT NOT NULL,
+          technician_id INT,
+          status VARCHAR(50) NOT NULL,
+          scheduled_date DATETIME,
+          start_date DATETIME,
+          completion_date DATETIME,
+          location_type VARCHAR(50),
+          address TEXT,
+          latitude DOUBLE,
+          longitude DOUBLE,
+          price DECIMAL(10, 2),
+          administrative_fee DECIMAL(10, 2),
+          total DECIMAL(10, 2),
+          notes TEXT,
+          description TEXT,
+          dents INT,
+          size INT,
+          is_vertical BOOLEAN,
+          is_aluminum BOOLEAN,
+          aw_value DECIMAL(10, 2),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (client_id) REFERENCES clients(id),
+          FOREIGN KEY (vehicle_id) REFERENCES vehicles(id),
+          FOREIGN KEY (service_type_id) REFERENCES service_types(id)
+        )
+      `);
+      console.log("Tabela services criada com sucesso");
+    }
+    
+    console.log("Verificação de tabelas essenciais concluída");
+  } catch (error) {
+    console.error("Erro ao criar tabelas essenciais:", error);
+    throw error;
+  }
 };
 
 // Usar MemoryStore como alternativa temporária para sessões até configurar MySQL
@@ -811,27 +923,126 @@ export class DatabaseStorage implements IStorage {
         serviceData.completion_date = new Date(serviceData.completion_date);
       }
       
-      console.log("Dados formatados para DB:", serviceData);
+      // Garantir que não existam propriedades undefined ou nulas que possam causar problemas
+      const cleanData = Object.entries(serviceData).reduce((acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, any>);
       
-      // No MySQL não temos o método returning()
-      const result = await db.insert(services).values(serviceData);
-      const serviceId = Number(result.insertId);
+      console.log("Dados formatados para DB:", cleanData);
       
-      if (!serviceId || isNaN(serviceId) || serviceId <= 0) {
-        throw new Error(`ID de serviço inválido ou não retornado pelo banco de dados: ${serviceId}`);
+      // Tentar usar query direta para o MySQL
+      try {
+        // Verificar se a tabela services existe
+        const [tablesResult] = await pool.query("SHOW TABLES LIKE 'services'");
+        if (!tablesResult.length) {
+          console.log("Tabela de serviços não existe, criando...");
+          await pool.query(`
+            CREATE TABLE IF NOT EXISTS services (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              client_id INT NOT NULL,
+              vehicle_id INT NOT NULL,
+              service_type_id INT NOT NULL,
+              technician_id INT,
+              status VARCHAR(50) NOT NULL,
+              scheduled_date DATETIME,
+              start_date DATETIME,
+              completion_date DATETIME,
+              location_type VARCHAR(50),
+              address TEXT,
+              latitude DOUBLE,
+              longitude DOUBLE,
+              price DECIMAL(10, 2),
+              administrative_fee DECIMAL(10, 2),
+              total DECIMAL(10, 2),
+              notes TEXT,
+              description TEXT,
+              dents INT,
+              size INT,
+              is_vertical BOOLEAN,
+              is_aluminum BOOLEAN,
+              aw_value DECIMAL(10, 2),
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (client_id) REFERENCES clients(id),
+              FOREIGN KEY (vehicle_id) REFERENCES vehicles(id),
+              FOREIGN KEY (service_type_id) REFERENCES service_types(id)
+            )
+          `);
+          console.log("Tabela de serviços criada com sucesso");
+        }
+        
+        // Preparar valores para query
+        const fields = Object.keys(cleanData).join(', ');
+        const placeholders = Object.keys(cleanData).map(() => '?').join(', ');
+        const values = Object.values(cleanData);
+        
+        console.log(`Executando inserção direta: INSERT INTO services (${fields}) VALUES (${placeholders})`);
+        console.log("Valores:", values);
+        
+        // Executar query usando a conexão direta
+        const query = `INSERT INTO services (${fields}) VALUES (${placeholders})`;
+        const [resultHeader] = await pool.query(query, values);
+        
+        console.log("Resultado da inserção via conexão direta:", JSON.stringify(resultHeader));
+        
+        // No MySQL, o insertId é uma propriedade direta do objeto de resultado
+        const insertId = resultHeader?.insertId;
+        
+        console.log("InsertId extraído:", insertId, "Tipo:", typeof insertId);
+        
+        if (insertId === undefined || insertId === null) {
+          throw new Error("Falha ao obter ID via inserção direta");
+        }
+        
+        const serviceId = Number(insertId);
+        
+        if (isNaN(serviceId) || serviceId <= 0) {
+          throw new Error(`ID de serviço inválido: ${serviceId}`);
+        }
+        
+        console.log(`Serviço criado com ID via inserção direta: ${serviceId}`);
+        
+        // Buscar serviço criado
+        const [serviceResult] = await pool.query(`SELECT * FROM services WHERE id = ?`, [serviceId]);
+        const service = serviceResult[0];
+        
+        if (!service) {
+          throw new Error(`Serviço criado mas não encontrado com ID ${serviceId}`);
+        }
+        
+        console.log("Serviço recuperado com sucesso:", service);
+        return service as Service;
+      } catch (directError) {
+        console.error("Erro na inserção direta:", directError);
+        
+        // Fallback para Drizzle ORM
+        console.log("Tentando com Drizzle ORM como fallback");
+        
+        // No MySQL não temos o método returning()
+        const result = await db.insert(services).values(cleanData);
+        
+        console.log("Resultado da inserção via Drizzle:", result);
+        
+        const serviceId = Number(result?.insertId);
+        
+        if (isNaN(serviceId) || serviceId <= 0) {
+          throw new Error(`ID de serviço inválido ou não retornado pelo banco de dados: ${serviceId}`);
+        }
+        
+        console.log(`Serviço criado com ID: ${serviceId}, buscando dados completos`);
+        
+        // Buscar o serviço diretamente
+        const service = await this.getService(serviceId);
+        
+        if (!service) {
+          throw new Error(`Serviço criado mas não encontrado com ID ${serviceId}`);
+        }
+        
+        console.log("Serviço recuperado com sucesso:", service);
+        return service;
       }
-      
-      console.log(`Serviço criado com ID: ${serviceId}, buscando dados completos`);
-      
-      // Buscar o serviço diretamente
-      const service = await this.getService(serviceId);
-      
-      if (!service) {
-        throw new Error(`Serviço criado mas não encontrado com ID ${serviceId}`);
-      }
-      
-      console.log("Serviço recuperado com sucesso:", service);
-      return service;
     } catch (error) {
       console.error("Erro ao criar serviço:", error);
       throw error;
