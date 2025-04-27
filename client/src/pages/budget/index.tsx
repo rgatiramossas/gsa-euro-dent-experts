@@ -996,13 +996,13 @@ export default function BudgetPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={isGestor ? 5 : 7} className="text-center py-4">
+                    <TableCell colSpan={(isGestor || isTechnician) ? 5 : 7} className="text-center py-4">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 ) : budgets.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isGestor ? 5 : 7} className="text-center py-4">
+                    <TableCell colSpan={(isGestor || isTechnician) ? 5 : 7} className="text-center py-4">
                       Nenhum orçamento encontrado.
                     </TableCell>
                   </TableRow>
@@ -1025,7 +1025,7 @@ export default function BudgetPage() {
                             <EyeIcon className="h-4 w-4" />
                           </Button>
                           
-                          {!isGestor && (
+                          {!isGestor && !isTechnician && (
                             <>
                               <Button
                                 variant="outline"
