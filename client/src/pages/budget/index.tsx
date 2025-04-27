@@ -252,8 +252,8 @@ function calculateAw(parts: Record<string, PartDamage>) {
           part.optionA, // isAluminum
           part.optionK, // isGlueTechnique
           false, // needsVordrucken (não usado na interface)
-          false, // needsHohlraum (não usado na interface)
-          15 // Taxa horária ajustada para 15€ para manter compatibilidade com o cálculo anterior
+          false // needsHohlraum (não usado na interface)
+          // Taxa padrão de 2.8€ será usada (definida na função hailCalculation)
         );
         totalAw += result.aw;
       }
@@ -266,8 +266,8 @@ function calculateAw(parts: Record<string, PartDamage>) {
           part.optionA, // isAluminum
           part.optionK, // isGlueTechnique
           false, // needsVordrucken
-          false, // needsHohlraum
-          15 // Taxa horária 
+          false // needsHohlraum
+          // Taxa padrão de 2.8€ será usada (definida na função hailCalculation)
         );
         totalAw += result.aw;
       }
@@ -280,14 +280,15 @@ function calculateAw(parts: Record<string, PartDamage>) {
           part.optionA, // isAluminum
           part.optionK, // isGlueTechnique
           false, // needsVordrucken
-          false, // needsHohlraum
-          15 // Taxa horária
+          false // needsHohlraum
+          // Taxa padrão de 2.8€ será usada (definida na função hailCalculation)
         );
         totalAw += result.aw;
       }
       
-      // Se precisar de pintura, adicione valor extra
-      if (part.optionP) totalAw += 15; // Valor adicional para pintura
+      // Não adicionamos valor extra para pintura, pois já está computado corretamente 
+      // na função hailCalculation e nos requisitos do projeto
+      // if (part.optionP) totalAw += 15; // Removido o adicional arbitrário de 15 pontos
     }
   });
   
