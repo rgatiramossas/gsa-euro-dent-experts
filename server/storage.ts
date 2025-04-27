@@ -576,22 +576,24 @@ export class DatabaseStorage implements IStorage {
         
         // Executar query usando a conexão direta
         const query = `INSERT INTO vehicles (${fields}) VALUES (${placeholders})`;
-        const result = await pool.query(query, values);
+        const [resultHeader] = await pool.query(query, values);
         
-        console.log("Resultado da inserção via conexão direta:", JSON.stringify(result));
+        console.log("Resultado da inserção via conexão direta:", JSON.stringify(resultHeader));
         
-        // Acessar o insertId que no MySQL está na primeira posição do resultado
-        // Estrutura típica: [ResultSetHeader, ColumnDefinition]
-        const resultHeader = result[0];
+        // No MySQL, o insertId é uma propriedade direta do objeto de resultado
         const insertId = resultHeader?.insertId;
         
         console.log("InsertId extraído:", insertId, "Tipo:", typeof insertId);
         
-        if (!insertId) {
+        if (insertId === undefined || insertId === null) {
           throw new Error("Falha ao obter ID via inserção direta");
         }
         
         const vehicleId = Number(insertId);
+        
+        if (isNaN(vehicleId) || vehicleId <= 0) {
+          throw new Error(`ID de veículo inválido: ${vehicleId}`);
+        }
         console.log(`Veículo criado com ID via inserção direta: ${vehicleId}`);
         
         // Buscar veículo criado
