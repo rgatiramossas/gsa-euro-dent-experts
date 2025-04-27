@@ -781,7 +781,30 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Obter todos os serviços do técnico (excluindo deletados)
-    const allServices = await db.select().from(services)
+    // Selecionar apenas colunas que existem na tabela MySQL
+    const selectColumns = {
+      id: services.id,
+      client_id: services.client_id,
+      vehicle_id: services.vehicle_id,
+      service_type_id: services.service_type_id,
+      technician_id: services.technician_id,
+      status: services.status,
+      scheduled_date: services.scheduled_date,
+      start_date: services.start_date,
+      completion_date: services.completion_date,
+      location_type: services.location_type,
+      address: services.address,
+      aw_value: services.aw_value,
+      total: services.total,
+      notes: services.notes,
+      dents: services.dents,
+      size: services.size,
+      is_vertical: services.is_vertical,
+      is_aluminum: services.is_aluminum,
+      created_at: services.created_at
+    };
+    
+    const allServices = await db.select(selectColumns).from(services)
       .where(
         and(
           eq(services.technician_id, technicianId),
@@ -945,7 +968,30 @@ export class DatabaseStorage implements IStorage {
       let totalRevenue = 0;
       
       // Obter todos os serviços concluídos que correspondem aos filtros
-      const completedServices = await db.select()
+      // Selecionar apenas colunas que existem na tabela MySQL
+      const selectColumns = {
+        id: services.id,
+        client_id: services.client_id,
+        vehicle_id: services.vehicle_id,
+        service_type_id: services.service_type_id,
+        technician_id: services.technician_id,
+        status: services.status,
+        scheduled_date: services.scheduled_date,
+        start_date: services.start_date,
+        completion_date: services.completion_date,
+        location_type: services.location_type,
+        address: services.address,
+        aw_value: services.aw_value,
+        total: services.total,
+        notes: services.notes,
+        dents: services.dents,
+        size: services.size,
+        is_vertical: services.is_vertical,
+        is_aluminum: services.is_aluminum,
+        created_at: services.created_at
+      };
+      
+      const completedServices = await db.select(selectColumns)
         .from(services)
         .where(
           and(
