@@ -161,16 +161,16 @@ function DamagedPartItem({
   
   return (
     <div className="border rounded-md p-2 space-y-2">
-      <div className="text-center mb-2">
+      <div className="text-center mb-2 text-sm font-medium">
         {label}
         {isHorizontal && <span className="text-xs text-muted-foreground ml-1">(Horizontal)</span>}
       </div>
       <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm">20mm:</span>
+        <div className="flex justify-between items-center gap-1">
+          <span className="text-xs sm:text-sm whitespace-nowrap">20mm:</span>
           <Input 
             type="number" 
-            className="w-28"
+            className="w-full min-w-0 h-8 px-2 text-sm"
             readOnly={isViewMode}
             disabled={isViewMode}
             value={damage.diameter20 > 0 ? damage.diameter20.toString() : ''}
@@ -178,11 +178,11 @@ function DamagedPartItem({
             min="0"
           />
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm">30mm:</span>
+        <div className="flex justify-between items-center gap-1">
+          <span className="text-xs sm:text-sm whitespace-nowrap">30mm:</span>
           <Input 
             type="number" 
-            className="w-28"
+            className="w-full min-w-0 h-8 px-2 text-sm"
             readOnly={isViewMode}
             disabled={isViewMode}
             value={damage.diameter30 > 0 ? damage.diameter30.toString() : ''}
@@ -190,11 +190,11 @@ function DamagedPartItem({
             min="0"
           />
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm">40mm:</span>
+        <div className="flex justify-between items-center gap-1">
+          <span className="text-xs sm:text-sm whitespace-nowrap">40mm:</span>
           <Input 
             type="number" 
-            className="w-28"
+            className="w-full min-w-0 h-8 px-2 text-sm"
             readOnly={isViewMode}
             disabled={isViewMode}
             value={damage.diameter40 > 0 ? damage.diameter40.toString() : ''}
@@ -203,32 +203,35 @@ function DamagedPartItem({
           />
         </div>
         <div className="flex justify-between pt-1">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Checkbox 
               id={`${partKey}-a`} 
+              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
               checked={damage.optionA}
               disabled={isViewMode}
               onCheckedChange={(checked) => updateDamage('optionA', !!checked)}
             />
-            <Label htmlFor={`${partKey}-a`} className="rounded px-1 bg-red-100">A</Label>
+            <Label htmlFor={`${partKey}-a`} className="rounded px-1 text-xs bg-red-100">A</Label>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Checkbox 
               id={`${partKey}-k`} 
+              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
               checked={damage.optionK}
               disabled={isViewMode}
               onCheckedChange={(checked) => updateDamage('optionK', !!checked)}
             />
-            <Label htmlFor={`${partKey}-k`} className="rounded px-1 bg-blue-100">K</Label>
+            <Label htmlFor={`${partKey}-k`} className="rounded px-1 text-xs bg-blue-100">K</Label>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Checkbox 
               id={`${partKey}-p`} 
+              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
               checked={damage.optionP}
               disabled={isViewMode}
               onCheckedChange={(checked) => updateDamage('optionP', !!checked)}
             />
-            <Label htmlFor={`${partKey}-p`} className="rounded px-1 bg-green-100">P</Label>
+            <Label htmlFor={`${partKey}-p`} className="rounded px-1 text-xs bg-green-100">P</Label>
           </div>
         </div>
       </div>
@@ -647,7 +650,7 @@ export default function BudgetPage() {
                 {/* Grid de Peças do Carro */}
                 <div className="space-y-4">
                   <Label>Danos do Veículo</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-2">
                     {/* Linha 1 */}
                     <DamagedPartItem partKey="paraLamaEsquerdo" label="Para-lama Esquerdo" isViewMode={isViewMode} onChange={handlePartChange} />
                     <DamagedPartItem partKey="capo" label="Capô" isHorizontal={true} isViewMode={isViewMode} onChange={handlePartChange} />
@@ -898,7 +901,7 @@ export default function BudgetPage() {
             {/* Grid de Peças do Carro */}
             <div className="space-y-4">
               <Label>Danos do Veículo</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-2">
                 {/* Linha 1 */}
                 <DamagedPartItem partKey="paraLamaEsquerdo" label="Para-lama Esquerdo" isViewMode={true} />
                 <DamagedPartItem partKey="capo" label="Capô" isHorizontal={true} isViewMode={true} />
