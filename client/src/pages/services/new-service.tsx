@@ -448,7 +448,7 @@ export default function NewService() {
                       <SelectContent>
                         {serviceTypes?.map((type) => (
                           <SelectItem key={type.id} value={type.id.toString()}>
-                            {type.name} (ID: {type.id})
+                            {type.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
