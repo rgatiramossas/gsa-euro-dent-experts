@@ -4,6 +4,11 @@ import { eq } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { fileURLToPath } from 'url';
+
+// Obter o diretório atual para ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Arrays para dados aleatórios
 const names = [
@@ -120,8 +125,12 @@ async function generateTestData() {
   try {
     // Verificar se já existem alguns dados
     const existingClients = await db.select().from(clients);
-    if (existingClients.length > 0) {
-      console.log(`Já existem ${existingClients.length} clientes. Pulando a geração de dados.`);
+    console.log(`Encontrados ${existingClients.length} clientes existentes.`);
+    
+    // Verificar se já existem orçamentos
+    const existingBudgets = await db.select().from(budgets);
+    if (existingBudgets.length > 0) {
+      console.log(`Já existem ${existingBudgets.length} orçamentos. Pulando a geração de dados.`);
       return;
     }
     
@@ -223,8 +232,8 @@ async function generateTestData() {
           status,
           location_type: Math.random() > 0.5 ? 'oficina' : 'remoto',
           address: Math.random() > 0.5 ? `${randomItem(streets)}, ${Math.floor(Math.random() * 100)}, ${randomItem(cities)}` : null,
-          scheduled_date: formatDate(startDate),
-          completion_date: status === 'concluido' ? formatDate(endDate) : null,
+          scheduled_date: startDate,
+          completion_date: status === 'concluido' ? endDate : null,
           total: Math.floor(150 + Math.random() * 500),
           description: `Serviço de reparação de danos por granizo`,
           notes: `Notas adicionais sobre o serviço`,
@@ -245,7 +254,7 @@ async function generateTestData() {
             photo_url: photoImg,
           };
           
-          const [newPhoto] = await db.insert(servicePhotos).values(photoData).returning();
+          const [newPhoto] = await db.insert(servicePhotos).values([photoData]).returning();
           console.log(`    Foto adicionada: #${newPhoto.id}`);
         }
       }
@@ -274,7 +283,7 @@ async function createServiceTypes() {
   
   const insertedIds: number[] = [];
   for (const type of typesToInsert) {
-    const [newType] = await db.insert(serviceTypes).values(type).returning();
+    const [newType] = await db.insert(serviceTypes).values([type]).returning();
     insertedIds.push(newType.id);
     console.log(`Tipo de serviço criado: ${newType.name}`);
   }
