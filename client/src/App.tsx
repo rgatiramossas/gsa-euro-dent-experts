@@ -8,12 +8,15 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import ManagerDashboard from "@/pages/manager-dashboard";
+import DashboardSelector from "@/components/dashboard/DashboardSelector";
 import { Header } from "@/components/layout/Header";
 // Sidebar removido pois não é mais necessário
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 // Componentes de autorização
 import { RequireAdmin } from "@/components/auth/RequireAdmin";
 import { RequireTechnician } from "@/components/auth/RequireTechnician";
+import { RequireManager } from "@/components/auth/RequireManager";
 
 // Import service related pages
 import ServicesList from "@/pages/services/index";
@@ -91,12 +94,23 @@ function AppRoutes() {
     <Switch>
       <Route path="/login" component={Login} />
       
-      {/* Dashboard */}
+      {/* Dashboard - verificar o tipo de usuário e redirecionar */}
       <Route path="/dashboard">
         <RequireAuth>
           <MainLayout>
-            <Dashboard />
+            <DashboardSelector />
           </MainLayout>
+        </RequireAuth>
+      </Route>
+      
+      {/* Dashboard específico para gestor */}
+      <Route path="/manager-dashboard">
+        <RequireAuth>
+          <RequireManager>
+            <MainLayout>
+              <ManagerDashboard />
+            </MainLayout>
+          </RequireManager>
         </RequireAuth>
       </Route>
       
@@ -261,7 +275,7 @@ function AppRoutes() {
       <Route path="/">
         <RequireAuth>
           <MainLayout>
-            <Dashboard />
+            <DashboardSelector />
           </MainLayout>
         </RequireAuth>
       </Route>
