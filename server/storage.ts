@@ -91,6 +91,13 @@ export interface IStorage {
   getManagerClients(managerId: number): Promise<Client[]>;
   getClientManagers(clientId: number): Promise<User[]>;
   
+  // Budget methods
+  getBudget(id: number): Promise<Budget | undefined>;
+  createBudget(budget: InsertBudget): Promise<Budget>;
+  updateBudget(id: number, budgetData: Partial<Budget>): Promise<Budget | undefined>;
+  deleteBudget(id: number): Promise<boolean>;
+  listBudgets(): Promise<Budget[]>;
+  
   // Session store
   sessionStore: session.SessionStore;
 }
