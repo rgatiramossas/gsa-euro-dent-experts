@@ -297,7 +297,7 @@ export default function NewService() {
     if (serviceTypes && !serviceTypes.some(type => type.id === data.service_type_id)) {
       toast({
         title: "Erro de validação",
-        description: `Tipo de serviço inválido. Valores disponíveis: ${serviceTypes.map(t => `${t.name} (${t.id})`).join(', ')}`,
+        description: `Tipo de serviço inválido. Valores disponíveis: ${serviceTypes.map(t => t.name).join(', ')}`,
         variant: "destructive",
       });
       return;
@@ -324,7 +324,7 @@ export default function NewService() {
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
         title="Novo Serviço"
-        description="Cadastre um novo serviço de martelinho de ouro"
+        description="Cadastre um novo serviço de reparo sem pintura"
         actions={
           <Button variant="outline" onClick={() => setLocation('/services')}>
             Cancelar

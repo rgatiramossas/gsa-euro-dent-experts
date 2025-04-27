@@ -10,10 +10,9 @@ async function createTestData() {
   if (existingServiceTypes.length === 0) {
     console.log("Criando tipos de serviço...");
     await db.insert(serviceTypes).values([
-      { name: "Amassado Pequeno", description: "Reparação de amassado pequeno", base_price: 80 },
-      { name: "Amassado Médio", description: "Reparação de amassado médio", base_price: 120 },
-      { name: "Amassado Grande", description: "Reparação de amassado grande", base_price: 200 },
-      { name: "Granizo", description: "Reparação de danos por granizo", base_price: 350 },
+      { name: "Amassado de Rua", description: "Reparo de amassados de rua sem pintura", base_price: 150 },
+      { name: "Granizo", description: "Reparo de danos causados por granizo", base_price: 250 },
+      { name: "Outros", description: "Outros tipos de reparos sem pintura", base_price: 350 }
     ]);
   }
   
@@ -213,7 +212,7 @@ async function createTestData() {
         service_type_id: serviceTypeId,
         technician_id: null, // Deixar null por enquanto
         status: status,
-        description: `Serviço de martelinho de ouro para reparação de amassado - Cliente ${i + 1}, Veículo ${j + 1}`,
+        description: `Serviço de reparo sem pintura - Cliente ${i + 1}, Veículo ${j + 1}`,
         scheduled_date: scheduledDate,
         start_date: status !== 'pending' ? scheduledDate : null,
         completion_date: ['completed', 'faturado', 'pago'].includes(status) ? scheduledDate : null,
