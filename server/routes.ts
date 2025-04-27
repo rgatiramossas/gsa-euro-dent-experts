@@ -123,7 +123,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Demo implementation - allow specific test account credentials for demo
       if ((username === "admin" && password === "password123") || 
           (username === "joao" && password === "password123") || 
-          (username === "pedro" && password === "password123") || 
+          (username === "pedro" && password === "password123") ||
+          (username === "gestor" && password === "password123") || 
           (await bcrypt.compare(password, user.password))) {
         
         req.session.userId = user.id;
