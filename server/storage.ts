@@ -1553,11 +1553,11 @@ export class DatabaseStorage implements IStorage {
     console.log(`Encontrados ${technicianServices.length} serviços para o técnico ID: ${technicianId}`);
     
     // Buscar pagamentos solicitados
-    const paymentRequests = await db.select()
-      .from(paymentRequests_)
-      .where(eq(paymentRequests_.technician_id, technicianId));
+    const paymentRequestsList = await db.select()
+      .from(paymentRequests)
+      .where(eq(paymentRequests.technician_id, technicianId));
     
-    console.log(`Encontrados ${paymentRequests.length} pedidos de pagamento para o técnico ID: ${technicianId}`);
+    console.log(`Encontrados ${paymentRequestsList.length} pedidos de pagamento para o técnico ID: ${technicianId}`);
     
     // Buscar a relação entre serviços e pagamentos
     const servicePaymentRelations = await db.select()
@@ -1565,7 +1565,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         inArray(
           servicePaymentRequests.payment_request_id, 
-          paymentRequests.map(pr => pr.id)
+          paymentRequestsList.map(pr => pr.id)
         )
       );
     
@@ -1600,7 +1600,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Processar pedidos de pagamento
-    for (const request of paymentRequests) {
+    for (const request of paymentRequestsList) {
       const requestDate = new Date(request.created_at);
       const requestMonth = requestDate.getMonth();
       const requestYear = requestDate.getFullYear();
