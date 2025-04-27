@@ -152,7 +152,7 @@ async function generateTestData() {
         created_at: new Date(),
       };
       
-      const [newClient] = await db.insert(clients).values(clientData).returning();
+      const [newClient] = await db.insert(clients).values([clientData]).returning();
       clientIds.push(newClient.id);
       console.log(`Cliente criado: ${newClient.name}`);
       
@@ -176,7 +176,7 @@ async function generateTestData() {
           notes: `${brand} ${model} ${year} ${color}`,
         };
         
-        const [newVehicle] = await db.insert(vehicles).values(vehicleData).returning();
+        const [newVehicle] = await db.insert(vehicles).values([vehicleData]).returning();
         vehicleIds.push(newVehicle.id);
         console.log(`  Veículo criado: ${newVehicle.make} ${newVehicle.model}`);
       }
@@ -199,7 +199,7 @@ async function generateTestData() {
           chassisNumber: randomChassisNumber(),
         };
         
-        const [newBudget] = await db.insert(budgets).values(budgetData).returning();
+        const [newBudget] = await db.insert(budgets).values([budgetData]).returning();
         console.log(`  Orçamento criado: #${newBudget.id}`);
       }
       
@@ -230,7 +230,7 @@ async function generateTestData() {
           notes: `Notas adicionais sobre o serviço`,
         };
         
-        const [newService] = await db.insert(services).values(serviceData).returning();
+        const [newService] = await db.insert(services).values([serviceData]).returning();
         console.log(`  Serviço criado: #${newService.id}`);
         
         // Adicionar 2-3 fotos para cada serviço
@@ -261,16 +261,15 @@ async function createServiceTypes() {
   // Verificar se já existem tipos de serviço
   const existingTypes = await db.select().from(serviceTypes);
   if (existingTypes.length > 0) {
+    console.log(`Usando ${existingTypes.length} tipos de serviço existentes`);
     return existingTypes.map(type => type.id);
   }
   
-  // Tipos de serviço para inserir
+  // Tipos de serviço para inserir (isto não será executado pois já temos tipos de serviço)
   const typesToInsert = [
-    { name: 'Reparo de Granizo', description: 'Reparo de danos causados por granizo' },
-    { name: 'Pintura', description: 'Serviço de pintura automotiva' },
-    { name: 'Polimento', description: 'Polimento de carroceria' },
-    { name: 'Reparo de Amassados', description: 'Reparação de amassados sem danificar a pintura' },
-    { name: 'Manutenção Preventiva', description: 'Verificação geral e manutenção preventiva' }
+    { name: 'Martelinho de Ouro - Pequeno', description: 'Reparo de amassados pequenos sem pintura' },
+    { name: 'Martelinho de Ouro - Médio', description: 'Reparo de amassados médios sem pintura' },
+    { name: 'Martelinho de Ouro - Grande', description: 'Reparo de amassados grandes sem pintura' }
   ];
   
   const insertedIds: number[] = [];
