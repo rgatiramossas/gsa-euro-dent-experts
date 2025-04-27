@@ -152,19 +152,31 @@ export default function ManagersList() {
                         )}
                       </TableCell>
                       <TableCell>{formatDate(manager.created_at)}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/managers/${manager.id}/clients`}>
-                            <Users className="h-4 w-4" />
-                            <span className="sr-only">Clientes</span>
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/managers/${manager.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
-                          </Link>
-                        </Button>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                            asChild
+                          >
+                            <Link to={`/managers/${manager.id}/clients`}>
+                              <Users className="h-4 w-4" />
+                              <span>Clientes</span>
+                            </Link>
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex items-center gap-2 text-green-600 border-green-200 hover:bg-green-50"
+                            asChild
+                          >
+                            <Link to={`/managers/${manager.id}/edit`}>
+                              <Edit className="h-4 w-4" />
+                              <span>Editar</span>
+                            </Link>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
