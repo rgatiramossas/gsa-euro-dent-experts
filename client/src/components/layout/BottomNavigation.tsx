@@ -14,7 +14,7 @@ export function BottomNavigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  const isGestor = user?.role === "manager";
+  const isGestor = user?.role === "gestor" || user?.role === "manager";
 
   // Itens padrões para todos os usuários
   let mobileNavItems = [

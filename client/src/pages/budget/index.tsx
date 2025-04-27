@@ -309,7 +309,7 @@ export default function BudgetPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isGestor = user?.role === 'manager';
+  const isGestor = user?.role === 'gestor' || user?.role === 'manager';
   
   // Estados para o formulário
   const [showDialog, setShowDialog] = useState(false);
