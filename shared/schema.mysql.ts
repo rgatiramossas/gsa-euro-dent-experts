@@ -22,17 +22,13 @@ export const insertUserSchema = createInsertSchema(users).omit({
   created_at: true 
 });
 
-// Clients
+// Clients - Simplified schema
 export const clients = mysqlTable("clients", {
   id: int("id").primaryKey().autoincrement(),
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
-  city: text("city"),
-  state: text("state"),
-  zip: text("zip"),
-  notes: text("notes"),
   created_at: timestamp("created_at").defaultNow(),
 });
 

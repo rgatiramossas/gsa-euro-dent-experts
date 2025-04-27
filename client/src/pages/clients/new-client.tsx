@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,22 +21,17 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { insertClientSchema } from "@shared/schema";
+import { insertClientSchema } from "@shared/schema.mysql";
 
-// Padrão para telefone internacional
-const phoneRegex = /^\+[1-9]\d{1,14}$/;
-
-// Extend the schema with more validations
-const formSchema = insertClientSchema.extend({
+// Esquema simplificado para o formulário
+const formSchema = z.object({
   name: z.string().min(1, "O nome é obrigatório"),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
-  phone: z.string()
-    .regex(phoneRegex, "Número de telefone deve estar no formato internacional (ex: +5511987654321)")
-    .optional()
-    .or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  address: z.string().optional().or(z.literal(""))
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -46,8 +40,6 @@ export default function NewClient() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
   
   // Form definition
   const form = useForm<FormData>({
@@ -63,9 +55,11 @@ export default function NewClient() {
   // Create client mutation
   const createClientMutation = useMutation({
     mutationFn: async (data: FormData) => {
+      console.log("Enviando dados:", data);
       return await apiRequest('/api/clients', 'POST', data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Cliente criado com sucesso:", data);
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
       toast({
         title: "Cliente cadastrado",
@@ -83,102 +77,30 @@ export default function NewClient() {
     }
   });
   
-  // Função para obter a localização atual
-  const getCurrentLocation = () => {
-    setIsGettingLocation(true);
-    setLocationError(null);
-
-    if (!navigator.geolocation) {
-      setLocationError("Geolocalização não é suportada pelo seu navegador");
-      setIsGettingLocation(false);
+  const onSubmit = (data: FormData) => {
+    // Limpar dados vazios para evitar problemas com MySQL
+    const cleanData = Object.entries(data).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, any>);
+    
+    // Garantir que o nome esteja presente
+    if (!cleanData.name || cleanData.name.trim() === '') {
+      form.setError('name', { message: 'O nome é obrigatório' });
       return;
     }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        
-        try {
-          // Usar a API OpenStreetMap Nominatim para geocodificação reversa
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-            {
-              headers: {
-                'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-                'User-Agent': 'EurodentApp/1.0'
-              }
-            }
-          );
-          
-          if (!response.ok) {
-            throw new Error('Falha ao obter endereço');
-          }
-          
-          const data = await response.json();
-          console.log('Geocode data:', data);
-          
-          // Extrair informações úteis da resposta
-          const address = data.address;
-          const streetAddress = [
-            address.road,
-            address.house_number ? `, ${address.house_number}` : '',
-            address.suburb ? ` - ${address.suburb}` : ''
-          ].join('');
-          
-          const city = address.city || address.town || address.village || address.municipality || '';
-          
-          // Preencher os campos do formulário
-          form.setValue("address", streetAddress || `Próximo a ${data.display_name}`);
-          
-          toast({
-            title: "Localização obtida",
-            description: "Endereço preenchido automaticamente",
-          });
-        } catch (error) {
-          console.error('Erro ao obter endereço:', error);
-          // Fallback para o formato de coordenadas caso o geocoding falhe
-          const locationString = `Localização atual (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`;
-          form.setValue("address", locationString);
-          
-          toast({
-            title: "Localização obtida parcialmente",
-            description: "Não foi possível determinar o endereço completo, usando coordenadas.",
-            variant: "destructive"
-          });
-        }
-        
-        setIsGettingLocation(false);
-      },
-      (error) => {
-        let errorMessage;
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = "Permissão para geolocalização negada pelo usuário";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = "Informações de localização indisponíveis";
-            break;
-          case error.TIMEOUT:
-            errorMessage = "Tempo esgotado para obter localização";
-            break;
-          default:
-            errorMessage = "Erro desconhecido ao obter localização";
-        }
-        setLocationError(errorMessage);
-        setIsGettingLocation(false);
-      }
-    );
-  };
-  
-  const onSubmit = (data: FormData) => {
-    createClientMutation.mutate(data);
+    
+    console.log("Enviando dados limpos:", cleanData);
+    createClientMutation.mutate(cleanData as FormData);
   };
   
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
         title="Novo Cliente"
-        description="Cadastre um novo cliente"
+        description="Cadastre um novo cliente (formulário simplificado)"
         actions={
           <Button variant="outline" onClick={() => setLocation('/clients')}>
             Cancelar
@@ -186,11 +108,21 @@ export default function NewClient() {
         }
       />
       
+      <Card className="mt-6 mb-4">
+        <CardHeader>
+          <CardTitle>Formulário Simplificado</CardTitle>
+          <CardDescription>
+            Este é o formulário simplificado para cadastro de clientes,
+            focando apenas nas informações essenciais.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+      
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Informações Básicas</CardTitle>
+              <CardTitle>Informações do Cliente</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -198,7 +130,7 @@ export default function NewClient() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome Completo</FormLabel>
+                    <FormLabel>Nome Completo*</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="Nome do cliente" />
                     </FormControl>
@@ -229,59 +161,27 @@ export default function NewClient() {
                     <FormItem>
                       <FormLabel>Telefone</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="+5511987654321" />
+                        <Input {...field} placeholder="(00) 00000-0000" />
                       </FormControl>
-                      <FormDescription className="text-xs">
-                        Formato internacional: código do país + DDD + número (ex: +5511987654321)
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Endereço</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              
               <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Endereço</FormLabel>
-                    <div className="flex space-x-2">
-                      <div className="flex-1">
-                        <FormControl>
-                          <Input {...field} placeholder="Rua, número, complemento" />
-                        </FormControl>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-shrink-0"
-                        onClick={getCurrentLocation}
-                        disabled={isGettingLocation}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        {isGettingLocation ? "Obtendo..." : "Localização Atual"}
-                      </Button>
-                    </div>
-                    {locationError && (
-                      <p className="text-sm text-red-500 mt-1">{locationError}</p>
-                    )}
+                    <FormControl>
+                      <Input {...field} placeholder="Endereço completo" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              
             </CardContent>
           </Card>
           

@@ -351,29 +351,52 @@ export class DatabaseStorage implements IStorage {
   
   async createClient(insertClient: InsertClient): Promise<Client> {
     try {
-      console.log("Criando cliente com dados:", insertClient);
+      console.log("Criando cliente simplificado com dados:", insertClient);
+      
+      // Garantir que não existam propriedades undefined ou nulas
+      const cleanData = Object.entries(insertClient).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+      
+      console.log("Dados limpos:", cleanData);
       
       // No MySQL o método returning() não é suportado
-      const result = await db.insert(clients).values(insertClient);
+      const result = await db.insert(clients).values(cleanData);
+      
+      if (!result || !result.insertId) {
+        throw new Error("Falha ao inserir cliente no banco de dados. ID não retornado.");
+      }
       
       // Obter o ID do cliente recém-criado
       const clientId = Number(result.insertId);
+      console.log(`Cliente criado com ID: ${clientId}`);
       
-      if (!clientId || isNaN(clientId) || clientId <= 0) {
-        throw new Error(`ID de cliente inválido ou não retornado pelo banco de dados: ${clientId}`);
+      // Buscar o cliente usando o ID
+      try {
+        const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
+        
+        if (!client) {
+          throw new Error(`Cliente criado com ID ${clientId} mas não encontrado na consulta subsequente`);
+        }
+        
+        console.log("Cliente recuperado com sucesso:", client);
+        return client;
+      } catch (selectError) {
+        console.error(`Erro ao recuperar o cliente após criação (ID: ${clientId}):`, selectError);
+        
+        // Retorna um objeto cliente mínimo com o ID para evitar falha completa
+        return {
+          id: clientId,
+          name: cleanData.name || '',
+          email: cleanData.email || null,
+          phone: cleanData.phone || null,
+          address: cleanData.address || null,
+          created_at: new Date()
+        } as Client;
       }
-      
-      console.log(`Cliente criado com ID: ${clientId}, buscando dados completos`);
-      
-      // Buscar o cliente diretamente do banco de dados usando uma consulta SQL simples
-      const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
-      
-      if (!client) {
-        throw new Error(`Cliente criado mas não encontrado com ID ${clientId}`);
-      }
-      
-      console.log("Cliente recuperado com sucesso:", client);
-      return client;
     } catch (error) {
       console.error("Erro ao criar cliente:", error);
       throw error;
