@@ -1,6 +1,6 @@
 import mysql from 'mysql2/promise';
 import { drizzle } from 'drizzle-orm/mysql2';
-import * as schema from "@shared/schema";
+import * as schema from "@shared/schema.mysql";
 
 // Verificar se todas as variáveis de ambiente necessárias estão definidas
 if (!process.env.MYSQL_HOST || 
@@ -19,8 +19,8 @@ const connectionConfig = {
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
   database: process.env.MYSQL_DATABASE,
-  port: parseInt(process.env.MYSQL_PORT || '3306'),
-  ssl: false // Desabilitar SSL para desenvolvimento
+  port: parseInt(process.env.MYSQL_PORT || '3306')
+  // SSL configurada como null para desenvolvimento
 };
 
 // Criação da pool de conexões
