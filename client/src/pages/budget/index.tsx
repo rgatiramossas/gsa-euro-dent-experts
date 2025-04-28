@@ -689,6 +689,8 @@ export default function BudgetPage() {
     }
     
     try {
+      console.log("Gerando PDF para orçamento:", selectedBudget.id, "- Cliente:", selectedBudget.client_name);
+      
       toast({
         title: "Gerando PDF...",
         description: "Aguarde enquanto o documento é preparado para impressão.",
@@ -862,22 +864,28 @@ export default function BudgetPage() {
       }
       
       // Geramos a captura da tela usando html2canvas
+      console.log("Iniciando captura com html2canvas");
       const canvas = await html2canvas(printDiv, {
         scale: 2, // Para melhor qualidade de impressão
         useCORS: true,
-        logging: false,
+        logging: true, // Ativando logs do html2canvas
         backgroundColor: '#ffffff'
       });
       
+      console.log("Captura html2canvas concluída, dimensões:", canvas.width, "x", canvas.height);
+      
       // Criamos o PDF a partir do canvas
       const imgData = canvas.toDataURL('image/png');
-      
+      console.log("Imagem convertida para data URL");
+    
       // Criamos um novo documento PDF no formato A4
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
+      
+      console.log("Documento PDF criado");
       
       // Configuramos as dimensões para ajustar a imagem na página A4
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -886,8 +894,11 @@ export default function BudgetPage() {
       const imgWidth = pdfWidth;
       const imgHeight = imgWidth * canvasRatio;
       
+      console.log("Dimensões calculadas:", { pdfWidth, pdfHeight, imgWidth, imgHeight });
+      
       // Adicionamos a imagem ao PDF
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      console.log("Imagem adicionada ao PDF");
       
       // Se a imagem for maior que a altura da página, a dividimos em várias páginas
       let heightLeft = imgHeight;
@@ -904,8 +915,11 @@ export default function BudgetPage() {
         }
       }
       
+      console.log("Pronto para salvar o PDF");
+      
       // Salvamos o PDF com o nome do cliente e ID do orçamento
       pdf.save(`Orcamento_${selectedBudget.id}_${selectedBudget.client_name}.pdf`);
+      console.log("PDF salvo com sucesso");
       
       // Removemos o elemento temporário
       document.body.removeChild(printDiv);
