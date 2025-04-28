@@ -126,21 +126,7 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
           </div>
         </div>
         
-        <!-- Resumo financeiro -->
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-          <div style="flex: 1;"></div>
-          <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
-            <div style="font-weight: bold; margin-bottom: 10px; color: #2563eb; font-size: 14px;">RESUMO</div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="font-size: 13px; font-weight: bold;">Total AW:</div>
-              <div style="font-size: 13px;">${budgetData.total_aw || 0}</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;">
-              <div style="font-size: 16px; font-weight: bold;">VALOR TOTAL:</div>
-              <div style="font-size: 16px; font-weight: bold;">R$ ${(budgetData.total_value || 0).toFixed(2).replace('.', ',')}</div>
-            </div>
-          </div>
-        </div>
+        <!-- Removido a seção de resumo financeiro conforme solicitado -->
         
         <!-- Observações - apenas se existir -->
         ${budgetData.note ? `
