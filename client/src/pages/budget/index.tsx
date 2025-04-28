@@ -176,7 +176,7 @@ function DamagedPartItem({
             className="w-full min-w-0 h-7 px-1 text-xs sm:text-sm text-right"
             readOnly={isViewMode}
             disabled={isViewMode}
-            value={damage.diameter20 > 0 ? damage.diameter20.toString() : ''}
+            value={isViewMode ? damage.diameter20.toString() : (damage.diameter20 > 0 ? damage.diameter20.toString() : '')}
             onChange={(e) => updateDamage('diameter20', e.target.value)}
             min="0"
           />
@@ -188,7 +188,7 @@ function DamagedPartItem({
             className="w-full min-w-0 h-7 px-1 text-xs sm:text-sm text-right"
             readOnly={isViewMode}
             disabled={isViewMode}
-            value={damage.diameter30 > 0 ? damage.diameter30.toString() : ''}
+            value={isViewMode ? damage.diameter30.toString() : (damage.diameter30 > 0 ? damage.diameter30.toString() : '')}
             onChange={(e) => updateDamage('diameter30', e.target.value)}
             min="0"
           />
@@ -200,7 +200,7 @@ function DamagedPartItem({
             className="w-full min-w-0 h-7 px-1 text-xs sm:text-sm text-right"
             readOnly={isViewMode}
             disabled={isViewMode}
-            value={damage.diameter40 > 0 ? damage.diameter40.toString() : ''}
+            value={isViewMode ? damage.diameter40.toString() : (damage.diameter40 > 0 ? damage.diameter40.toString() : '')}
             onChange={(e) => updateDamage('diameter40', e.target.value)}
             min="0"
           />
