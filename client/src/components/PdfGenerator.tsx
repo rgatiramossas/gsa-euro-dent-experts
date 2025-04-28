@@ -310,15 +310,16 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
     // Definir o estilo para peças selecionadas vs. não selecionadas
     const backgroundStyle = part.selected ? 'white' : '#f9fafb';
     const borderStyle = part.selected ? '1px solid #2563eb' : '1px solid #ddd';
-    const titleColor = part.selected ? '#2563eb' : '#888';
+    // Título sempre preto para melhor visibilidade
+    const titleColor = '#000000';
     const shadowStyle = part.selected ? '0 2px 4px rgba(0,0,0,0.1)' : 'none';
     
     gridHtml += `
       <div style="padding: 8px; border: ${borderStyle}; border-radius: 5px; background-color: ${backgroundStyle}; box-shadow: ${shadowStyle}; height: 125px; width: 100%; display: flex; flex-direction: column;">
         <!-- Título da peça centralizado e com altura fixa -->
-        <div style="font-weight: bold; font-size: 11px; color: ${titleColor}; text-align: center; height: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; overflow: hidden;">
+        <div style="font-weight: bold; font-size: 12px; color: #000000; text-align: center; height: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; overflow: hidden;">
           ${partLayout.name}
-          ${partLayout.isHorizontal ? '<span style="margin-left: 4px; color: #666; font-size: 9px;">(H)</span>' : ''}
+          ${partLayout.isHorizontal ? '<span style="margin-left: 4px; color: #666; font-size: 10px;">(H)</span>' : ''}
         </div>
         
         <!-- Container principal para os dados -->
