@@ -807,23 +807,7 @@ export default function BudgetPage() {
         printDiv.appendChild(notesDiv);
       }
       
-      // Rodapé com visual aprimorado
-      const footerDiv = document.createElement('div');
-      footerDiv.style.textAlign = 'center';
-      footerDiv.style.fontSize = '8px';
-      footerDiv.style.color = '#666';
-      footerDiv.style.marginTop = '35px';
-      footerDiv.style.paddingTop = '6px';
-      footerDiv.style.borderTop = '1px solid #eaeaea';
-      footerDiv.style.marginLeft = 'auto';
-      footerDiv.style.marginRight = 'auto';
-      footerDiv.style.maxWidth = '80%';
-      footerDiv.style.letterSpacing = '0.3px';
-      footerDiv.innerHTML = `
-        <div style="margin-bottom: 2px;">Orçamento #${selectedBudget.id} · Euro Dent Experts</div>
-        <div>Gerado em ${formatDisplayDate(new Date().toISOString())}</div>
-      `;
-      printDiv.appendChild(footerDiv);
+      // Removida a seção de rodapé que duplicava informações do cabeçalho
       
       // Adicionamos o elemento ao documento
       document.body.appendChild(printDiv);
