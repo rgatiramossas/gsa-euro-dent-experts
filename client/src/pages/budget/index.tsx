@@ -51,10 +51,11 @@ import html2canvas from "html2canvas";
 
 interface Budget {
   id: number;
+  client_id: number;
   client_name: string;
   vehicle_info: string;
   date: string;
-  damaged_parts?: string[];
+  damaged_parts?: string | string[]; // Pode ser uma string JSON ou um array
   photo_url?: string;
   total_aw?: number;
   total_value?: number;
@@ -62,6 +63,7 @@ interface Budget {
   note?: string;
   plate?: string;
   chassisNumber?: string;
+  chassis_number?: string; // Variação do nome no banco de dados
 }
 
 interface PartDamage {
@@ -519,9 +521,17 @@ export default function BudgetPage() {
       // Carregar informações das peças danificadas, se disponíveis
       if (budget.damaged_parts) {
         try {
-          const parsedDamagedParts = JSON.parse(budget.damaged_parts as string);
+          let parsedDamagedParts;
+          if (typeof budget.damaged_parts === 'string') {
+            parsedDamagedParts = JSON.parse(budget.damaged_parts);
+          } else {
+            // Se já for um objeto (mais improvável), vamos tentar usá-lo diretamente
+            parsedDamagedParts = budget.damaged_parts;
+          }
           console.log("Carregando peças danificadas:", parsedDamagedParts);
-          setDamagedParts(parsedDamagedParts);
+          if (parsedDamagedParts && typeof parsedDamagedParts === 'object') {
+            setDamagedParts(parsedDamagedParts);
+          }
         } catch (error) {
           console.error("Erro ao fazer parse das peças danificadas:", error);
         }

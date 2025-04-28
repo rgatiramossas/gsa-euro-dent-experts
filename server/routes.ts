@@ -1984,12 +1984,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log("Inserindo orçamento diretamente com SQL...");
         
+        // Extrair damaged_parts do request
+        const { damaged_parts, chassisNumber } = req.body;
+        
         // Construir query de inserção
         const insertQuery = `
           INSERT INTO budgets 
-            (client_id, vehicle_info, date, total_aw, total_value, photo_url, note, plate) 
+            (client_id, vehicle_info, date, total_aw, total_value, photo_url, note, plate, chassis_number, damaged_parts) 
           VALUES 
-            (?, ?, ?, ?, ?, ?, ?, ?)
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         
         // Executar query
@@ -2001,7 +2004,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total_value || 0, 
           photo_url || null, 
           note || null, 
-          plate || null
+          plate || null,
+          chassisNumber || null,
+          damaged_parts || null
         ]);
         
         console.log("Resultado da inserção direta:", result);
@@ -2124,6 +2129,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (budgetData.chassisNumber !== undefined) {
           query += 'chassis_number = ?, ';
           values.push(budgetData.chassisNumber);
+        }
+        
+        if (budgetData.damaged_parts !== undefined) {
+          query += 'damaged_parts = ?, ';
+          values.push(budgetData.damaged_parts);
         }
         
         // Remover a última vírgula e espaço
