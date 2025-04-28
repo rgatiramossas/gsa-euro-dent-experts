@@ -680,12 +680,13 @@ export default function BudgetPage() {
     }
   };
   
-  // Cria referência para o elemento que será impresso
-  const printRef = useRef<HTMLDivElement>(null);
-  
   // Função para gerar o PDF a partir do conteúdo
   const handlePrintBudget = async () => {
-    if (!selectedBudget) return;
+    console.log("Iniciando geração do PDF");
+    if (!selectedBudget) {
+      console.error("Nenhum orçamento selecionado");
+      return;
+    }
     
     try {
       toast({
@@ -773,7 +774,7 @@ export default function BudgetPage() {
           } else if (Array.isArray(selectedBudget.damaged_parts)) {
             console.error("Formato de damaged_parts inválido (array)", selectedBudget.damaged_parts);
           } else {
-            parsedDamagedParts = selectedBudget.damaged_parts as Record<string, PartDamage>;
+            parsedDamagedParts = selectedBudget.damaged_parts as unknown as Record<string, PartDamage>;
           }
         }
         
