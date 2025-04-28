@@ -317,21 +317,73 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createBudget(insertBudget: InsertBudget): Promise<Budget> {
-    const [budget] = await db.insert(budgets).values(insertBudget).returning();
-    return budget;
+    try {
+      console.log("Criando orçamento com dados:", insertBudget);
+      
+      // Em MySQL, não podemos usar returning()
+      const result = await db.insert(budgets).values(insertBudget);
+      
+      console.log("Resultado da inserção:", result);
+      
+      const budgetId = Number(result?.insertId);
+      
+      if (isNaN(budgetId) || budgetId <= 0) {
+        throw new Error(`ID de orçamento inválido ou não retornado pelo banco: ${budgetId}`);
+      }
+      
+      console.log(`Orçamento criado com ID: ${budgetId}, buscando dados completos`);
+      
+      // Buscar o orçamento recém-criado
+      const budget = await this.getBudget(budgetId);
+      
+      if (!budget) {
+        throw new Error(`Orçamento criado mas não encontrado com ID ${budgetId}`);
+      }
+      
+      return budget;
+    } catch (error) {
+      console.error("Erro ao criar orçamento:", error);
+      throw error;
+    }
   }
   
   async updateBudget(id: number, budgetData: Partial<Budget>): Promise<Budget | undefined> {
-    const [updatedBudget] = await db.update(budgets)
-      .set(budgetData)
-      .where(eq(budgets.id, id))
-      .returning();
-    return updatedBudget;
+    try {
+      console.log(`Atualizando orçamento ID ${id} com dados:`, budgetData);
+      
+      // Em MySQL, não podemos usar returning()
+      await db.update(budgets)
+        .set(budgetData)
+        .where(eq(budgets.id, id));
+      
+      // Buscar o orçamento atualizado
+      const updatedBudget = await this.getBudget(id);
+      
+      if (!updatedBudget) {
+        console.log(`Orçamento ID ${id} não encontrado após atualização`);
+        return undefined;
+      }
+      
+      return updatedBudget;
+    } catch (error) {
+      console.error(`Erro ao atualizar orçamento ID ${id}:`, error);
+      return undefined;
+    }
   }
   
   async deleteBudget(id: number): Promise<boolean> {
-    const result = await db.delete(budgets).where(eq(budgets.id, id));
-    return result.rowCount ? result.rowCount > 0 : false;
+    try {
+      console.log(`Excluindo orçamento ID ${id}`);
+      
+      // Em MySQL, não temos rowCount
+      const result = await db.delete(budgets).where(eq(budgets.id, id));
+      
+      // Verificar se a exclusão foi bem-sucedida através de affectedRows
+      return result && (result as any).rowsAffected > 0;
+    } catch (error) {
+      console.error(`Erro ao excluir orçamento ID ${id}:`, error);
+      return false;
+    }
   }
   
   async listBudgets(): Promise<Budget[]> {
@@ -462,8 +514,34 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
+    try {
+      console.log("Criando usuário com dados:", insertUser);
+      
+      // Em MySQL, não podemos usar returning()
+      const result = await db.insert(users).values(insertUser);
+      
+      console.log("Resultado da inserção:", result);
+      
+      const userId = Number(result?.insertId);
+      
+      if (isNaN(userId) || userId <= 0) {
+        throw new Error(`ID de usuário inválido ou não retornado pelo banco: ${userId}`);
+      }
+      
+      console.log(`Usuário criado com ID: ${userId}, buscando dados completos`);
+      
+      // Buscar o usuário recém-criado
+      const user = await this.getUser(userId);
+      
+      if (!user) {
+        throw new Error(`Usuário criado mas não encontrado com ID ${userId}`);
+      }
+      
+      return user;
+    } catch (error) {
+      console.error("Erro ao criar usuário:", error);
+      throw error;
+    }
   }
   
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
