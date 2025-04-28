@@ -774,11 +774,11 @@ export default function BudgetPage() {
         </div>
         <div style="margin-bottom: 10px;">
           <!-- Grid de peças danificadas em 3 colunas -->
-          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; box-sizing: border-box; border: 1px solid #eaeaea; border-radius: 6px; padding: 10px; background-color: #f9fafc;">
+          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; width: 100%; box-sizing: border-box; border: 1px solid #eaeaea; border-radius: 8px; padding: 15px; background-color: #f9fafc;">
           </div>
         </div>
         
-        <div style="margin-top: 12px; padding: 5px 8px; font-size: 11px; text-align: center; background-color: #f8f8f8; border-radius: 4px; border: 1px solid #e4e4e4;">
+        <div style="margin-top: 20px; padding: 8px 10px; font-size: 11px; text-align: center; background-color: #f8f8f8; border-radius: 6px; border: 1px solid #e4e4e4;">
           <span style="font-weight: bold; margin-right: 12px; letter-spacing: 0.2px;">Materiais Especiais</span>
           <span style="color: #ff0000; font-weight: bold; background-color: #fff0f0; padding: 2px 4px; border-radius: 2px;">A</span> = ALUMÍNIO
           &nbsp;&nbsp;&nbsp;
@@ -883,7 +883,7 @@ export default function BudgetPage() {
               placeholderDiv.style.display = 'flex';
               placeholderDiv.style.justifyContent = 'center';
               placeholderDiv.style.alignItems = 'center';
-              placeholderDiv.style.height = '95px'; 
+              placeholderDiv.style.height = '105px'; 
               placeholderDiv.style.overflow = 'hidden';
               placeholderDiv.style.borderRadius = '3px';
               placeholderDiv.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
@@ -928,7 +928,7 @@ export default function BudgetPage() {
             partDiv.style.display = 'flex';
             partDiv.style.flexDirection = 'column';
             partDiv.style.justifyContent = 'flex-start'; 
-            partDiv.style.height = '95px'; // Altura fixa para todas as células
+            partDiv.style.height = '105px'; // Altura fixa para todas as células
             partDiv.style.width = '100%'; // Largura completa na coluna do grid
             partDiv.style.borderRadius = '5px';
             partDiv.style.boxShadow = part.selected ? '0 2px 4px rgba(0,0,0,0.08), 0 0 0 1px #c3d8f5' : '0 1px 3px rgba(0,0,0,0.05)';
