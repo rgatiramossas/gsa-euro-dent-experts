@@ -1789,31 +1789,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rotas para orçamentos (budgets)
   app.get("/api/budgets", requireAuth, async (req, res) => {
     try {
+      // Importar conexão do módulo storage
+      const mysqlConnection = await import('./db-mysql.js');
+      const { initDb } = mysqlConnection;
+      const { pool } = await initDb();
+      
       // Se for gestor, mostra apenas orçamentos dos seus clientes
       if (req.session.userRole === "gestor" || req.session.userRole === "manager") {
         const managerId = Number(req.session.userId);
         
-        // Obter IDs dos clientes atribuídos a este gestor
-        const clients = await storage.getManagerClients(managerId);
-        const clientIds = clients.map(client => client.id);
+        console.log(`Buscando orçamentos para o gestor ID ${managerId}`);
         
-        console.log(`Listando orçamentos apenas dos clientes do gestor ${managerId}:`, clientIds);
-        
-        if (clientIds.length === 0) {
-          return res.json([]);
+        try {
+          // Obter IDs dos clientes atribuídos a este gestor
+          const [managerClients] = await pool.query(`
+            SELECT c.* 
+            FROM clients c
+            JOIN manager_client_assignments mca ON c.id = mca.client_id
+            WHERE mca.manager_id = ?
+          `, [managerId]);
+          
+          const clientIds = managerClients.map(client => client.id);
+          
+          console.log(`Listando orçamentos apenas dos clientes do gestor ${managerId}:`, clientIds);
+          
+          if (clientIds.length === 0) {
+            return res.json([]);
+          }
+          
+          // Consulta SQL para buscar orçamentos dos clientes deste gestor
+          const placeholders = clientIds.map(() => '?').join(',');
+          const query = `
+            SELECT b.*, c.name as client_name 
+            FROM budgets b 
+            LEFT JOIN clients c ON b.client_id = c.id
+            WHERE b.client_id IN (${placeholders})
+            ORDER BY b.id DESC
+          `;
+          
+          const [filteredBudgets] = await pool.query(query, clientIds);
+          
+          console.log(`Total de orçamentos encontrados: ${filteredBudgets.length}`);
+          
+          res.json(filteredBudgets);
+        } catch (sqlError) {
+          console.error("Erro na consulta SQL direta para gestor:", sqlError);
+          
+          // Fallback para o método original
+          const clients = await storage.getManagerClients(managerId);
+          const clientIds = clients.map(client => client.id);
+          
+          if (clientIds.length === 0) {
+            return res.json([]);
+          }
+          
+          // Filtrar orçamentos por clientes
+          const allBudgets = await storage.listBudgets();
+          const filteredBudgets = allBudgets.filter(budget => 
+            clientIds.includes(budget.client_id)
+          );
+          
+          res.json(filteredBudgets);
         }
-        
-        // Filtrar orçamentos por clientes
-        const allBudgets = await storage.listBudgets();
-        const filteredBudgets = allBudgets.filter(budget => 
-          clientIds.includes(budget.client_id)
-        );
-        
-        res.json(filteredBudgets);
       } else {
         // Admin e técnicos veem todos os orçamentos
-        const budgets = await storage.listBudgets();
-        res.json(budgets);
+        console.log("Buscando todos os orçamentos");
+        
+        try {
+          // Query para buscar todos os orçamentos com nomes de clientes
+          const query = `
+            SELECT b.*, c.name as client_name 
+            FROM budgets b 
+            LEFT JOIN clients c ON b.client_id = c.id
+            ORDER BY b.id DESC
+          `;
+          
+          const [budgets] = await pool.query(query);
+          
+          console.log(`Total de orçamentos encontrados: ${budgets.length}`);
+          
+          res.json(budgets);
+        } catch (sqlError) {
+          console.error("Erro na consulta SQL direta:", sqlError);
+          
+          // Fallback para o método original
+          const budgets = await storage.listBudgets();
+          res.json(budgets);
+        }
       }
     } catch (error) {
       console.error("Erro ao listar orçamentos:", error);
@@ -1824,28 +1886,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/budgets/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      const budget = await storage.getBudget(Number(id));
       
-      if (!budget) {
-        return res.status(404).json({ message: "Orçamento não encontrado" });
-      }
+      console.log(`Buscando orçamento ID ${id}`);
       
-      // Verificar acesso para gestores
-      if (req.session.userRole === "gestor" || req.session.userRole === "manager") {
-        const managerId = Number(req.session.userId);
+      // Abordagem alternativa - consulta direta com SQL
+      try {
+        // Importar conexão do módulo storage
+        const mysqlConnection = await import('./db-mysql.js');
+        const { initDb } = mysqlConnection;
+        const { pool } = await initDb();
         
-        // Obter clientes atribuídos ao gestor
-        const clients = await storage.getManagerClients(managerId);
-        const clientIds = clients.map(client => client.id);
+        // Consulta para obter orçamento com nome do cliente
+        const query = `
+          SELECT b.*, c.name as client_name 
+          FROM budgets b 
+          LEFT JOIN clients c ON b.client_id = c.id
+          WHERE b.id = ?
+        `;
         
-        // Verificar se o orçamento pertence a um cliente do gestor
-        if (!clientIds.includes(budget.client_id)) {
-          console.log(`Acesso negado: Gestor ${managerId} tentou acessar orçamento ${id} do cliente ${budget.client_id}`);
-          return res.status(403).json({ message: "Acesso negado: Este orçamento não pertence a um cliente atribuído a você" });
+        const [budgetRows] = await pool.query(query, [id]);
+        
+        if (!budgetRows || budgetRows.length === 0) {
+          return res.status(404).json({ message: "Orçamento não encontrado" });
         }
+        
+        const budget = budgetRows[0];
+        
+        // Verificar acesso para gestores
+        if (req.session.userRole === "gestor" || req.session.userRole === "manager") {
+          const managerId = Number(req.session.userId);
+          
+          // Consulta para obter clientes atribuídos ao gestor
+          const [managerClients] = await pool.query(`
+            SELECT c.id 
+            FROM clients c
+            JOIN manager_client_assignments mca ON c.id = mca.client_id
+            WHERE mca.manager_id = ?
+          `, [managerId]);
+          
+          const clientIds = managerClients.map(client => client.id);
+          
+          // Verificar se o orçamento pertence a um cliente do gestor
+          if (!clientIds.includes(budget.client_id)) {
+            console.log(`Acesso negado: Gestor ${managerId} tentou acessar orçamento ${id} do cliente ${budget.client_id}`);
+            return res.status(403).json({ message: "Acesso negado: Este orçamento não pertence a um cliente atribuído a você" });
+          }
+        }
+        
+        res.json(budget);
+      } catch (sqlError) {
+        console.error("Erro na consulta SQL direta:", sqlError);
+        
+        // Fallback para o método original
+        const budget = await storage.getBudget(Number(id));
+        
+        if (!budget) {
+          return res.status(404).json({ message: "Orçamento não encontrado" });
+        }
+        
+        // Verificar acesso para gestores
+        if (req.session.userRole === "gestor" || req.session.userRole === "manager") {
+          const managerId = Number(req.session.userId);
+          
+          // Obter clientes atribuídos ao gestor
+          const clients = await storage.getManagerClients(managerId);
+          const clientIds = clients.map(client => client.id);
+          
+          // Verificar se o orçamento pertence a um cliente do gestor
+          if (!clientIds.includes(budget.client_id)) {
+            console.log(`Acesso negado: Gestor ${managerId} tentou acessar orçamento ${id} do cliente ${budget.client_id}`);
+            return res.status(403).json({ message: "Acesso negado: Este orçamento não pertence a um cliente atribuído a você" });
+          }
+        }
+        
+        res.json(budget);
       }
-      
-      res.json(budget);
     } catch (error) {
       console.error(`Erro ao buscar orçamento ID ${req.params.id}:`, error);
       res.status(500).json({ message: "Erro ao buscar orçamento" });
@@ -1855,8 +1970,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/budgets", requireAuth, async (req, res) => {
     try {
       const budgetData = insertBudgetSchema.parse(req.body);
-      const budget = await storage.createBudget(budgetData);
-      res.status(201).json(budget);
+      console.log("Dados do orçamento validados:", budgetData);
+      
+      // Abordagem alternativa - inserção direta com SQL
+      const { client_id, vehicle_info, date, total_aw, total_value, photo_url, note, plate } = budgetData;
+      
+      // Conexão direta com o banco MySQL
+      try {
+        // Importar conexão do módulo storage
+        const mysqlConnection = await import('./db-mysql.js');
+        const { initDb } = mysqlConnection;
+        const { pool } = await initDb();
+        
+        console.log("Inserindo orçamento diretamente com SQL...");
+        
+        // Construir query de inserção
+        const insertQuery = `
+          INSERT INTO budgets 
+            (client_id, vehicle_info, date, total_aw, total_value, photo_url, note, plate) 
+          VALUES 
+            (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        
+        // Executar query
+        const [result] = await pool.query(insertQuery, [
+          client_id, 
+          vehicle_info || '', 
+          date || new Date().toISOString(), 
+          total_aw || 0, 
+          total_value || 0, 
+          photo_url || null, 
+          note || null, 
+          plate || null
+        ]);
+        
+        console.log("Resultado da inserção direta:", result);
+        
+        // Pegar o ID do orçamento criado
+        const budgetId = result.insertId;
+        
+        if (!budgetId) {
+          throw new Error('Falha ao obter ID do orçamento criado');
+        }
+        
+        // Buscar o orçamento recém-criado
+        const [budgetRows] = await pool.query('SELECT * FROM budgets WHERE id = ?', [budgetId]);
+        
+        if (!budgetRows || budgetRows.length === 0) {
+          throw new Error(`Orçamento criado, mas não encontrado com ID ${budgetId}`);
+        }
+        
+        const budget = budgetRows[0];
+        
+        // Adicionar nome do cliente
+        const [clientRows] = await pool.query('SELECT name FROM clients WHERE id = ?', [budget.client_id]);
+        
+        const clientName = clientRows && clientRows.length > 0 ? clientRows[0].name : 'Cliente não encontrado';
+        
+        // Retornar orçamento com nome do cliente
+        res.status(201).json({
+          ...budget,
+          client_name: clientName
+        });
+      } catch (sqlError) {
+        console.error("Erro na inserção SQL direta:", sqlError);
+        
+        // Tente usando o método normal como fallback
+        console.log("Tentando com método de storage como fallback...");
+        const budget = await storage.createBudget(budgetData);
+        res.status(201).json(budget);
+      }
     } catch (error) {
       console.error("Erro ao criar orçamento:", error);
       
@@ -1876,14 +2059,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const budgetData = req.body;
       
-      // Verificar se o orçamento existe
-      const existingBudget = await storage.getBudget(Number(id));
-      if (!existingBudget) {
-        return res.status(404).json({ message: "Orçamento não encontrado" });
-      }
+      console.log(`Atualizando orçamento ID ${id}:`, budgetData);
       
-      const updatedBudget = await storage.updateBudget(Number(id), budgetData);
-      res.json(updatedBudget);
+      // Abordagem alternativa - atualização direta com SQL
+      try {
+        // Importar conexão do módulo storage
+        const mysqlConnection = await import('./db-mysql.js');
+        const { initDb } = mysqlConnection;
+        const { pool } = await initDb();
+        
+        // Verificar se o orçamento existe
+        const [existingBudgetRows] = await pool.query('SELECT * FROM budgets WHERE id = ?', [id]);
+        
+        if (!existingBudgetRows || existingBudgetRows.length === 0) {
+          return res.status(404).json({ message: "Orçamento não encontrado" });
+        }
+        
+        console.log("Atualizando orçamento diretamente com SQL...");
+        
+        // Construir query de atualização
+        let query = 'UPDATE budgets SET ';
+        const values = [];
+        
+        if (budgetData.client_id !== undefined) {
+          query += 'client_id = ?, ';
+          values.push(budgetData.client_id);
+        }
+        
+        if (budgetData.vehicle_info !== undefined) {
+          query += 'vehicle_info = ?, ';
+          values.push(budgetData.vehicle_info);
+        }
+        
+        if (budgetData.date !== undefined) {
+          query += 'date = ?, ';
+          values.push(budgetData.date);
+        }
+        
+        if (budgetData.total_aw !== undefined) {
+          query += 'total_aw = ?, ';
+          values.push(budgetData.total_aw);
+        }
+        
+        if (budgetData.total_value !== undefined) {
+          query += 'total_value = ?, ';
+          values.push(budgetData.total_value);
+        }
+        
+        if (budgetData.photo_url !== undefined) {
+          query += 'photo_url = ?, ';
+          values.push(budgetData.photo_url);
+        }
+        
+        if (budgetData.note !== undefined) {
+          query += 'note = ?, ';
+          values.push(budgetData.note);
+        }
+        
+        if (budgetData.plate !== undefined) {
+          query += 'plate = ?, ';
+          values.push(budgetData.plate);
+        }
+        
+        if (budgetData.chassisNumber !== undefined) {
+          query += 'chassis_number = ?, ';
+          values.push(budgetData.chassisNumber);
+        }
+        
+        // Remover a última vírgula e espaço
+        query = query.slice(0, -2);
+        
+        // Adicionar cláusula WHERE
+        query += ' WHERE id = ?';
+        values.push(id);
+        
+        if (values.length === 1) {
+          // Se apenas o ID foi adicionado, não há nada para atualizar
+          return res.status(400).json({ message: "Nenhum dado para atualizar" });
+        }
+        
+        // Executar query
+        const [result] = await pool.query(query, values);
+        
+        console.log("Resultado da atualização direta:", result);
+        
+        if (result.affectedRows === 0) {
+          throw new Error(`Falha ao atualizar orçamento com ID ${id}`);
+        }
+        
+        // Buscar o orçamento atualizado
+        const [budgetRows] = await pool.query('SELECT * FROM budgets WHERE id = ?', [id]);
+        
+        if (!budgetRows || budgetRows.length === 0) {
+          throw new Error(`Orçamento atualizado, mas não encontrado com ID ${id}`);
+        }
+        
+        const budget = budgetRows[0];
+        
+        // Adicionar nome do cliente
+        const [clientRows] = await pool.query('SELECT name FROM clients WHERE id = ?', [budget.client_id]);
+        
+        const clientName = clientRows && clientRows.length > 0 ? clientRows[0].name : 'Cliente não encontrado';
+        
+        // Retornar orçamento com nome do cliente
+        res.json({
+          ...budget,
+          client_name: clientName
+        });
+      } catch (sqlError) {
+        console.error("Erro na atualização SQL direta:", sqlError);
+        
+        // Tente usando o método normal como fallback
+        console.log("Tentando com método de storage como fallback...");
+        
+        // Verificar se o orçamento existe
+        const existingBudget = await storage.getBudget(Number(id));
+        if (!existingBudget) {
+          return res.status(404).json({ message: "Orçamento não encontrado" });
+        }
+        
+        const updatedBudget = await storage.updateBudget(Number(id), budgetData);
+        res.json(updatedBudget);
+      }
     } catch (error) {
       console.error(`Erro ao atualizar orçamento ID ${req.params.id}:`, error);
       res.status(500).json({ message: "Erro ao atualizar orçamento" });
@@ -1894,18 +2191,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
-      // Verificar se o orçamento existe
-      const existingBudget = await storage.getBudget(Number(id));
-      if (!existingBudget) {
-        return res.status(404).json({ message: "Orçamento não encontrado" });
-      }
+      console.log(`Excluindo orçamento ID ${id}`);
       
-      const deleted = await storage.deleteBudget(Number(id));
-      
-      if (deleted) {
+      // Abordagem alternativa - exclusão direta com SQL
+      try {
+        // Importar conexão do módulo storage
+        const mysqlConnection = await import('./db-mysql.js');
+        const { initDb } = mysqlConnection;
+        const { pool } = await initDb();
+        
+        // Verificar se o orçamento existe
+        const [existingBudgetRows] = await pool.query('SELECT * FROM budgets WHERE id = ?', [id]);
+        
+        if (!existingBudgetRows || existingBudgetRows.length === 0) {
+          return res.status(404).json({ message: "Orçamento não encontrado" });
+        }
+        
+        console.log("Excluindo orçamento diretamente com SQL...");
+        
+        // Executar query de exclusão
+        const [result] = await pool.query('DELETE FROM budgets WHERE id = ?', [id]);
+        
+        console.log("Resultado da exclusão direta:", result);
+        
+        if (result.affectedRows === 0) {
+          throw new Error(`Falha ao excluir orçamento com ID ${id}`);
+        }
+        
         res.status(200).json({ message: "Orçamento excluído com sucesso" });
-      } else {
-        res.status(500).json({ message: "Erro ao excluir orçamento" });
+      } catch (sqlError) {
+        console.error("Erro na exclusão SQL direta:", sqlError);
+        
+        // Tente usando o método normal como fallback
+        console.log("Tentando com método de storage como fallback...");
+        
+        // Verificar se o orçamento existe
+        const existingBudget = await storage.getBudget(Number(id));
+        if (!existingBudget) {
+          return res.status(404).json({ message: "Orçamento não encontrado" });
+        }
+        
+        const deleted = await storage.deleteBudget(Number(id));
+        
+        if (deleted) {
+          res.status(200).json({ message: "Orçamento excluído com sucesso" });
+        } else {
+          res.status(500).json({ message: "Erro ao excluir orçamento" });
+        }
       }
     } catch (error) {
       console.error(`Erro ao excluir orçamento ID ${req.params.id}:`, error);
