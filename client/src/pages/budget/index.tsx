@@ -1180,22 +1180,34 @@ export default function BudgetPage() {
                 </div>
               </div>
               
-              <DialogFooter>
+              <DialogFooter className="flex justify-between">
                 {isViewMode ? (
                   <>
-                    <Button variant="outline" onClick={() => setShowDialog(false)}>
-                      Fechar
-                    </Button>
-                    {!isGestor && (
+                    <div>
                       <Button 
-                        variant="secondary"
-                        onClick={() => setIsViewMode(false)}
+                        variant="default" 
+                        onClick={handlePrintBudget}
                         className="mr-2"
                       >
-                        <PencilIcon className="h-4 w-4 mr-2" />
-                        Editar
+                        <PrinterIcon className="h-4 w-4 mr-2" />
+                        Imprimir
                       </Button>
-                    )}
+                    </div>
+                    <div>
+                      <Button variant="outline" onClick={() => setShowDialog(false)}>
+                        Fechar
+                      </Button>
+                      {!isGestor && (
+                        <Button 
+                          variant="secondary"
+                          onClick={() => setIsViewMode(false)}
+                          className="ml-2"
+                        >
+                          <PencilIcon className="h-4 w-4 mr-2" />
+                          Editar
+                        </Button>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
