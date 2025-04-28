@@ -102,7 +102,11 @@ const partDisplayNames: Record<string, string> = {
   lateral_direita: "Lateral Direita"
 };
 
-const NewBudgetForm: React.FC = () => {
+const NewBudgetForm: React.FC<NewBudgetFormProps> = ({ 
+  initialData = null, 
+  readOnly = false,
+  onSuccess = () => {} 
+}) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [damages, setDamages] = useState<VehicleDamage>({});
@@ -114,36 +118,57 @@ const NewBudgetForm: React.FC = () => {
     retry: 1,
   });
 
-  // Inicialize os danos com todas as peças
+  // Inicialize os danos com todas as peças ou use os danos iniciais
   useEffect(() => {
-    const initialDamages: VehicleDamage = {};
+    let initialDamages: VehicleDamage = {};
+    
+    // Se temos dados iniciais, tente usar eles
+    if (initialData && initialData.damaged_parts) {
+      try {
+        // Se for string, parse o JSON
+        const parsedDamages = typeof initialData.damaged_parts === 'string' 
+          ? JSON.parse(initialData.damaged_parts) 
+          : initialData.damaged_parts;
+        
+        initialDamages = parsedDamages;
+      } catch (error) {
+        console.error("Erro ao processar dados de danos:", error);
+      }
+    }
+    
+    // Preencher partes faltantes
     vehicleParts.forEach(part => {
-      initialDamages[part] = {
-        size20: 0,
-        size30: 0,
-        size40: 0,
-        isAluminum: false,
-        isGlue: false,
-        isPaint: false
-      };
+      if (!initialDamages[part]) {
+        initialDamages[part] = {
+          size20: 0,
+          size30: 0,
+          size40: 0,
+          isAluminum: false,
+          isGlue: false,
+          isPaint: false
+        };
+      }
     });
+    
     setDamages(initialDamages);
-  }, []);
+  }, [initialData]);
 
   // Configuração do formulário
   const form = useForm<BudgetFormValues>({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
-      date: new Date(),
-      client_name: "",
-      vehicle_info: "",
-      plate: "",
-      chassis_number: ""
+      date: initialData?.date ? new Date(initialData.date) : new Date(),
+      client_name: initialData?.client_id ? String(initialData.client_id) : "",
+      vehicle_info: initialData?.vehicle_info || "",
+      plate: initialData?.plate || "",
+      chassis_number: initialData?.chassis_number || ""
     },
   });
 
   // Submissão do formulário
   const onSubmit = async (data: BudgetFormValues) => {
+    if (readOnly) return; // Não submeter se estiver em modo somente leitura
+    
     try {
       // Calcular valores com base nos danos
       const totalValues = calculateTotalValues(damages);
@@ -151,24 +176,37 @@ const NewBudgetForm: React.FC = () => {
       const budget = {
         ...data,
         date: format(data.date, "yyyy-MM-dd"),
-        damaged_parts: damages,
+        damaged_parts: JSON.stringify(damages),
         total_aw: totalValues.totalAw,
         total_value: totalValues.totalValue
       };
 
-      // Enviar para a API
-      await saveNewBudget(budget);
-
-      toast({
-        title: "Orçamento criado com sucesso",
-        description: "O orçamento foi salvo e está pronto para ser utilizado.",
-      });
+      if (initialData) {
+        // Atualizar orçamento existente
+        await updateBudget(budget, initialData.id);
+        toast({
+          title: "Orçamento atualizado com sucesso",
+          description: "As alterações foram salvas com sucesso.",
+        });
+      } else {
+        // Criar novo orçamento
+        await saveNewBudget(budget);
+        toast({
+          title: "Orçamento criado com sucesso",
+          description: "O orçamento foi salvo e está pronto para ser utilizado.",
+        });
+      }
       
-      window.location.href = "/budgets";
+      // Chamar callback de sucesso ou redirecionar
+      if (onSuccess) {
+        onSuccess(budget);
+      } else {
+        window.location.href = "/budgets";
+      }
     } catch (error) {
-      console.error("Erro ao criar orçamento:", error);
+      console.error("Erro ao processar orçamento:", error);
       toast({
-        title: "Erro ao criar orçamento",
+        title: initialData ? "Erro ao atualizar orçamento" : "Erro ao criar orçamento",
         description: "Ocorreu um problema ao salvar o orçamento. Por favor, tente novamente.",
         variant: "destructive",
       });
@@ -187,6 +225,23 @@ const NewBudgetForm: React.FC = () => {
 
     if (!response.ok) {
       throw new Error("Falha ao criar orçamento");
+    }
+
+    return response.json();
+  };
+  
+  // Função para atualizar um orçamento existente
+  const updateBudget = async (budget: any, budgetId: number) => {
+    const response = await fetch(`/api/budgets/${budgetId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(budget),
+    });
+
+    if (!response.ok) {
+      throw new Error("Falha ao atualizar orçamento");
     }
 
     return response.json();
@@ -219,102 +274,98 @@ const NewBudgetForm: React.FC = () => {
     return (
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-4 max-w-6xl mx-auto">
         {/* Primeira linha: Para-lama Esquerdo - Capô - Para-lama Direito */}
-        <DamagePart part="para_lama_esquerdo" damages={damages} onChange={handleDamageChange} />
-        <DamagePart part="capo" damages={damages} onChange={handleDamageChange} />
-        <DamagePart part="para_lama_direito" damages={damages} onChange={handleDamageChange} />
+        <DamagePart part="para_lama_esquerdo" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="capo" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="para_lama_direito" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
 
         {/* Segunda linha: Coluna Esquerda - Teto - Coluna Direita */}
-        <DamagePart part="coluna_esquerda" damages={damages} onChange={handleDamageChange} />
-        <DamagePart part="teto" damages={damages} onChange={handleDamageChange} />
-        <DamagePart part="coluna_direita" damages={damages} onChange={handleDamageChange} />
+        <DamagePart part="coluna_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="teto" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="coluna_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
 
         {/* Terceira linha: Porta Dianteira Esquerda - Espaço Imagem - Porta Dianteira Direita */}
-        <DamagePart part="porta_dianteira_esquerda" damages={damages} onChange={handleDamageChange} />
+        <DamagePart part="porta_dianteira_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
         <div className="p-3 border rounded-md bg-gray-50 flex items-center justify-center">
           <div className="text-center text-gray-400 text-xs">Veículo</div>
         </div>
-        <DamagePart part="porta_dianteira_direita" damages={damages} onChange={handleDamageChange} />
+        <DamagePart part="porta_dianteira_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
 
         {/* Quarta linha: Porta Traseira Esquerda - Porta Malas Superior - Porta Traseira Direita */}
-        <DamagePart part="porta_traseira_esquerda" damages={damages} onChange={handleDamageChange} />
-        <DamagePart part="porta_malas_superior" damages={damages} onChange={handleDamageChange} />
-        <DamagePart part="porta_traseira_direita" damages={damages} onChange={handleDamageChange} />
+        <DamagePart part="porta_traseira_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="porta_malas_superior" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="porta_traseira_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
 
         {/* Quinta linha: Lateral Esquerda - Porta Malas Inferior - Lateral Direita */}
-        <DamagePart part="lateral_esquerda" damages={damages} onChange={handleDamageChange} />
-        <DamagePart part="porta_malas_inferior" damages={damages} onChange={handleDamageChange} />
-        <DamagePart part="lateral_direita" damages={damages} onChange={handleDamageChange} />
+        <DamagePart part="lateral_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="porta_malas_inferior" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="lateral_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
       </div>
     );
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center mb-2">
-            <Button 
-              variant="ghost" 
-              className="mr-2 p-0 h-8 w-8" 
-              onClick={() => window.location.href = "/budgets"}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <CardTitle className="text-2xl">Novo Orçamento</CardTitle>
-          </div>
-          <CardDescription>
-            Preencha os dados do veículo e indique as áreas danificadas
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Primeira linha: Data e Cliente (selecionável do BD) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>DATA</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={`pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
-                            >
-                              {field.value ? (
-                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
-                              ) : (
-                                <span>Selecione uma data</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
+    <div className="container p-0">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Primeira linha: Data e Cliente (selecionável do BD) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>DATA</FormLabel>
+                  {readOnly ? (
+                    <div className="p-2 border rounded-md">
+                      {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : ""}
+                    </div>
+                  ) : (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={`pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                          >
+                            {field.value ? (
+                              format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                            ) : (
+                              <span>Selecione uma data</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   )}
-                />
-                <FormField
-                  control={form.control}
-                  name="client_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CLIENTE</FormLabel>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="client_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CLIENTE</FormLabel>
+                  {readOnly ? (
+                    <div className="p-2 border rounded-md">
+                      {clients?.find(c => c.id.toString() === field.value)?.name || ""}
+                    </div>
+                  ) : (
+                    <>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
+                        disabled={readOnly}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -335,113 +386,135 @@ const NewBudgetForm: React.FC = () => {
                           )}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
+                    </>
                   )}
-                />
-              </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-              {/* Segunda linha: Veículo - Placa - Chassi (digitados manualmente) */}
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <FormField
-                  control={form.control}
-                  name="vehicle_info"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>VEÍCULO</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Marca/Modelo" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="plate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>PLACA</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ABC1234" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="chassis_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CHASSI</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Número do chassi" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+          {/* Segunda linha: Veículo - Placa - Chassi (digitados manualmente) */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <FormField
+              control={form.control}
+              name="vehicle_info"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>VEÍCULO</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Marca/Modelo" 
+                      {...field} 
+                      readOnly={readOnly}
+                      className={readOnly ? "bg-gray-50" : ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="plate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>PLACA</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="ABC1234" 
+                      {...field} 
+                      readOnly={readOnly}
+                      className={readOnly ? "bg-gray-50" : ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="chassis_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CHASSI</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Número do chassi" 
+                      {...field} 
+                      readOnly={readOnly}
+                      className={readOnly ? "bg-gray-50" : ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-              {/* Separador */}
-              <Separator className="my-4" />
+          {/* Separador */}
+          <Separator className="my-4" />
 
-              {/* Título da seção de danos */}
+          {/* Título da seção de danos */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Danos do Veículo</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {readOnly 
+                ? "Visualização dos danos registrados no veículo" 
+                : "Indique a posição, quantidade e tamanho dos danos em cada parte do veículo"
+              }
+            </p>
+          </div>
+
+          {/* Grid de danos do veículo */}
+          {renderDamageGrid()}
+
+          {/* Legenda dos materiais especiais */}
+          <div className="bg-gray-50 p-4 rounded-md mt-4">
+            <h4 className="font-medium mb-2">Materiais Especiais</h4>
+            <p className="text-sm">
+              (A) = Alumínio (+25%)  |  (K) = Cola (+30%)  |  (P) = Pintura
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              *Valores calculados automaticamente de acordo com a tabela de referência
+            </p>
+          </div>
+
+          {/* Exibição dos Totais */}
+          <div className="bg-gray-50 p-4 rounded-md mt-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Danos do Veículo</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Indique a posição, quantidade e tamanho dos danos em cada parte do veículo
+                <h4 className="font-medium mb-2">Total AW</h4>
+                <p className="text-xl font-bold">
+                  {calculateTotalValues(damages).totalAw.toFixed(2)}
                 </p>
               </div>
-
-              {/* Grid de danos do veículo */}
-              {renderDamageGrid()}
-
-              {/* Legenda dos materiais especiais */}
-              <div className="bg-gray-50 p-4 rounded-md mt-4">
-                <h4 className="font-medium mb-2">Materiais Especiais</h4>
-                <p className="text-sm">
-                  (A) = Alumínio (+25%)  |  (K) = Cola (+30%)  |  (P) = Pintura
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  *Valores calculados automaticamente de acordo com a tabela de referência
+              <div>
+                <h4 className="font-medium mb-2">Total €</h4>
+                <p className="text-xl font-bold">
+                  {calculateTotalValues(damages).totalValue.toFixed(2)} €
                 </p>
               </div>
+            </div>
+          </div>
 
-              {/* Exibição dos Totais */}
-              <div className="bg-gray-50 p-4 rounded-md mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Total AW</h4>
-                    <p className="text-xl font-bold">
-                      {calculateTotalValues(damages).totalAw.toFixed(2)}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Total €</h4>
-                    <p className="text-xl font-bold">
-                      {calculateTotalValues(damages).totalValue.toFixed(2)} €
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Botões de ação */}
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => window.location.href = "/budgets"}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit">Salvar Orçamento</Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+          {/* Botões de ação - só mostrar se não for modo somente leitura */}
+          {!readOnly && (
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => window.location.href = "/budgets"}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {initialData ? "Atualizar Orçamento" : "Salvar Orçamento"}
+              </Button>
+            </div>
+          )}
+        </form>
+      </Form>
     </div>
   );
 };
