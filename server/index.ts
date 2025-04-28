@@ -5,8 +5,9 @@ import path from "path";
 import { initializeDatabase, storage } from "./storage";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Aumentar o limite de tamanho para uploads de imagens e payload JSON
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 app.use((req, res, next) => {
