@@ -779,8 +779,8 @@ export default function BudgetPage() {
           let parsedDamagedParts: Record<string, PartDamage> = {};
           if (typeof selectedBudget.damaged_parts === 'string') {
             parsedDamagedParts = JSON.parse(selectedBudget.damaged_parts);
-          } else if (typeof selectedBudget.damaged_parts === 'object') {
-            parsedDamagedParts = selectedBudget.damaged_parts as Record<string, PartDamage>;
+          } else if (typeof selectedBudget.damaged_parts === 'object' && !Array.isArray(selectedBudget.damaged_parts)) {
+            parsedDamagedParts = selectedBudget.damaged_parts as unknown as Record<string, PartDamage>;
           }
           
           // Nomes amigáveis para as partes
@@ -901,26 +901,52 @@ export default function BudgetPage() {
           heightLeft -= pdfHeight;
         }
         
-        // Criamos um arquivo blob para garantir compatibilidade com dispositivos móveis
-        const pdfBlob = pdf.output('blob');
-        const blobUrl = URL.createObjectURL(pdfBlob);
+        // Em vez de usar o método save() direto, vamos usar uma abordagem que
+        // funciona melhor em dispositivos móveis, abrindo o PDF em uma nova aba
         
-        // Criamos um link temporário para iniciar o download
-        const downloadLink = document.createElement('a');
-        downloadLink.href = blobUrl;
-        downloadLink.download = `Orcamento_${selectedBudget.id}_${selectedBudget.client_name.replace(/[^\w\s]/gi, '')}.pdf`;
-        downloadLink.style.display = 'none';
-        document.body.appendChild(downloadLink);
-        
-        // Iniciamos o download
-        downloadLink.click();
-        
-        // Limpamos após um pequeno atraso para garantir que o download seja iniciado
-        setTimeout(() => {
-          URL.revokeObjectURL(blobUrl);
-          document.body.removeChild(downloadLink);
+        try {
+          // Primeiro, tente a abordagem com base64 - geralmente funciona em mais dispositivos
+          const pdfOutput = pdf.output('datauristring');
+          
+          // Para depuração
+          console.log("PDF gerado como URI de dados");
+          
+          // Abre o PDF em uma nova aba, permitindo que o usuário salve
+          window.open(pdfOutput, '_blank');
+          
+          // Limpa o elemento temporário
           document.body.removeChild(printDiv);
-        }, 100);
+          
+          // Se o método acima falhar em algum dispositivo móvel, 
+          // tente a segunda abordagem com blob como fallback
+          if (!window.open(pdfOutput)) {
+            console.log("Abordagem com URI de dados falhou, tentando blob...");
+            
+            const pdfBlob = pdf.output('blob');
+            const blobUrl = URL.createObjectURL(pdfBlob);
+            
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            downloadLink.download = `Orcamento_${selectedBudget.id}_${selectedBudget.client_name.replace(/[^\w\s]/gi, '')}.pdf`;
+            downloadLink.target = '_blank';
+            downloadLink.rel = 'noopener noreferrer';
+            document.body.appendChild(downloadLink);
+            
+            downloadLink.click();
+            
+            setTimeout(() => {
+              URL.revokeObjectURL(blobUrl);
+              document.body.removeChild(downloadLink);
+            }, 100);
+          }
+        } catch (error) {
+          console.error("Erro ao abrir o PDF:", error);
+          
+          // Em último caso, tente o método save() padrão
+          console.log("Tentando método save() padrão...");
+          pdf.save(`Orcamento_${selectedBudget.id}_${selectedBudget.client_name.replace(/[^\w\s]/gi, '')}.pdf`);
+          document.body.removeChild(printDiv);
+        }
         
         toast({
           title: "PDF gerado com sucesso!",
