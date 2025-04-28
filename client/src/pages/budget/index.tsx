@@ -131,6 +131,12 @@ function DamagedPartItem({
     isHorizontal: isHorizontal 
   });
   
+  useEffect(() => {
+    if (initialDamage) {
+      setDamage(initialDamage);
+    }
+  }, [initialDamage]);
+  
   const updateDamage = (field: keyof PartDamage, value: any) => {
     const updatedDamage = { ...damage, [field]: value };
     
@@ -163,6 +169,52 @@ function DamagedPartItem({
     }
   };
   
+  // Se estiver no modo de visualização, mostramos um formato mais simples
+  if (isViewMode) {
+    return (
+      <div className="border rounded-md p-2 space-y-2 overflow-hidden">
+        <div className="text-center mb-2 text-sm font-medium truncate">
+          {label}
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center gap-1">
+            <span className="text-xs whitespace-nowrap">20mm:</span>
+            <span className="text-xs sm:text-sm text-right font-medium">{damage.diameter20}</span>
+          </div>
+          <div className="flex justify-between items-center gap-1">
+            <span className="text-xs whitespace-nowrap">30mm:</span>
+            <span className="text-xs sm:text-sm text-right font-medium">{damage.diameter30}</span>
+          </div>
+          <div className="flex justify-between items-center gap-1">
+            <span className="text-xs whitespace-nowrap">40mm:</span>
+            <span className="text-xs sm:text-sm text-right font-medium">{damage.diameter40}</span>
+          </div>
+          <div className="flex justify-between pt-1">
+            <div className="flex items-center gap-0.5">
+              <div className={`w-4 h-4 rounded border ${damage.optionA ? 'bg-red-100 border-red-300' : 'bg-gray-100 border-gray-300'}`}>
+                {damage.optionA && <span className="flex items-center justify-center text-xs">✓</span>}
+              </div>
+              <Label className="rounded px-1 text-xs bg-red-100">A</Label>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <div className={`w-4 h-4 rounded border ${damage.optionK ? 'bg-blue-100 border-blue-300' : 'bg-gray-100 border-gray-300'}`}>
+                {damage.optionK && <span className="flex items-center justify-center text-xs">✓</span>}
+              </div>
+              <Label className="rounded px-1 text-xs bg-blue-100">K</Label>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <div className={`w-4 h-4 rounded border ${damage.optionP ? 'bg-green-100 border-green-300' : 'bg-gray-100 border-gray-300'}`}>
+                {damage.optionP && <span className="flex items-center justify-center text-xs">✓</span>}
+              </div>
+              <Label className="rounded px-1 text-xs bg-green-100">P</Label>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Modo de edição
   return (
     <div className="border rounded-md p-2 space-y-2 overflow-hidden">
       <div className="text-center mb-2 text-sm font-medium truncate">
@@ -174,9 +226,7 @@ function DamagedPartItem({
           <Input 
             type="number" 
             className="w-full min-w-0 h-7 px-1 text-xs sm:text-sm text-right"
-            readOnly={isViewMode}
-            disabled={isViewMode}
-            value={isViewMode ? damage.diameter20.toString() : (damage.diameter20 > 0 ? damage.diameter20.toString() : '')}
+            value={damage.diameter20 > 0 ? damage.diameter20.toString() : ''}
             onChange={(e) => updateDamage('diameter20', e.target.value)}
             min="0"
           />
@@ -186,9 +236,7 @@ function DamagedPartItem({
           <Input 
             type="number" 
             className="w-full min-w-0 h-7 px-1 text-xs sm:text-sm text-right"
-            readOnly={isViewMode}
-            disabled={isViewMode}
-            value={isViewMode ? damage.diameter30.toString() : (damage.diameter30 > 0 ? damage.diameter30.toString() : '')}
+            value={damage.diameter30 > 0 ? damage.diameter30.toString() : ''}
             onChange={(e) => updateDamage('diameter30', e.target.value)}
             min="0"
           />
@@ -198,9 +246,7 @@ function DamagedPartItem({
           <Input 
             type="number" 
             className="w-full min-w-0 h-7 px-1 text-xs sm:text-sm text-right"
-            readOnly={isViewMode}
-            disabled={isViewMode}
-            value={isViewMode ? damage.diameter40.toString() : (damage.diameter40 > 0 ? damage.diameter40.toString() : '')}
+            value={damage.diameter40 > 0 ? damage.diameter40.toString() : ''}
             onChange={(e) => updateDamage('diameter40', e.target.value)}
             min="0"
           />
@@ -211,7 +257,6 @@ function DamagedPartItem({
               id={`${partKey}-a`} 
               className="w-3.5 h-3.5 sm:w-4 sm:h-4"
               checked={damage.optionA}
-              disabled={isViewMode}
               onCheckedChange={(checked) => updateDamage('optionA', !!checked)}
             />
             <Label htmlFor={`${partKey}-a`} className="rounded px-1 text-xs bg-red-100">A</Label>
@@ -221,7 +266,6 @@ function DamagedPartItem({
               id={`${partKey}-k`} 
               className="w-3.5 h-3.5 sm:w-4 sm:h-4"
               checked={damage.optionK}
-              disabled={isViewMode}
               onCheckedChange={(checked) => updateDamage('optionK', !!checked)}
             />
             <Label htmlFor={`${partKey}-k`} className="rounded px-1 text-xs bg-blue-100">K</Label>
@@ -231,7 +275,6 @@ function DamagedPartItem({
               id={`${partKey}-p`} 
               className="w-3.5 h-3.5 sm:w-4 sm:h-4"
               checked={damage.optionP}
-              disabled={isViewMode}
               onCheckedChange={(checked) => updateDamage('optionP', !!checked)}
             />
             <Label htmlFor={`${partKey}-p`} className="rounded px-1 text-xs bg-green-100">P</Label>
