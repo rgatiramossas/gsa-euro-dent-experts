@@ -254,6 +254,16 @@ export const generateSimplePdf = async (budget: Budget): Promise<void> => {
           </div>
           
           ${renderDamageGrid()}
+          
+          <!-- Seção de Materiais Especiais -->
+          <div style="margin-top: 15px; border: 2px solid #2563EB; padding: 10px; border-radius: 6px; background-color: #f0f7ff;">
+            <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #2563EB; text-align: center; text-transform: uppercase;">Materiais Especiais</h3>
+            <div style="font-size: 12px; text-align: center; font-weight: bold;">
+              <span style="color: #DC2626;">(A) = Alumínio (+25%)</span> | 
+              <span style="color: #2563EB;">(K) = Cola (+30%)</span> | 
+              <span style="color: #16A34A;">(P) = Pintura</span>
+            </div>
+          </div>
         </div>
       </div>
     `;
