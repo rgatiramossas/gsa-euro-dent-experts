@@ -214,34 +214,37 @@ export const generateSimplePdf = async (budget: Budget): Promise<void> => {
         <!-- Linha horizontal abaixo do logo -->
         <div style="height: 2px; background-color: #2563EB; width: 100%; margin-bottom: 15px;"></div>
         
-        <!-- Barra azul com título ORÇAMENTO e número -->
-        <div style="background-color: #2563EB; color: white; padding: 10px; display: flex; justify-content: space-between; border-radius: 6px; margin-bottom: 20px;">
-          <div style="font-size: 18px; font-weight: bold;">ORÇAMENTO</div>
-          <div style="font-size: 18px; font-weight: bold;">#${budget.id}</div>
-        </div>
-        
-        <!-- Informações do cliente -->
-        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-          <!-- Bloco de informações do cliente -->
-          <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
-            <div style="font-weight: bold; margin-bottom: 15px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO CLIENTE</div>
-            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Nome:</span> ${budget.client_name}</div>
-            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Data:</span> ${formatDate(budget.date)}</div>
+        <!-- Conteúdo principal -->
+        <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
+          <!-- Barra azul com título ORÇAMENTO e número -->
+          <div style="background-color: #2563EB; color: white; padding: 8px 10px; display: flex; justify-content: space-between; border-radius: 6px;">
+            <div style="font-size: 15px; font-weight: bold;">ORÇAMENTO</div>
+            <div style="font-size: 15px; font-weight: bold;">#${budget.id}</div>
           </div>
           
-          <!-- Bloco de informações do veículo -->
-          <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
-            <div style="font-weight: bold; margin-bottom: 15px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO VEÍCULO</div>
-            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Veículo:</span> ${budget.vehicle_info}</div>
-            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Placa:</span> ${budget.plate || '---'}</div>
-            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Chassi:</span> ${budget.chassis_number || '---'}</div>
+          <!-- Informações do cliente e veículo -->
+          <div style="display: flex; gap: 20px;">
+            <!-- Bloco de informações do cliente -->
+            <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
+              <div style="font-weight: bold; margin-bottom: 15px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO CLIENTE</div>
+              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Nome:</span> ${budget.client_name}</div>
+              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Data:</span> ${formatDate(budget.date)}</div>
+            </div>
+            
+            <!-- Bloco de informações do veículo -->
+            <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
+              <div style="font-weight: bold; margin-bottom: 15px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO VEÍCULO</div>
+              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Veículo:</span> ${budget.vehicle_info}</div>
+              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Placa:</span> ${budget.plate || '---'}</div>
+              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Chassi:</span> ${budget.chassis_number || '---'}</div>
+            </div>
           </div>
         </div>
         
         <!-- Seção de Danos do Veículo -->
-        <div style="margin-top: 30px; margin-bottom: 20px;">
-          <div style="background-color: #2563EB; color: white; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-            <div style="font-size: 16px; font-weight: bold;">DANOS DO VEÍCULO</div>
+        <div style="margin-top: 10px; margin-bottom: 20px;">
+          <div style="background-color: #2563EB; color: white; padding: 8px 10px; border-radius: 6px; margin-bottom: 15px;">
+            <div style="font-size: 15px; font-weight: bold;">DANOS DO VEÍCULO</div>
           </div>
           
           ${renderDamageGrid()}
