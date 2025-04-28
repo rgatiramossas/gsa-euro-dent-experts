@@ -598,8 +598,8 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
         </div>
         
         {/* Checkboxes para materiais especiais */}
-        <div className="flex justify-start gap-3 mt-2">
-          <div className="flex items-center">
+        <div className="flex justify-between mt-2 px-1 w-full">
+          <div className="flex items-center w-6 justify-center">
             <Checkbox 
               id={`${part}-aluminum`}
               checked={damage.isAluminum || false}
@@ -607,9 +607,9 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
               className="h-3 w-3"
               disabled={readOnly}
             />
-            <label htmlFor={`${part}-aluminum`} className="ml-1 text-xs">A</label>
+            <label htmlFor={`${part}-aluminum`} className="ml-1 text-xs font-semibold">A</label>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center w-6 justify-center">
             <Checkbox 
               id={`${part}-glue`}
               checked={damage.isGlue || false}
@@ -617,9 +617,9 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
               className="h-3 w-3"
               disabled={readOnly}
             />
-            <label htmlFor={`${part}-glue`} className="ml-1 text-xs">K</label>
+            <label htmlFor={`${part}-glue`} className="ml-1 text-xs font-semibold">K</label>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center w-6 justify-center">
             <Checkbox 
               id={`${part}-paint`}
               checked={damage.isPaint || false}
@@ -627,7 +627,7 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
               className="h-3 w-3"
               disabled={readOnly}
             />
-            <label htmlFor={`${part}-paint`} className="ml-1 text-xs">P</label>
+            <label htmlFor={`${part}-paint`} className="ml-1 text-xs font-semibold">P</label>
           </div>
         </div>
       </div>
