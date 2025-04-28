@@ -715,107 +715,113 @@ export default function BudgetPage() {
         return `${day}/${month}/${year}`;
       };
       
-      // Cabeçalho exatamente como na imagem de referência
+      // Cabeçalho com visual aprimorado
       const headerDiv = document.createElement('div');
       headerDiv.style.marginBottom = '15px';
       headerDiv.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
           <div style="margin-bottom: 8px;">
-            <div style="color: #0047AB; font-weight: bold; font-size: 15px;">Orçamento #${selectedBudget.id}</div>
-            <div style="color: #0047AB; font-size: 12px;">Euro Dent Experts</div>
+            <div style="color: #0047AB; font-weight: bold; font-size: 16px; letter-spacing: 0.3px;">Orçamento #${selectedBudget.id}</div>
+            <div style="color: #0047AB; font-size: 12px; letter-spacing: 0.2px; font-weight: 500;">Euro Dent Experts</div>
           </div>
-          <div style="text-align: right; font-size: 10px; color: #666;">
+          <div style="text-align: right; font-size: 10px; color: #555; background-color: #f8f9fa; padding: 4px 8px; border-radius: 4px;">
             Data de emissão: ${formatDisplayDate(new Date().toISOString())}
           </div>
         </div>
-        <div style="height: 1px; background-color: #0047AB; margin: 4px 0 10px 0;"></div>
+        <div style="height: 2px; background: linear-gradient(to right, #0047AB, #4f95ff); margin: 4px 0 12px 0; border-radius: 1px;"></div>
       `;
       printDiv.appendChild(headerDiv);
       
-      // Informações do cliente exatamente como na imagem de referência
+      // Informações do cliente com visual aprimorado
       const clientInfoDiv = document.createElement('div');
       clientInfoDiv.style.marginBottom = '15px';
       clientInfoDiv.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 8px; font-size: 12px;">Detalhes do orçamento para:</div>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <div style="font-weight: bold; margin-bottom: 10px; font-size: 12px; color: #333; letter-spacing: 0.2px; border-left: 3px solid #0047AB; padding-left: 6px;">Detalhes do orçamento para:</div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border-spacing: 0;">
           <tr>
-            <td style="width: 49%; padding-right: 5px; vertical-align: top;">
-              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">DATA</div>
-              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px; margin-bottom: 8px;">${formatDisplayDate(selectedBudget.date)}</div>
+            <td style="width: 49%; padding-right: 8px; vertical-align: top;">
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 3px; letter-spacing: 0.5px;">DATA</div>
+              <div style="border: 1px solid #e0e0e0; padding: 6px 8px; background-color: #ffffff; font-size: 11px; margin-bottom: 10px; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">${formatDisplayDate(selectedBudget.date)}</div>
               
-              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">VEÍCULO</div>
-              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px; margin-bottom: 8px;">${selectedBudget.vehicle_info}</div>
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 3px; letter-spacing: 0.5px;">VEÍCULO</div>
+              <div style="border: 1px solid #e0e0e0; padding: 6px 8px; background-color: #ffffff; font-size: 11px; margin-bottom: 10px; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">${selectedBudget.vehicle_info}</div>
               
-              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">CHASSI</div>
-              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</div>
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 3px; letter-spacing: 0.5px;">CHASSI</div>
+              <div style="border: 1px solid #e0e0e0; padding: 6px 8px; background-color: #ffffff; font-size: 11px; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</div>
             </td>
             <td style="width: 2%;"></td>
-            <td style="width: 49%; padding-left: 5px; vertical-align: top;">
-              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">CLIENTE</div>
-              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px; margin-bottom: 8px;">${selectedBudget.client_name}</div>
+            <td style="width: 49%; padding-left: 8px; vertical-align: top;">
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 3px; letter-spacing: 0.5px;">CLIENTE</div>
+              <div style="border: 1px solid #e0e0e0; padding: 6px 8px; background-color: #ffffff; font-size: 11px; margin-bottom: 10px; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">${selectedBudget.client_name}</div>
               
-              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">PLACA</div>
-              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px;">${selectedBudget.plate || '-'}</div>
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 3px; letter-spacing: 0.5px;">PLACA</div>
+              <div style="border: 1px solid #e0e0e0; padding: 6px 8px; background-color: #ffffff; font-size: 11px; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">${selectedBudget.plate || '-'}</div>
             </td>
           </tr>
         </table>
       `;
       printDiv.appendChild(clientInfoDiv);
       
-      // Danos do veículo no novo formato
+      // Danos do veículo com visual aprimorado
       const damagesDiv = document.createElement('div');
       damagesDiv.style.marginBottom = '15px';
       damagesDiv.innerHTML = `
-        <div style="margin-bottom: 8px; font-size: 13px; display: flex; align-items: center;">
-          <svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 3px; margin-top: 1px;">
+        <div style="margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; background-color: #f0f7ff; padding: 5px 8px; border-radius: 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" style="margin-right: 5px; margin-top: 0px;">
             <path fill="#0047AB" d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z" />
           </svg>
-          <span style="color: #0047AB; font-weight: bold;">Danos do Veículo</span>
+          <span style="color: #0047AB; font-weight: bold; letter-spacing: 0.2px;">Danos do Veículo</span>
         </div>
         <div style="display: grid; grid-template-columns: 1fr; gap: 4px; margin-bottom: 5px;">
           <!-- Grid de peças danificadas em 3 colunas -->
-          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%;">
+          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; width: 100%;">
           </div>
         </div>
         
-        <div style="margin-top: 10px; padding: 5px 0; font-size: 11px; text-align: center; padding-top: 10px;">
-          <span style="font-weight: bold; margin-right: 12px;">Materiais Especiais</span>
-          <span style="color: #ff0000; font-weight: bold;">A</span> = ALUMÍNIO
+        <div style="margin-top: 12px; padding: 5px 8px; font-size: 11px; text-align: center; background-color: #f8f8f8; border-radius: 4px; border: 1px solid #e4e4e4;">
+          <span style="font-weight: bold; margin-right: 12px; letter-spacing: 0.2px;">Materiais Especiais</span>
+          <span style="color: #ff0000; font-weight: bold; background-color: #fff0f0; padding: 2px 4px; border-radius: 2px;">A</span> = ALUMÍNIO
           &nbsp;&nbsp;&nbsp;
-          <span style="color: #0000ff; font-weight: bold;">K</span> = COLA
+          <span style="color: #0055cc; font-weight: bold; background-color: #f0f5ff; padding: 2px 4px; border-radius: 2px;">K</span> = COLA
           &nbsp;&nbsp;&nbsp;
-          <span style="color: #00aa00; font-weight: bold;">P</span> = PINTURA
+          <span style="color: #00aa00; font-weight: bold; background-color: #f0fff0; padding: 2px 4px; border-radius: 2px;">P</span> = PINTURA
         </div>
       `;
       printDiv.appendChild(damagesDiv);
       
-      // Observações
+      // Observações com visual aprimorado
       if (selectedBudget.note) {
         const notesDiv = document.createElement('div');
         notesDiv.style.marginBottom = '15px';
         notesDiv.innerHTML = `
-          <div style="margin-bottom: 8px; font-size: 13px; display: flex; align-items: center;">
-            <svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 3px; margin-top: 1px;">
+          <div style="margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; background-color: #f0f7ff; padding: 5px 8px; border-radius: 4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" style="margin-right: 5px; margin-top: 0px;">
               <path fill="#0047AB" d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z" />
             </svg>
-            <span style="color: #0047AB; font-weight: bold;">Observações</span>
+            <span style="color: #0047AB; font-weight: bold; letter-spacing: 0.2px;">Observações</span>
           </div>
-          <div style="padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px; background-color: #f9f9f9;">
+          <div style="padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 11px; background-color: #f9f9f9; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
             ${selectedBudget.note}
           </div>
         `;
         printDiv.appendChild(notesDiv);
       }
       
-      // Rodapé exatamente como na imagem de referência
+      // Rodapé com visual aprimorado
       const footerDiv = document.createElement('div');
       footerDiv.style.textAlign = 'center';
       footerDiv.style.fontSize = '8px';
       footerDiv.style.color = '#666';
-      footerDiv.style.marginTop = '30px';
-      footerDiv.style.paddingTop = '5px';
+      footerDiv.style.marginTop = '35px';
+      footerDiv.style.paddingTop = '6px';
+      footerDiv.style.borderTop = '1px solid #eaeaea';
+      footerDiv.style.marginLeft = 'auto';
+      footerDiv.style.marginRight = 'auto';
+      footerDiv.style.maxWidth = '80%';
+      footerDiv.style.letterSpacing = '0.3px';
       footerDiv.innerHTML = `
-        Orçamento #${selectedBudget.id} · Euro Dent Experts · Gerado em ${formatDisplayDate(new Date().toISOString())}
+        <div style="margin-bottom: 2px;">Orçamento #${selectedBudget.id} · Euro Dent Experts</div>
+        <div>Gerado em ${formatDisplayDate(new Date().toISOString())}</div>
       `;
       printDiv.appendChild(footerDiv);
       
@@ -884,17 +890,19 @@ export default function BudgetPage() {
           allPartKeys.forEach(key => {
             // Caso especial para o espaço reservado para a foto
             if (key === 'photoPlaceholder') {
-              // Criamos uma célula específica para a imagem
+              // Criamos uma célula específica para a imagem com visual aprimorado
               const placeholderDiv = document.createElement('div');
-              placeholderDiv.style.border = '1px solid #ddd';
-              placeholderDiv.style.boxSizing = 'border-box'; // Manter consistência com as outras células
+              placeholderDiv.style.border = '1px solid #e0e0e0';
+              placeholderDiv.style.boxSizing = 'border-box'; 
               placeholderDiv.style.margin = '0';
               placeholderDiv.style.backgroundColor = '#ffffff';
               placeholderDiv.style.display = 'flex';
               placeholderDiv.style.justifyContent = 'center';
               placeholderDiv.style.alignItems = 'center';
-              placeholderDiv.style.height = '190px'; // Aumentar mais a altura para manter proporcionalidade
+              placeholderDiv.style.height = '190px'; 
               placeholderDiv.style.overflow = 'hidden';
+              placeholderDiv.style.borderRadius = '3px';
+              placeholderDiv.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
               
               // Adicionamos a imagem ou o placeholder
               if (selectedBudget.photo_url) {
@@ -904,13 +912,13 @@ export default function BudgetPage() {
                 img.style.maxWidth = '100%';
                 img.style.maxHeight = '100%';
                 img.style.objectFit = 'contain';
-                img.style.borderRadius = '3px'; // Adicionar borda levemente arredondada para melhor apresentação
+                img.style.borderRadius = '3px';
                 placeholderDiv.appendChild(img);
               } else {
                 placeholderDiv.innerHTML = `
-                  <div style="text-align: center; color: #999; padding: 10px;">
-                    <div style="font-size: 20px; margin-bottom: 5px;">🚗</div>
-                    <div style="font-size: 9px;">Sem foto do veículo</div>
+                  <div style="text-align: center; color: #888; padding: 10px; background-color: #f8f9fa; border-radius: 4px; width: 90%; max-width: 150px;">
+                    <div style="font-size: 24px; margin-bottom: 8px; color: #0047AB;">🚗</div>
+                    <div style="font-size: 10px; font-weight: 500; letter-spacing: 0.2px;">Sem foto do veículo</div>
                   </div>
                 `;
               }
@@ -928,27 +936,33 @@ export default function BudgetPage() {
             }
             
             const partDiv = document.createElement('div');
-            partDiv.style.border = '1px solid #ddd';
-            partDiv.style.boxSizing = 'border-box'; // Garantir que bordas não aumentem o tamanho
+            partDiv.style.border = '1px solid #e0e0e0';
+            partDiv.style.boxSizing = 'border-box'; 
             partDiv.style.margin = '0';
-            partDiv.style.padding = '1px 6px 6px 6px'; // Reduzido ainda mais o padding do topo
+            partDiv.style.padding = '2px 8px 6px 8px'; 
             partDiv.style.fontSize = '10px';
             partDiv.style.display = 'flex';
             partDiv.style.flexDirection = 'column';
-            partDiv.style.justifyContent = 'flex-start'; // Forçar alinhamento ao topo
-            partDiv.style.minHeight = '85px'; // Aumentar ainda mais a altura para usar melhor o espaço
+            partDiv.style.justifyContent = 'flex-start'; 
+            partDiv.style.minHeight = '85px';
+            partDiv.style.borderRadius = '3px';
+            partDiv.style.boxShadow = part.selected ? '0 1px 3px rgba(0,0,0,0.05), 0 0 0 1px #c3d8f5' : '0 1px 3px rgba(0,0,0,0.03)';
+            partDiv.style.backgroundColor = part.selected ? '#f8faff' : '#ffffff';
             
-            // Criar o cabeçalho com o nome da peça (estilo exato como no modelo)
+            // Cabeçalho da peça com visual aprimorado
             const partHeader = document.createElement('div');
             partHeader.style.textAlign = 'center';
             partHeader.style.fontWeight = 'bold';
             partHeader.style.color = '#0047AB';
-            partHeader.style.fontSize = '9px'; // Menor para acomodar o texto completo
-            partHeader.style.marginBottom = '0px'; // Eliminar espaço entre cabeçalho e conteúdo
+            partHeader.style.fontSize = '9px';
+            partHeader.style.marginBottom = '2px';
             partHeader.style.whiteSpace = 'nowrap';
             partHeader.style.overflow = 'hidden';
             partHeader.style.textOverflow = 'ellipsis';
-            partHeader.style.marginTop = '-3px'; // Subir o texto do título
+            partHeader.style.marginTop = '0px';
+            partHeader.style.letterSpacing = '0.1px';
+            partHeader.style.padding = '3px 0';
+            partHeader.style.borderBottom = '1px solid #f0f0f0';
             partHeader.innerText = partNames[key] || key;
             partDiv.appendChild(partHeader);
             
