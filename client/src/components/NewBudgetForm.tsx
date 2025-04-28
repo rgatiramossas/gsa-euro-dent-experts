@@ -446,14 +446,22 @@ const NewBudgetForm: React.FC = () => {
   );
 };
 
+// Props para o componente NewBudgetForm
+interface NewBudgetFormProps {
+  initialData?: any;
+  readOnly?: boolean;
+  onSuccess?: (data: any) => void;
+}
+
 // Componente para renderizar uma unidade de dano (uma parte do veículo)
 interface DamagePartProps {
   part: string;
   damages: VehicleDamage;
   onChange: (part: string, field: keyof DamageUnit, value: any) => void;
+  readOnly?: boolean;
 }
 
-const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
+const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOnly = false }) => {
   // Se for o espaço para imagem, retornar um espaço vazio
   if (part === "imagem_central") {
     return <div className="border rounded-md p-4"></div>;
@@ -468,37 +476,52 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
         {/* Tamanho 20 */}
         <div className="flex items-center justify-between">
           <span className="w-5 text-xs text-right pr-1">20</span>
-          <Input
-            type="number"
-            value={damage.size20 || 0}
-            onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
-            className="w-12 h-6 text-xs px-1 text-right"
-            min={0}
-          />
+          {readOnly ? (
+            <span className="w-12 h-6 text-xs text-right py-1">{damage.size20 || 0}</span>
+          ) : (
+            <Input
+              type="number"
+              value={damage.size20 || 0}
+              onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
+              className="w-12 h-6 text-xs px-1 text-right"
+              min={0}
+              readOnly={readOnly}
+            />
+          )}
         </div>
         
         {/* Tamanho 30 */}
         <div className="flex items-center justify-between">
           <span className="w-5 text-xs text-right pr-1">30</span>
-          <Input
-            type="number"
-            value={damage.size30 || 0}
-            onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
-            className="w-12 h-6 text-xs px-1 text-right"
-            min={0}
-          />
+          {readOnly ? (
+            <span className="w-12 h-6 text-xs text-right py-1">{damage.size30 || 0}</span>
+          ) : (
+            <Input
+              type="number"
+              value={damage.size30 || 0}
+              onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
+              className="w-12 h-6 text-xs px-1 text-right"
+              min={0}
+              readOnly={readOnly}
+            />
+          )}
         </div>
         
         {/* Tamanho 40 */}
         <div className="flex items-center justify-between">
           <span className="w-5 text-xs text-right pr-1">40</span>
-          <Input
-            type="number"
-            value={damage.size40 || 0}
-            onChange={(e) => onChange(part, "size40", parseInt(e.target.value) || 0)}
-            className="w-12 h-6 text-xs px-1 text-right"
-            min={0}
-          />
+          {readOnly ? (
+            <span className="w-12 h-6 text-xs text-right py-1">{damage.size40 || 0}</span>
+          ) : (
+            <Input
+              type="number"
+              value={damage.size40 || 0}
+              onChange={(e) => onChange(part, "size40", parseInt(e.target.value) || 0)}
+              className="w-12 h-6 text-xs px-1 text-right"
+              min={0}
+              readOnly={readOnly}
+            />
+          )}
         </div>
         
         {/* Checkboxes para materiais especiais */}
@@ -507,8 +530,9 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
             <Checkbox 
               id={`${part}-aluminum`}
               checked={damage.isAluminum || false}
-              onCheckedChange={(checked) => onChange(part, "isAluminum", !!checked)}
+              onCheckedChange={(checked) => !readOnly && onChange(part, "isAluminum", !!checked)}
               className="h-3 w-3"
+              disabled={readOnly}
             />
             <label htmlFor={`${part}-aluminum`} className="ml-1 text-xs">A</label>
           </div>
@@ -516,8 +540,9 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
             <Checkbox 
               id={`${part}-glue`}
               checked={damage.isGlue || false}
-              onCheckedChange={(checked) => onChange(part, "isGlue", !!checked)}
+              onCheckedChange={(checked) => !readOnly && onChange(part, "isGlue", !!checked)}
               className="h-3 w-3"
+              disabled={readOnly}
             />
             <label htmlFor={`${part}-glue`} className="ml-1 text-xs">K</label>
           </div>
@@ -525,8 +550,9 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
             <Checkbox 
               id={`${part}-paint`}
               checked={damage.isPaint || false}
-              onCheckedChange={(checked) => onChange(part, "isPaint", !!checked)}
+              onCheckedChange={(checked) => !readOnly && onChange(part, "isPaint", !!checked)}
               className="h-3 w-3"
+              disabled={readOnly}
             />
             <label htmlFor={`${part}-paint`} className="ml-1 text-xs">P</label>
           </div>
