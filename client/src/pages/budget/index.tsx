@@ -772,20 +772,9 @@ export default function BudgetPage() {
           </svg>
           <span style="color: #0047AB; font-weight: bold;">Danos do Veículo</span>
         </div>
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <!-- Grid de peças danificadas, ocupa o lado esquerdo -->
-          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; grid-column: span 1;">
-          </div>
-          
-          <!-- Área para foto do veículo, ocupa o lado direito -->
-          <div style="border: 1px solid #ddd; grid-column: span 1; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 470px; background-color: #ffffff; position: relative; overflow: hidden;">
-            ${selectedBudget.photo_url ? 
-              `<img src="${selectedBudget.photo_url}" alt="Foto do Veículo" style="max-width: 100%; height: 100%; object-fit: contain;">` : 
-              `<div style="text-align: center; color: #999; padding: 20px;">
-                <div style="font-size: 24px; margin-bottom: 10px;">🚗</div>
-                <div>Sem foto do veículo</div>
-              </div>`
-            }
+        <div style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px;">
+          <!-- Grid de peças danificadas em 3 colunas -->
+          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
           </div>
         </div>
         
@@ -871,12 +860,12 @@ export default function BudgetPage() {
             'paraLamaEsquerdo', 'capo', 'paraLamaDireito',
             // Segunda linha - Colunas e Teto
             'colunaEsquerda', 'teto', 'colunaDireita',
-            // Terceira linha - Portas Dianteiras
-            'portaDianteiraEsquerda', 'portaDianteiraDireita', 'portaTraseiraEsquerda',
-            // Quarta linha - Porta Traseira e Porta Malas
-            'portaTraseiraDireita', 'portaMalasSuperior', 'portaMalasInferior',
-            // Quinta linha - Laterais
-            'lateralEsquerda', 'lateralDireita'
+            // Terceira linha - Portas Dianteiras (com espaço para imagem)
+            'portaDianteiraEsquerda', 'photoPlaceholder', 'portaDianteiraDireita',
+            // Quarta linha - Portas Traseiras e Porta Malas Superior
+            'portaTraseiraEsquerda', 'portaMalasSuperior', 'portaTraseiraDireita',
+            // Quinta linha - Laterais e Porta Malas Inferior
+            'lateralEsquerda', 'portaMalasInferior', 'lateralDireita'
           ];
 
           // Definição de um objeto padrão para peças não danificadas
@@ -893,6 +882,41 @@ export default function BudgetPage() {
 
           // Iterar sobre todas as peças e renderizar todas, independente de estarem danificadas
           allPartKeys.forEach(key => {
+            // Caso especial para o espaço reservado para a foto
+            if (key === 'photoPlaceholder') {
+              // Criamos uma célula específica para a imagem
+              const placeholderDiv = document.createElement('div');
+              placeholderDiv.style.border = '1px solid #ddd';
+              placeholderDiv.style.margin = '0';
+              placeholderDiv.style.backgroundColor = '#ffffff';
+              placeholderDiv.style.display = 'flex';
+              placeholderDiv.style.justifyContent = 'center';
+              placeholderDiv.style.alignItems = 'center';
+              placeholderDiv.style.height = '150px'; // Altura suficiente para a imagem
+              placeholderDiv.style.overflow = 'hidden';
+              
+              // Adicionamos a imagem ou o placeholder
+              if (selectedBudget.photo_url) {
+                const img = document.createElement('img');
+                img.src = selectedBudget.photo_url;
+                img.alt = 'Foto do Veículo';
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+                img.style.objectFit = 'contain';
+                placeholderDiv.appendChild(img);
+              } else {
+                placeholderDiv.innerHTML = `
+                  <div style="text-align: center; color: #999; padding: 10px;">
+                    <div style="font-size: 20px; margin-bottom: 5px;">🚗</div>
+                    <div style="font-size: 9px;">Sem foto do veículo</div>
+                  </div>
+                `;
+              }
+              
+              gridElement.appendChild(placeholderDiv);
+              return; // Pular o resto do código para esta iteração
+            }
+            
             // Pegar dados da peça se existir, ou usar valores padrão
             const part = parsedDamagedParts[key] || { ...defaultPartDamage };
             
