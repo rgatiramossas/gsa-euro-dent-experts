@@ -688,14 +688,12 @@ export default function BudgetPage() {
       return;
     }
     
+    toast({
+      title: "Gerando PDF...",
+      description: "Aguarde enquanto o documento é preparado para impressão.",
+    });
+    
     try {
-      console.log("Gerando PDF para orçamento:", selectedBudget.id, "- Cliente:", selectedBudget.client_name);
-      
-      toast({
-        title: "Gerando PDF...",
-        description: "Aguarde enquanto o documento é preparado para impressão.",
-      });
-      
       // Criamos um elemento temporário que será renderizado apenas para gerar o PDF
       const printDiv = document.createElement('div');
       printDiv.className = 'print-content';
@@ -706,53 +704,59 @@ export default function BudgetPage() {
       printDiv.style.top = '-9999px';
       printDiv.style.left = '-9999px';
       
-      // Adicionamos o conteúdo do orçamento no elemento temporário
-      printDiv.innerHTML = `
-        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
-          <h1 style="margin: 0; font-size: 24px;">Euro Dent Experts</h1>
-          <p style="margin: 5px 0;">Orçamento #${selectedBudget.id}</p>
-          <p style="margin: 5px 0;">Data: ${formatDate(selectedBudget.date)}</p>
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 18px; margin-bottom: 10px;">Informações do Cliente</h2>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 5px; border: 1px solid #ddd; width: 150px;"><strong>Cliente:</strong></td>
-              <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.client_name}</td>
-            </tr>
-            <tr>
-              <td style="padding: 5px; border: 1px solid #ddd;"><strong>Veículo:</strong></td>
-              <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.vehicle_info}</td>
-            </tr>
-            <tr>
-              <td style="padding: 5px; border: 1px solid #ddd;"><strong>Placa:</strong></td>
-              <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.plate || '-'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 5px; border: 1px solid #ddd;"><strong>Chassi:</strong></td>
-              <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</td>
-            </tr>
-          </table>
-        </div>
+      // Cabeçalho
+      const headerDiv = document.createElement('div');
+      headerDiv.style.textAlign = 'center';
+      headerDiv.style.marginBottom = '20px';
+      headerDiv.style.borderBottom = '2px solid #333';
+      headerDiv.style.paddingBottom = '10px';
+      headerDiv.innerHTML = `
+        <h1 style="margin: 0; font-size: 24px;">Euro Dent Experts</h1>
+        <p style="margin: 5px 0;">Orçamento #${selectedBudget.id}</p>
+        <p style="margin: 5px 0;">Data: ${formatDate(selectedBudget.date)}</p>
       `;
+      printDiv.appendChild(headerDiv);
       
-      // Adicionamos o conteúdo do grid de danos
-      const damagedPartsDiv = document.createElement('div');
-      damagedPartsDiv.innerHTML = `
+      // Informações do cliente
+      const clientInfoDiv = document.createElement('div');
+      clientInfoDiv.style.marginBottom = '20px';
+      clientInfoDiv.innerHTML = `
+        <h2 style="font-size: 18px; margin-bottom: 10px;">Informações do Cliente</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 5px; border: 1px solid #ddd; width: 150px;"><strong>Cliente:</strong></td>
+            <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.client_name}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px; border: 1px solid #ddd;"><strong>Veículo:</strong></td>
+            <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.vehicle_info}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px; border: 1px solid #ddd;"><strong>Placa:</strong></td>
+            <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.plate || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px; border: 1px solid #ddd;"><strong>Chassi:</strong></td>
+            <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</td>
+          </tr>
+        </table>
+      `;
+      printDiv.appendChild(clientInfoDiv);
+      
+      // Danos do veículo
+      const damagesDiv = document.createElement('div');
+      damagesDiv.innerHTML = `
         <h2 style="font-size: 18px; margin-bottom: 10px;">Danos do Veículo</h2>
         <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
         </div>
-        
         <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f5f5f5;">
           <strong>MATERIAIS ESPECIAIS:</strong><br />
           A= ALUMÍNIO   K= COLA   P= PINTURA
         </div>
       `;
+      printDiv.appendChild(damagesDiv);
       
-      printDiv.appendChild(damagedPartsDiv);
-      
-      // Adicionamos observações, se houver
+      // Observações
       if (selectedBudget.note) {
         const notesDiv = document.createElement('div');
         notesDiv.innerHTML = `
@@ -764,26 +768,23 @@ export default function BudgetPage() {
         printDiv.appendChild(notesDiv);
       }
       
-      // Adicionamos o elemento temporário ao documento para capturá-lo com html2canvas
+      // Adicionamos o elemento ao documento
       document.body.appendChild(printDiv);
       
-      // Processamos todas as peças danificadas e as adicionamos ao grid
-      try {
-        let parsedDamagedParts: Record<string, PartDamage> = {};
-        if (selectedBudget.damaged_parts) {
+      // Processamos as peças danificadas
+      const gridElement = printDiv.querySelector('#damaged-parts-grid');
+      if (gridElement && selectedBudget.damaged_parts) {
+        try {
+          // Parse das peças danificadas
+          let parsedDamagedParts = {};
           if (typeof selectedBudget.damaged_parts === 'string') {
             parsedDamagedParts = JSON.parse(selectedBudget.damaged_parts);
-          } else if (Array.isArray(selectedBudget.damaged_parts)) {
-            console.error("Formato de damaged_parts inválido (array)", selectedBudget.damaged_parts);
           } else {
-            parsedDamagedParts = selectedBudget.damaged_parts as unknown as Record<string, PartDamage>;
+            parsedDamagedParts = selectedBudget.damaged_parts;
           }
-        }
-        
-        const gridElement = printDiv.querySelector('#damaged-parts-grid');
-        if (gridElement) {
+          
           // Nomes amigáveis para as partes
-          const partNames: Record<string, string> = {
+          const partNames = {
             capo: 'Capô',
             teto: 'Teto',
             portaMalasSuperior: 'Porta Malas Superior',
@@ -800,12 +801,9 @@ export default function BudgetPage() {
             portaMalasInferior: 'Porta Malas Inferior'
           };
           
-          // Para cada parte do carro
           Object.keys(parsedDamagedParts).forEach(key => {
-            const part: PartDamage = parsedDamagedParts[key];
-            
-            // Só exibimos partes que estão selecionadas (têm dano)
-            if (part.selected) {
+            const part = parsedDamagedParts[key];
+            if (part && part.selected) {
               const partDiv = document.createElement('div');
               partDiv.style.border = '1px solid #ddd';
               partDiv.style.borderRadius = '4px';
@@ -858,78 +856,68 @@ export default function BudgetPage() {
               gridElement.appendChild(partDiv);
             }
           });
+        } catch (error) {
+          console.error("Erro ao processar peças danificadas:", error);
         }
-      } catch (error) {
-        console.error("Erro ao processar as peças danificadas para PDF:", error);
       }
       
-      // Geramos a captura da tela usando html2canvas
-      console.log("Iniciando captura com html2canvas");
-      const canvas = await html2canvas(printDiv, {
-        scale: 2, // Para melhor qualidade de impressão
-        useCORS: true,
-        logging: true, // Ativando logs do html2canvas
-        backgroundColor: '#ffffff'
-      });
-      
-      console.log("Captura html2canvas concluída, dimensões:", canvas.width, "x", canvas.height);
-      
-      // Criamos o PDF a partir do canvas
-      const imgData = canvas.toDataURL('image/png');
-      console.log("Imagem convertida para data URL");
-    
-      // Criamos um novo documento PDF no formato A4
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      console.log("Documento PDF criado");
-      
-      // Configuramos as dimensões para ajustar a imagem na página A4
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasRatio = canvas.height / canvas.width;
-      const imgWidth = pdfWidth;
-      const imgHeight = imgWidth * canvasRatio;
-      
-      console.log("Dimensões calculadas:", { pdfWidth, pdfHeight, imgWidth, imgHeight });
-      
-      // Adicionamos a imagem ao PDF
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      console.log("Imagem adicionada ao PDF");
-      
-      // Se a imagem for maior que a altura da página, a dividimos em várias páginas
-      let heightLeft = imgHeight;
-      let position = 0;
-      
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        if (heightLeft > pdfHeight) {
+      try {
+        // Geramos o canvas com html2canvas
+        console.log("Iniciando captura com html2canvas");
+        const canvas = await html2canvas(printDiv, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        });
+        
+        // Convertemos o canvas para imagem
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Criamos o PDF
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+        
+        // Configuramos as dimensões
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasRatio = canvas.height / canvas.width;
+        const imgWidth = pdfWidth;
+        const imgHeight = imgWidth * canvasRatio;
+        
+        // Adicionamos a imagem
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        
+        // Se for maior que uma página, adicionamos mais páginas
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        while (heightLeft > pdfHeight) {
+          position = pdfHeight - imgHeight;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
           heightLeft -= pdfHeight;
-        } else {
-          heightLeft = 0;
         }
+        
+        // Salvamos o PDF
+        pdf.save(`Orcamento_${selectedBudget.id}_${selectedBudget.client_name.replace(/[^\w\s]/gi, '')}.pdf`);
+        
+        // Limpamos o elemento temporário
+        document.body.removeChild(printDiv);
+        
+        toast({
+          title: "PDF gerado com sucesso!",
+          description: "O download do arquivo foi iniciado.",
+        });
+      } catch (err) {
+        console.error("Erro na geração do PDF:", err);
+        document.body.removeChild(printDiv);
+        throw err;
       }
-      
-      console.log("Pronto para salvar o PDF");
-      
-      // Salvamos o PDF com o nome do cliente e ID do orçamento
-      pdf.save(`Orcamento_${selectedBudget.id}_${selectedBudget.client_name}.pdf`);
-      console.log("PDF salvo com sucesso");
-      
-      // Removemos o elemento temporário
-      document.body.removeChild(printDiv);
-      
-      toast({
-        title: "PDF gerado com sucesso!",
-        description: "O download do arquivo foi iniciado.",
-      });
     } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
+      console.error("Erro geral na geração do PDF:", error);
       toast({
         title: "Erro ao gerar PDF",
         description: "Ocorreu um erro ao gerar o documento. Tente novamente.",
