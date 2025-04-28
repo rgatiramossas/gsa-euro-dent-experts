@@ -462,41 +462,41 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
   const damage = damages[part] || {};
   
   return (
-    <div className="border rounded-md p-3">
-      <h4 className="font-medium text-sm mb-2">{partDisplayNames[part]}</h4>
-      <div className="space-y-2">
+    <div className="border rounded-md p-2">
+      <h4 className="font-medium text-xs mb-1">{partDisplayNames[part]}</h4>
+      <div className="space-y-1">
         {/* Tamanho 20 */}
         <div className="flex items-center">
-          <span className="w-6 text-sm">20</span>
+          <span className="w-5 text-xs text-right pr-1">20</span>
           <Input
             type="number"
             value={damage.size20 || 0}
             onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
-            className="w-14 h-7 text-sm px-2"
+            className="w-12 h-6 text-xs px-1"
             min={0}
           />
         </div>
         
         {/* Tamanho 30 */}
         <div className="flex items-center">
-          <span className="w-6 text-sm">30</span>
+          <span className="w-5 text-xs text-right pr-1">30</span>
           <Input
             type="number"
             value={damage.size30 || 0}
             onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
-            className="w-14 h-7 text-sm px-2"
+            className="w-12 h-6 text-xs px-1"
             min={0}
           />
         </div>
         
         {/* Tamanho 40 */}
         <div className="flex items-center">
-          <span className="w-6 text-sm">40</span>
+          <span className="w-5 text-xs text-right pr-1">40</span>
           <Input
             type="number"
             value={damage.size40 || 0}
             onChange={(e) => onChange(part, "size40", parseInt(e.target.value) || 0)}
-            className="w-14 h-7 text-sm px-2"
+            className="w-12 h-6 text-xs px-1"
             min={0}
           />
         </div>
