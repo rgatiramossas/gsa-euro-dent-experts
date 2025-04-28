@@ -698,8 +698,9 @@ export default function BudgetPage() {
       const printDiv = document.createElement('div');
       printDiv.className = 'print-content';
       printDiv.style.width = '210mm'; // Tamanho A4
-      printDiv.style.padding = '20px';
+      printDiv.style.padding = '10px'; // Reduzido de 20px para 10px
       printDiv.style.fontFamily = 'Arial, sans-serif';
+      printDiv.style.fontSize = '12px'; // Fonte base reduzida
       printDiv.style.position = 'fixed';
       printDiv.style.top = '-9999px';
       printDiv.style.left = '-9999px';
@@ -707,37 +708,37 @@ export default function BudgetPage() {
       // Cabeçalho
       const headerDiv = document.createElement('div');
       headerDiv.style.textAlign = 'center';
-      headerDiv.style.marginBottom = '20px';
-      headerDiv.style.borderBottom = '2px solid #333';
-      headerDiv.style.paddingBottom = '10px';
+      headerDiv.style.marginBottom = '10px'; // Reduzido de 20px para 10px
+      headerDiv.style.borderBottom = '1px solid #333'; // Reduzido de 2px para 1px
+      headerDiv.style.paddingBottom = '5px'; // Reduzido de 10px para 5px
       headerDiv.innerHTML = `
-        <h1 style="margin: 0; font-size: 24px;">Euro Dent Experts</h1>
-        <p style="margin: 5px 0;">Orçamento #${selectedBudget.id}</p>
-        <p style="margin: 5px 0;">Data: ${formatDate(selectedBudget.date)}</p>
+        <h1 style="margin: 0; font-size: 18px;">Euro Dent Experts</h1> <!-- Reduzido de 24px para 18px -->
+        <p style="margin: 2px 0; font-size: 12px;">Orçamento #${selectedBudget.id}</p> <!-- Reduzido margin -->
+        <p style="margin: 2px 0; font-size: 12px;">Data: ${formatDate(selectedBudget.date)}</p> <!-- Reduzido margin -->
       `;
       printDiv.appendChild(headerDiv);
       
       // Informações do cliente
       const clientInfoDiv = document.createElement('div');
-      clientInfoDiv.style.marginBottom = '20px';
+      clientInfoDiv.style.marginBottom = '10px'; // Reduzido de 20px para 10px
       clientInfoDiv.innerHTML = `
-        <h2 style="font-size: 18px; margin-bottom: 10px;">Informações do Cliente</h2>
-        <table style="width: 100%; border-collapse: collapse;">
+        <h2 style="font-size: 14px; margin-bottom: 5px;">Informações do Cliente</h2> <!-- Reduzido de 18px para 14px e margin -->
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;"> <!-- Adicionado font-size -->
           <tr>
-            <td style="padding: 5px; border: 1px solid #ddd; width: 150px;"><strong>Cliente:</strong></td>
-            <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.client_name}</td>
+            <td style="padding: 3px; border: 1px solid #ddd; width: 120px;"><strong>Cliente:</strong></td> <!-- Reduzido padding e width -->
+            <td style="padding: 3px; border: 1px solid #ddd;">${selectedBudget.client_name}</td> <!-- Reduzido padding -->
           </tr>
           <tr>
-            <td style="padding: 5px; border: 1px solid #ddd;"><strong>Veículo:</strong></td>
-            <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.vehicle_info}</td>
+            <td style="padding: 3px; border: 1px solid #ddd;"><strong>Veículo:</strong></td> <!-- Reduzido padding -->
+            <td style="padding: 3px; border: 1px solid #ddd;">${selectedBudget.vehicle_info}</td> <!-- Reduzido padding -->
           </tr>
           <tr>
-            <td style="padding: 5px; border: 1px solid #ddd;"><strong>Placa:</strong></td>
-            <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.plate || '-'}</td>
+            <td style="padding: 3px; border: 1px solid #ddd;"><strong>Placa:</strong></td> <!-- Reduzido padding -->
+            <td style="padding: 3px; border: 1px solid #ddd;">${selectedBudget.plate || '-'}</td> <!-- Reduzido padding -->
           </tr>
           <tr>
-            <td style="padding: 5px; border: 1px solid #ddd;"><strong>Chassi:</strong></td>
-            <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</td>
+            <td style="padding: 3px; border: 1px solid #ddd;"><strong>Chassi:</strong></td> <!-- Reduzido padding -->
+            <td style="padding: 3px; border: 1px solid #ddd;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</td> <!-- Reduzido padding -->
           </tr>
         </table>
       `;
@@ -746,13 +747,12 @@ export default function BudgetPage() {
       // Danos do veículo
       const damagesDiv = document.createElement('div');
       damagesDiv.innerHTML = `
-        <h2 style="font-size: 18px; margin-bottom: 10px;">Danos do Veículo</h2>
-        <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-        </div>
-        <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f5f5f5;">
-          <strong>MATERIAIS ESPECIAIS:</strong><br />
-          A= ALUMÍNIO   K= COLA   P= PINTURA
-        </div>
+        <h2 style="font-size: 14px; margin-bottom: 5px;">Danos do Veículo</h2> <!-- Reduzido de 18px para 14px e margin -->
+        <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px;">
+        </div> <!-- Alterado de 3 para 4 colunas, reduzido gap e margin -->
+        <div style="margin-bottom: 10px; padding: 5px; border: 1px solid #ddd; background-color: #f5f5f5; font-size: 11px;">
+          <strong>MATERIAIS ESPECIAIS:</strong> A= ALUMÍNIO   K= COLA   P= PINTURA
+        </div> <!-- Reduzido margin, padding e formatação em linha única -->
       `;
       printDiv.appendChild(damagesDiv);
       
@@ -760,8 +760,8 @@ export default function BudgetPage() {
       if (selectedBudget.note) {
         const notesDiv = document.createElement('div');
         notesDiv.innerHTML = `
-          <h2 style="font-size: 18px; margin-bottom: 10px;">Observações</h2>
-          <div style="padding: 10px; border: 1px solid #ddd;">
+          <h2 style="font-size: 14px; margin-bottom: 5px;">Observações</h2>
+          <div style="padding: 5px; border: 1px solid #ddd; font-size: 11px;">
             ${selectedBudget.note}
           </div>
         `;
@@ -836,49 +836,50 @@ export default function BudgetPage() {
             
             const partDiv = document.createElement('div');
             partDiv.style.border = '1px solid #ddd';
-            partDiv.style.borderRadius = '4px';
-            partDiv.style.padding = '10px';
+            partDiv.style.borderRadius = '3px';
+            partDiv.style.padding = '4px';
+            partDiv.style.fontSize = '10px';
             partDiv.innerHTML = `
-              <div style="text-align: center; margin-bottom: 8px; font-weight: bold;">
+              <div style="text-align: center; margin-bottom: 3px; font-weight: bold; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 ${partNames[key] || key}
               </div>
               <div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                   <span>20mm:</span>
-                  <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
+                  <span style="font-weight: bold; background: #f5f5f5; padding: 1px 3px; border-radius: 2px; min-width: 20px; text-align: center;">
                     ${part.diameter20 || '0'}
                   </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                   <span>30mm:</span>
-                  <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
+                  <span style="font-weight: bold; background: #f5f5f5; padding: 1px 3px; border-radius: 2px; min-width: 20px; text-align: center;">
                     ${part.diameter30 || '0'}
                   </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                   <span>40mm:</span>
-                  <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
+                  <span style="font-weight: bold; background: #f5f5f5; padding: 1px 3px; border-radius: 2px; min-width: 20px; text-align: center;">
                     ${part.diameter40 || '0'}
                   </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
                   <div style="display: flex; align-items: center;">
-                    <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionA ? '#ffcccc' : '#f5f5f5'}">
+                    <div style="width: 10px; height: 10px; border: 1px solid #ccc; border-radius: 2px; margin-right: 1px; display: flex; justify-content: center; align-items: center; font-size: 7px; background: ${part.optionA ? '#ffcccc' : '#f5f5f5'}">
                       ${part.optionA ? '✓' : ''}
                     </div>
-                    <span style="background: #ffcccc; padding: 1px 3px; border-radius: 2px; font-size: 12px;">A</span>
+                    <span style="background: #ffcccc; padding: 0px 2px; border-radius: 2px; font-size: 9px;">A</span>
                   </div>
                   <div style="display: flex; align-items: center;">
-                    <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionK ? '#ccccff' : '#f5f5f5'}">
+                    <div style="width: 10px; height: 10px; border: 1px solid #ccc; border-radius: 2px; margin-right: 1px; display: flex; justify-content: center; align-items: center; font-size: 7px; background: ${part.optionK ? '#ccccff' : '#f5f5f5'}">
                       ${part.optionK ? '✓' : ''}
                     </div>
-                    <span style="background: #ccccff; padding: 1px 3px; border-radius: 2px; font-size: 12px;">K</span>
+                    <span style="background: #ccccff; padding: 0px 2px; border-radius: 2px; font-size: 9px;">K</span>
                   </div>
                   <div style="display: flex; align-items: center;">
-                    <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionP ? '#ccffcc' : '#f5f5f5'}">
+                    <div style="width: 10px; height: 10px; border: 1px solid #ccc; border-radius: 2px; margin-right: 1px; display: flex; justify-content: center; align-items: center; font-size: 7px; background: ${part.optionP ? '#ccffcc' : '#f5f5f5'}">
                       ${part.optionP ? '✓' : ''}
                     </div>
-                    <span style="background: #ccffcc; padding: 1px 3px; border-radius: 2px; font-size: 12px;">P</span>
+                    <span style="background: #ccffcc; padding: 0px 2px; border-radius: 2px; font-size: 9px;">P</span>
                   </div>
                 </div>
               </div>
