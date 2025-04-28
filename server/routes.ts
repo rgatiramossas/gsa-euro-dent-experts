@@ -598,12 +598,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Validação do schema passou com sucesso, userInput:", userInput);
       } catch (validationError) {
         console.error("Erro de validação do schema:", validationError);
-        throw validationError;
+        return res.status(400).json({ 
+          message: "Erro de validação", 
+          errors: validationError.errors || [{ message: validationError.message }] 
+        });
       }
       
       // Check if user is admin when creating another user
       if (req.session.userRole !== "admin") {
         return res.status(403).json({ message: "Only admins can create users" });
+      }
+
+      // Verificar se o nome de usuário já existe
+      const existingUser = await storage.getUserByUsername(userInput.username);
+      if (existingUser) {
+        return res.status(400).json({ 
+          message: "Nome de usuário já existe",
+          field: "username"
+        });
       }
 
       // Hash password
@@ -659,6 +671,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
       }
+      
+      // Verificar se é erro de duplicação do MySQL
+      if (error.code === 'ER_DUP_ENTRY') {
+        // Extrair o campo duplicado da mensagem de erro
+        const match = error.sqlMessage?.match(/Duplicate entry '(.+)' for key '(.+)'/);
+        let field = 'unknown';
+        
+        if (match && match[2]) {
+          // Extrair o nome do campo da chave
+          const key = match[2];
+          if (key.includes('username')) {
+            field = 'username';
+          } else if (key.includes('email')) {
+            field = 'email';
+          }
+        }
+        
+        return res.status(400).json({ 
+          message: "Valor já existe",
+          field: field,
+          detail: `Este ${field} já está sendo usado por outro usuário`
+        });
+      }
+      
       console.error("Error creating user:", error);
       res.status(500).json({ message: "Internal server error" });
     }
