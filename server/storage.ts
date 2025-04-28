@@ -529,7 +529,9 @@ export class DatabaseStorage implements IStorage {
       
       console.log("Resultado da inserção:", result);
       
-      const userId = Number(result?.insertId);
+      // O resultado é um array, com o primeiro elemento sendo o ResultSetHeader
+      const insertResult = Array.isArray(result) ? result[0] : result;
+      const userId = Number(insertResult?.insertId);
       
       if (isNaN(userId) || userId <= 0) {
         throw new Error(`ID de usuário inválido ou não retornado pelo banco: ${userId}`);
