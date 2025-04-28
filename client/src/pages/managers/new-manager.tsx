@@ -27,31 +27,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema } from "@shared/schema.mysql";
 import { ClientSelector } from "@/components/forms/ClientSelector";
 
 // Extend the schema with more validations
 const formSchema = insertUserSchema.extend({
   email: z.string().email("Email inválido"),
-  password: z.string().superRefine((val, ctx) => {
-    // Se estivermos no modo de edição e a senha estiver vazia, é ok
-    // No modo de criação, exigimos pelo menos 8 caracteres
-    if (val && val.length > 0 && val.length < 8) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.too_small,
-        minimum: 8,
-        type: "string",
-        inclusive: true,
-        message: "A senha deve ter no mínimo 8 caracteres"
-      });
-    }
-  }),
+  password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres"),
   confirmPassword: z.string(),
   active: z.boolean().default(true),
 }).refine((data) => {
-  // Se ambos os campos estiverem vazios, é válido
-  if (!data.password && !data.confirmPassword) return true;
-  // Caso contrário, verifique se correspondem
   return data.password === data.confirmPassword;
 }, {
   message: "As senhas não conferem",
@@ -177,7 +162,13 @@ export default function NewManager({ isEditMode = false }: NewManagerProps) {
   const onSubmit = (data: FormData) => {
     // Remove confirmPassword from the data before sending to the API
     const { confirmPassword, ...managerData } = data;
-    // Adicione os IDs dos clientes selecionados
+    
+    // Adicione cabeçalhos de autenticação e IDs dos clientes selecionados
+    console.log("Enviando dados para API:", JSON.stringify({
+      ...managerData,
+      client_ids: selectedClientIds.length > 0 ? selectedClientIds : undefined
+    }));
+    
     managerMutation.mutate({ 
       ...managerData, 
       client_ids: selectedClientIds.length > 0 ? selectedClientIds : undefined 

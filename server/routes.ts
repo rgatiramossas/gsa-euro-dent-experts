@@ -585,9 +585,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", requireAuth, async (req, res) => {
     try {
+      // Log para debug
+      console.log("POST /api/users - Corpo da requisição:", JSON.stringify(req.body));
+      console.log("POST /api/users - Sessão:", req.session);
+      
       // Validate input
       const { client_ids, ...userData } = req.body;
-      const userInput = insertUserSchema.parse(userData);
+      
+      let userInput;
+      try {
+        userInput = insertUserSchema.parse(userData);
+        console.log("Validação do schema passou com sucesso, userInput:", userInput);
+      } catch (validationError) {
+        console.error("Erro de validação do schema:", validationError);
+        throw validationError;
+      }
       
       // Check if user is admin when creating another user
       if (req.session.userRole !== "admin") {
