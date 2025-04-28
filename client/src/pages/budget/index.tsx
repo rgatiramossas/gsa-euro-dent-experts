@@ -315,16 +315,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                           >
                             <FileText className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            title="Editar orçamento"
-                            asChild
-                          >
-                            <Link href={`/budgets/${budget.id}/edit`}>
-                              <FileEdit className="h-4 w-4" />
-                            </Link>
-                          </Button>
+
                           <Button
                             variant="outline"
                             size="icon"
