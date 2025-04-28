@@ -30,7 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { generatePdf, generateDamagedPartsGrid } from "@/components/PdfGenerator";
+// Componente PdfGenerator removido conforme solicitado
 import { Loader2, Search, Printer, FileText, Trash2, Plus, Edit, FileEdit, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import NewBudgetForm from "@/components/NewBudgetForm";
@@ -141,20 +141,15 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
     }
   };
 
-  // Handle printing a budget
+  // Handle printing a budget - simplificado após remoção do PdfGenerator
   const handlePrintBudget = async (budget: Budget) => {
     if (!budget) return;
     
-    try {
-      await generatePdf(budget);
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast({
-        title: "Erro ao gerar PDF",
-        description: "Ocorreu um erro ao gerar o documento. Tente novamente.",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Impressão indisponível",
+      description: "Funcionalidade de impressão está temporariamente indisponível.",
+      variant: "default",
+    });
   };
   
   // Manipulador para quando um novo orçamento é criado com sucesso
