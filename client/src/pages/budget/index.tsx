@@ -574,8 +574,26 @@ export default function BudgetPage() {
             parsedDamagedParts = budget.damaged_parts;
           }
           console.log("Carregando peças danificadas:", parsedDamagedParts);
+          
+          // Certifique-se de que parsedDamagedParts seja um objeto
           if (parsedDamagedParts && typeof parsedDamagedParts === 'object') {
-            setDamagedParts(parsedDamagedParts);
+            const damagedPartsCopy = {...initialDamagedParts}; // Começar com os valores padrão
+            
+            // Mesclar com os valores do banco de dados
+            Object.keys(parsedDamagedParts).forEach(key => {
+              if (damagedPartsCopy[key]) {
+                damagedPartsCopy[key] = {
+                  ...damagedPartsCopy[key],
+                  ...parsedDamagedParts[key]
+                };
+              }
+            });
+            
+            // Atualizar o estado
+            setDamagedParts(damagedPartsCopy);
+            
+            // Debug dos valores após o processamento
+            console.log("Valores de damaged parts após processamento:", damagedPartsCopy);
           }
         } catch (error) {
           console.error("Erro ao fazer parse das peças danificadas:", error);
@@ -588,9 +606,15 @@ export default function BudgetPage() {
       
       // Abre o dialog adequado dependendo do tipo de usuário
       if (isGestor) {
-        setShowViewDialog(true); // Diálogo de visualização somente para gestores
+        // Aguarde a atualização do estado antes de abrir o diálogo
+        setTimeout(() => {
+          setShowViewDialog(true); // Diálogo de visualização somente para gestores
+        }, 50);
       } else {
-        setShowDialog(true); // Diálogo principal para admin e técnicos
+        // Aguarde a atualização do estado antes de abrir o diálogo
+        setTimeout(() => {
+          setShowDialog(true); // Diálogo principal para admin e técnicos
+        }, 50);
       }
     }
   };
