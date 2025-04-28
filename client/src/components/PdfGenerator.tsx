@@ -323,29 +323,29 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 2px;">
-          <!-- Sempre mostrar todos os diâmetros -->
+          <!-- Sempre mostrar todos os diâmetros com larguras fixas para melhor alinhamento -->
           <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 3px;">
-            <!-- 20mm (sempre visível) -->
-            <div style="display: flex; justify-content: space-between; align-items: center; height: 16px;">
-              <span style="font-size: 10px;">20mm:</span>
+            <!-- 20mm (sempre visível) - com largura fixa para o label -->
+            <div style="display: flex; align-items: center; height: 16px;">
+              <span style="font-size: 10px; width: 35px; text-align: right; padding-right: 5px;">20mm:</span>
               <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter20 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px;">${part.diameter20 > 0 ? part.diameter20 : ''}</span>
             </div>
             
-            <!-- 30mm (sempre visível) -->
-            <div style="display: flex; justify-content: space-between; align-items: center; height: 16px;">
-              <span style="font-size: 10px;">30mm:</span>
+            <!-- 30mm (sempre visível) - com largura fixa para o label -->
+            <div style="display: flex; align-items: center; height: 16px;">
+              <span style="font-size: 10px; width: 35px; text-align: right; padding-right: 5px;">30mm:</span>
               <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter30 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px;">${part.diameter30 > 0 ? part.diameter30 : ''}</span>
             </div>
             
-            <!-- 40mm (sempre visível) -->
-            <div style="display: flex; justify-content: space-between; align-items: center; height: 16px;">
-              <span style="font-size: 10px;">40mm:</span>
+            <!-- 40mm (sempre visível) - com largura fixa para o label -->
+            <div style="display: flex; align-items: center; height: 16px;">
+              <span style="font-size: 10px; width: 35px; text-align: right; padding-right: 5px;">40mm:</span>
               <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter40 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px;">${part.diameter40 > 0 ? part.diameter40 : ''}</span>
             </div>
           </div>
           
-          <!-- Opções A, K, P (sempre visíveis) -->
-          <div style="display: flex; justify-content: space-between; padding-top: 2px; border-top: 1px solid #eee; margin: 0 5px;">
+          <!-- Opções A, K, P (sempre visíveis) com espaçamento distribuído uniformemente -->
+          <div style="display: flex; justify-content: space-around; padding-top: 2px; border-top: 1px solid #eee; margin: 0 5px;">
             <div style="display: flex; align-items: center; width: 20px; justify-content: center;">
               <div style="width: 9px; height: 9px; border: 1px solid #ccc; margin-right: 2px; display: inline-block; position: relative; border-radius: 2px; background-color: ${part.optionA ? '#f8f8f8' : 'white'};">
                 ${part.optionA ? '<div style="position: absolute; top: -2px; left: 1px; font-size: 7px; color: #333;">✓</div>' : ''}
