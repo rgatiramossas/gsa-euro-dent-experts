@@ -770,6 +770,8 @@ export default function BudgetPage() {
         if (selectedBudget.damaged_parts) {
           if (typeof selectedBudget.damaged_parts === 'string') {
             parsedDamagedParts = JSON.parse(selectedBudget.damaged_parts);
+          } else if (Array.isArray(selectedBudget.damaged_parts)) {
+            console.error("Formato de damaged_parts inválido (array)", selectedBudget.damaged_parts);
           } else {
             parsedDamagedParts = selectedBudget.damaged_parts as Record<string, PartDamage>;
           }
@@ -797,7 +799,7 @@ export default function BudgetPage() {
           
           // Para cada parte do carro
           Object.keys(parsedDamagedParts).forEach(key => {
-            const part = parsedDamagedParts[key];
+            const part: PartDamage = parsedDamagedParts[key];
             
             // Só exibimos partes que estão selecionadas (têm dano)
             if (part.selected) {
