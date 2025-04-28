@@ -35,7 +35,10 @@ const formSchema = insertUserSchema.extend({
   email: z.string().email("Email inválido"),
   password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres"),
   confirmPassword: z.string(),
-  active: z.boolean().default(true),
+  // Aqui ajustamos: o active será 1 para true e 0 para false
+  active: z.union([z.number(), z.boolean()]).transform(val => 
+    typeof val === 'boolean' ? (val ? 1 : 0) : val
+  ).default(1),
 }).refine((data) => {
   return data.password === data.confirmPassword;
 }, {
@@ -72,7 +75,7 @@ export default function NewManager({ isEditMode = false }: NewManagerProps) {
       email: "",
       phone: "",
       role: "gestor", // Defina como gestor
-      active: true,
+      active: 1, // Use 1 (número) em vez de true (booleano)
     },
   });
   
@@ -337,8 +340,8 @@ export default function NewManager({ isEditMode = false }: NewManagerProps) {
                     </div>
                     <FormControl>
                       <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                        checked={!!field.value}
+                        onCheckedChange={(checked) => field.onChange(checked ? 1 : 0)}
                       />
                     </FormControl>
                   </FormItem>
