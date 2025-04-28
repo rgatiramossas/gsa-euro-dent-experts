@@ -972,13 +972,13 @@ export default function BudgetPage() {
             
             const input20mm = document.createElement('div');
             input20mm.style.width = '35px';
-            input20mm.style.height = '14px';
+            input20mm.style.height = '16px';
             input20mm.style.minWidth = '35px';
             input20mm.style.border = '1px solid #ccc';
             input20mm.style.display = 'flex';
             input20mm.style.justifyContent = 'center';
             input20mm.style.alignItems = 'center';
-            input20mm.style.paddingTop = '1px';
+            input20mm.style.paddingTop = '2px';
             input20mm.style.textAlign = 'center';
             input20mm.style.fontSize = '10px';
             input20mm.style.backgroundColor = part.diameter20 > 0 ? '#f4f4f4' : 'white';
@@ -1008,13 +1008,13 @@ export default function BudgetPage() {
             
             const input30mm = document.createElement('div');
             input30mm.style.width = '35px';
-            input30mm.style.height = '14px';
+            input30mm.style.height = '16px';
             input30mm.style.minWidth = '35px';
             input30mm.style.border = '1px solid #ccc';
             input30mm.style.display = 'flex';
             input30mm.style.justifyContent = 'center';
             input30mm.style.alignItems = 'center';
-            input30mm.style.paddingTop = '1px';
+            input30mm.style.paddingTop = '2px';
             input30mm.style.textAlign = 'center';
             input30mm.style.fontSize = '10px';
             input30mm.style.backgroundColor = part.diameter30 > 0 ? '#f4f4f4' : 'white';
@@ -1044,13 +1044,13 @@ export default function BudgetPage() {
             
             const input40mm = document.createElement('div');
             input40mm.style.width = '35px';
-            input40mm.style.height = '14px';
+            input40mm.style.height = '16px';
             input40mm.style.minWidth = '35px';
             input40mm.style.border = '1px solid #ccc';
             input40mm.style.display = 'flex';
             input40mm.style.justifyContent = 'center';
             input40mm.style.alignItems = 'center';
-            input40mm.style.paddingTop = '1px';
+            input40mm.style.paddingTop = '2px';
             input40mm.style.textAlign = 'center';
             input40mm.style.fontSize = '10px';
             input40mm.style.backgroundColor = part.diameter40 > 0 ? '#f4f4f4' : 'white';
