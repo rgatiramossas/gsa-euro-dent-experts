@@ -1910,6 +1910,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao excluir orçamento" });
     }
   });
+  
+  // Rota para verificar e corrigir a tabela budgets
+  app.get("/api/admin/check-budgets-table", async (req, res) => {
+    try {
+      console.log("Verificando estrutura da tabela budgets...");
+      
+      // Usar a conexão direta para MySQL
+      const [tableCheck] = await pool.query("SHOW TABLES LIKE 'budgets'");
+      
+      // Verificar se a tabela existe
+      if (!tableCheck || tableCheck.length === 0) {
+        console.log("Tabela budgets não encontrada. Criando tabela...");
+        
+        // Criar a tabela budgets
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS budgets (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            client_id INT NOT NULL,
+            vehicle_info TEXT,
+            date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            total_aw FLOAT,
+            total_value FLOAT,
+            photo_url VARCHAR(255),
+            note TEXT,
+            plate VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (client_id) REFERENCES clients(id)
+          )
+        `);
+        
+        console.log("Tabela budgets criada com sucesso!");
+        
+        return res.json({ 
+          message: "Tabela budgets criada com sucesso!",
+          created: true
+        });
+      }
+      
+      // Verificar a estrutura da tabela
+      const [tableStructure] = await pool.query("DESCRIBE budgets");
+      
+      console.log("Estrutura da tabela budgets:", tableStructure);
+      
+      return res.json({
+        message: "Estrutura da tabela budgets verificada com sucesso",
+        structure: tableStructure,
+        exists: true
+      });
+    } catch (error) {
+      console.error("Erro ao verificar estrutura da tabela budgets:", error);
+      res.status(500).json({ 
+        message: "Erro ao verificar estrutura da tabela budgets",
+        error: String(error)
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
