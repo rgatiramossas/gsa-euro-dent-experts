@@ -928,7 +928,7 @@ export default function BudgetPage() {
             const partDiv = document.createElement('div');
             partDiv.style.border = '1px solid #ddd';
             partDiv.style.margin = '0';
-            partDiv.style.padding = '6px';
+            partDiv.style.padding = '4px 6px 6px 6px'; // Reduzido o padding do topo
             partDiv.style.fontSize = '10px';
             
             // Criar o cabeçalho com o nome da peça (estilo exato como no modelo)
@@ -937,21 +937,22 @@ export default function BudgetPage() {
             partHeader.style.fontWeight = 'bold';
             partHeader.style.color = '#0047AB';
             partHeader.style.fontSize = '9px'; // Menor para acomodar o texto completo
-            partHeader.style.marginBottom = '5px';
+            partHeader.style.marginBottom = '3px'; // Reduzido o espaço para aproximar o cabeçalho
             partHeader.style.whiteSpace = 'nowrap';
             partHeader.style.overflow = 'hidden';
             partHeader.style.textOverflow = 'ellipsis';
             partHeader.innerText = partNames[key] || key;
             partDiv.appendChild(partHeader);
             
-            // Criar os campos de diâmetros
+            // Criar os campos de diâmetros - AJUSTADO PARA FICAR MAIS ALINHADO
             const diametersDiv = document.createElement('div');
+            diametersDiv.style.marginTop = '2px'; // Reduzido o espaço para subir os campos
             
             // 20mm
             const div20mm = document.createElement('div');
             div20mm.style.display = 'flex';
             div20mm.style.justifyContent = 'space-between';
-            div20mm.style.marginBottom = '6px';
+            div20mm.style.marginBottom = '4px'; // Reduzido o espaço para aproximar os campos
             div20mm.style.alignItems = 'center';
             
             const label20mm = document.createElement('span');
@@ -977,7 +978,7 @@ export default function BudgetPage() {
             const div30mm = document.createElement('div');
             div30mm.style.display = 'flex';
             div30mm.style.justifyContent = 'space-between';
-            div30mm.style.marginBottom = '6px';
+            div30mm.style.marginBottom = '4px'; // Reduzido o espaço para aproximar os campos
             div30mm.style.alignItems = 'center';
             
             const label30mm = document.createElement('span');
@@ -1003,7 +1004,7 @@ export default function BudgetPage() {
             const div40mm = document.createElement('div');
             div40mm.style.display = 'flex';
             div40mm.style.justifyContent = 'space-between';
-            div40mm.style.marginBottom = '6px';
+            div40mm.style.marginBottom = '4px'; // Reduzido o espaço para aproximar os campos
             div40mm.style.alignItems = 'center';
             
             const label40mm = document.createElement('span');
@@ -1032,6 +1033,7 @@ export default function BudgetPage() {
             optionsDiv.style.display = 'flex';
             optionsDiv.style.justifyContent = 'space-between';
             optionsDiv.style.alignItems = 'center';
+            optionsDiv.style.marginTop = '2px'; // Adicionado margem para ajustar alinhamento com referência
             
             // Opção A
             const optionADiv = document.createElement('div');
