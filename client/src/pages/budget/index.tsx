@@ -978,7 +978,7 @@ export default function BudgetPage() {
             input20mm.style.display = 'flex';
             input20mm.style.justifyContent = 'center';
             input20mm.style.alignItems = 'center';
-            input20mm.style.marginTop = '-6px';
+            // Remover ajuste de margin para manter a posição fixa
             input20mm.style.textAlign = 'center';
             input20mm.style.fontSize = '10px';
             input20mm.style.backgroundColor = part.diameter20 > 0 ? '#f4f4f4' : 'white';
@@ -1014,7 +1014,7 @@ export default function BudgetPage() {
             input30mm.style.display = 'flex';
             input30mm.style.justifyContent = 'center';
             input30mm.style.alignItems = 'center';
-            input30mm.style.marginTop = '-6px';
+            // Remover ajuste de margin para manter a posição fixa
             input30mm.style.textAlign = 'center';
             input30mm.style.fontSize = '10px';
             input30mm.style.backgroundColor = part.diameter30 > 0 ? '#f4f4f4' : 'white';
@@ -1050,7 +1050,7 @@ export default function BudgetPage() {
             input40mm.style.display = 'flex';
             input40mm.style.justifyContent = 'center';
             input40mm.style.alignItems = 'center';
-            input40mm.style.marginTop = '-6px';
+            // Remover ajuste de margin para manter a posição fixa
             input40mm.style.textAlign = 'center';
             input40mm.style.fontSize = '10px';
             input40mm.style.backgroundColor = part.diameter40 > 0 ? '#f4f4f4' : 'white';
@@ -1069,7 +1069,7 @@ export default function BudgetPage() {
             optionsDiv.style.display = 'flex';
             optionsDiv.style.justifyContent = 'space-between';
             optionsDiv.style.alignItems = 'center';
-            optionsDiv.style.marginTop = '-3px'; // Valor negativo para subir os checkboxes ao nível dos números
+            // Remover ajuste de margin para manter a posição fixa
             optionsDiv.style.height = '16px'; // Altura fixa para melhor alinhamento
             
             // Opção A
@@ -1103,7 +1103,7 @@ export default function BudgetPage() {
             labelA.style.color = '#ff0000';
             labelA.style.fontWeight = 'bold';
             labelA.style.fontSize = '9px';
-            labelA.style.marginTop = '-6px';
+            // Remover ajuste de margin para manter a posição fixa
             labelA.innerText = 'A';
             optionADiv.appendChild(labelA);
             
@@ -1140,7 +1140,7 @@ export default function BudgetPage() {
             labelK.style.color = '#0000ff';
             labelK.style.fontWeight = 'bold';
             labelK.style.fontSize = '9px';
-            labelK.style.marginTop = '-6px';
+            // Remover ajuste de margin para manter a posição fixa
             labelK.innerText = 'K';
             optionKDiv.appendChild(labelK);
             
@@ -1177,7 +1177,7 @@ export default function BudgetPage() {
             labelP.style.color = '#00aa00';
             labelP.style.fontWeight = 'bold';
             labelP.style.fontSize = '10px';
-            labelP.style.marginTop = '-6px';
+            // Remover ajuste de margin para manter a posição fixa
             labelP.innerText = 'P';
             optionPDiv.appendChild(labelP);
             
