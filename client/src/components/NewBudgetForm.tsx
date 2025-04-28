@@ -177,18 +177,18 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
       const totalValues = calculateTotalValues(damages);
       
       // Convertemos client_name (que é o ID do cliente como string) para client_id como número
+      // Usando destructuring para omitir client_name e adicionar client_id
+      const { client_name, ...restData } = data;
+      
       const budget = {
-        ...data,
-        client_id: parseInt(data.client_name), // Convertendo para número
+        ...restData,
+        client_id: parseInt(client_name), // Convertendo para número
         date: format(data.date, "yyyy-MM-dd"),
         damaged_parts: JSON.stringify(damages),
         total_aw: totalValues.totalAw,
         total_value: totalValues.totalValue,
         vehicle_image: vehicleImage
       };
-      
-      // Remover client_name já que estamos usando client_id
-      delete budget.client_name;
 
       if (initialData) {
         // Atualizar orçamento existente
