@@ -491,6 +491,7 @@ export default function BudgetPage() {
       note: note,
       plate: licensePlate,
       chassisNumber: chassisNumber,
+      damaged_parts: JSON.stringify(damagedParts), // Incluir informações sobre as peças danificadas
     };
 
     if (selectedBudget && selectedBudget.id) {
@@ -514,6 +515,18 @@ export default function BudgetPage() {
       setNote(budget.note || '');
       setLicensePlate(budget.plate || '');
       setChassisNumber(budget.chassisNumber || '');
+      
+      // Carregar informações das peças danificadas, se disponíveis
+      if (budget.damaged_parts) {
+        try {
+          const parsedDamagedParts = JSON.parse(budget.damaged_parts as string);
+          console.log("Carregando peças danificadas:", parsedDamagedParts);
+          setDamagedParts(parsedDamagedParts);
+        } catch (error) {
+          console.error("Erro ao fazer parse das peças danificadas:", error);
+        }
+      }
+      
       setIsViewMode(true);
       
       console.log("Carregando orçamento para edição:", budget);
