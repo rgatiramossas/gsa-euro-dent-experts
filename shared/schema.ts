@@ -253,6 +253,8 @@ export const budgets = pgTable("budgets", {
   note: text("note"),
   plate: text("plate"),
   chassisNumber: text("chassis_number"),
+  vehicle_image: text("vehicle_image"), // Campo para armazenar a imagem do veículo em base64
+  damaged_parts: jsonb("damaged_parts"), // Campo para armazenar os danos em formato JSON
   created_at: timestamp("created_at").defaultNow(),
 });
 

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 // Remover importação de useLocation e usar window.location
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, ArrowLeft } from "lucide-react";
+import { CalendarIcon, ArrowLeft, Upload, Image } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateBudgetTotals } from "@/utils/hailCalculation";
@@ -111,6 +111,8 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   const queryClient = useQueryClient();
   const [damages, setDamages] = useState<VehicleDamage>({});
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [vehicleImage, setVehicleImage] = useState<string | null>(initialData?.vehicle_image || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Buscar a lista de clientes do banco de dados
   const { data: clients, isLoading: isLoadingClients } = useQuery<any[]>({
@@ -178,7 +180,8 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
         date: format(data.date, "yyyy-MM-dd"),
         damaged_parts: JSON.stringify(damages),
         total_aw: totalValues.totalAw,
-        total_value: totalValues.totalValue
+        total_value: totalValues.totalValue,
+        vehicle_image: vehicleImage
       };
 
       if (initialData) {
@@ -268,6 +271,24 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
       totalValue: totalCost 
     };
   };
+  
+  // Funções para gerenciar o upload de imagens
+  const handleImageClick = () => {
+    if (readOnly) return;
+    fileInputRef.current?.click();
+  };
+  
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setVehicleImage(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Renderizar o grid de danos do veículo
   const renderDamageGrid = () => {
@@ -285,8 +306,34 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
 
         {/* Terceira linha: Porta Dianteira Esquerda - Espaço para Imagem - Porta Dianteira Direita */}
         <DamagePart part="porta_dianteira_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
-        <div className="p-3 border rounded-md bg-gray-50 flex items-center justify-center">
-          <div className="text-center text-gray-400 text-xs">Veículo</div>
+        <div 
+          className={`p-3 border rounded-md ${readOnly ? 'bg-gray-50' : 'bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors'} flex flex-col items-center justify-center`}
+          onClick={handleImageClick}
+        >
+          {vehicleImage ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <img 
+                src={vehicleImage} 
+                alt="Imagem do veículo" 
+                className="max-w-full max-h-[80px] object-contain"
+              />
+            </div>
+          ) : (
+            <>
+              <Upload className="h-5 w-5 text-gray-400 mb-1" />
+              <div className="text-center text-gray-400 text-xs">
+                {readOnly ? "Sem imagem" : "Clique para inserir foto"}
+              </div>
+            </>
+          )}
+          <input 
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            accept="image/*"
+            className="hidden"
+            disabled={readOnly}
+          />
         </div>
         <DamagePart part="porta_dianteira_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
 
