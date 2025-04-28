@@ -615,88 +615,94 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
     <div className="border rounded-md p-2">
       <h4 className="font-medium text-xs mb-1 text-center">{partDisplayNames[part]}</h4>
       <div className="space-y-1">
-        {/* Tamanho 20mm - Melhorado o alinhamento */}
-        <div className="flex items-center">
-          <span className="w-10 text-xs text-right pr-2">20mm:</span>
+        {/* Tamanho 20mm - Alinhamento simétrico com padding negativo no rótulo e positivo no input */}
+        <div className="flex items-center justify-between">
+          <span className="w-8 text-xs text-right -mr-2">20mm:</span>
           {readOnly ? (
-            <span className="w-12 h-6 text-xs text-right py-1 border border-gray-200 rounded px-1 ml-auto">{damage.size20 || 0}</span>
+            <span className="w-12 h-6 text-xs text-center py-1 border border-gray-200 rounded px-2">{damage.size20 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size20 || 0}
               onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
-              className="w-14 h-6 text-xs px-1 text-right ml-auto"
+              className="w-12 h-6 text-xs px-2 text-center"
               min={0}
               readOnly={readOnly}
             />
           )}
         </div>
         
-        {/* Tamanho 30mm - Melhorado o alinhamento */}
-        <div className="flex items-center">
-          <span className="w-10 text-xs text-right pr-2">30mm:</span>
+        {/* Tamanho 30mm - Alinhamento simétrico com padding negativo no rótulo e positivo no input */}
+        <div className="flex items-center justify-between">
+          <span className="w-8 text-xs text-right -mr-2">30mm:</span>
           {readOnly ? (
-            <span className="w-12 h-6 text-xs text-right py-1 border border-gray-200 rounded px-1 ml-auto">{damage.size30 || 0}</span>
+            <span className="w-12 h-6 text-xs text-center py-1 border border-gray-200 rounded px-2">{damage.size30 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size30 || 0}
               onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
-              className="w-14 h-6 text-xs px-1 text-right ml-auto"
+              className="w-12 h-6 text-xs px-2 text-center"
               min={0}
               readOnly={readOnly}
             />
           )}
         </div>
         
-        {/* Tamanho 40mm - Melhorado o alinhamento */}
-        <div className="flex items-center">
-          <span className="w-10 text-xs text-right pr-2">40mm:</span>
+        {/* Tamanho 40mm - Alinhamento simétrico com padding negativo no rótulo e positivo no input */}
+        <div className="flex items-center justify-between">
+          <span className="w-8 text-xs text-right -mr-2">40mm:</span>
           {readOnly ? (
-            <span className="w-12 h-6 text-xs text-right py-1 border border-gray-200 rounded px-1 ml-auto">{damage.size40 || 0}</span>
+            <span className="w-12 h-6 text-xs text-center py-1 border border-gray-200 rounded px-2">{damage.size40 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size40 || 0}
               onChange={(e) => onChange(part, "size40", parseInt(e.target.value) || 0)}
-              className="w-14 h-6 text-xs px-1 text-right ml-auto"
+              className="w-12 h-6 text-xs px-2 text-center"
               min={0}
               readOnly={readOnly}
             />
           )}
         </div>
         
-        {/* Checkboxes para materiais especiais */}
-        <div className="flex justify-between mt-2 px-1 w-full">
-          <div className="flex items-center w-6 justify-center">
-            <Checkbox 
-              id={`${part}-aluminum`}
-              checked={damage.isAluminum || false}
-              onCheckedChange={(checked) => !readOnly && onChange(part, "isAluminum", !!checked)}
-              className="h-3 w-3"
-              disabled={readOnly}
-            />
-            <label htmlFor={`${part}-aluminum`} className="ml-1 text-xs font-semibold">A</label>
+        {/* Checkboxes para materiais especiais - com melhor alinhamento */}
+        <div className="flex justify-between mt-2 -mx-2 w-full">
+          <div className="flex items-center justify-center w-6">
+            <div className="flex flex-col items-center">
+              <Checkbox 
+                id={`${part}-aluminum`}
+                checked={damage.isAluminum || false}
+                onCheckedChange={(checked) => !readOnly && onChange(part, "isAluminum", !!checked)}
+                className="h-3 w-3 mb-0.5"
+                disabled={readOnly}
+              />
+              <label htmlFor={`${part}-aluminum`} className="text-xs font-semibold text-red-600">A</label>
+            </div>
           </div>
-          <div className="flex items-center w-6 justify-center">
-            <Checkbox 
-              id={`${part}-glue`}
-              checked={damage.isGlue || false}
-              onCheckedChange={(checked) => !readOnly && onChange(part, "isGlue", !!checked)}
-              className="h-3 w-3"
-              disabled={readOnly}
-            />
-            <label htmlFor={`${part}-glue`} className="ml-1 text-xs font-semibold">K</label>
+          <div className="flex items-center justify-center w-6">
+            <div className="flex flex-col items-center">
+              <Checkbox 
+                id={`${part}-glue`}
+                checked={damage.isGlue || false}
+                onCheckedChange={(checked) => !readOnly && onChange(part, "isGlue", !!checked)}
+                className="h-3 w-3 mb-0.5"
+                disabled={readOnly}
+              />
+              <label htmlFor={`${part}-glue`} className="text-xs font-semibold text-blue-600">K</label>
+            </div>
           </div>
-          <div className="flex items-center w-6 justify-center">
-            <Checkbox 
-              id={`${part}-paint`}
-              checked={damage.isPaint || false}
-              onCheckedChange={(checked) => !readOnly && onChange(part, "isPaint", !!checked)}
-              className="h-3 w-3"
-              disabled={readOnly}
-            />
-            <label htmlFor={`${part}-paint`} className="ml-1 text-xs font-semibold">P</label>
+          <div className="flex items-center justify-center w-6">
+            <div className="flex flex-col items-center">
+              <Checkbox 
+                id={`${part}-paint`}
+                checked={damage.isPaint || false}
+                onCheckedChange={(checked) => !readOnly && onChange(part, "isPaint", !!checked)}
+                className="h-3 w-3 mb-0.5"
+                disabled={readOnly}
+              />
+              <label htmlFor={`${part}-paint`} className="text-xs font-semibold text-green-600">P</label>
+            </div>
           </div>
         </div>
       </div>
