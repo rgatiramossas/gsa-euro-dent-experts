@@ -547,16 +547,16 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
       <h4 className="font-medium text-xs mb-1 text-center">{partDisplayNames[part]}</h4>
       <div className="space-y-0.5">
         {/* Tamanho 20 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <span className="w-4 text-xs text-right pr-1">20</span>
           {readOnly ? (
-            <span className="w-8 h-5 text-xs text-right py-0.5">{damage.size20 || 0}</span>
+            <span className="w-6 h-5 text-xs text-right py-0.5 ml-auto">{damage.size20 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size20 || 0}
               onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
-              className="w-8 h-5 text-xs px-1 text-right"
+              className="w-6 h-5 text-xs px-0.5 text-right ml-auto"
               min={0}
               readOnly={readOnly}
             />
@@ -564,16 +564,16 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
         </div>
         
         {/* Tamanho 30 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <span className="w-4 text-xs text-right pr-1">30</span>
           {readOnly ? (
-            <span className="w-8 h-5 text-xs text-right py-0.5">{damage.size30 || 0}</span>
+            <span className="w-6 h-5 text-xs text-right py-0.5 ml-auto">{damage.size30 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size30 || 0}
               onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
-              className="w-8 h-5 text-xs px-1 text-right"
+              className="w-6 h-5 text-xs px-0.5 text-right ml-auto"
               min={0}
               readOnly={readOnly}
             />
@@ -581,16 +581,16 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
         </div>
         
         {/* Tamanho 40 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <span className="w-4 text-xs text-right pr-1">40</span>
           {readOnly ? (
-            <span className="w-8 h-5 text-xs text-right py-0.5">{damage.size40 || 0}</span>
+            <span className="w-6 h-5 text-xs text-right py-0.5 ml-auto">{damage.size40 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size40 || 0}
               onChange={(e) => onChange(part, "size40", parseInt(e.target.value) || 0)}
-              className="w-8 h-5 text-xs px-1 text-right"
+              className="w-6 h-5 text-xs px-0.5 text-right ml-auto"
               min={0}
               readOnly={readOnly}
             />
@@ -598,7 +598,7 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
         </div>
         
         {/* Checkboxes para materiais especiais */}
-        <div className="flex justify-between gap-1 mt-1">
+        <div className="flex justify-start gap-3 mt-1">
           <div className="flex items-center">
             <Checkbox 
               id={`${part}-aluminum`}
