@@ -310,16 +310,15 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
     // Definir o estilo para peças selecionadas vs. não selecionadas
     const backgroundStyle = part.selected ? 'white' : '#f9fafb';
     const borderStyle = part.selected ? '1px solid #2563eb' : '1px solid #ddd';
-    // Título sempre preto para melhor visibilidade
-    const titleColor = '#000000';
+    const titleColor = part.selected ? '#2563eb' : '#888';
     const shadowStyle = part.selected ? '0 2px 4px rgba(0,0,0,0.1)' : 'none';
     
     gridHtml += `
       <div style="padding: 8px; border: ${borderStyle}; border-radius: 5px; background-color: ${backgroundStyle}; box-shadow: ${shadowStyle}; height: 125px; width: 100%; display: flex; flex-direction: column;">
         <!-- Título da peça centralizado e com altura fixa -->
-        <div style="font-weight: bold; font-size: 12px; color: #000000; text-align: center; height: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; overflow: hidden;">
+        <div style="font-weight: bold; font-size: 11px; color: ${titleColor}; text-align: center; height: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; overflow: hidden;">
           ${partLayout.name}
-          ${partLayout.isHorizontal ? '<span style="margin-left: 4px; color: #666; font-size: 10px;">(H)</span>' : ''}
+          ${partLayout.isHorizontal ? '<span style="margin-left: 4px; color: #666; font-size: 9px;">(H)</span>' : ''}
         </div>
         
         <!-- Container principal para os dados -->
@@ -359,7 +358,7 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
             <div style="display: table-row;">
               <!-- Célula para A -->
               <div style="display: table-cell; text-align: center; vertical-align: middle;">
-                <div style="display: inline-block; text-align: center; margin-top: -5px;">
+                <div style="display: inline-block; text-align: center; margin-top: 8px;">
                   <div style="width: 9px; height: 9px; border: 1px solid #ccc; margin: 0 auto 2px auto; position: relative; border-radius: 2px; background-color: ${part.optionA ? '#f8f8f8' : 'white'};">
                     ${part.optionA ? '<div style="position: absolute; top: -2px; left: 1px; font-size: 7px; color: #333;">✓</div>' : ''}
                   </div>
@@ -369,7 +368,7 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
               
               <!-- Célula para K -->
               <div style="display: table-cell; text-align: center; vertical-align: middle;">
-                <div style="display: inline-block; text-align: center; margin-top: -5px;">
+                <div style="display: inline-block; text-align: center; margin-top: 8px;">
                   <div style="width: 9px; height: 9px; border: 1px solid #ccc; margin: 0 auto 2px auto; position: relative; border-radius: 2px; background-color: ${part.optionK ? '#f8f8f8' : 'white'};">
                     ${part.optionK ? '<div style="position: absolute; top: -2px; left: 1px; font-size: 7px; color: #333;">✓</div>' : ''}
                   </div>
@@ -379,7 +378,7 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
               
               <!-- Célula para P -->
               <div style="display: table-cell; text-align: center; vertical-align: middle;">
-                <div style="display: inline-block; text-align: center; margin-top: -5px;">
+                <div style="display: inline-block; text-align: center; margin-top: 8px;">
                   <div style="width: 9px; height: 9px; border: 1px solid #ccc; margin: 0 auto 2px auto; position: relative; border-radius: 2px; background-color: ${part.optionP ? '#f8f8f8' : 'white'};">
                     ${part.optionP ? '<div style="position: absolute; top: -2px; left: 1px; font-size: 7px; color: #333;">✓</div>' : ''}
                   </div>
