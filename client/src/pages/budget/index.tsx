@@ -110,15 +110,17 @@ function DamagedPartItem({
   label, 
   isHorizontal = false, 
   isViewMode = false,
-  onChange
+  onChange,
+  initialDamage
 }: { 
   partKey: string; 
   label: string; 
   isHorizontal?: boolean; 
   isViewMode?: boolean;
   onChange?: (key: string, value: PartDamage) => void;
+  initialDamage?: PartDamage;
 }) {
-  const [damage, setDamage] = useState<PartDamage>(initialDamagedParts[partKey] || { 
+  const [damage, setDamage] = useState<PartDamage>(initialDamage || initialDamagedParts[partKey] || { 
     selected: false, 
     diameter20: 0, 
     diameter30: 0, 
@@ -929,17 +931,24 @@ export default function BudgetPage() {
               <Label>Danos do Veículo</Label>
               <div className="grid grid-cols-3 gap-2">
                 {/* Linha 1 */}
-                <DamagedPartItem partKey="paraLamaEsquerdo" label="Para-lama Esquerdo" isViewMode={true} />
-                <DamagedPartItem partKey="capo" label="Capô" isHorizontal={true} isViewMode={true} />
-                <DamagedPartItem partKey="paraLamaDireito" label="Para-lama Direito" isViewMode={true} />
+                <DamagedPartItem partKey="paraLamaEsquerdo" label="Para-lama Esquerdo" isViewMode={true} 
+                  initialDamage={damagedParts["paraLamaEsquerdo"]} />
+                <DamagedPartItem partKey="capo" label="Capô" isHorizontal={true} isViewMode={true}
+                  initialDamage={damagedParts["capo"]} />
+                <DamagedPartItem partKey="paraLamaDireito" label="Para-lama Direito" isViewMode={true}
+                  initialDamage={damagedParts["paraLamaDireito"]} />
                 
                 {/* Linha 2 */}
-                <DamagedPartItem partKey="colunaEsquerda" label="Coluna Esquerda" isViewMode={true} />
-                <DamagedPartItem partKey="teto" label="Teto" isHorizontal={true} isViewMode={true} />
-                <DamagedPartItem partKey="colunaDireita" label="Coluna Direita" isViewMode={true} />
+                <DamagedPartItem partKey="colunaEsquerda" label="Coluna Esquerda" isViewMode={true}
+                  initialDamage={damagedParts["colunaEsquerda"]} />
+                <DamagedPartItem partKey="teto" label="Teto" isHorizontal={true} isViewMode={true}
+                  initialDamage={damagedParts["teto"]} />
+                <DamagedPartItem partKey="colunaDireita" label="Coluna Direita" isViewMode={true}
+                  initialDamage={damagedParts["colunaDireita"]} />
                 
                 {/* Linha 3 */}
-                <DamagedPartItem partKey="portaDianteiraEsquerda" label="Porta Dianteira Esq." isViewMode={true} />
+                <DamagedPartItem partKey="portaDianteiraEsquerda" label="Porta Dianteira Esq." isViewMode={true}
+                  initialDamage={damagedParts["portaDianteiraEsquerda"]} />
                 
                 <div className="flex justify-center items-center p-2 border rounded-md">
                   {photoUrl ? (
@@ -958,17 +967,24 @@ export default function BudgetPage() {
                   )}
                 </div>
                 
-                <DamagedPartItem partKey="portaDianteiraDireita" label="Porta Dianteira Dir." isViewMode={true} />
+                <DamagedPartItem partKey="portaDianteiraDireita" label="Porta Dianteira Dir." isViewMode={true}
+                  initialDamage={damagedParts["portaDianteiraDireita"]} />
                 
                 {/* Linha 4 */}
-                <DamagedPartItem partKey="portaTraseiraEsquerda" label="Porta Traseira Esq." isViewMode={true} />
-                <DamagedPartItem partKey="portaMalasSuperior" label="Porta Malas Superior" isHorizontal={true} isViewMode={true} />
-                <DamagedPartItem partKey="portaTraseiraDireita" label="Porta Traseira Dir." isViewMode={true} />
+                <DamagedPartItem partKey="portaTraseiraEsquerda" label="Porta Traseira Esq." isViewMode={true}
+                  initialDamage={damagedParts["portaTraseiraEsquerda"]} />
+                <DamagedPartItem partKey="portaMalasSuperior" label="Porta Malas Superior" isHorizontal={true} isViewMode={true}
+                  initialDamage={damagedParts["portaMalasSuperior"]} />
+                <DamagedPartItem partKey="portaTraseiraDireita" label="Porta Traseira Dir." isViewMode={true}
+                  initialDamage={damagedParts["portaTraseiraDireita"]} />
                 
                 {/* Linha 5 */}
-                <DamagedPartItem partKey="lateralEsquerda" label="Lateral Esquerda" isViewMode={true} />
-                <DamagedPartItem partKey="portaMalasInferior" label="Porta Malas Inferior" isViewMode={true} />
-                <DamagedPartItem partKey="lateralDireita" label="Lateral Direita" isViewMode={true} />
+                <DamagedPartItem partKey="lateralEsquerda" label="Lateral Esquerda" isViewMode={true}
+                  initialDamage={damagedParts["lateralEsquerda"]} />
+                <DamagedPartItem partKey="portaMalasInferior" label="Porta Malas Inferior" isViewMode={true}
+                  initialDamage={damagedParts["portaMalasInferior"]} />
+                <DamagedPartItem partKey="lateralDireita" label="Lateral Direita" isViewMode={true}
+                  initialDamage={damagedParts["lateralDireita"]} />
               </div>
             </div>
             
