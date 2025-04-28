@@ -601,6 +601,10 @@ export default function BudgetPage() {
   const handleViewBudget = (id: number) => {
     const budget = budgets.find(b => b.id === id);
     if (budget) {
+      // Log para debug
+      console.log("Orçamento selecionado:", budget);
+      console.log("URL da imagem no orçamento:", budget.photo_url);
+      
       setSelectedBudget(budget);
       // Importante: definir o cliente selecionado
       setSelectedClient(budget.client_id);
@@ -1069,20 +1073,28 @@ export default function BudgetPage() {
                   initialDamage={damagedParts["portaDianteiraEsquerda"]} />
                 
                 <div className="flex justify-center items-center p-2 border rounded-md">
-                  {selectedBudget?.photo_url ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px]">
-                      <img 
-                        src={selectedBudget.photo_url} 
-                        alt="Foto do veículo" 
-                        className="max-h-[135px] max-w-full object-contain"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] text-gray-400">
-                      <CameraIcon className="h-10 w-10 mb-2" />
-                      <span className="text-sm">Sem foto</span>
-                    </div>
-                  )}
+                  {(() => {
+                    // Log para debug
+                    console.log("Visualização do gestor - photo_url:", selectedBudget?.photo_url);
+                    return selectedBudget?.photo_url ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px]">
+                        <img 
+                          src={selectedBudget.photo_url} 
+                          alt="Foto do veículo" 
+                          className="max-h-[135px] max-w-full object-contain"
+                          onError={(e) => {
+                            console.error("Erro ao carregar imagem:", e);
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px] text-gray-400">
+                        <CameraIcon className="h-10 w-10 mb-2" />
+                        <span className="text-sm">Sem foto</span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 
                 <DamagedPartItem partKey="portaDianteiraDireita" label="Porta Dianteira Dir." isViewMode={true}
