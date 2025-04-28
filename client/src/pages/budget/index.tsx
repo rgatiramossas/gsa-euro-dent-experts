@@ -772,9 +772,9 @@ export default function BudgetPage() {
           </svg>
           <span style="color: #0047AB; font-weight: bold; letter-spacing: 0.2px;">Danos do Veículo</span>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr; gap: 4px; margin-bottom: 5px;">
+        <div style="margin-bottom: 10px;">
           <!-- Grid de peças danificadas em 3 colunas -->
-          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; width: 100%;">
+          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; box-sizing: border-box; border: 1px solid #eaeaea; border-radius: 6px; padding: 10px; background-color: #f9fafc;">
           </div>
         </div>
         
@@ -899,7 +899,7 @@ export default function BudgetPage() {
               placeholderDiv.style.display = 'flex';
               placeholderDiv.style.justifyContent = 'center';
               placeholderDiv.style.alignItems = 'center';
-              placeholderDiv.style.height = '190px'; 
+              placeholderDiv.style.height = '95px'; 
               placeholderDiv.style.overflow = 'hidden';
               placeholderDiv.style.borderRadius = '3px';
               placeholderDiv.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
@@ -916,9 +916,9 @@ export default function BudgetPage() {
                 placeholderDiv.appendChild(img);
               } else {
                 placeholderDiv.innerHTML = `
-                  <div style="text-align: center; color: #888; padding: 10px; background-color: #f8f9fa; border-radius: 4px; width: 90%; max-width: 150px;">
-                    <div style="font-size: 24px; margin-bottom: 8px; color: #0047AB;">🚗</div>
-                    <div style="font-size: 10px; font-weight: 500; letter-spacing: 0.2px;">Sem foto do veículo</div>
+                  <div style="text-align: center; color: #888; padding: 10px; background-color: #f8f9fa; border-radius: 4px; width: 100%;">
+                    <div style="font-size: 18px; margin-bottom: 4px; color: #0047AB;">🚗</div>
+                    <div style="font-size: 9px; font-weight: 500; letter-spacing: 0.2px;">Sem foto</div>
                   </div>
                 `;
               }
@@ -1152,6 +1152,8 @@ export default function BudgetPage() {
             checkboxP.style.marginRight = '3px';
             checkboxP.style.display = 'inline-block';
             checkboxP.style.position = 'relative';
+            checkboxP.style.borderRadius = '2px';
+            checkboxP.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.03)';
             if (part.optionP) {
               checkboxP.style.backgroundColor = '#f8f8f8';
               const check = document.createElement('div');
