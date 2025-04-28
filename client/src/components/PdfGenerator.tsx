@@ -329,7 +329,7 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
             <div style="display: table-row; height: 16px;">
               <div style="display: table-cell; font-size: 10px; width: 32px; text-align: right; vertical-align: middle; padding-right: 5px; white-space: nowrap;">20mm:</div>
               <div style="display: table-cell; vertical-align: middle;">
-                <div style="font-size: 10px; width: 30px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter20 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px; margin-top: -5px;">${part.diameter20 > 0 ? part.diameter20 : ''}</div>
+                <div style="font-size: 10px; width: 30px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter20 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px; margin-top: 8px;">${part.diameter20 > 0 ? part.diameter20 : ''}</div>
               </div>
             </div>
             
@@ -337,7 +337,7 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
             <div style="display: table-row; height: 16px;">
               <div style="display: table-cell; font-size: 10px; width: 32px; text-align: right; vertical-align: middle; padding-right: 5px; white-space: nowrap;">30mm:</div>
               <div style="display: table-cell; vertical-align: middle;">
-                <div style="font-size: 10px; width: 30px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter30 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px; margin-top: -5px;">${part.diameter30 > 0 ? part.diameter30 : ''}</div>
+                <div style="font-size: 10px; width: 30px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter30 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px; margin-top: 8px;">${part.diameter30 > 0 ? part.diameter30 : ''}</div>
               </div>
             </div>
             
@@ -345,7 +345,7 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
             <div style="display: table-row; height: 16px;">
               <div style="display: table-cell; font-size: 10px; width: 32px; text-align: right; vertical-align: middle; padding-right: 5px; white-space: nowrap;">40mm:</div>
               <div style="display: table-cell; vertical-align: middle;">
-                <div style="font-size: 10px; width: 30px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter40 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px; margin-top: -5px;">${part.diameter40 > 0 ? part.diameter40 : ''}</div>
+                <div style="font-size: 10px; width: 30px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter40 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px; margin-top: 8px;">${part.diameter40 > 0 ? part.diameter40 : ''}</div>
               </div>
             </div>
           </div>
