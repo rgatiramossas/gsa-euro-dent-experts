@@ -44,7 +44,8 @@ import {
   Camera as CameraIcon,
   FileText as FileTextIcon,
   Download as DownloadIcon,
-  Eye as EyeIcon
+  Eye as EyeIcon,
+  Printer as PrinterIcon
 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -678,6 +679,247 @@ export default function BudgetPage() {
       deleteBudgetMutation.mutate(id);
     }
   };
+  
+  // Cria referência para o elemento que será impresso
+  const printRef = useRef<HTMLDivElement>(null);
+  
+  // Função para gerar o PDF a partir do conteúdo
+  const handlePrintBudget = async () => {
+    if (!selectedBudget) return;
+    
+    try {
+      toast({
+        title: "Gerando PDF...",
+        description: "Aguarde enquanto o documento é preparado para impressão.",
+      });
+      
+      // Criamos um elemento temporário que será renderizado apenas para gerar o PDF
+      const printDiv = document.createElement('div');
+      printDiv.className = 'print-content';
+      printDiv.style.width = '210mm'; // Tamanho A4
+      printDiv.style.padding = '20px';
+      printDiv.style.fontFamily = 'Arial, sans-serif';
+      printDiv.style.position = 'fixed';
+      printDiv.style.top = '-9999px';
+      printDiv.style.left = '-9999px';
+      
+      // Adicionamos o conteúdo do orçamento no elemento temporário
+      printDiv.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+          <h1 style="margin: 0; font-size: 24px;">Euro Dent Experts</h1>
+          <p style="margin: 5px 0;">Orçamento #${selectedBudget.id}</p>
+          <p style="margin: 5px 0;">Data: ${formatDate(selectedBudget.date)}</p>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h2 style="font-size: 18px; margin-bottom: 10px;">Informações do Cliente</h2>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 5px; border: 1px solid #ddd; width: 150px;"><strong>Cliente:</strong></td>
+              <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.client_name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px; border: 1px solid #ddd;"><strong>Veículo:</strong></td>
+              <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.vehicle_info}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px; border: 1px solid #ddd;"><strong>Placa:</strong></td>
+              <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.plate || '-'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px; border: 1px solid #ddd;"><strong>Chassi:</strong></td>
+              <td style="padding: 5px; border: 1px solid #ddd;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</td>
+            </tr>
+          </table>
+        </div>
+      `;
+      
+      // Adicionamos o conteúdo do grid de danos
+      const damagedPartsDiv = document.createElement('div');
+      damagedPartsDiv.innerHTML = `
+        <h2 style="font-size: 18px; margin-bottom: 10px;">Danos do Veículo</h2>
+        <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+        </div>
+        
+        <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f5f5f5;">
+          <strong>MATERIAIS ESPECIAIS:</strong><br />
+          A= ALUMÍNIO   K= COLA   P= PINTURA
+        </div>
+      `;
+      
+      printDiv.appendChild(damagedPartsDiv);
+      
+      // Adicionamos observações, se houver
+      if (selectedBudget.note) {
+        const notesDiv = document.createElement('div');
+        notesDiv.innerHTML = `
+          <h2 style="font-size: 18px; margin-bottom: 10px;">Observações</h2>
+          <div style="padding: 10px; border: 1px solid #ddd;">
+            ${selectedBudget.note}
+          </div>
+        `;
+        printDiv.appendChild(notesDiv);
+      }
+      
+      // Adicionamos o elemento temporário ao documento para capturá-lo com html2canvas
+      document.body.appendChild(printDiv);
+      
+      // Processamos todas as peças danificadas e as adicionamos ao grid
+      try {
+        let parsedDamagedParts: Record<string, PartDamage> = {};
+        if (selectedBudget.damaged_parts) {
+          if (typeof selectedBudget.damaged_parts === 'string') {
+            parsedDamagedParts = JSON.parse(selectedBudget.damaged_parts);
+          } else {
+            parsedDamagedParts = selectedBudget.damaged_parts as Record<string, PartDamage>;
+          }
+        }
+        
+        const gridElement = printDiv.querySelector('#damaged-parts-grid');
+        if (gridElement) {
+          // Nomes amigáveis para as partes
+          const partNames: Record<string, string> = {
+            capo: 'Capô',
+            teto: 'Teto',
+            portaMalasSuperior: 'Porta Malas Superior',
+            paraLamaEsquerdo: 'Para-lama Esquerdo',
+            paraLamaDireito: 'Para-lama Direito',
+            colunaEsquerda: 'Coluna Esquerda',
+            colunaDireita: 'Coluna Direita',
+            portaDianteiraEsquerda: 'Porta Dianteira Esq.',
+            portaDianteiraDireita: 'Porta Dianteira Dir.',
+            portaTraseiraEsquerda: 'Porta Traseira Esq.',
+            portaTraseiraDireita: 'Porta Traseira Dir.',
+            lateralEsquerda: 'Lateral Esquerda',
+            lateralDireita: 'Lateral Direita',
+            portaMalasInferior: 'Porta Malas Inferior'
+          };
+          
+          // Para cada parte do carro
+          Object.keys(parsedDamagedParts).forEach(key => {
+            const part = parsedDamagedParts[key];
+            
+            // Só exibimos partes que estão selecionadas (têm dano)
+            if (part.selected) {
+              const partDiv = document.createElement('div');
+              partDiv.style.border = '1px solid #ddd';
+              partDiv.style.borderRadius = '4px';
+              partDiv.style.padding = '10px';
+              partDiv.innerHTML = `
+                <div style="text-align: center; margin-bottom: 8px; font-weight: bold;">
+                  ${partNames[key] || key}
+                </div>
+                <div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>20mm:</span>
+                    <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
+                      ${part.diameter20 || '0'}
+                    </span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>30mm:</span>
+                    <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
+                      ${part.diameter30 || '0'}
+                    </span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>40mm:</span>
+                    <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
+                      ${part.diameter40 || '0'}
+                    </span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                    <div style="display: flex; align-items: center;">
+                      <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionA ? '#ffcccc' : '#f5f5f5'}">
+                        ${part.optionA ? '✓' : ''}
+                      </div>
+                      <span style="background: #ffcccc; padding: 1px 3px; border-radius: 2px; font-size: 12px;">A</span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                      <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionK ? '#ccccff' : '#f5f5f5'}">
+                        ${part.optionK ? '✓' : ''}
+                      </div>
+                      <span style="background: #ccccff; padding: 1px 3px; border-radius: 2px; font-size: 12px;">K</span>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                      <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionP ? '#ccffcc' : '#f5f5f5'}">
+                        ${part.optionP ? '✓' : ''}
+                      </div>
+                      <span style="background: #ccffcc; padding: 1px 3px; border-radius: 2px; font-size: 12px;">P</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+              gridElement.appendChild(partDiv);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao processar as peças danificadas para PDF:", error);
+      }
+      
+      // Geramos a captura da tela usando html2canvas
+      const canvas = await html2canvas(printDiv, {
+        scale: 2, // Para melhor qualidade de impressão
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Criamos o PDF a partir do canvas
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Criamos um novo documento PDF no formato A4
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Configuramos as dimensões para ajustar a imagem na página A4
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasRatio = canvas.height / canvas.width;
+      const imgWidth = pdfWidth;
+      const imgHeight = imgWidth * canvasRatio;
+      
+      // Adicionamos a imagem ao PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      
+      // Se a imagem for maior que a altura da página, a dividimos em várias páginas
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        if (heightLeft > pdfHeight) {
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        } else {
+          heightLeft = 0;
+        }
+      }
+      
+      // Salvamos o PDF com o nome do cliente e ID do orçamento
+      pdf.save(`Orcamento_${selectedBudget.id}_${selectedBudget.client_name}.pdf`);
+      
+      // Removemos o elemento temporário
+      document.body.removeChild(printDiv);
+      
+      toast({
+        title: "PDF gerado com sucesso!",
+        description: "O download do arquivo foi iniciado.",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um erro ao gerar o documento. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <DamagedPartsContext.Provider value={damagedPartsContextValue}>
@@ -1139,7 +1381,17 @@ export default function BudgetPage() {
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex justify-between">
+            <div>
+              <Button 
+                variant="default" 
+                onClick={handlePrintBudget}
+                className="mr-2"
+              >
+                <PrinterIcon className="h-4 w-4 mr-2" />
+                Imprimir
+              </Button>
+            </div>
             <Button 
               variant="outline" 
               onClick={() => setShowViewDialog(false)}
