@@ -706,15 +706,16 @@ export default function BudgetPage() {
       printDiv.style.left = '-9999px';
       printDiv.style.backgroundColor = '#ffffff';
 
-      // Formatação da data no formato "Hoje, HH:MM"
+      // Formatação da data no formato "dd/mm/yyyy"
       const formatDisplayDate = (dateString: string) => {
         const date = new Date(dateString);
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `Hoje, ${hours}:${minutes}`;
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
       };
       
-      // Cabeçalho no novo formato
+      // Cabeçalho no formato exato do modelo
       const headerDiv = document.createElement('div');
       headerDiv.style.marginBottom = '15px';
       headerDiv.innerHTML = `
@@ -724,7 +725,7 @@ export default function BudgetPage() {
             <div style="color: #0047AB; font-size: 12px;">Euro Dent Experts</div>
           </div>
           <div style="text-align: right; font-size: 11px;">
-            Data de emissão: ${formatDate(new Date().toISOString())}
+            Data de emissão: ${formatDisplayDate(new Date().toISOString())}
           </div>
         </div>
         <div style="height: 1px; background-color: #0047AB; margin: 8px 0;"></div>
@@ -771,9 +772,24 @@ export default function BudgetPage() {
           </svg>
           Danos do Veículo
         </div>
-        <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+          <!-- Grid de peças danificadas, ocupa 2/3 do espaço -->
+          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; grid-column: span 1;">
+          </div>
+          
+          <!-- Área para foto do veículo, ocupa 1/3 do espaço -->
+          <div style="border: 1px solid #ddd; grid-column: span 1; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 200px; background-color: #f5f5f5; position: relative; overflow: hidden;">
+            ${selectedBudget.photo_url ? 
+              `<img src="${selectedBudget.photo_url}" alt="Foto do Veículo" style="max-width: 100%; max-height: 200px; object-fit: contain;">` : 
+              `<div style="text-align: center; color: #999; padding: 20px;">
+                <div style="font-size: 24px; margin-bottom: 10px;">🚗</div>
+                <div>Sem foto do veículo</div>
+              </div>`
+            }
+          </div>
         </div>
-        <div style="margin-bottom: 10px; padding: 5px; font-size: 11px; text-align: center;">
+        
+        <div style="margin-bottom: 10px; padding: 5px; font-size: 11px; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
           <strong>MATERIAIS ESPECIAIS:</strong> <span style="color: #ff0000; font-weight: bold;">A</span>= ALUMÍNIO &nbsp;&nbsp; <span style="color: #0000ff; font-weight: bold;">K</span>= COLA &nbsp;&nbsp; <span style="color: #00aa00; font-weight: bold;">P</span>= PINTURA
         </div>
       `;
@@ -815,7 +831,7 @@ export default function BudgetPage() {
       const gridElement = printDiv.querySelector('#damaged-parts-grid');
       if (gridElement) {
         try {
-          // Nomes amigáveis para as partes
+          // Nomes amigáveis para as partes (curtos e padronizados conforme o modelo)
           const partNames: Record<string, string> = {
             capo: 'Capô',
             teto: 'Teto',
@@ -824,10 +840,10 @@ export default function BudgetPage() {
             paraLamaDireito: 'Para-lama Direito',
             colunaEsquerda: 'Coluna Esquerda',
             colunaDireita: 'Coluna Direita',
-            portaDianteiraEsquerda: 'Porta Dianteira Esq.',
-            portaDianteiraDireita: 'Porta Dianteira Dir.',
-            portaTraseiraEsquerda: 'Porta Traseira Esq.',
-            portaTraseiraDireita: 'Porta Traseira Dir.',
+            portaDianteiraEsquerda: 'Porta Dianteira Esq',
+            portaDianteiraDireita: 'Porta Dianteira Dir',
+            portaTraseiraEsquerda: 'Porta Traseira Esq',
+            portaTraseiraDireita: 'Porta Traseira Dir',
             lateralEsquerda: 'Lateral Esquerda',
             lateralDireita: 'Lateral Direita',
             portaMalasInferior: 'Porta Malas Inferior'
@@ -843,13 +859,18 @@ export default function BudgetPage() {
             }
           }
 
-          // Lista de todas as peças que queremos mostrar no grid, independente se estão danificadas ou não
+          // Lista de todas as peças que queremos mostrar no grid, organizadas exatamente como no modelo
           const allPartKeys = [
+            // Primeira linha - Para-lamas e Capô
             'paraLamaEsquerdo', 'capo', 'paraLamaDireito',
+            // Segunda linha - Colunas e Teto
             'colunaEsquerda', 'teto', 'colunaDireita',
-            'portaDianteiraEsquerda', 'portaDianteiraDireita',
-            'portaTraseiraEsquerda', 'portaMalasSuperior', 'portaTraseiraDireita',
-            'lateralEsquerda', 'portaMalasInferior', 'lateralDireita'
+            // Terceira linha - Portas Dianteiras
+            'portaDianteiraEsquerda', 'portaDianteiraDireita', 'portaTraseiraEsquerda',
+            // Quarta linha - Porta Traseira e Porta Malas
+            'portaTraseiraDireita', 'portaMalasSuperior', 'portaMalasInferior',
+            // Quinta linha - Laterais
+            'lateralEsquerda', 'lateralDireita'
           ];
 
           // Definição de um objeto padrão para peças não danificadas
@@ -880,12 +901,12 @@ export default function BudgetPage() {
             partDiv.style.padding = '6px';
             partDiv.style.fontSize = '10px';
             
-            // Criar o cabeçalho com o nome da peça
+            // Criar o cabeçalho com o nome da peça (estilo exato como no modelo)
             const partHeader = document.createElement('div');
             partHeader.style.textAlign = 'center';
             partHeader.style.fontWeight = 'bold';
             partHeader.style.color = '#0047AB';
-            partHeader.style.fontSize = '11px';
+            partHeader.style.fontSize = '9px'; // Menor para acomodar o texto completo
             partHeader.style.marginBottom = '5px';
             partHeader.style.whiteSpace = 'nowrap';
             partHeader.style.overflow = 'hidden';
