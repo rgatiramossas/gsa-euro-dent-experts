@@ -30,7 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { generatePdf } from "@/components/PdfGenerator";
+import { generatePdf, generateDamagedPartsGrid } from "@/components/PdfGenerator";
 import { Loader2, Search, Printer, FileText, Trash2, Plus, Edit, FileEdit } from "lucide-react";
 import { Link } from "wouter";
 
