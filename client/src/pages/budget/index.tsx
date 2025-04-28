@@ -887,12 +887,13 @@ export default function BudgetPage() {
               // Criamos uma célula específica para a imagem
               const placeholderDiv = document.createElement('div');
               placeholderDiv.style.border = '1px solid #ddd';
+              placeholderDiv.style.boxSizing = 'border-box'; // Manter consistência com as outras células
               placeholderDiv.style.margin = '0';
               placeholderDiv.style.backgroundColor = '#ffffff';
               placeholderDiv.style.display = 'flex';
               placeholderDiv.style.justifyContent = 'center';
               placeholderDiv.style.alignItems = 'center';
-              placeholderDiv.style.height = '180px'; // Aumentar altura para ficar proporcional às células
+              placeholderDiv.style.height = '190px'; // Aumentar mais a altura para manter proporcionalidade
               placeholderDiv.style.overflow = 'hidden';
               
               // Adicionamos a imagem ou o placeholder
@@ -903,6 +904,7 @@ export default function BudgetPage() {
                 img.style.maxWidth = '100%';
                 img.style.maxHeight = '100%';
                 img.style.objectFit = 'contain';
+                img.style.borderRadius = '3px'; // Adicionar borda levemente arredondada para melhor apresentação
                 placeholderDiv.appendChild(img);
               } else {
                 placeholderDiv.innerHTML = `
@@ -927,13 +929,14 @@ export default function BudgetPage() {
             
             const partDiv = document.createElement('div');
             partDiv.style.border = '1px solid #ddd';
+            partDiv.style.boxSizing = 'border-box'; // Garantir que bordas não aumentem o tamanho
             partDiv.style.margin = '0';
             partDiv.style.padding = '1px 6px 6px 6px'; // Reduzido ainda mais o padding do topo
             partDiv.style.fontSize = '10px';
             partDiv.style.display = 'flex';
             partDiv.style.flexDirection = 'column';
             partDiv.style.justifyContent = 'flex-start'; // Forçar alinhamento ao topo
-            partDiv.style.minHeight = '75px'; // Aumentar altura para usar melhor o espaço
+            partDiv.style.minHeight = '85px'; // Aumentar ainda mais a altura para usar melhor o espaço
             
             // Criar o cabeçalho com o nome da peça (estilo exato como no modelo)
             const partHeader = document.createElement('div');
