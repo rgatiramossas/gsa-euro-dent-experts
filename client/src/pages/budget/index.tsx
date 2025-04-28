@@ -350,8 +350,8 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
 
       {/* Budget Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6">
             <DialogTitle>Detalhes do Orçamento #{selectedBudget?.id}</DialogTitle>
             <DialogDescription>
               Informações completas do orçamento
@@ -359,104 +359,36 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
           </DialogHeader>
 
           {selectedBudget && (
-            <div className="space-y-4 mt-4">
-              {/* Cliente e Veículo */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Cliente</Label>
-                  <Input value={selectedBudget.client_name} readOnly />
-                </div>
-                <div>
-                  <Label>Veículo</Label>
-                  <Input value={selectedBudget.vehicle_info} readOnly />
-                </div>
-              </div>
+            <div className="px-6 pb-6 max-h-[80vh] overflow-y-auto">
+              <NewBudgetForm
+                initialData={selectedBudget}
+                readOnly={true}
+              />
               
-              {/* Placa e Data */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Placa</Label>
-                  <Input value={selectedBudget.plate || "N/A"} readOnly />
-                </div>
-                <div>
-                  <Label>Data</Label>
-                  <Input 
-                    value={formatDisplayDate(selectedBudget.date)}
-                    readOnly 
-                  />
-                </div>
-              </div>
-              
-              {/* Chassis e Valores */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Chassi</Label>
-                  <Input 
-                    value={selectedBudget.chassis_number || "N/A"} 
-                    readOnly 
-                  />
-                </div>
-                <div>
-                  <Label>Valor Total</Label>
-                  <Input
-                    value={formatCurrency(selectedBudget.total_value)}
-                    readOnly
-                  />
-                </div>
-              </div>
-              
-              {/* Grid de Danos */}
-              {selectedBudget.damaged_parts && (
-                <div>
-                  <Label className="block mb-2">Mapa de Danos</Label>
-                  <div className="border rounded-md p-4 bg-gray-50">
-                    <div 
-                      dangerouslySetInnerHTML={{ 
-                        __html: generateDamagedPartsGrid(selectedBudget.damaged_parts)
-                      }} 
-                    />
-                  </div>
-                </div>
-              )}
-              
-              {/* Observações */}
-              <div>
-                <Label>Observações</Label>
-                <Textarea
-                  value={selectedBudget.note || "Sem observações"}
-                  readOnly
-                  className="h-24"
-                />
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:justify-between">
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => selectedBudget && handlePrintBudget(selectedBudget)}
-                >
-                  <Printer className="h-4 w-4 mr-2" />
-                  Imprimir
-                </Button>
-                {selectedBudget && (
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:justify-between mt-6">
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => selectedBudget && handlePrintBudget(selectedBudget)}
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    Imprimir
+                  </Button>
                   <Button variant="secondary" asChild>
                     <Link href={`/budgets/${selectedBudget.id}/edit`}>
                       <Edit className="h-4 w-4 mr-2" />
                       Editar
                     </Link>
                   </Button>
-                )}
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDetailsDialog(false)}
+                >
+                  Fechar
+                </Button>
               </div>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowDetailsDialog(false)}
-              >
-                Fechar
-              </Button>
             </div>
-          </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
 
