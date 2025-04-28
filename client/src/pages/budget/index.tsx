@@ -1211,48 +1211,39 @@ export default function BudgetPage() {
           heightLeft -= pdfHeight;
         }
         
-        // Em vez de usar o método save() direto, vamos usar uma abordagem que
-        // funciona melhor em dispositivos móveis, abrindo o PDF em uma nova aba
-        
+        // Modificado para usar apenas o método de download direto em vez de abrir em nova aba
         try {
-          // Primeiro, tente a abordagem com base64 - geralmente funciona em mais dispositivos
-          const pdfOutput = pdf.output('datauristring');
+          console.log("Gerando PDF para download direto");
           
-          // Para depuração
-          console.log("PDF gerado como URI de dados");
+          // Criar um blob do PDF
+          const pdfBlob = pdf.output('blob');
+          const blobUrl = URL.createObjectURL(pdfBlob);
           
-          // Abre o PDF em uma nova aba, permitindo que o usuário salve
-          window.open(pdfOutput, '_blank');
+          // Criar elemento de link para download direto
+          const downloadLink = document.createElement('a');
+          downloadLink.href = blobUrl;
+          // Nome do arquivo com formato normalizado
+          const fileName = `Orcamento_${selectedBudget.id}_${selectedBudget.client_name.replace(/[^\w\s]/gi, '')}.pdf`;
+          downloadLink.download = fileName;
           
-          // Limpa o elemento temporário
-          document.body.removeChild(printDiv);
+          // Não abrir em nova aba, apenas fazer download
+          document.body.appendChild(downloadLink);
           
-          // Se o método acima falhar em algum dispositivo móvel, 
-          // tente a segunda abordagem com blob como fallback
-          if (!window.open(pdfOutput)) {
-            console.log("Abordagem com URI de dados falhou, tentando blob...");
-            
-            const pdfBlob = pdf.output('blob');
-            const blobUrl = URL.createObjectURL(pdfBlob);
-            
-            const downloadLink = document.createElement('a');
-            downloadLink.href = blobUrl;
-            downloadLink.download = `Orcamento_${selectedBudget.id}_${selectedBudget.client_name.replace(/[^\w\s]/gi, '')}.pdf`;
-            downloadLink.target = '_blank';
-            downloadLink.rel = 'noopener noreferrer';
-            document.body.appendChild(downloadLink);
-            
-            downloadLink.click();
-            
-            setTimeout(() => {
-              URL.revokeObjectURL(blobUrl);
-              document.body.removeChild(downloadLink);
-            }, 100);
-          }
+          // Clicar no link para iniciar o download
+          downloadLink.click();
+          
+          // Limpar recursos após o download
+          setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(downloadLink);
+            document.body.removeChild(printDiv);
+          }, 200);
+          
+          console.log(`Download do arquivo ${fileName} iniciado`);
         } catch (error) {
-          console.error("Erro ao abrir o PDF:", error);
+          console.error("Erro ao gerar o PDF para download:", error);
           
-          // Em último caso, tente o método save() padrão
+          // Em caso de erro, tente o método save() padrão como fallback
           console.log("Tentando método save() padrão...");
           pdf.save(`Orcamento_${selectedBudget.id}_${selectedBudget.client_name.replace(/[^\w\s]/gi, '')}.pdf`);
           document.body.removeChild(printDiv);
