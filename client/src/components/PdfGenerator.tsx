@@ -236,30 +236,30 @@ export function generateDamagedPartsGrid(damagedParts: any): string {
   // Criar o grid completo de layout do carro
   // Definir o layout fixo do grid para representar o carro
   const gridLayout = [
-    // Primeira linha
+    // Primeira linha: Para-lama Esquerdo - Capô - Para-lama Direito
     { id: 'paraLamaEsquerdo', name: 'Para-lama Esquerdo', isHorizontal: false },
     { id: 'capo', name: 'Capô', isHorizontal: true },
     { id: 'paraLamaDireito', name: 'Para-lama Direito', isHorizontal: false },
     
-    // Segunda linha
+    // Segunda linha: Coluna Esquerda - Teto - Coluna Direita
     { id: 'colunaEsquerda', name: 'Coluna Esquerda', isHorizontal: false },
     { id: 'teto', name: 'Teto', isHorizontal: true },
     { id: 'colunaDireita', name: 'Coluna Direita', isHorizontal: false },
     
-    // Terceira linha
+    // Terceira linha: Porta Dianteira Esquerda - Espaço Imagem - Porta Dianteira Direita
     { id: 'portaDianteiraEsquerda', name: 'Porta Dianteira Esq.', isHorizontal: false },
     { id: 'PHOTO_PLACEHOLDER', name: 'FOTO', isHorizontal: false },
     { id: 'portaDianteiraDireita', name: 'Porta Dianteira Dir.', isHorizontal: false },
     
-    // Quarta linha
+    // Quarta linha: Porta Traseira Esquerda - Porta Malas Superior - Porta Traseira Direita
     { id: 'portaTraseiraEsquerda', name: 'Porta Traseira Esq.', isHorizontal: false },
-    { id: 'lateral', name: 'Lateral', isHorizontal: true },
+    { id: 'portaMalasSuperior', name: 'Porta Malas Superior', isHorizontal: true },
     { id: 'portaTraseiraDireita', name: 'Porta Traseira Dir.', isHorizontal: false },
     
-    // Quinta linha
-    { id: 'EMPTY', name: '', isHorizontal: false },
-    { id: 'portaMalasInferior', name: 'Porta-malas Inferior', isHorizontal: true },
-    { id: 'EMPTY', name: '', isHorizontal: false },
+    // Quinta linha: Lateral Esquerda - Porta Malas Inferior - Lateral Direita
+    { id: 'lateralEsquerda', name: 'Lateral Esquerda', isHorizontal: false },
+    { id: 'portaMalasInferior', name: 'Porta Malas Inferior', isHorizontal: true },
+    { id: 'lateralDireita', name: 'Lateral Direita', isHorizontal: false },
   ];
   
   let partsObject: Record<string, any> = {};
@@ -271,6 +271,46 @@ export function generateDamagedPartsGrid(damagedParts: any): string {
     } else {
       partsObject = damagedParts;
     }
+    
+    // Mapear os IDs do formulário para os IDs do PDF
+    const formToPdfMap: Record<string, string> = {
+      'para_lama_esquerdo': 'paraLamaEsquerdo',
+      'capo': 'capo',
+      'para_lama_direito': 'paraLamaDireito',
+      'coluna_esquerda': 'colunaEsquerda',
+      'teto': 'teto',
+      'coluna_direita': 'colunaDireita',
+      'porta_dianteira_esquerda': 'portaDianteiraEsquerda',
+      'porta_dianteira_direita': 'portaDianteiraDireita',
+      'porta_traseira_esquerda': 'portaTraseiraEsquerda',
+      'porta_malas_superior': 'portaMalasSuperior',
+      'porta_traseira_direita': 'portaTraseiraDireita',
+      'lateral_esquerda': 'lateralEsquerda',
+      'porta_malas_inferior': 'portaMalasInferior',
+      'lateral_direita': 'lateralDireita'
+    };
+    
+    // Criar um novo objeto com as chaves mapeadas
+    const mappedObject: Record<string, any> = {};
+    
+    // Converter os dados do formulário para o formato do PDF
+    for (const [formKey, formData] of Object.entries(partsObject)) {
+      if (formToPdfMap[formKey]) {
+        mappedObject[formToPdfMap[formKey]] = {
+          selected: formData.size20 > 0 || formData.size30 > 0 || formData.size40 > 0,
+          diameter20: formData.size20 || 0,
+          diameter30: formData.size30 || 0,
+          diameter40: formData.size40 || 0,
+          optionA: formData.isAluminum || false,
+          optionK: formData.isGlue || false,
+          optionP: formData.isPaint || false
+        };
+      }
+    }
+    
+    // Substituir o objeto original pelo mapeado
+    partsObject = mappedObject;
+    
   } catch (error) {
     console.error("Erro ao processar peças danificadas:", error);
     partsObject = {};
