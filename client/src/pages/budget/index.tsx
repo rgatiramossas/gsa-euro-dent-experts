@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, createContext, useContext } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -83,6 +83,14 @@ interface CarPart {
   damage: PartDamage;
 }
 
+// Definir contexto para compartilhar dados de peças danificadas
+interface DamagedPartsContextType {
+  damagedParts: Record<string, PartDamage>;
+  updateDamagedPart: (key: string, damage: PartDamage) => void;
+}
+
+const DamagedPartsContext = createContext<DamagedPartsContextType | null>(null);
+
 // Definição dos dados iniciais para cada peça
 const initialDamagedParts: Record<string, PartDamage> = {
   // Peças horizontais
@@ -120,7 +128,12 @@ function DamagedPartItem({
   onChange?: (key: string, value: PartDamage) => void;
   initialDamage?: PartDamage;
 }) {
-  const [damage, setDamage] = useState<PartDamage>(initialDamage || initialDamagedParts[partKey] || { 
+  // Usar o estado global para damagedParts
+  const damagedPartsContext = useContext(DamagedPartsContext);
+  const partsData = damagedPartsContext?.damagedParts || {};
+  
+  // Use o estado local apenas para edição
+  const [localDamage, setLocalDamage] = useState<PartDamage>({ 
     selected: false, 
     diameter20: 0, 
     diameter30: 0, 
@@ -131,14 +144,34 @@ function DamagedPartItem({
     isHorizontal: isHorizontal 
   });
   
+  // Obtenha os dados de dano para esta parte específica
+  const partData = partsData[partKey] || initialDamagedParts[partKey] || localDamage;
+  
+  // Efeito para atualizar o estado local a partir de props ou contexto
   useEffect(() => {
     if (initialDamage) {
-      setDamage(initialDamage);
+      setLocalDamage(initialDamage);
+    } else if (partsData[partKey]) {
+      setLocalDamage(partsData[partKey]);
     }
-  }, [initialDamage]);
+  }, [initialDamage, partsData, partKey]);
+  
+  // Determinar qual fonte de dados usar
+  const damage = isViewMode
+    ? (initialDamage || partsData[partKey] || localDamage)
+    : localDamage;
+  
+  // Log para debug - remover em produção
+  useEffect(() => {
+    if (partKey === 'capo' || partKey === 'paraLamaEsquerdo') {
+      console.log(`[${partKey}] Renderizando com damage:`, damage);
+      console.log(`[${partKey}] partsData:`, partsData[partKey]);
+      console.log(`[${partKey}] initialDamage:`, initialDamage);
+    }
+  }, [damage, partKey, partsData, initialDamage]);
   
   const updateDamage = (field: keyof PartDamage, value: any) => {
-    const updatedDamage = { ...damage, [field]: value };
+    const updatedDamage = { ...localDamage, [field]: value };
     
     // Se algum campo for preenchido, marcamos a peça como selecionada
     if (field === 'diameter20' || field === 'diameter30' || field === 'diameter40') {
@@ -161,7 +194,7 @@ function DamagedPartItem({
     }
     
     // Atualiza o estado local
-    setDamage(updatedDamage);
+    setLocalDamage(updatedDamage);
     
     // Notifica o componente pai sobre a mudança
     if (onChange) {
@@ -172,22 +205,28 @@ function DamagedPartItem({
   // Se estiver no modo de visualização, mostramos um formato mais simples
   if (isViewMode) {
     return (
-      <div className="border rounded-md p-2 space-y-2 overflow-hidden">
+      <div className={`border rounded-md p-2 space-y-2 overflow-hidden ${damage.selected ? 'border-blue-500' : ''}`}>
         <div className="text-center mb-2 text-sm font-medium truncate">
           {label}
         </div>
         <div className="space-y-2">
           <div className="flex justify-between items-center gap-1">
             <span className="text-xs whitespace-nowrap">20mm:</span>
-            <span className="text-xs sm:text-sm text-right font-medium">{damage.diameter20}</span>
+            <span className="text-xs sm:text-sm text-right font-medium bg-gray-50 rounded px-2 py-1 w-16 inline-block">
+              {damage.diameter20 || '0'}
+            </span>
           </div>
           <div className="flex justify-between items-center gap-1">
             <span className="text-xs whitespace-nowrap">30mm:</span>
-            <span className="text-xs sm:text-sm text-right font-medium">{damage.diameter30}</span>
+            <span className="text-xs sm:text-sm text-right font-medium bg-gray-50 rounded px-2 py-1 w-16 inline-block">
+              {damage.diameter30 || '0'}
+            </span>
           </div>
           <div className="flex justify-between items-center gap-1">
             <span className="text-xs whitespace-nowrap">40mm:</span>
-            <span className="text-xs sm:text-sm text-right font-medium">{damage.diameter40}</span>
+            <span className="text-xs sm:text-sm text-right font-medium bg-gray-50 rounded px-2 py-1 w-16 inline-block">
+              {damage.diameter40 || '0'}
+            </span>
           </div>
           <div className="flex justify-between pt-1">
             <div className="flex items-center gap-0.5">
@@ -378,6 +417,17 @@ export default function BudgetPage() {
   const [chassisNumber, setChassisNumber] = useState('');
   const [damagedParts, setDamagedParts] = useState<Record<string, PartDamage>>(initialDamagedParts);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Criar o valor do contexto
+  const damagedPartsContextValue = {
+    damagedParts,
+    updateDamagedPart: (key: string, damage: PartDamage) => {
+      setDamagedParts(prev => ({
+        ...prev,
+        [key]: damage
+      }));
+    }
+  };
 
   // Consultas
   const { data: clients } = useQuery({
@@ -626,12 +676,13 @@ export default function BudgetPage() {
   };
 
   return (
-    <div className="py-6 px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Orçamentos</h1>
-          <p className="text-muted-foreground">Gerencie orçamentos para seus clientes</p>
-        </div>
+    <DamagedPartsContext.Provider value={damagedPartsContextValue}>
+      <div className="py-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Orçamentos</h1>
+            <p className="text-muted-foreground">Gerencie orçamentos para seus clientes</p>
+          </div>
         
         {/* Botão "Novo Orçamento" aparece para admin e técnicos, mas não para gestores */}
         {(!isGestor || isTechnician) && (
@@ -1170,5 +1221,6 @@ export default function BudgetPage() {
         </Card>
       </div>
     </div>
+    </DamagedPartsContext.Provider>
   );
 }
