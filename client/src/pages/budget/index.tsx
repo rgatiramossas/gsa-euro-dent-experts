@@ -991,6 +991,7 @@ export default function BudgetPage() {
             input20mm.style.display = 'flex';
             input20mm.style.justifyContent = 'center';
             input20mm.style.alignItems = 'center';
+            input20mm.style.textAlign = 'center';
             input20mm.style.fontSize = '10px';
             input20mm.style.backgroundColor = part.diameter20 > 0 ? '#f4f4f4' : 'white';
             input20mm.style.borderRadius = '2px';
@@ -1020,6 +1021,7 @@ export default function BudgetPage() {
             input30mm.style.display = 'flex';
             input30mm.style.justifyContent = 'center';
             input30mm.style.alignItems = 'center';
+            input30mm.style.textAlign = 'center';
             input30mm.style.fontSize = '10px';
             input30mm.style.backgroundColor = part.diameter30 > 0 ? '#f4f4f4' : 'white';
             input30mm.style.borderRadius = '2px';
@@ -1049,6 +1051,7 @@ export default function BudgetPage() {
             input40mm.style.display = 'flex';
             input40mm.style.justifyContent = 'center';
             input40mm.style.alignItems = 'center';
+            input40mm.style.textAlign = 'center';
             input40mm.style.fontSize = '10px';
             input40mm.style.backgroundColor = part.diameter40 > 0 ? '#f4f4f4' : 'white';
             input40mm.style.borderRadius = '2px';
