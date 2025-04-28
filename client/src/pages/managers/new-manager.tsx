@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, ApiError } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -152,13 +152,57 @@ export default function NewManager({ isEditMode = false }: NewManagerProps) {
       });
       setLocation('/managers');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(`Error ${isEditMode ? 'updating' : 'creating'} manager:`, error);
-      toast({
-        title: `Erro ao ${isEditMode ? 'atualizar' : 'cadastrar'} gestor`,
-        description: `Ocorreu um erro ao ${isEditMode ? 'atualizar' : 'cadastrar'} o gestor. Verifique os dados e tente novamente.`,
-        variant: "destructive",
-      });
+      
+      // Verificar se é um erro da API
+      if (error.name === "ApiError" && error.data) {
+        const errorData = error.data;
+        
+        // Verificar se o erro é relacionado a um campo específico
+        if (errorData.field) {
+          // Marcar o campo específico como inválido
+          if (errorData.field === "username") {
+            form.setError("username", { 
+              type: "manual", 
+              message: "Este nome de usuário já está sendo usado" 
+            });
+            
+            toast({
+              title: "Nome de usuário já existe",
+              description: "Este nome de usuário já está sendo usado por outro usuário. Por favor, escolha um nome de usuário diferente.",
+              variant: "destructive",
+            });
+            return;
+          } else if (errorData.field === "email") {
+            form.setError("email", { 
+              type: "manual", 
+              message: "Este email já está sendo usado" 
+            });
+            
+            toast({
+              title: "Email já existe",
+              description: "Este email já está sendo usado por outro usuário. Por favor, use um email diferente.",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+        
+        // Mensagem personalizada baseada nos dados de erro
+        toast({
+          title: `Erro ao ${isEditMode ? 'atualizar' : 'cadastrar'} gestor`,
+          description: errorData.message || `Ocorreu um erro ao ${isEditMode ? 'atualizar' : 'cadastrar'} o gestor. Verifique os dados e tente novamente.`,
+          variant: "destructive",
+        });
+      } else {
+        // Erro de rede ou outro erro não relacionado à API
+        toast({
+          title: `Erro ao ${isEditMode ? 'atualizar' : 'cadastrar'} gestor`,
+          description: error.message || `Ocorreu um erro ao ${isEditMode ? 'atualizar' : 'cadastrar'} o gestor. Verifique sua conexão e tente novamente.`,
+          variant: "destructive",
+        });
+      }
     }
   });
   

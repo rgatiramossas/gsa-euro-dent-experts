@@ -1,9 +1,44 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Classe de erro customizada que inclui detalhes da resposta
+export class ApiError extends Error {
+  status: number;
+  response: Response;
+  data: any;
+
+  constructor(status: number, message: string, response: Response, data: any = null) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.response = response;
+    this.data = data;
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let errorData = null;
+    let errorMessage = res.statusText;
+    
+    try {
+      // Tentar analisar o corpo da resposta como JSON
+      if (res.headers.get("content-type")?.includes("application/json")) {
+        errorData = await res.json();
+        errorMessage = errorData.message || errorMessage;
+      } else {
+        errorMessage = await res.text() || errorMessage;
+      }
+    } catch (e) {
+      // Se falhar ao analisar JSON, usar o texto bruto
+      try {
+        errorMessage = await res.text() || errorMessage;
+      } catch {
+        // Usar o statusText se não conseguir ler o corpo
+        errorMessage = res.statusText;
+      }
+    }
+    
+    throw new ApiError(res.status, errorMessage, res, errorData);
   }
 }
 
