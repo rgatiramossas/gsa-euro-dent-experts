@@ -69,7 +69,7 @@ export const generateSimplePdf = async (budget: Budget): Promise<void> => {
     tempElement.style.left = '-9999px';
     tempElement.style.fontFamily = 'Arial, sans-serif';
     tempElement.style.width = '794px'; // Largura A4
-    tempElement.style.padding = '40px';
+    tempElement.style.padding = '20px 40px 40px 40px'; // Topo, Direita, Baixo, Esquerda
     document.body.appendChild(tempElement);
 
     // Função para formatar data
