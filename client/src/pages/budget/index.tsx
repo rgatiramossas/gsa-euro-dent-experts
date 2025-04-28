@@ -509,6 +509,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
           <div className="px-6 pb-6 max-h-[80vh] overflow-y-auto">
             <NewBudgetForm 
               onSuccess={handleNewBudgetSuccess}
+              isInDialog={true}
             />
           </div>
         </DialogContent>
