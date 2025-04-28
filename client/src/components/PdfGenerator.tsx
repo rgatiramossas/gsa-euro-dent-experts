@@ -39,9 +39,9 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
         <!-- Cabeçalho com logo (sem informações da empresa) -->
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 10px;">
           <div style="display: flex; align-items: center;">
-            <div style="font-size: 24px; font-weight: bold; color: #2563eb;">EURO</div>
-            <div style="font-size: 24px; font-weight: bold; color: #000; margin-left: 3px;">DENT</div>
-            <div style="font-size: 10px; margin-left: 3px; margin-top: 3px; color: #000;">EXPERTS</div>
+            <div style="font-size: 20px; font-weight: bold; color: #2563eb;">EURO</div>
+            <div style="font-size: 20px; font-weight: bold; color: #000; margin-left: 3px;">DENT</div>
+            <div style="font-size: 9px; margin-left: 3px; margin-top: 2px; color: #000;">EXPERTS</div>
           </div>
         </div>
         
@@ -104,10 +104,8 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
         </div>
         ` : ''}
         
-        <!-- Rodapé -->
+        <!-- Rodapé - Texto removido conforme solicitado -->
         <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 15px; font-size: 12px; color: #666; text-align: center;">
-          <div>Este orçamento é válido por 15 dias. Após este período, os valores poderão sofrer alterações.</div>
-          <div style="margin-top: 5px;">Emitido em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</div>
         </div>
       </div>
     `;
@@ -287,11 +285,11 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
     // Foto do veículo - inserida diretamente no HTML
     if (partLayout.id === 'PHOTO_PLACEHOLDER') {
       if (vehicleImage) {
-        gridHtml += `<div style="height: 110px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; padding: 0; width: 100%;">
-          <img src="${vehicleImage}" style="width: 100%; height: 110px; object-fit: contain; border-radius: 4px;" alt="Foto do veículo" />
+        gridHtml += `<div style="height: 125px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; padding: 0; width: 100%;">
+          <img src="${vehicleImage}" style="width: 100%; height: 125px; object-fit: contain; border-radius: 4px;" alt="Foto do veículo" />
         </div>`;
       } else {
-        gridHtml += `<div style="height: 110px; border: 1px dashed #ccc; border-radius: 5px; display: flex; align-items: center; justify-content: center; width: 100%;">
+        gridHtml += `<div style="height: 125px; border: 1px dashed #ccc; border-radius: 5px; display: flex; align-items: center; justify-content: center; width: 100%;">
           <div style="color: #999; font-size: 12px; text-align: center;">Foto do veículo</div>
         </div>`;
       }
@@ -316,7 +314,7 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
     const shadowStyle = part.selected ? '0 2px 4px rgba(0,0,0,0.1)' : 'none';
     
     gridHtml += `
-      <div style="padding: 8px; border: ${borderStyle}; border-radius: 5px; background-color: ${backgroundStyle}; box-shadow: ${shadowStyle}; height: 110px; width: 100%; display: flex; flex-direction: column;">
+      <div style="padding: 8px; border: ${borderStyle}; border-radius: 5px; background-color: ${backgroundStyle}; box-shadow: ${shadowStyle}; height: 125px; width: 100%; display: flex; flex-direction: column;">
         <!-- Título da peça centralizado e com altura fixa -->
         <div style="font-weight: bold; font-size: 11px; color: ${titleColor}; text-align: center; height: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; overflow: hidden;">
           ${partLayout.name}
