@@ -1,6 +1,8 @@
 // Script para verificar a tabela budgets e corrigi-la se necessário
-const mysql = require('mysql2/promise');
-require('dotenv').config();
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 async function main() {
   // Conexão com o banco de dados
