@@ -613,53 +613,53 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
   
   return (
     <div className="border rounded-md p-2">
-      <h4 className="font-medium text-xs mb-1">{partDisplayNames[part]}</h4>
+      <h4 className="font-medium text-xs mb-1 text-center">{partDisplayNames[part]}</h4>
       <div className="space-y-1">
-        {/* Tamanho 20 */}
-        <div className="flex items-center justify-between">
-          <span className="w-5 text-xs text-right pr-1">20</span>
+        {/* Tamanho 20mm - Melhorado o alinhamento */}
+        <div className="flex items-center">
+          <span className="w-10 text-xs text-right pr-2">20mm:</span>
           {readOnly ? (
-            <span className="w-12 h-6 text-xs text-right py-1">{damage.size20 || 0}</span>
+            <span className="w-12 h-6 text-xs text-right py-1 border border-gray-200 rounded px-1 ml-auto">{damage.size20 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size20 || 0}
               onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
-              className="w-12 h-6 text-xs px-1 text-right"
+              className="w-14 h-6 text-xs px-1 text-right ml-auto"
               min={0}
               readOnly={readOnly}
             />
           )}
         </div>
         
-        {/* Tamanho 30 */}
-        <div className="flex items-center justify-between">
-          <span className="w-5 text-xs text-right pr-1">30</span>
+        {/* Tamanho 30mm - Melhorado o alinhamento */}
+        <div className="flex items-center">
+          <span className="w-10 text-xs text-right pr-2">30mm:</span>
           {readOnly ? (
-            <span className="w-12 h-6 text-xs text-right py-1">{damage.size30 || 0}</span>
+            <span className="w-12 h-6 text-xs text-right py-1 border border-gray-200 rounded px-1 ml-auto">{damage.size30 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size30 || 0}
               onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
-              className="w-12 h-6 text-xs px-1 text-right"
+              className="w-14 h-6 text-xs px-1 text-right ml-auto"
               min={0}
               readOnly={readOnly}
             />
           )}
         </div>
         
-        {/* Tamanho 40 */}
-        <div className="flex items-center justify-between">
-          <span className="w-5 text-xs text-right pr-1">40</span>
+        {/* Tamanho 40mm - Melhorado o alinhamento */}
+        <div className="flex items-center">
+          <span className="w-10 text-xs text-right pr-2">40mm:</span>
           {readOnly ? (
-            <span className="w-12 h-6 text-xs text-right py-1">{damage.size40 || 0}</span>
+            <span className="w-12 h-6 text-xs text-right py-1 border border-gray-200 rounded px-1 ml-auto">{damage.size40 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size40 || 0}
               onChange={(e) => onChange(part, "size40", parseInt(e.target.value) || 0)}
-              className="w-12 h-6 text-xs px-1 text-right"
+              className="w-14 h-6 text-xs px-1 text-right ml-auto"
               min={0}
               readOnly={readOnly}
             />
