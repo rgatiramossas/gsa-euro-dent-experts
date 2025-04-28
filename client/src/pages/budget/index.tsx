@@ -776,15 +776,15 @@ export default function BudgetPage() {
       if (gridElement && selectedBudget.damaged_parts) {
         try {
           // Parse das peças danificadas
-          let parsedDamagedParts = {};
+          let parsedDamagedParts: Record<string, PartDamage> = {};
           if (typeof selectedBudget.damaged_parts === 'string') {
             parsedDamagedParts = JSON.parse(selectedBudget.damaged_parts);
-          } else {
-            parsedDamagedParts = selectedBudget.damaged_parts;
+          } else if (typeof selectedBudget.damaged_parts === 'object') {
+            parsedDamagedParts = selectedBudget.damaged_parts as Record<string, PartDamage>;
           }
           
           // Nomes amigáveis para as partes
-          const partNames = {
+          const partNames: Record<string, string> = {
             capo: 'Capô',
             teto: 'Teto',
             portaMalasSuperior: 'Porta Malas Superior',
@@ -901,11 +901,26 @@ export default function BudgetPage() {
           heightLeft -= pdfHeight;
         }
         
-        // Salvamos o PDF
-        pdf.save(`Orcamento_${selectedBudget.id}_${selectedBudget.client_name.replace(/[^\w\s]/gi, '')}.pdf`);
+        // Criamos um arquivo blob para garantir compatibilidade com dispositivos móveis
+        const pdfBlob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
         
-        // Limpamos o elemento temporário
-        document.body.removeChild(printDiv);
+        // Criamos um link temporário para iniciar o download
+        const downloadLink = document.createElement('a');
+        downloadLink.href = blobUrl;
+        downloadLink.download = `Orcamento_${selectedBudget.id}_${selectedBudget.client_name.replace(/[^\w\s]/gi, '')}.pdf`;
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+        
+        // Iniciamos o download
+        downloadLink.click();
+        
+        // Limpamos após um pequeno atraso para garantir que o download seja iniciado
+        setTimeout(() => {
+          URL.revokeObjectURL(blobUrl);
+          document.body.removeChild(downloadLink);
+          document.body.removeChild(printDiv);
+        }, 100);
         
         toast({
           title: "PDF gerado com sucesso!",
