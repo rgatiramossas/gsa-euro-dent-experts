@@ -66,6 +66,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showNewBudgetDialog, setShowNewBudgetDialog] = useState(false);
   const [filteredBudgets, setFilteredBudgets] = useState<Budget[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fetch budgets data
   const {
@@ -349,7 +350,12 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
       </Card>
 
       {/* Budget Details Dialog */}
-      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+      <Dialog 
+        open={showDetailsDialog} 
+        onOpenChange={(open) => {
+          setShowDetailsDialog(open);
+          if (!open) setIsEditing(false);
+        }}>
         <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>Detalhes do Orçamento #{selectedBudget?.id}</DialogTitle>
@@ -362,7 +368,17 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
             <div className="px-6 pb-6 max-h-[80vh] overflow-y-auto">
               <NewBudgetForm
                 initialData={selectedBudget}
-                readOnly={true}
+                readOnly={!isEditing}
+                onSuccess={(data) => {
+                  toast({
+                    title: "Orçamento atualizado",
+                    description: "O orçamento foi atualizado com sucesso.",
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
+                  setIsEditing(false);
+                  setShowDetailsDialog(false);
+                }}
+                isInDialog={true}
               />
               
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:justify-between mt-6">
@@ -373,16 +389,29 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                     <Printer className="h-4 w-4 mr-2" />
                     Imprimir
                   </Button>
-                  <Button variant="secondary" asChild>
-                    <Link href={`/budgets/${selectedBudget.id}/edit`}>
+                  {isEditing ? (
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => setIsEditing(false)}
+                    >
+                      Cancelar Edição
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="secondary" 
+                      onClick={() => setIsEditing(true)}
+                    >
                       <Edit className="h-4 w-4 mr-2" />
                       Editar
-                    </Link>
-                  </Button>
+                    </Button>
+                  )}
                 </div>
                 <Button 
                   variant="outline" 
-                  onClick={() => setShowDetailsDialog(false)}
+                  onClick={() => {
+                    setShowDetailsDialog(false);
+                    setIsEditing(false);
+                  }}
                 >
                   Fechar
                 </Button>
