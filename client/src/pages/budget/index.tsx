@@ -1069,10 +1069,10 @@ export default function BudgetPage() {
                   initialDamage={damagedParts["portaDianteiraEsquerda"]} />
                 
                 <div className="flex justify-center items-center p-2 border rounded-md">
-                  {photoUrl ? (
+                  {selectedBudget?.photo_url ? (
                     <div className="w-full h-full flex flex-col items-center justify-center min-h-[135px]">
                       <img 
-                        src={photoUrl} 
+                        src={selectedBudget.photo_url} 
                         alt="Foto do veículo" 
                         className="max-h-[135px] max-w-full object-contain"
                       />
