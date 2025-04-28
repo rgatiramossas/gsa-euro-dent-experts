@@ -978,7 +978,7 @@ export default function BudgetPage() {
             input20mm.style.display = 'flex';
             input20mm.style.justifyContent = 'center';
             input20mm.style.alignItems = 'center';
-            input20mm.style.paddingTop = '-10px';
+            input20mm.style.marginTop = '-6px';
             input20mm.style.textAlign = 'center';
             input20mm.style.fontSize = '10px';
             input20mm.style.backgroundColor = part.diameter20 > 0 ? '#f4f4f4' : 'white';
@@ -1014,7 +1014,7 @@ export default function BudgetPage() {
             input30mm.style.display = 'flex';
             input30mm.style.justifyContent = 'center';
             input30mm.style.alignItems = 'center';
-            input30mm.style.paddingTop = '-10px';
+            input30mm.style.marginTop = '-6px';
             input30mm.style.textAlign = 'center';
             input30mm.style.fontSize = '10px';
             input30mm.style.backgroundColor = part.diameter30 > 0 ? '#f4f4f4' : 'white';
@@ -1050,7 +1050,7 @@ export default function BudgetPage() {
             input40mm.style.display = 'flex';
             input40mm.style.justifyContent = 'center';
             input40mm.style.alignItems = 'center';
-            input40mm.style.paddingTop = '-10px';
+            input40mm.style.marginTop = '-6px';
             input40mm.style.textAlign = 'center';
             input40mm.style.fontSize = '10px';
             input40mm.style.backgroundColor = part.diameter40 > 0 ? '#f4f4f4' : 'white';
@@ -1103,7 +1103,7 @@ export default function BudgetPage() {
             labelA.style.color = '#ff0000';
             labelA.style.fontWeight = 'bold';
             labelA.style.fontSize = '9px';
-            labelA.style.paddingTop = '-10px';
+            labelA.style.marginTop = '-6px';
             labelA.innerText = 'A';
             optionADiv.appendChild(labelA);
             
@@ -1140,7 +1140,7 @@ export default function BudgetPage() {
             labelK.style.color = '#0000ff';
             labelK.style.fontWeight = 'bold';
             labelK.style.fontSize = '9px';
-            labelK.style.paddingTop = '-10px';
+            labelK.style.marginTop = '-6px';
             labelK.innerText = 'K';
             optionKDiv.appendChild(labelK);
             
@@ -1177,7 +1177,7 @@ export default function BudgetPage() {
             labelP.style.color = '#00aa00';
             labelP.style.fontWeight = 'bold';
             labelP.style.fontSize = '10px';
-            labelP.style.paddingTop = '-10px';
+            labelP.style.marginTop = '-6px';
             labelP.innerText = 'P';
             optionPDiv.appendChild(labelP);
             
