@@ -127,8 +127,8 @@ export const generateSimplePdf = async (budget: Budget): Promise<void> => {
         const damage = damageData[part] || {};
         
         return `
-          <div style="border: 1px solid #ddd; border-radius: 5px; padding: 8px;">
-            <h4 style="font-size: 11px; font-weight: bold; margin-bottom: 5px; text-align: center;">${partDisplayNames[part]}</h4>
+          <div style="border: 1px solid #ddd; border-radius: 5px; padding: 6px;">
+            <h4 style="font-size: 11px; font-weight: bold; margin-bottom: 4px; text-align: center;">${partDisplayNames[part]}</h4>
             <div>
               <!-- Tamanho 20mm -->
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -176,7 +176,7 @@ export const generateSimplePdf = async (budget: Budget): Promise<void> => {
       
       // Construir o grid
       damageParts += `
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-top: 10px;">
           <!-- Primeira linha: Para-lama Esquerdo - Capô - Para-lama Direito -->
           ${renderDamagePart("para_lama_esquerdo")}
           ${renderDamagePart("capo")}
@@ -221,35 +221,35 @@ export const generateSimplePdf = async (budget: Budget): Promise<void> => {
         <div style="height: 2px; background-color: #2563EB; width: 100%; margin-bottom: 15px;"></div>
         
         <!-- Conteúdo principal -->
-        <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
           <!-- Barra azul com título ORÇAMENTO e número -->
-          <div style="background-color: #2563EB; color: white; padding: 8px 10px; display: flex; justify-content: space-between; border-radius: 6px;">
+          <div style="background-color: #2563EB; color: white; padding: 6px 10px; display: flex; justify-content: space-between; border-radius: 6px;">
             <div style="font-size: 15px; font-weight: bold;">ORÇAMENTO</div>
             <div style="font-size: 15px; font-weight: bold;">#${budget.id}</div>
           </div>
           
           <!-- Informações do cliente e veículo -->
-          <div style="display: flex; gap: 20px;">
+          <div style="display: flex; gap: 10px;">
             <!-- Bloco de informações do cliente -->
-            <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
-              <div style="font-weight: bold; margin-bottom: 15px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO CLIENTE</div>
-              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Nome:</span> ${budget.client_name}</div>
-              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Data:</span> ${formatDate(budget.date)}</div>
+            <div style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
+              <div style="font-weight: bold; margin-bottom: 12px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO CLIENTE</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Nome:</span> ${budget.client_name}</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Data:</span> ${formatDate(budget.date)}</div>
             </div>
             
             <!-- Bloco de informações do veículo -->
-            <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
-              <div style="font-weight: bold; margin-bottom: 15px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO VEÍCULO</div>
-              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Veículo:</span> ${budget.vehicle_info}</div>
-              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Placa:</span> ${budget.plate || '---'}</div>
-              <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Chassi:</span> ${budget.chassis_number || '---'}</div>
+            <div style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
+              <div style="font-weight: bold; margin-bottom: 12px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO VEÍCULO</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Veículo:</span> ${budget.vehicle_info}</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Placa:</span> ${budget.plate || '---'}</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Chassi:</span> ${budget.chassis_number || '---'}</div>
             </div>
           </div>
         </div>
         
         <!-- Seção de Danos do Veículo -->
-        <div style="margin-top: 10px; margin-bottom: 20px;">
-          <div style="background-color: #2563EB; color: white; padding: 8px 10px; border-radius: 6px; margin-bottom: 15px;">
+        <div style="margin-top: 5px; margin-bottom: 15px;">
+          <div style="background-color: #2563EB; color: white; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px;">
             <div style="font-size: 15px; font-weight: bold;">DANOS DO VEÍCULO</div>
           </div>
           
