@@ -105,6 +105,8 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
+{/* As páginas de Novo e Editar orçamento serão implementadas em uma etapa posterior */}
+      
       {/* Dashboard específico para gestor */}
       <Route path="/manager-dashboard">
         <RequireAuth>
