@@ -25,12 +25,14 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { generatePdf } from "@/components/PdfGenerator";
-import { Loader2, Search, Printer, FileText, Trash2 } from "lucide-react";
+import { Loader2, Search, Printer, FileText, Trash2, Plus, Edit, FileEdit } from "lucide-react";
+import { Link } from "wouter";
 
 // Define a type for our budget data
 interface Budget {
@@ -183,11 +185,19 @@ const BudgetPage: React.FC = () => {
   return (
     <div className="container mx-auto p-4 sm:p-6">
       <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-2xl">Gerenciamento de Orçamentos</CardTitle>
-          <CardDescription>
-            Visualize e gerencie todos os orçamentos
-          </CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div>
+            <CardTitle className="text-2xl">Gerenciamento de Orçamentos</CardTitle>
+            <CardDescription>
+              Visualize e gerencie todos os orçamentos
+            </CardDescription>
+          </div>
+          <Button className="mt-4 sm:mt-0" asChild>
+            <Link href="/budgets/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Orçamento
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="mb-6 relative">
@@ -239,6 +249,16 @@ const BudgetPage: React.FC = () => {
                             title="Ver detalhes"
                           >
                             <FileText className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            title="Editar orçamento"
+                            asChild
+                          >
+                            <Link href={`/budgets/${budget.id}/edit`}>
+                              <FileEdit className="h-4 w-4" />
+                            </Link>
                           </Button>
                           <Button
                             variant="outline"
@@ -325,6 +345,20 @@ const BudgetPage: React.FC = () => {
                 </div>
               </div>
               
+              {/* Grid de Danos */}
+              {selectedBudget.damaged_parts && (
+                <div>
+                  <Label className="block mb-2">Mapa de Danos</Label>
+                  <div className="border rounded-md p-4 bg-gray-50">
+                    <div 
+                      dangerouslySetInnerHTML={{ 
+                        __html: generateDamagedPartsGrid(selectedBudget.damaged_parts)
+                      }} 
+                    />
+                  </div>
+                </div>
+              )}
+              
               {/* Observações */}
               <div>
                 <Label>Observações</Label>
@@ -338,19 +372,30 @@ const BudgetPage: React.FC = () => {
           )}
 
           <DialogFooter>
-            <Button
-              onClick={() => selectedBudget && handlePrintBudget(selectedBudget)}
-              className="mr-2"
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              Imprimir
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowDetailsDialog(false)}
-            >
-              Fechar
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:justify-between">
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => selectedBudget && handlePrintBudget(selectedBudget)}
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Imprimir
+                </Button>
+                {selectedBudget && (
+                  <Button variant="secondary" asChild>
+                    <Link href={`/budgets/${selectedBudget.id}/edit`}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Editar
+                    </Link>
+                  </Button>
+                )}
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDetailsDialog(false)}
+              >
+                Fechar
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -21,8 +21,6 @@ interface PdfGeneratorProps {
 }
 
 export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) => {
-  const toast = useToast();
-  
   try {
     // Criar o elemento que será transformado em PDF
     const printDiv = document.createElement('div');
@@ -217,11 +215,6 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
         }, 200);
         
         console.log(`Download do arquivo ${fileName} iniciado`);
-        
-        toast.toast({
-          title: "PDF gerado com sucesso!",
-          description: "O download do arquivo foi iniciado.",
-        });
       } catch (error) {
         console.error("Erro ao gerar o PDF para download:", error);
         pdf.save(`Orcamento_${budgetData.id}_${budgetData.client_name.replace(/[^\w\s]/gi, '')}.pdf`);
@@ -234,16 +227,12 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
     }
   } catch (error) {
     console.error("Erro geral na geração do PDF:", error);
-    toast.toast({
-      title: "Erro ao gerar PDF",
-      description: "Ocorreu um erro ao gerar o documento. Tente novamente.",
-      variant: "destructive",
-    });
+    throw error;
   }
 };
 
 // Função para gerar o grid de peças danificadas de forma elegante
-function generateDamagedPartsGrid(damagedParts: any): string {
+export function generateDamagedPartsGrid(damagedParts: any): string {
   // Criar o grid completo de layout do carro
   // Definir o layout fixo do grid para representar o carro
   const gridLayout = [
