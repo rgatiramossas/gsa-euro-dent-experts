@@ -720,15 +720,15 @@ export default function BudgetPage() {
       headerDiv.style.marginBottom = '15px';
       headerDiv.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-          <div>
-            <div style="color: #0047AB; font-weight: bold; font-size: 14px;">Orçamento #${selectedBudget.id}</div>
+          <div style="margin-bottom: 8px;">
+            <div style="color: #0047AB; font-weight: bold; font-size: 15px;">Orçamento #${selectedBudget.id}</div>
             <div style="color: #0047AB; font-size: 12px;">Euro Dent Experts</div>
           </div>
-          <div style="text-align: right; font-size: 11px; color: #666;">
+          <div style="text-align: right; font-size: 10px; color: #666;">
             Data de emissão: ${formatDisplayDate(new Date().toISOString())}
           </div>
         </div>
-        <div style="height: 1px; background-color: #0047AB; margin: 8px 0;"></div>
+        <div style="height: 1px; background-color: #0047AB; margin: 4px 0 10px 0;"></div>
       `;
       printDiv.appendChild(headerDiv);
       
@@ -736,32 +736,26 @@ export default function BudgetPage() {
       const clientInfoDiv = document.createElement('div');
       clientInfoDiv.style.marginBottom = '15px';
       clientInfoDiv.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">Detalhes do orçamento para:</div>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+        <div style="font-weight: bold; margin-bottom: 8px; font-size: 12px;">Detalhes do orçamento para:</div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
           <tr>
-            <td style="width: 50%; padding-right: 10px;">
-              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">DATA</div>
-              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${formatDisplayDate(selectedBudget.date)}</div>
+            <td style="width: 49%; padding-right: 5px; vertical-align: top;">
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">DATA</div>
+              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px; margin-bottom: 8px;">${formatDisplayDate(selectedBudget.date)}</div>
+              
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">VEÍCULO</div>
+              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px; margin-bottom: 8px;">${selectedBudget.vehicle_info}</div>
+              
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">CHASSI</div>
+              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</div>
             </td>
-            <td style="width: 50%; padding-left: 10px;">
-              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">CLIENTE</div>
-              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${selectedBudget.client_name}</div>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding-top: 10px; padding-right: 10px;">
-              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">VEÍCULO</div>
-              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${selectedBudget.vehicle_info}</div>
-            </td>
-            <td style="padding-top: 10px; padding-left: 10px;">
-              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">PLACA</div>
-              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${selectedBudget.plate || '-'}</div>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" style="padding-top: 10px;">
-              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">CHASSI</div>
-              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</div>
+            <td style="width: 2%;"></td>
+            <td style="width: 49%; padding-left: 5px; vertical-align: top;">
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">CLIENTE</div>
+              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px; margin-bottom: 8px;">${selectedBudget.client_name}</div>
+              
+              <div style="color: #0047AB; font-weight: bold; font-size: 10px; margin-bottom: 2px;">PLACA</div>
+              <div style="border: 1px solid #ddd; padding: 4px 6px; background-color: #ffffff; font-size: 11px;">${selectedBudget.plate || '-'}</div>
             </td>
           </tr>
         </table>
@@ -778,15 +772,15 @@ export default function BudgetPage() {
           </svg>
           <span style="color: #0047AB; font-weight: bold;">Danos do Veículo</span>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-          <!-- Grid de peças danificadas, ocupa 2/3 do espaço -->
-          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; grid-column: span 1;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px;">
+          <!-- Grid de peças danificadas, ocupa o lado esquerdo -->
+          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; grid-column: span 1;">
           </div>
           
-          <!-- Área para foto do veículo, ocupa 1/3 do espaço -->
-          <div style="border: 1px solid #ddd; grid-column: span 1; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 200px; background-color: #f5f5f5; position: relative; overflow: hidden;">
+          <!-- Área para foto do veículo, ocupa o lado direito -->
+          <div style="border: 1px solid #ddd; grid-column: span 1; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 470px; background-color: #ffffff; position: relative; overflow: hidden;">
             ${selectedBudget.photo_url ? 
-              `<img src="${selectedBudget.photo_url}" alt="Foto do Veículo" style="max-width: 100%; max-height: 200px; object-fit: contain;">` : 
+              `<img src="${selectedBudget.photo_url}" alt="Foto do Veículo" style="max-width: 100%; height: 100%; object-fit: contain;">` : 
               `<div style="text-align: center; color: #999; padding: 20px;">
                 <div style="font-size: 24px; margin-bottom: 10px;">🚗</div>
                 <div>Sem foto do veículo</div>
@@ -795,20 +789,13 @@ export default function BudgetPage() {
           </div>
         </div>
         
-        <div style="margin-top: 10px; padding: 5px 0; font-size: 11px; text-align: center; border-top: 1px solid #eee; padding-top: 10px; display: flex; justify-content: center; align-items: center;">
-          <span style="color: #333; font-weight: bold; margin-right: 10px;">Materiais Especiais</span>
-          <div style="display: inline-flex; align-items: center; margin-right: 12px;">
-            <div style="width: 14px; height: 14px; background-color: #ff0000; border-radius: 50%; margin-right: 5px; display: flex; justify-content: center; align-items: center; color: white; font-size: 10px; font-weight: bold;">A</div>
-            <span>ALUMÍNIO</span>
-          </div>
-          <div style="display: inline-flex; align-items: center; margin-right: 12px;">
-            <div style="width: 14px; height: 14px; background-color: #0000ff; border-radius: 50%; margin-right: 5px; display: flex; justify-content: center; align-items: center; color: white; font-size: 10px; font-weight: bold;">K</div>
-            <span>COLA</span>
-          </div>
-          <div style="display: inline-flex; align-items: center;">
-            <div style="width: 14px; height: 14px; background-color: #00aa00; border-radius: 50%; margin-right: 5px; display: flex; justify-content: center; align-items: center; color: white; font-size: 10px; font-weight: bold;">P</div>
-            <span>PINTURA</span>
-          </div>
+        <div style="margin-top: 10px; padding: 5px 0; font-size: 11px; text-align: center; padding-top: 10px;">
+          <span style="font-weight: bold; margin-right: 12px;">Materiais Especiais</span>
+          <span style="color: #ff0000; font-weight: bold;">A</span> = ALUMÍNIO
+          &nbsp;&nbsp;&nbsp;
+          <span style="color: #0000ff; font-weight: bold;">K</span> = COLA
+          &nbsp;&nbsp;&nbsp;
+          <span style="color: #00aa00; font-weight: bold;">P</span> = PINTURA
         </div>
       `;
       printDiv.appendChild(damagesDiv);
@@ -834,10 +821,9 @@ export default function BudgetPage() {
       // Rodapé exatamente como na imagem de referência
       const footerDiv = document.createElement('div');
       footerDiv.style.textAlign = 'center';
-      footerDiv.style.fontSize = '9px';
+      footerDiv.style.fontSize = '8px';
       footerDiv.style.color = '#666';
-      footerDiv.style.marginTop = '20px';
-      footerDiv.style.borderTop = '1px solid #eee';
+      footerDiv.style.marginTop = '30px';
       footerDiv.style.paddingTop = '5px';
       footerDiv.innerHTML = `
         Orçamento #${selectedBudget.id} · Euro Dent Experts · Gerado em ${formatDisplayDate(new Date().toISOString())}
@@ -1029,22 +1015,29 @@ export default function BudgetPage() {
             optionADiv.style.alignItems = 'center';
             
             const checkboxA = document.createElement('div');
-            checkboxA.style.width = '12px';
-            checkboxA.style.height = '12px';
+            checkboxA.style.width = '10px';
+            checkboxA.style.height = '10px';
             checkboxA.style.border = '1px solid #ccc';
-            checkboxA.style.backgroundColor = part.optionA ? '#ff8888' : 'white';
-            checkboxA.style.marginRight = '2px';
-            checkboxA.style.display = 'flex';
-            checkboxA.style.justifyContent = 'center';
-            checkboxA.style.alignItems = 'center';
-            checkboxA.style.fontSize = '8px';
-            checkboxA.innerHTML = part.optionA ? '✓' : '';
+            checkboxA.style.marginRight = '3px';
+            checkboxA.style.display = 'inline-block';
+            checkboxA.style.position = 'relative';
+            if (part.optionA) {
+              checkboxA.style.backgroundColor = '#f8f8f8';
+              const check = document.createElement('div');
+              check.innerHTML = '✓';
+              check.style.position = 'absolute';
+              check.style.top = '-2px';
+              check.style.left = '1px';
+              check.style.fontSize = '8px';
+              check.style.color = '#333';
+              checkboxA.appendChild(check);
+            }
             optionADiv.appendChild(checkboxA);
             
             const labelA = document.createElement('span');
             labelA.style.color = '#ff0000';
             labelA.style.fontWeight = 'bold';
-            labelA.style.fontSize = '10px';
+            labelA.style.fontSize = '9px';
             labelA.innerText = 'A';
             optionADiv.appendChild(labelA);
             
@@ -1056,22 +1049,29 @@ export default function BudgetPage() {
             optionKDiv.style.alignItems = 'center';
             
             const checkboxK = document.createElement('div');
-            checkboxK.style.width = '12px';
-            checkboxK.style.height = '12px';
+            checkboxK.style.width = '10px';
+            checkboxK.style.height = '10px';
             checkboxK.style.border = '1px solid #ccc';
-            checkboxK.style.backgroundColor = part.optionK ? '#8888ff' : 'white';
-            checkboxK.style.marginRight = '2px';
-            checkboxK.style.display = 'flex';
-            checkboxK.style.justifyContent = 'center';
-            checkboxK.style.alignItems = 'center';
-            checkboxK.style.fontSize = '8px';
-            checkboxK.innerHTML = part.optionK ? '✓' : '';
+            checkboxK.style.marginRight = '3px';
+            checkboxK.style.display = 'inline-block';
+            checkboxK.style.position = 'relative';
+            if (part.optionK) {
+              checkboxK.style.backgroundColor = '#f8f8f8';
+              const check = document.createElement('div');
+              check.innerHTML = '✓';
+              check.style.position = 'absolute';
+              check.style.top = '-2px';
+              check.style.left = '1px';
+              check.style.fontSize = '8px';
+              check.style.color = '#333';
+              checkboxK.appendChild(check);
+            }
             optionKDiv.appendChild(checkboxK);
             
             const labelK = document.createElement('span');
             labelK.style.color = '#0000ff';
             labelK.style.fontWeight = 'bold';
-            labelK.style.fontSize = '10px';
+            labelK.style.fontSize = '9px';
             labelK.innerText = 'K';
             optionKDiv.appendChild(labelK);
             
@@ -1083,16 +1083,23 @@ export default function BudgetPage() {
             optionPDiv.style.alignItems = 'center';
             
             const checkboxP = document.createElement('div');
-            checkboxP.style.width = '12px';
-            checkboxP.style.height = '12px';
+            checkboxP.style.width = '10px';
+            checkboxP.style.height = '10px';
             checkboxP.style.border = '1px solid #ccc';
-            checkboxP.style.backgroundColor = part.optionP ? '#88ff88' : 'white';
-            checkboxP.style.marginRight = '2px';
-            checkboxP.style.display = 'flex';
-            checkboxP.style.justifyContent = 'center';
-            checkboxP.style.alignItems = 'center';
-            checkboxP.style.fontSize = '8px';
-            checkboxP.innerHTML = part.optionP ? '✓' : '';
+            checkboxP.style.marginRight = '3px';
+            checkboxP.style.display = 'inline-block';
+            checkboxP.style.position = 'relative';
+            if (part.optionP) {
+              checkboxP.style.backgroundColor = '#f8f8f8';
+              const check = document.createElement('div');
+              check.innerHTML = '✓';
+              check.style.position = 'absolute';
+              check.style.top = '-2px';
+              check.style.left = '1px';
+              check.style.fontSize = '8px';
+              check.style.color = '#333';
+              checkboxP.appendChild(check);
+            }
             optionPDiv.appendChild(checkboxP);
             
             const labelP = document.createElement('span');
