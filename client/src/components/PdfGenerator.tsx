@@ -325,46 +325,46 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
         <div style="display: flex; flex-direction: column; gap: 2px;">
           <!-- Sempre mostrar todos os diâmetros com larguras fixas para melhor alinhamento -->
           <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 3px;">
-            <!-- 20mm (sempre visível) - com padding negativo para o label e positivo para o valor -->
-            <div style="display: flex; align-items: center; justify-content: space-between; height: 16px;">
-              <span style="font-size: 10px; width: 25px; text-align: right; margin-right: -2px;">20mm:</span>
-              <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter20 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px; padding: 0 2px;">${part.diameter20 > 0 ? part.diameter20 : ''}</span>
+            <!-- 20mm -->
+            <div style="display: flex; align-items: center; height: 16px;">
+              <span style="font-size: 10px; width: 28px; text-align: right; padding-right: 8px;">20mm:</span>
+              <span style="font-size: 10px; width: 30px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter20 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px;">${part.diameter20 > 0 ? part.diameter20 : ''}</span>
             </div>
             
-            <!-- 30mm (sempre visível) - com padding negativo para o label e positivo para o valor -->
-            <div style="display: flex; align-items: center; justify-content: space-between; height: 16px;">
-              <span style="font-size: 10px; width: 25px; text-align: right; margin-right: -2px;">30mm:</span>
-              <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter30 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px; padding: 0 2px;">${part.diameter30 > 0 ? part.diameter30 : ''}</span>
+            <!-- 30mm -->
+            <div style="display: flex; align-items: center; height: 16px;">
+              <span style="font-size: 10px; width: 28px; text-align: right; padding-right: 8px;">30mm:</span>
+              <span style="font-size: 10px; width: 30px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter30 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px;">${part.diameter30 > 0 ? part.diameter30 : ''}</span>
             </div>
             
-            <!-- 40mm (sempre visível) - com padding negativo para o label e positivo para o valor -->
-            <div style="display: flex; align-items: center; justify-content: space-between; height: 16px;">
-              <span style="font-size: 10px; width: 25px; text-align: right; margin-right: -2px;">40mm:</span>
-              <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter40 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px; padding: 0 2px;">${part.diameter40 > 0 ? part.diameter40 : ''}</span>
+            <!-- 40mm -->
+            <div style="display: flex; align-items: center; height: 16px;">
+              <span style="font-size: 10px; width: 28px; text-align: right; padding-right: 8px;">40mm:</span>
+              <span style="font-size: 10px; width: 30px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter40 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px;">${part.diameter40 > 0 ? part.diameter40 : ''}</span>
             </div>
           </div>
           
-          <!-- Opções A, K, P (sempre visíveis) com margem negativa para melhor alinhamento -->
-          <div style="display: flex; justify-content: space-around; padding-top: 2px; border-top: 1px solid #eee; margin: 0 -5px;">
-            <div style="display: flex; flex-direction: column; align-items: center; width: 12px; justify-content: center;">
-              <div style="width: 9px; height: 9px; border: 1px solid #ccc; display: inline-block; position: relative; border-radius: 2px; background-color: ${part.optionA ? '#f8f8f8' : 'white'}; margin-bottom: 1px;">
-                ${part.optionA ? '<div style="position: absolute; top: -2px; left: 1px; font-size: 7px; color: #333;">✓</div>' : ''}
+          <!-- Opções A, K, P -->
+          <div style="display: flex; justify-content: space-between; padding-top: 2px; border-top: 1px solid #eee; margin: 0 5px;">
+            <div style="display: flex; align-items: center; width: 16px; justify-content: center;">
+              <div style="width: 8px; height: 8px; border: 1px solid #ccc; margin-right: 2px; display: inline-block; position: relative; border-radius: 2px; background-color: ${part.optionA ? '#f8f8f8' : 'white'};">
+                ${part.optionA ? '<div style="position: absolute; top: -2px; left: 0px; font-size: 6px; color: #333;">✓</div>' : ''}
               </div>
-              <span style="color: red; font-weight: bold; font-size: 9px;">A</span>
+              <span style="color: red; font-weight: bold; font-size: 8px;">A</span>
             </div>
             
-            <div style="display: flex; flex-direction: column; align-items: center; width: 12px; justify-content: center;">
-              <div style="width: 9px; height: 9px; border: 1px solid #ccc; display: inline-block; position: relative; border-radius: 2px; background-color: ${part.optionK ? '#f8f8f8' : 'white'}; margin-bottom: 1px;">
-                ${part.optionK ? '<div style="position: absolute; top: -2px; left: 1px; font-size: 7px; color: #333;">✓</div>' : ''}
+            <div style="display: flex; align-items: center; width: 16px; justify-content: center;">
+              <div style="width: 8px; height: 8px; border: 1px solid #ccc; margin-right: 2px; display: inline-block; position: relative; border-radius: 2px; background-color: ${part.optionK ? '#f8f8f8' : 'white'};">
+                ${part.optionK ? '<div style="position: absolute; top: -2px; left: 0px; font-size: 6px; color: #333;">✓</div>' : ''}
               </div>
-              <span style="color: blue; font-weight: bold; font-size: 9px;">K</span>
+              <span style="color: blue; font-weight: bold; font-size: 8px;">K</span>
             </div>
             
-            <div style="display: flex; flex-direction: column; align-items: center; width: 12px; justify-content: center;">
-              <div style="width: 9px; height: 9px; border: 1px solid #ccc; display: inline-block; position: relative; border-radius: 2px; background-color: ${part.optionP ? '#f8f8f8' : 'white'}; margin-bottom: 1px;">
-                ${part.optionP ? '<div style="position: absolute; top: -2px; left: 1px; font-size: 7px; color: #333;">✓</div>' : ''}
+            <div style="display: flex; align-items: center; width: 16px; justify-content: center;">
+              <div style="width: 8px; height: 8px; border: 1px solid #ccc; margin-right: 2px; display: inline-block; position: relative; border-radius: 2px; background-color: ${part.optionP ? '#f8f8f8' : 'white'};">
+                ${part.optionP ? '<div style="position: absolute; top: -2px; left: 0px; font-size: 6px; color: #333;">✓</div>' : ''}
               </div>
-              <span style="color: green; font-weight: bold; font-size: 9px;">P</span>
+              <span style="color: green; font-weight: bold; font-size: 8px;">P</span>
             </div>
           </div>
         </div>
