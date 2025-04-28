@@ -272,7 +272,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   // Renderizar o grid de danos do veículo
   const renderDamageGrid = () => {
     return (
-      <div className="grid grid-cols-3 gap-1 mt-4 max-w-5xl mx-auto">
+      <div className="grid grid-cols-3 gap-2 mt-4 max-w-6xl mx-auto">
         {/* Primeira linha: Para-lama Esquerdo - Capô - Para-lama Direito */}
         <DamagePart part="para_lama_esquerdo" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
         <DamagePart part="capo" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
@@ -285,7 +285,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
 
         {/* Terceira linha: Porta Dianteira Esquerda - Espaço para Imagem - Porta Dianteira Direita */}
         <DamagePart part="porta_dianteira_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
-        <div className="p-1 border rounded-md bg-gray-50 flex items-center justify-center">
+        <div className="p-3 border rounded-md bg-gray-50 flex items-center justify-center">
           <div className="text-center text-gray-400 text-xs">Veículo</div>
         </div>
         <DamagePart part="porta_dianteira_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
@@ -543,20 +543,20 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
   const damage = damages[part] || {};
   
   return (
-    <div className="border rounded-md p-0.5">
-      <h4 className="font-medium text-[9px] text-center mb-0.5">{partDisplayNames[part]}</h4>
-      <div className="space-y-0">
+    <div className="border rounded-md p-2">
+      <h4 className="font-medium text-xs mb-1">{partDisplayNames[part]}</h4>
+      <div className="space-y-1">
         {/* Tamanho 20 */}
-        <div className="flex items-center justify-between space-x-0.5">
-          <span className="w-3 text-[10px] text-right">20</span>
+        <div className="flex items-center justify-between">
+          <span className="w-5 text-xs text-right pr-1">20</span>
           {readOnly ? (
-            <span className="w-8 h-4 text-[10px] text-right">{damage.size20 || 0}</span>
+            <span className="w-12 h-6 text-xs text-right py-1">{damage.size20 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size20 || 0}
               onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
-              className="w-8 h-4 text-[10px] px-0.5 py-0 text-right"
+              className="w-12 h-6 text-xs px-1 text-right"
               min={0}
               readOnly={readOnly}
             />
@@ -564,16 +564,16 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
         </div>
         
         {/* Tamanho 30 */}
-        <div className="flex items-center justify-between space-x-0.5">
-          <span className="w-3 text-[10px] text-right">30</span>
+        <div className="flex items-center justify-between">
+          <span className="w-5 text-xs text-right pr-1">30</span>
           {readOnly ? (
-            <span className="w-8 h-4 text-[10px] text-right">{damage.size30 || 0}</span>
+            <span className="w-12 h-6 text-xs text-right py-1">{damage.size30 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size30 || 0}
               onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
-              className="w-8 h-4 text-[10px] px-0.5 py-0 text-right"
+              className="w-12 h-6 text-xs px-1 text-right"
               min={0}
               readOnly={readOnly}
             />
@@ -581,16 +581,16 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
         </div>
         
         {/* Tamanho 40 */}
-        <div className="flex items-center justify-between space-x-0.5">
-          <span className="w-3 text-[10px] text-right">40</span>
+        <div className="flex items-center justify-between">
+          <span className="w-5 text-xs text-right pr-1">40</span>
           {readOnly ? (
-            <span className="w-8 h-4 text-[10px] text-right">{damage.size40 || 0}</span>
+            <span className="w-12 h-6 text-xs text-right py-1">{damage.size40 || 0}</span>
           ) : (
             <Input
               type="number"
               value={damage.size40 || 0}
               onChange={(e) => onChange(part, "size40", parseInt(e.target.value) || 0)}
-              className="w-8 h-4 text-[10px] px-0.5 py-0 text-right"
+              className="w-12 h-6 text-xs px-1 text-right"
               min={0}
               readOnly={readOnly}
             />
@@ -598,36 +598,36 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
         </div>
         
         {/* Checkboxes para materiais especiais */}
-        <div className="flex justify-between px-1 mt-0.5 border-t pt-0.5 border-gray-100">
+        <div className="flex justify-start gap-3 mt-2">
           <div className="flex items-center">
             <Checkbox 
               id={`${part}-aluminum`}
               checked={damage.isAluminum || false}
               onCheckedChange={(checked) => !readOnly && onChange(part, "isAluminum", !!checked)}
-              className="h-2 w-2"
+              className="h-3 w-3"
               disabled={readOnly}
             />
-            <label htmlFor={`${part}-aluminum`} className="ml-0.5 text-[9px]">A</label>
+            <label htmlFor={`${part}-aluminum`} className="ml-1 text-xs">A</label>
           </div>
           <div className="flex items-center">
             <Checkbox 
               id={`${part}-glue`}
               checked={damage.isGlue || false}
               onCheckedChange={(checked) => !readOnly && onChange(part, "isGlue", !!checked)}
-              className="h-2 w-2"
+              className="h-3 w-3"
               disabled={readOnly}
             />
-            <label htmlFor={`${part}-glue`} className="ml-0.5 text-[9px]">K</label>
+            <label htmlFor={`${part}-glue`} className="ml-1 text-xs">K</label>
           </div>
           <div className="flex items-center">
             <Checkbox 
               id={`${part}-paint`}
               checked={damage.isPaint || false}
               onCheckedChange={(checked) => !readOnly && onChange(part, "isPaint", !!checked)}
-              className="h-2 w-2"
+              className="h-3 w-3"
               disabled={readOnly}
             />
-            <label htmlFor={`${part}-paint`} className="ml-0.5 text-[9px]">P</label>
+            <label htmlFor={`${part}-paint`} className="ml-1 text-xs">P</label>
           </div>
         </div>
       </div>
