@@ -939,14 +939,15 @@ export default function BudgetPage() {
             partDiv.style.border = '1px solid #e0e0e0';
             partDiv.style.boxSizing = 'border-box'; 
             partDiv.style.margin = '0';
-            partDiv.style.padding = '2px 8px 6px 8px'; 
+            partDiv.style.padding = '4px 8px 6px 8px'; 
             partDiv.style.fontSize = '10px';
             partDiv.style.display = 'flex';
             partDiv.style.flexDirection = 'column';
             partDiv.style.justifyContent = 'flex-start'; 
-            partDiv.style.minHeight = '85px';
-            partDiv.style.borderRadius = '3px';
-            partDiv.style.boxShadow = part.selected ? '0 1px 3px rgba(0,0,0,0.05), 0 0 0 1px #c3d8f5' : '0 1px 3px rgba(0,0,0,0.03)';
+            partDiv.style.height = '95px'; // Altura fixa para todas as células
+            partDiv.style.width = '100%'; // Largura completa na coluna do grid
+            partDiv.style.borderRadius = '5px';
+            partDiv.style.boxShadow = part.selected ? '0 2px 4px rgba(0,0,0,0.08), 0 0 0 1px #c3d8f5' : '0 1px 3px rgba(0,0,0,0.05)';
             partDiv.style.backgroundColor = part.selected ? '#f8faff' : '#ffffff';
             
             // Cabeçalho da peça com visual aprimorado
@@ -992,6 +993,8 @@ export default function BudgetPage() {
             input20mm.style.alignItems = 'center';
             input20mm.style.fontSize = '10px';
             input20mm.style.backgroundColor = part.diameter20 > 0 ? '#f4f4f4' : 'white';
+            input20mm.style.borderRadius = '2px';
+            input20mm.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.03)';
             input20mm.innerText = part.diameter20 > 0 ? part.diameter20.toString() : '';
             div20mm.appendChild(input20mm);
             
@@ -1019,6 +1022,8 @@ export default function BudgetPage() {
             input30mm.style.alignItems = 'center';
             input30mm.style.fontSize = '10px';
             input30mm.style.backgroundColor = part.diameter30 > 0 ? '#f4f4f4' : 'white';
+            input30mm.style.borderRadius = '2px';
+            input30mm.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.03)';
             input30mm.innerText = part.diameter30 > 0 ? part.diameter30.toString() : '';
             div30mm.appendChild(input30mm);
             
@@ -1046,6 +1051,8 @@ export default function BudgetPage() {
             input40mm.style.alignItems = 'center';
             input40mm.style.fontSize = '10px';
             input40mm.style.backgroundColor = part.diameter40 > 0 ? '#f4f4f4' : 'white';
+            input40mm.style.borderRadius = '2px';
+            input40mm.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.03)';
             input40mm.innerText = part.diameter40 > 0 ? part.diameter40.toString() : '';
             div40mm.appendChild(input40mm);
             
@@ -1073,6 +1080,8 @@ export default function BudgetPage() {
             checkboxA.style.marginRight = '3px';
             checkboxA.style.display = 'inline-block';
             checkboxA.style.position = 'relative';
+            checkboxA.style.borderRadius = '2px';
+            checkboxA.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.03)';
             if (part.optionA) {
               checkboxA.style.backgroundColor = '#f8f8f8';
               const check = document.createElement('div');
@@ -1107,6 +1116,8 @@ export default function BudgetPage() {
             checkboxK.style.marginRight = '3px';
             checkboxK.style.display = 'inline-block';
             checkboxK.style.position = 'relative';
+            checkboxK.style.borderRadius = '2px';
+            checkboxK.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.03)';
             if (part.optionK) {
               checkboxK.style.backgroundColor = '#f8f8f8';
               const check = document.createElement('div');
