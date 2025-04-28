@@ -105,11 +105,24 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-{/* 
-      Rotas de Novo Orçamento e Edição não estão incluídas aqui.
-      Elas são tratadas diretamente no componente Budget que contém lógica de 
-      redirecionamento baseada em props isNewMode e isEditMode.
-    */}
+      {/* Budget pages - new and edit routes */}
+      <Route path="/budgets/new">
+        <RequireAuth>
+          <MainLayout>
+            <Budget isNewMode={true} />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      
+      <Route path="/budgets/:id/edit">
+        {(params) => (
+          <RequireAuth>
+            <MainLayout>
+              <Budget isEditMode={true} id={params.id} />
+            </MainLayout>
+          </RequireAuth>
+        )}
+      </Route>
       
       {/* Dashboard específico para gestor */}
       <Route path="/manager-dashboard">

@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { generatePdf, generateDamagedPartsGrid } from "@/components/PdfGenerator";
-import { Loader2, Search, Printer, FileText, Trash2, Plus, Edit, FileEdit } from "lucide-react";
+import { Loader2, Search, Printer, FileText, Trash2, Plus, Edit, FileEdit, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 
 // Define a type for our budget data
@@ -188,17 +188,69 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
     );
   }
 
-  // Renderizar o componente com base no modo (lista, novo, editar)
+  // Código para lidar com modos de edição e criação
+  // Neste momento, esses modos são implementados como componentes separados
+  // Verificar se estamos em modo de criação ou edição
   if (isNewMode) {
-    // Redirecionar para a página existente (já implementada)
-    window.location.href = '/budget/new.html';
-    return <div>Redirecionando...</div>;
+    // No futuro, implementaremos a criação de orçamentos aqui
+    return (
+      <div className="container mx-auto p-4 sm:p-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center mb-2">
+              <Button 
+                variant="ghost" 
+                className="mr-2 p-0 h-8 w-8" 
+                onClick={() => window.location.href = "/budgets"}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <CardTitle className="text-2xl">Novo Orçamento</CardTitle>
+            </div>
+            <CardDescription>
+              Funcionalidade em desenvolvimento
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center py-8">
+            <p className="mb-4">Esta funcionalidade está sendo implementada.</p>
+            <Button onClick={() => window.location.href = "/budgets"}>
+              Voltar para Orçamentos
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
   
   if (isEditMode && id) {
-    // Redirecionar para a página existente (já implementada)
-    window.location.href = `/budget/${id}/edit.html`;
-    return <div>Redirecionando...</div>;
+    // No futuro, implementaremos a edição de orçamentos aqui
+    return (
+      <div className="container mx-auto p-4 sm:p-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center mb-2">
+              <Button 
+                variant="ghost" 
+                className="mr-2 p-0 h-8 w-8" 
+                onClick={() => window.location.href = "/budgets"}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <CardTitle className="text-2xl">Editar Orçamento #{id}</CardTitle>
+            </div>
+            <CardDescription>
+              Funcionalidade em desenvolvimento
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center py-8">
+            <p className="mb-4">Esta funcionalidade está sendo implementada.</p>
+            <Button onClick={() => window.location.href = "/budgets"}>
+              Voltar para Orçamentos
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
