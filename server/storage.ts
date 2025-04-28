@@ -30,6 +30,7 @@ let pool: any;
 // Esta função deve ser chamada no inicio do servidor
 export const initializeDatabase = async () => {
   try {
+    console.log("Tentando inicializar banco de dados MySQL...");
     const connection = await initDb();
     db = connection.db;
     pool = connection.pool;
@@ -41,6 +42,12 @@ export const initializeDatabase = async () => {
     return { db, pool };
   } catch (error) {
     console.error("Erro ao inicializar o banco de dados:", error);
+    
+    // Se quiser implementar um fallback para um banco em memória em caso de falha:
+    // console.log("Usando armazenamento em memória como fallback...");
+    // ... lógica de fallback aqui ...
+    
+    // Por enquanto, propagamos o erro para interromper a aplicação
     throw error;
   }
 };

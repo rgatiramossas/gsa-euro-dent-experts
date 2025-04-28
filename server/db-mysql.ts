@@ -13,13 +13,23 @@ if (!process.env.MYSQL_HOST ||
   );
 }
 
+// Log das informações de conexão para debugging (sem mostrar a senha)
+console.log(`Tentando conectar ao MySQL:
+  Host: ${process.env.MYSQL_HOST}
+  User: ${process.env.MYSQL_USER}
+  Database: ${process.env.MYSQL_DATABASE}
+  Port: ${process.env.MYSQL_PORT}
+`);
+
 // Configuração da conexão MySQL
 const connectionConfig = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
   database: process.env.MYSQL_DATABASE,
-  port: parseInt(process.env.MYSQL_PORT || '3306')
+  port: parseInt(process.env.MYSQL_PORT || '3306'),
+  // Adicionar timeout maior para dar mais tempo para conectar
+  connectTimeout: 10000,
   // SSL configurada como null para desenvolvimento
 };
 
