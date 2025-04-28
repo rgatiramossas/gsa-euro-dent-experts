@@ -269,7 +269,7 @@ const NewBudgetForm: React.FC = () => {
             <Button 
               variant="ghost" 
               className="mr-2 p-0 h-8 w-8" 
-              onClick={() => navigate("/budgets")}
+              onClick={() => window.location.href = "/budgets"}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -426,7 +426,7 @@ const NewBudgetForm: React.FC = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/budgets")}
+                  onClick={() => window.location.href = "/budgets"}
                 >
                   Cancelar
                 </Button>
