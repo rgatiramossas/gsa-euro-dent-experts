@@ -698,75 +698,115 @@ export default function BudgetPage() {
       const printDiv = document.createElement('div');
       printDiv.className = 'print-content';
       printDiv.style.width = '210mm'; // Tamanho A4
-      printDiv.style.padding = '10px'; // Reduzido de 20px para 10px
+      printDiv.style.padding = '15px'; 
       printDiv.style.fontFamily = 'Arial, sans-serif';
-      printDiv.style.fontSize = '12px'; // Fonte base reduzida
+      printDiv.style.fontSize = '11px';
       printDiv.style.position = 'fixed';
       printDiv.style.top = '-9999px';
       printDiv.style.left = '-9999px';
+      printDiv.style.backgroundColor = '#ffffff';
+
+      // Formatação da data no formato "Hoje, HH:MM"
+      const formatDisplayDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `Hoje, ${hours}:${minutes}`;
+      };
       
-      // Cabeçalho
+      // Cabeçalho no novo formato
       const headerDiv = document.createElement('div');
-      headerDiv.style.textAlign = 'center';
-      headerDiv.style.marginBottom = '10px'; // Reduzido de 20px para 10px
-      headerDiv.style.borderBottom = '1px solid #333'; // Reduzido de 2px para 1px
-      headerDiv.style.paddingBottom = '5px'; // Reduzido de 10px para 5px
+      headerDiv.style.marginBottom = '15px';
       headerDiv.innerHTML = `
-        <h1 style="margin: 0; font-size: 18px;">Euro Dent Experts</h1> <!-- Reduzido de 24px para 18px -->
-        <p style="margin: 2px 0; font-size: 12px;">Orçamento #${selectedBudget.id}</p> <!-- Reduzido margin -->
-        <p style="margin: 2px 0; font-size: 12px;">Data: ${formatDate(selectedBudget.date)}</p> <!-- Reduzido margin -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+          <div>
+            <div style="color: #0047AB; font-weight: bold; font-size: 14px;">Orçamento #${selectedBudget.id}</div>
+            <div style="color: #0047AB; font-size: 12px;">Euro Dent Experts</div>
+          </div>
+          <div style="text-align: right; font-size: 11px;">
+            Data de emissão: ${formatDate(new Date().toISOString())}
+          </div>
+        </div>
+        <div style="height: 1px; background-color: #0047AB; margin: 8px 0;"></div>
       `;
       printDiv.appendChild(headerDiv);
       
-      // Informações do cliente
+      // Informações do cliente no novo formato
       const clientInfoDiv = document.createElement('div');
-      clientInfoDiv.style.marginBottom = '10px'; // Reduzido de 20px para 10px
+      clientInfoDiv.style.marginBottom = '15px';
       clientInfoDiv.innerHTML = `
-        <h2 style="font-size: 14px; margin-bottom: 5px;">Informações do Cliente</h2> <!-- Reduzido de 18px para 14px e margin -->
-        <table style="width: 100%; border-collapse: collapse; font-size: 11px;"> <!-- Adicionado font-size -->
-          <tr>
-            <td style="padding: 3px; border: 1px solid #ddd; width: 120px;"><strong>Cliente:</strong></td> <!-- Reduzido padding e width -->
-            <td style="padding: 3px; border: 1px solid #ddd;">${selectedBudget.client_name}</td> <!-- Reduzido padding -->
-          </tr>
-          <tr>
-            <td style="padding: 3px; border: 1px solid #ddd;"><strong>Veículo:</strong></td> <!-- Reduzido padding -->
-            <td style="padding: 3px; border: 1px solid #ddd;">${selectedBudget.vehicle_info}</td> <!-- Reduzido padding -->
-          </tr>
-          <tr>
-            <td style="padding: 3px; border: 1px solid #ddd;"><strong>Placa:</strong></td> <!-- Reduzido padding -->
-            <td style="padding: 3px; border: 1px solid #ddd;">${selectedBudget.plate || '-'}</td> <!-- Reduzido padding -->
-          </tr>
-          <tr>
-            <td style="padding: 3px; border: 1px solid #ddd;"><strong>Chassi:</strong></td> <!-- Reduzido padding -->
-            <td style="padding: 3px; border: 1px solid #ddd;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</td> <!-- Reduzido padding -->
-          </tr>
-        </table>
+        <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">Detalhes do orçamento para:</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">DATA</div>
+            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${formatDisplayDate(selectedBudget.date)}</div>
+          </div>
+          <div>
+            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">CLIENTE</div>
+            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${selectedBudget.client_name}</div>
+          </div>
+          <div>
+            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">VEÍCULO</div>
+            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${selectedBudget.vehicle_info}</div>
+          </div>
+          <div>
+            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">PLACA</div>
+            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${selectedBudget.plate || '-'}</div>
+          </div>
+          <div>
+            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">CHASSI</div>
+            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</div>
+          </div>
+        </div>
       `;
       printDiv.appendChild(clientInfoDiv);
       
-      // Danos do veículo
+      // Danos do veículo no novo formato
       const damagesDiv = document.createElement('div');
+      damagesDiv.style.marginBottom = '15px';
       damagesDiv.innerHTML = `
-        <h2 style="font-size: 14px; margin-bottom: 5px;">Danos do Veículo</h2> <!-- Reduzido de 18px para 14px e margin -->
-        <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px;">
-        </div> <!-- Alterado de 3 para 4 colunas, reduzido gap e margin -->
-        <div style="margin-bottom: 10px; padding: 5px; border: 1px solid #ddd; background-color: #f5f5f5; font-size: 11px;">
-          <strong>MATERIAIS ESPECIAIS:</strong> A= ALUMÍNIO   K= COLA   P= PINTURA
-        </div> <!-- Reduzido margin, padding e formatação em linha única -->
+        <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; display: flex; align-items: center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px;">
+            <path fill="#0047AB" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+          </svg>
+          Danos do Veículo
+        </div>
+        <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+        </div>
+        <div style="margin-bottom: 10px; padding: 5px; font-size: 11px; text-align: center;">
+          <strong>MATERIAIS ESPECIAIS:</strong> <span style="color: #ff0000; font-weight: bold;">A</span>= ALUMÍNIO &nbsp;&nbsp; <span style="color: #0000ff; font-weight: bold;">K</span>= COLA &nbsp;&nbsp; <span style="color: #00aa00; font-weight: bold;">P</span>= PINTURA
+        </div>
       `;
       printDiv.appendChild(damagesDiv);
       
       // Observações
       if (selectedBudget.note) {
         const notesDiv = document.createElement('div');
+        notesDiv.style.marginBottom = '15px';
         notesDiv.innerHTML = `
-          <h2 style="font-size: 14px; margin-bottom: 5px;">Observações</h2>
-          <div style="padding: 5px; border: 1px solid #ddd; font-size: 11px;">
+          <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; display: flex; align-items: center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px;">
+              <path fill="#0047AB" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+            </svg>
+            Observações
+          </div>
+          <div style="padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px; background-color: #f9f9f9;">
             ${selectedBudget.note}
           </div>
         `;
         printDiv.appendChild(notesDiv);
       }
+      
+      // Rodapé
+      const footerDiv = document.createElement('div');
+      footerDiv.style.textAlign = 'center';
+      footerDiv.style.fontSize = '10px';
+      footerDiv.style.color = '#666';
+      footerDiv.style.marginTop = '20px';
+      footerDiv.innerHTML = `
+        Orçamento #${selectedBudget.id} · Euro Dent Experts · Gerado em ${formatDate(new Date().toISOString())}
+      `;
+      printDiv.appendChild(footerDiv);
       
       // Adicionamos o elemento ao documento
       document.body.appendChild(printDiv);
@@ -836,54 +876,194 @@ export default function BudgetPage() {
             
             const partDiv = document.createElement('div');
             partDiv.style.border = '1px solid #ddd';
-            partDiv.style.borderRadius = '3px';
-            partDiv.style.padding = '4px';
+            partDiv.style.margin = '0';
+            partDiv.style.padding = '6px';
             partDiv.style.fontSize = '10px';
-            partDiv.innerHTML = `
-              <div style="text-align: center; margin-bottom: 3px; font-weight: bold; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${partNames[key] || key}
-              </div>
-              <div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                  <span>20mm:</span>
-                  <span style="font-weight: bold; background: #f5f5f5; padding: 1px 3px; border-radius: 2px; min-width: 20px; text-align: center;">
-                    ${part.diameter20 || '0'}
-                  </span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                  <span>30mm:</span>
-                  <span style="font-weight: bold; background: #f5f5f5; padding: 1px 3px; border-radius: 2px; min-width: 20px; text-align: center;">
-                    ${part.diameter30 || '0'}
-                  </span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                  <span>40mm:</span>
-                  <span style="font-weight: bold; background: #f5f5f5; padding: 1px 3px; border-radius: 2px; min-width: 20px; text-align: center;">
-                    ${part.diameter40 || '0'}
-                  </span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
-                  <div style="display: flex; align-items: center;">
-                    <div style="width: 10px; height: 10px; border: 1px solid #ccc; border-radius: 2px; margin-right: 1px; display: flex; justify-content: center; align-items: center; font-size: 7px; background: ${part.optionA ? '#ffcccc' : '#f5f5f5'}">
-                      ${part.optionA ? '✓' : ''}
-                    </div>
-                    <span style="background: #ffcccc; padding: 0px 2px; border-radius: 2px; font-size: 9px;">A</span>
-                  </div>
-                  <div style="display: flex; align-items: center;">
-                    <div style="width: 10px; height: 10px; border: 1px solid #ccc; border-radius: 2px; margin-right: 1px; display: flex; justify-content: center; align-items: center; font-size: 7px; background: ${part.optionK ? '#ccccff' : '#f5f5f5'}">
-                      ${part.optionK ? '✓' : ''}
-                    </div>
-                    <span style="background: #ccccff; padding: 0px 2px; border-radius: 2px; font-size: 9px;">K</span>
-                  </div>
-                  <div style="display: flex; align-items: center;">
-                    <div style="width: 10px; height: 10px; border: 1px solid #ccc; border-radius: 2px; margin-right: 1px; display: flex; justify-content: center; align-items: center; font-size: 7px; background: ${part.optionP ? '#ccffcc' : '#f5f5f5'}">
-                      ${part.optionP ? '✓' : ''}
-                    </div>
-                    <span style="background: #ccffcc; padding: 0px 2px; border-radius: 2px; font-size: 9px;">P</span>
-                  </div>
-                </div>
-              </div>
-            `;
+            
+            // Criar o cabeçalho com o nome da peça
+            const partHeader = document.createElement('div');
+            partHeader.style.textAlign = 'center';
+            partHeader.style.fontWeight = 'bold';
+            partHeader.style.color = '#0047AB';
+            partHeader.style.fontSize = '11px';
+            partHeader.style.marginBottom = '5px';
+            partHeader.style.whiteSpace = 'nowrap';
+            partHeader.style.overflow = 'hidden';
+            partHeader.style.textOverflow = 'ellipsis';
+            partHeader.innerText = partNames[key] || key;
+            partDiv.appendChild(partHeader);
+            
+            // Criar os campos de diâmetros
+            const diametersDiv = document.createElement('div');
+            
+            // 20mm
+            const div20mm = document.createElement('div');
+            div20mm.style.display = 'flex';
+            div20mm.style.justifyContent = 'space-between';
+            div20mm.style.marginBottom = '6px';
+            div20mm.style.alignItems = 'center';
+            
+            const label20mm = document.createElement('span');
+            label20mm.innerText = '20mm:';
+            label20mm.style.fontSize = '10px';
+            div20mm.appendChild(label20mm);
+            
+            const input20mm = document.createElement('div');
+            input20mm.style.width = '35px';
+            input20mm.style.height = '14px';
+            input20mm.style.border = '1px solid #ccc';
+            input20mm.style.display = 'flex';
+            input20mm.style.justifyContent = 'center';
+            input20mm.style.alignItems = 'center';
+            input20mm.style.fontSize = '10px';
+            input20mm.style.backgroundColor = part.diameter20 > 0 ? '#f4f4f4' : 'white';
+            input20mm.innerText = part.diameter20 > 0 ? part.diameter20.toString() : '';
+            div20mm.appendChild(input20mm);
+            
+            diametersDiv.appendChild(div20mm);
+            
+            // 30mm
+            const div30mm = document.createElement('div');
+            div30mm.style.display = 'flex';
+            div30mm.style.justifyContent = 'space-between';
+            div30mm.style.marginBottom = '6px';
+            div30mm.style.alignItems = 'center';
+            
+            const label30mm = document.createElement('span');
+            label30mm.innerText = '30mm:';
+            label30mm.style.fontSize = '10px';
+            div30mm.appendChild(label30mm);
+            
+            const input30mm = document.createElement('div');
+            input30mm.style.width = '35px';
+            input30mm.style.height = '14px';
+            input30mm.style.border = '1px solid #ccc';
+            input30mm.style.display = 'flex';
+            input30mm.style.justifyContent = 'center';
+            input30mm.style.alignItems = 'center';
+            input30mm.style.fontSize = '10px';
+            input30mm.style.backgroundColor = part.diameter30 > 0 ? '#f4f4f4' : 'white';
+            input30mm.innerText = part.diameter30 > 0 ? part.diameter30.toString() : '';
+            div30mm.appendChild(input30mm);
+            
+            diametersDiv.appendChild(div30mm);
+            
+            // 40mm
+            const div40mm = document.createElement('div');
+            div40mm.style.display = 'flex';
+            div40mm.style.justifyContent = 'space-between';
+            div40mm.style.marginBottom = '6px';
+            div40mm.style.alignItems = 'center';
+            
+            const label40mm = document.createElement('span');
+            label40mm.innerText = '40mm:';
+            label40mm.style.fontSize = '10px';
+            div40mm.appendChild(label40mm);
+            
+            const input40mm = document.createElement('div');
+            input40mm.style.width = '35px';
+            input40mm.style.height = '14px';
+            input40mm.style.border = '1px solid #ccc';
+            input40mm.style.display = 'flex';
+            input40mm.style.justifyContent = 'center';
+            input40mm.style.alignItems = 'center';
+            input40mm.style.fontSize = '10px';
+            input40mm.style.backgroundColor = part.diameter40 > 0 ? '#f4f4f4' : 'white';
+            input40mm.innerText = part.diameter40 > 0 ? part.diameter40.toString() : '';
+            div40mm.appendChild(input40mm);
+            
+            diametersDiv.appendChild(div40mm);
+            
+            partDiv.appendChild(diametersDiv);
+            
+            // Criar os checkboxes A, K, P
+            const optionsDiv = document.createElement('div');
+            optionsDiv.style.display = 'flex';
+            optionsDiv.style.justifyContent = 'space-between';
+            optionsDiv.style.alignItems = 'center';
+            
+            // Opção A
+            const optionADiv = document.createElement('div');
+            optionADiv.style.display = 'flex';
+            optionADiv.style.alignItems = 'center';
+            
+            const checkboxA = document.createElement('div');
+            checkboxA.style.width = '12px';
+            checkboxA.style.height = '12px';
+            checkboxA.style.border = '1px solid #ccc';
+            checkboxA.style.backgroundColor = part.optionA ? '#ff8888' : 'white';
+            checkboxA.style.marginRight = '2px';
+            checkboxA.style.display = 'flex';
+            checkboxA.style.justifyContent = 'center';
+            checkboxA.style.alignItems = 'center';
+            checkboxA.style.fontSize = '8px';
+            checkboxA.innerHTML = part.optionA ? '✓' : '';
+            optionADiv.appendChild(checkboxA);
+            
+            const labelA = document.createElement('span');
+            labelA.style.color = '#ff0000';
+            labelA.style.fontWeight = 'bold';
+            labelA.style.fontSize = '10px';
+            labelA.innerText = 'A';
+            optionADiv.appendChild(labelA);
+            
+            optionsDiv.appendChild(optionADiv);
+            
+            // Opção K
+            const optionKDiv = document.createElement('div');
+            optionKDiv.style.display = 'flex';
+            optionKDiv.style.alignItems = 'center';
+            
+            const checkboxK = document.createElement('div');
+            checkboxK.style.width = '12px';
+            checkboxK.style.height = '12px';
+            checkboxK.style.border = '1px solid #ccc';
+            checkboxK.style.backgroundColor = part.optionK ? '#8888ff' : 'white';
+            checkboxK.style.marginRight = '2px';
+            checkboxK.style.display = 'flex';
+            checkboxK.style.justifyContent = 'center';
+            checkboxK.style.alignItems = 'center';
+            checkboxK.style.fontSize = '8px';
+            checkboxK.innerHTML = part.optionK ? '✓' : '';
+            optionKDiv.appendChild(checkboxK);
+            
+            const labelK = document.createElement('span');
+            labelK.style.color = '#0000ff';
+            labelK.style.fontWeight = 'bold';
+            labelK.style.fontSize = '10px';
+            labelK.innerText = 'K';
+            optionKDiv.appendChild(labelK);
+            
+            optionsDiv.appendChild(optionKDiv);
+            
+            // Opção P
+            const optionPDiv = document.createElement('div');
+            optionPDiv.style.display = 'flex';
+            optionPDiv.style.alignItems = 'center';
+            
+            const checkboxP = document.createElement('div');
+            checkboxP.style.width = '12px';
+            checkboxP.style.height = '12px';
+            checkboxP.style.border = '1px solid #ccc';
+            checkboxP.style.backgroundColor = part.optionP ? '#88ff88' : 'white';
+            checkboxP.style.marginRight = '2px';
+            checkboxP.style.display = 'flex';
+            checkboxP.style.justifyContent = 'center';
+            checkboxP.style.alignItems = 'center';
+            checkboxP.style.fontSize = '8px';
+            checkboxP.innerHTML = part.optionP ? '✓' : '';
+            optionPDiv.appendChild(checkboxP);
+            
+            const labelP = document.createElement('span');
+            labelP.style.color = '#00aa00';
+            labelP.style.fontWeight = 'bold';
+            labelP.style.fontSize = '10px';
+            labelP.innerText = 'P';
+            optionPDiv.appendChild(labelP);
+            
+            optionsDiv.appendChild(optionPDiv);
+            
+            partDiv.appendChild(optionsDiv);
             gridElement.appendChild(partDiv);
           });
         } catch (error) {
