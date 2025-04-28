@@ -12,6 +12,7 @@ interface Budget {
   note?: string;
   total_value?: number;
   damaged_parts?: any;
+  vehicle_image?: string; // Adicionando campo para a imagem do veículo
 }
 
 // Interface para uma unidade de dano
@@ -117,11 +118,17 @@ export const generateSimplePdf = async (budget: Budget): Promise<void> => {
       
       // Função para renderizar uma parte dos danos
       const renderDamagePart = (part: string) => {
-        // Se for o espaço para imagem, retornar um div vazio
+        // Se for o espaço para imagem, exibir a imagem do veículo se existir
         if (part === "imagem_central") {
-          return `<div style="border: 1px solid #ddd; border-radius: 5px; padding: 10px; height: 80px; display: flex; align-items: center; justify-content: center;">
-            <div style="color: #888; font-size: 10px;">Imagem do veículo</div>
-          </div>`;
+          if (budget.vehicle_image) {
+            return `<div style="border: 1px solid #ddd; border-radius: 5px; padding: 6px; height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+              <img src="${budget.vehicle_image}" alt="Imagem do veículo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+            </div>`;
+          } else {
+            return `<div style="border: 1px solid #ddd; border-radius: 5px; padding: 6px; height: 100px; display: flex; align-items: center; justify-content: center;">
+              <div style="color: #888; font-size: 10px;">Sem imagem</div>
+            </div>`;
+          }
         }
         
         const damage = damageData[part] || {};
