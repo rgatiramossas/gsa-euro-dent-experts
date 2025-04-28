@@ -39,9 +39,9 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
         <!-- Cabeçalho com logo e informações da empresa -->
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px;">
           <div style="display: flex; align-items: center;">
-            <div style="font-size: 28px; font-weight: bold; color: #2563eb;">EURO</div>
-            <div style="font-size: 28px; font-weight: bold; margin-left: 5px;">DENT</div>
-            <div style="font-size: 16px; margin-left: 5px; margin-top: 10px;">EXPERTS</div>
+            <div style="font-size: 32px; font-weight: bold; color: #2563eb;">EURO</div>
+            <div style="font-size: 32px; font-weight: bold; color: #000; margin-left: 5px;">DENT</div>
+            <div style="font-size: 14px; margin-left: 5px; margin-top: 5px; color: #000;">EXPERTS</div>
           </div>
           <div style="text-align: right;">
             <div style="font-size: 12px; color: #666;">R. Alemanha, 86 - Jardim Europa, Sorriso - MT</div>
@@ -72,22 +72,18 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
           </div>
         </div>
         
-        <!-- Mapa de danos -->
-        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
-          <div style="font-weight: bold; margin-bottom: 15px; color: #2563eb; font-size: 14px;">MAPA DE DANOS</div>
-          
+        <!-- Grid de danos do veículo -->
+        <div>
           <!-- Grid de peças danificadas -->
           <div id="damage-grid">
             ${generateDamagedPartsGrid(budgetData.damaged_parts, budgetData.vehicle_image)}
           </div>
-          
-          <!-- A foto do veículo é inserida diretamente no grid pela função generateDamagedPartsGrid -->
         </div>
         
         <!-- Legenda -->
-        <div style="margin-bottom: 20px;">
+        <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
           <div style="font-weight: bold; margin-bottom: 10px; color: #2563eb; font-size: 14px;">LEGENDA</div>
-          <div style="display: flex; gap: 15px; font-size: 12px;">
+          <div style="display: flex; gap: 25px; font-size: 12px;">
             <div style="display: flex; align-items: center;">
               <span style="color: red; font-weight: bold; margin-right: 5px;">A</span>
               <span>ALUMÍNIO</span>
@@ -280,9 +276,9 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
     partsObject = {};
   }
   
-  // Gerar o HTML para o grid completo
+  // Gerar o HTML para o grid completo de 3x5
   let gridHtml = `
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin-bottom: 20px;">
   `;
   
   // Para cada posição no layout
@@ -296,11 +292,11 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
     // Foto do veículo - inserida diretamente no HTML
     if (partLayout.id === 'PHOTO_PLACEHOLDER') {
       if (vehicleImage) {
-        gridHtml += `<div style="min-height: 105px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; padding: 0;">
-          <img src="${vehicleImage}" style="width: 100%; height: 105px; object-fit: contain; border-radius: 4px;" alt="Foto do veículo" />
+        gridHtml += `<div style="height: 110px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; padding: 0; width: 100%;">
+          <img src="${vehicleImage}" style="width: 100%; height: 110px; object-fit: contain; border-radius: 4px;" alt="Foto do veículo" />
         </div>`;
       } else {
-        gridHtml += `<div style="min-height: 105px; border: 1px dashed #ccc; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+        gridHtml += `<div style="height: 110px; border: 1px dashed #ccc; border-radius: 5px; display: flex; align-items: center; justify-content: center; width: 100%;">
           <div style="color: #999; font-size: 12px; text-align: center;">Foto do veículo</div>
         </div>`;
       }
@@ -325,8 +321,8 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
     const shadowStyle = part.selected ? '0 2px 4px rgba(0,0,0,0.1)' : 'none';
     
     gridHtml += `
-      <div style="padding: 12px; border: ${borderStyle}; border-radius: 5px; background-color: ${backgroundStyle}; box-shadow: ${shadowStyle}; min-height: 105px;">
-        <div style="font-weight: bold; font-size: 11px; margin-bottom: 8px; color: ${titleColor}; text-align: center; min-height: 28px; display: flex; align-items: center; justify-content: center;">
+      <div style="padding: 10px; border: ${borderStyle}; border-radius: 5px; background-color: ${backgroundStyle}; box-shadow: ${shadowStyle}; height: 110px; width: 100%;">
+        <div style="font-weight: bold; font-size: 11px; margin-bottom: 5px; color: ${titleColor}; text-align: center; height: 25px; display: flex; align-items: center; justify-content: center;">
           ${partLayout.name}
           ${partLayout.isHorizontal ? '<span style="margin-left: 5px; color: #666; font-size: 9px;">(H)</span>' : ''}
         </div>
