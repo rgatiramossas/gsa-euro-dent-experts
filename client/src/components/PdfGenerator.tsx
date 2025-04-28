@@ -81,30 +81,7 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
             ${generateDamagedPartsGrid(budgetData.damaged_parts, budgetData.vehicle_image)}
           </div>
           
-          <!-- Script para substituir o placeholder da foto -->
-          ${(budgetData.photo_url || budgetData.vehicle_image) ? `
-          <script>
-            // Este script é executado durante a geração do PDF para inserir a foto no local correto
-            (function() {
-              var photoPlaceholder = document.getElementById('photo-placeholder');
-              if (photoPlaceholder) {
-                photoPlaceholder.innerHTML = '';
-                photoPlaceholder.style.padding = '0';
-                photoPlaceholder.style.overflow = 'hidden';
-                photoPlaceholder.style.border = '1px solid #ddd';
-                
-                var img = document.createElement('img');
-                img.src = "${budgetData.vehicle_image || budgetData.photo_url}";
-                img.style.width = '100%';
-                img.style.height = '105px';
-                img.style.objectFit = 'contain';
-                img.style.borderRadius = '4px';
-                
-                photoPlaceholder.appendChild(img);
-              }
-            })();
-          </script>
-          ` : ''}
+          <!-- A foto do veículo é inserida diretamente no grid pela função generateDamagedPartsGrid -->
         </div>
         
         <!-- Legenda -->
@@ -316,11 +293,17 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
       return;
     }
     
-    // Placeholder para a foto (será substituído pela foto real depois)
+    // Foto do veículo - inserida diretamente no HTML
     if (partLayout.id === 'PHOTO_PLACEHOLDER') {
-      gridHtml += `<div id="photo-placeholder" style="min-height: 105px; border: 1px dashed #ccc; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
-        <div style="color: #999; font-size: 12px; text-align: center;">Foto do veículo</div>
-      </div>`;
+      if (vehicleImage) {
+        gridHtml += `<div style="min-height: 105px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; padding: 0;">
+          <img src="${vehicleImage}" style="width: 100%; height: 105px; object-fit: contain; border-radius: 4px;" alt="Foto do veículo" />
+        </div>`;
+      } else {
+        gridHtml += `<div style="min-height: 105px; border: 1px dashed #ccc; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+          <div style="color: #999; font-size: 12px; text-align: center;">Foto do veículo</div>
+        </div>`;
+      }
       return;
     }
     
