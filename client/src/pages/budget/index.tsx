@@ -51,7 +51,13 @@ interface Budget {
   created_at: string;
 }
 
-const BudgetPage: React.FC = () => {
+interface BudgetPageProps {
+  isNewMode?: boolean;
+  isEditMode?: boolean;
+  id?: string;
+}
+
+const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
@@ -180,6 +186,19 @@ const BudgetPage: React.FC = () => {
         </Card>
       </div>
     );
+  }
+
+  // Renderizar o componente com base no modo (lista, novo, editar)
+  if (isNewMode) {
+    // Redirecionar para a página existente (já implementada)
+    window.location.href = '/budget/new.html';
+    return <div>Redirecionando...</div>;
+  }
+  
+  if (isEditMode && id) {
+    // Redirecionar para a página existente (já implementada)
+    window.location.href = `/budget/${id}/edit.html`;
+    return <div>Redirecionando...</div>;
   }
 
   return (

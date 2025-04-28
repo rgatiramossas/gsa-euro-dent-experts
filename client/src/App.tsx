@@ -105,7 +105,11 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-{/* As páginas de Novo e Editar orçamento serão implementadas em uma etapa posterior */}
+{/* 
+      Rotas de Novo Orçamento e Edição não estão incluídas aqui.
+      Elas são tratadas diretamente no componente Budget que contém lógica de 
+      redirecionamento baseada em props isNewMode e isEditMode.
+    */}
       
       {/* Dashboard específico para gestor */}
       <Route path="/manager-dashboard">
