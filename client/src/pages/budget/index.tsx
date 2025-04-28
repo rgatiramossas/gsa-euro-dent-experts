@@ -773,16 +773,8 @@ export default function BudgetPage() {
       
       // Processamos as peças danificadas
       const gridElement = printDiv.querySelector('#damaged-parts-grid');
-      if (gridElement && selectedBudget.damaged_parts) {
+      if (gridElement) {
         try {
-          // Parse das peças danificadas
-          let parsedDamagedParts: Record<string, PartDamage> = {};
-          if (typeof selectedBudget.damaged_parts === 'string') {
-            parsedDamagedParts = JSON.parse(selectedBudget.damaged_parts);
-          } else if (typeof selectedBudget.damaged_parts === 'object' && !Array.isArray(selectedBudget.damaged_parts)) {
-            parsedDamagedParts = selectedBudget.damaged_parts as unknown as Record<string, PartDamage>;
-          }
-          
           // Nomes amigáveis para as partes
           const partNames: Record<string, string> = {
             capo: 'Capô',
@@ -801,60 +793,97 @@ export default function BudgetPage() {
             portaMalasInferior: 'Porta Malas Inferior'
           };
           
-          Object.keys(parsedDamagedParts).forEach(key => {
-            const part = parsedDamagedParts[key];
-            if (part && part.selected) {
-              const partDiv = document.createElement('div');
-              partDiv.style.border = '1px solid #ddd';
-              partDiv.style.borderRadius = '4px';
-              partDiv.style.padding = '10px';
-              partDiv.innerHTML = `
-                <div style="text-align: center; margin-bottom: 8px; font-weight: bold;">
-                  ${partNames[key] || key}
-                </div>
-                <div>
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span>20mm:</span>
-                    <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
-                      ${part.diameter20 || '0'}
-                    </span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span>30mm:</span>
-                    <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
-                      ${part.diameter30 || '0'}
-                    </span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span>40mm:</span>
-                    <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
-                      ${part.diameter40 || '0'}
-                    </span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-                    <div style="display: flex; align-items: center;">
-                      <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionA ? '#ffcccc' : '#f5f5f5'}">
-                        ${part.optionA ? '✓' : ''}
-                      </div>
-                      <span style="background: #ffcccc; padding: 1px 3px; border-radius: 2px; font-size: 12px;">A</span>
-                    </div>
-                    <div style="display: flex; align-items: center;">
-                      <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionK ? '#ccccff' : '#f5f5f5'}">
-                        ${part.optionK ? '✓' : ''}
-                      </div>
-                      <span style="background: #ccccff; padding: 1px 3px; border-radius: 2px; font-size: 12px;">K</span>
-                    </div>
-                    <div style="display: flex; align-items: center;">
-                      <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionP ? '#ccffcc' : '#f5f5f5'}">
-                        ${part.optionP ? '✓' : ''}
-                      </div>
-                      <span style="background: #ccffcc; padding: 1px 3px; border-radius: 2px; font-size: 12px;">P</span>
-                    </div>
-                  </div>
-                </div>
-              `;
-              gridElement.appendChild(partDiv);
+          // Parse das peças danificadas (se existirem)
+          let parsedDamagedParts: Record<string, PartDamage> = {};
+          if (selectedBudget.damaged_parts) {
+            if (typeof selectedBudget.damaged_parts === 'string') {
+              parsedDamagedParts = JSON.parse(selectedBudget.damaged_parts);
+            } else if (typeof selectedBudget.damaged_parts === 'object' && !Array.isArray(selectedBudget.damaged_parts)) {
+              parsedDamagedParts = selectedBudget.damaged_parts as unknown as Record<string, PartDamage>;
             }
+          }
+
+          // Lista de todas as peças que queremos mostrar no grid, independente se estão danificadas ou não
+          const allPartKeys = [
+            'paraLamaEsquerdo', 'capo', 'paraLamaDireito',
+            'colunaEsquerda', 'teto', 'colunaDireita',
+            'portaDianteiraEsquerda', 'portaDianteiraDireita',
+            'portaTraseiraEsquerda', 'portaMalasSuperior', 'portaTraseiraDireita',
+            'lateralEsquerda', 'portaMalasInferior', 'lateralDireita'
+          ];
+
+          // Definição de um objeto padrão para peças não danificadas
+          const defaultPartDamage: PartDamage = {
+            selected: false,
+            diameter20: 0,
+            diameter30: 0,
+            diameter40: 0,
+            optionA: false,
+            optionK: false,
+            optionP: false,
+            isHorizontal: false
+          };
+
+          // Iterar sobre todas as peças e renderizar todas, independente de estarem danificadas
+          allPartKeys.forEach(key => {
+            // Pegar dados da peça se existir, ou usar valores padrão
+            const part = parsedDamagedParts[key] || { ...defaultPartDamage };
+            
+            // Alguns ajustes específicos para peças horizontais
+            if (key === 'capo' || key === 'teto' || key === 'portaMalasSuperior') {
+              part.isHorizontal = true;
+            }
+            
+            const partDiv = document.createElement('div');
+            partDiv.style.border = '1px solid #ddd';
+            partDiv.style.borderRadius = '4px';
+            partDiv.style.padding = '10px';
+            partDiv.innerHTML = `
+              <div style="text-align: center; margin-bottom: 8px; font-weight: bold;">
+                ${partNames[key] || key}
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                  <span>20mm:</span>
+                  <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
+                    ${part.diameter20 || '0'}
+                  </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                  <span>30mm:</span>
+                  <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
+                    ${part.diameter30 || '0'}
+                  </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                  <span>40mm:</span>
+                  <span style="font-weight: bold; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; min-width: 30px; text-align: center;">
+                    ${part.diameter40 || '0'}
+                  </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                  <div style="display: flex; align-items: center;">
+                    <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionA ? '#ffcccc' : '#f5f5f5'}">
+                      ${part.optionA ? '✓' : ''}
+                    </div>
+                    <span style="background: #ffcccc; padding: 1px 3px; border-radius: 2px; font-size: 12px;">A</span>
+                  </div>
+                  <div style="display: flex; align-items: center;">
+                    <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionK ? '#ccccff' : '#f5f5f5'}">
+                      ${part.optionK ? '✓' : ''}
+                    </div>
+                    <span style="background: #ccccff; padding: 1px 3px; border-radius: 2px; font-size: 12px;">K</span>
+                  </div>
+                  <div style="display: flex; align-items: center;">
+                    <div style="width: 16px; height: 16px; border: 1px solid #ccc; border-radius: 3px; margin-right: 2px; display: flex; justify-content: center; align-items: center; background: ${part.optionP ? '#ccffcc' : '#f5f5f5'}">
+                      ${part.optionP ? '✓' : ''}
+                    </div>
+                    <span style="background: #ccffcc; padding: 1px 3px; border-radius: 2px; font-size: 12px;">P</span>
+                  </div>
+                </div>
+              </div>
+            `;
+            gridElement.appendChild(partDiv);
           });
         } catch (error) {
           console.error("Erro ao processar peças danificadas:", error);
