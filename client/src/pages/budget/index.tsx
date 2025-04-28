@@ -956,10 +956,9 @@ export default function BudgetPage() {
             partHeader.style.fontWeight = 'bold';
             partHeader.style.color = '#0047AB';
             partHeader.style.fontSize = '9px';
-            partHeader.style.marginBottom = '2px';
-            partHeader.style.whiteSpace = 'nowrap';
-            partHeader.style.overflow = 'hidden';
-            partHeader.style.textOverflow = 'ellipsis';
+            partHeader.style.marginBottom = '3px';
+            partHeader.style.width = '100%';
+            partHeader.style.overflow = 'visible'; // Permitir que o texto ultrapasse o container
             partHeader.style.marginTop = '0px';
             partHeader.style.letterSpacing = '0.1px';
             partHeader.style.padding = '3px 0';
@@ -978,15 +977,19 @@ export default function BudgetPage() {
             div20mm.style.marginBottom = '2px'; // Reduzido ainda mais o espaço entre campos
             div20mm.style.alignItems = 'center';
             div20mm.style.height = '16px'; // Altura fixa para melhor alinhamento
+            div20mm.style.width = '100%'; // Largura total para controlar melhor os elementos
             
             const label20mm = document.createElement('span');
             label20mm.innerText = '20mm:';
             label20mm.style.fontSize = '10px';
+            label20mm.style.flex = '0 0 auto';
+            label20mm.style.marginRight = '5px';
             div20mm.appendChild(label20mm);
             
             const input20mm = document.createElement('div');
             input20mm.style.width = '35px';
             input20mm.style.height = '14px';
+            input20mm.style.minWidth = '35px';
             input20mm.style.border = '1px solid #ccc';
             input20mm.style.display = 'flex';
             input20mm.style.justifyContent = 'center';
@@ -997,6 +1000,7 @@ export default function BudgetPage() {
             input20mm.style.borderRadius = '2px';
             input20mm.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.03)';
             input20mm.innerText = part.diameter20 > 0 ? part.diameter20.toString() : '';
+            input20mm.style.marginLeft = 'auto'; // Importante para alinhar à direita
             div20mm.appendChild(input20mm);
             
             diametersDiv.appendChild(div20mm);
@@ -1008,15 +1012,19 @@ export default function BudgetPage() {
             div30mm.style.marginBottom = '2px'; // Reduzido ainda mais o espaço entre campos
             div30mm.style.alignItems = 'center';
             div30mm.style.height = '16px'; // Altura fixa para melhor alinhamento
+            div30mm.style.width = '100%'; // Largura total para controlar melhor os elementos
             
             const label30mm = document.createElement('span');
             label30mm.innerText = '30mm:';
             label30mm.style.fontSize = '10px';
+            label30mm.style.flex = '0 0 auto';
+            label30mm.style.marginRight = '5px';
             div30mm.appendChild(label30mm);
             
             const input30mm = document.createElement('div');
             input30mm.style.width = '35px';
             input30mm.style.height = '14px';
+            input30mm.style.minWidth = '35px';
             input30mm.style.border = '1px solid #ccc';
             input30mm.style.display = 'flex';
             input30mm.style.justifyContent = 'center';
@@ -1027,6 +1035,7 @@ export default function BudgetPage() {
             input30mm.style.borderRadius = '2px';
             input30mm.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.03)';
             input30mm.innerText = part.diameter30 > 0 ? part.diameter30.toString() : '';
+            input30mm.style.marginLeft = 'auto'; // Importante para alinhar à direita
             div30mm.appendChild(input30mm);
             
             diametersDiv.appendChild(div30mm);
@@ -1038,15 +1047,19 @@ export default function BudgetPage() {
             div40mm.style.marginBottom = '2px'; // Reduzido ainda mais o espaço entre campos
             div40mm.style.alignItems = 'center';
             div40mm.style.height = '16px'; // Altura fixa para melhor alinhamento
+            div40mm.style.width = '100%'; // Largura total para controlar melhor os elementos
             
             const label40mm = document.createElement('span');
             label40mm.innerText = '40mm:';
             label40mm.style.fontSize = '10px';
+            label40mm.style.flex = '0 0 auto';
+            label40mm.style.marginRight = '5px';
             div40mm.appendChild(label40mm);
             
             const input40mm = document.createElement('div');
             input40mm.style.width = '35px';
             input40mm.style.height = '14px';
+            input40mm.style.minWidth = '35px';
             input40mm.style.border = '1px solid #ccc';
             input40mm.style.display = 'flex';
             input40mm.style.justifyContent = 'center';
@@ -1057,6 +1070,7 @@ export default function BudgetPage() {
             input40mm.style.borderRadius = '2px';
             input40mm.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.03)';
             input40mm.innerText = part.diameter40 > 0 ? part.diameter40.toString() : '';
+            input40mm.style.marginLeft = 'auto'; // Importante para alinhar à direita
             div40mm.appendChild(input40mm);
             
             diametersDiv.appendChild(div40mm);
