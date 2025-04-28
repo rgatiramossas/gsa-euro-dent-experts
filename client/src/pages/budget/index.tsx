@@ -504,6 +504,8 @@ export default function BudgetPage() {
     const budget = budgets.find(b => b.id === id);
     if (budget) {
       setSelectedBudget(budget);
+      // Importante: definir o cliente selecionado
+      setSelectedClient(budget.client_id);
       setDate(budget.date || new Date().toISOString().split('T')[0]);
       setManualVehicleInfo(budget.vehicle_info || '');
       setTotalAw(budget.total_aw || 0);
@@ -513,6 +515,8 @@ export default function BudgetPage() {
       setLicensePlate(budget.plate || '');
       setChassisNumber(budget.chassisNumber || '');
       setIsViewMode(true);
+      
+      console.log("Carregando orçamento para edição:", budget);
       
       // Abre o dialog adequado dependendo do tipo de usuário
       if (isGestor) {
