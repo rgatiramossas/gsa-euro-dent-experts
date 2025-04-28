@@ -272,7 +272,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   // Renderizar o grid de danos do veículo
   const renderDamageGrid = () => {
     return (
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-4 max-w-6xl mx-auto">
+      <div className="grid grid-cols-3 gap-2 mt-4 max-w-6xl mx-auto">
         {/* Primeira linha: Para-lama Esquerdo - Capô - Para-lama Direito */}
         <DamagePart part="para_lama_esquerdo" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
         <DamagePart part="capo" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
@@ -283,7 +283,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
         <DamagePart part="teto" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
         <DamagePart part="coluna_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
 
-        {/* Terceira linha: Porta Dianteira Esquerda - Espaço Imagem - Porta Dianteira Direita */}
+        {/* Terceira linha: Porta Dianteira Esquerda - Espaço para Imagem - Porta Dianteira Direita */}
         <DamagePart part="porta_dianteira_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
         <div className="p-3 border rounded-md bg-gray-50 flex items-center justify-center">
           <div className="text-center text-gray-400 text-xs">Veículo</div>
