@@ -715,7 +715,7 @@ export default function BudgetPage() {
         return `${day}/${month}/${year}`;
       };
       
-      // Cabeçalho no formato exato do modelo
+      // Cabeçalho exatamente como na imagem de referência
       const headerDiv = document.createElement('div');
       headerDiv.style.marginBottom = '15px';
       headerDiv.innerHTML = `
@@ -724,7 +724,7 @@ export default function BudgetPage() {
             <div style="color: #0047AB; font-weight: bold; font-size: 14px;">Orçamento #${selectedBudget.id}</div>
             <div style="color: #0047AB; font-size: 12px;">Euro Dent Experts</div>
           </div>
-          <div style="text-align: right; font-size: 11px;">
+          <div style="text-align: right; font-size: 11px; color: #666;">
             Data de emissão: ${formatDisplayDate(new Date().toISOString())}
           </div>
         </div>
@@ -732,33 +732,39 @@ export default function BudgetPage() {
       `;
       printDiv.appendChild(headerDiv);
       
-      // Informações do cliente no novo formato
+      // Informações do cliente exatamente como na imagem de referência
       const clientInfoDiv = document.createElement('div');
       clientInfoDiv.style.marginBottom = '15px';
       clientInfoDiv.innerHTML = `
         <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">Detalhes do orçamento para:</div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div>
-            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">DATA</div>
-            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${formatDisplayDate(selectedBudget.date)}</div>
-          </div>
-          <div>
-            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">CLIENTE</div>
-            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${selectedBudget.client_name}</div>
-          </div>
-          <div>
-            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">VEÍCULO</div>
-            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${selectedBudget.vehicle_info}</div>
-          </div>
-          <div>
-            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">PLACA</div>
-            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${selectedBudget.plate || '-'}</div>
-          </div>
-          <div>
-            <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">CHASSI</div>
-            <div style="border: 1px solid #ddd; padding: 5px; border-radius: 3px; background-color: #f9f9f9;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</div>
-          </div>
-        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+          <tr>
+            <td style="width: 50%; padding-right: 10px;">
+              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">DATA</div>
+              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${formatDisplayDate(selectedBudget.date)}</div>
+            </td>
+            <td style="width: 50%; padding-left: 10px;">
+              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">CLIENTE</div>
+              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${selectedBudget.client_name}</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-top: 10px; padding-right: 10px;">
+              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">VEÍCULO</div>
+              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${selectedBudget.vehicle_info}</div>
+            </td>
+            <td style="padding-top: 10px; padding-left: 10px;">
+              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">PLACA</div>
+              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${selectedBudget.plate || '-'}</div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" style="padding-top: 10px;">
+              <div style="color: #0047AB; font-weight: bold; font-size: 11px; margin-bottom: 3px;">CHASSI</div>
+              <div style="border: 1px solid #ddd; padding: 5px; border-radius: 0px; background-color: #ffffff;">${selectedBudget.chassisNumber || selectedBudget.chassis_number || '-'}</div>
+            </td>
+          </tr>
+        </table>
       `;
       printDiv.appendChild(clientInfoDiv);
       
@@ -766,11 +772,11 @@ export default function BudgetPage() {
       const damagesDiv = document.createElement('div');
       damagesDiv.style.marginBottom = '15px';
       damagesDiv.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; display: flex; align-items: center;">
-          <svg width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px;">
-            <path fill="#0047AB" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+        <div style="margin-bottom: 8px; font-size: 13px; display: flex; align-items: center;">
+          <svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 3px; margin-top: 1px;">
+            <path fill="#0047AB" d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z" />
           </svg>
-          Danos do Veículo
+          <span style="color: #0047AB; font-weight: bold;">Danos do Veículo</span>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
           <!-- Grid de peças danificadas, ocupa 2/3 do espaço -->
@@ -789,8 +795,20 @@ export default function BudgetPage() {
           </div>
         </div>
         
-        <div style="margin-bottom: 10px; padding: 5px; font-size: 11px; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
-          <strong>MATERIAIS ESPECIAIS:</strong> <span style="color: #ff0000; font-weight: bold;">A</span>= ALUMÍNIO &nbsp;&nbsp; <span style="color: #0000ff; font-weight: bold;">K</span>= COLA &nbsp;&nbsp; <span style="color: #00aa00; font-weight: bold;">P</span>= PINTURA
+        <div style="margin-top: 10px; padding: 5px 0; font-size: 11px; text-align: center; border-top: 1px solid #eee; padding-top: 10px; display: flex; justify-content: center; align-items: center;">
+          <span style="color: #333; font-weight: bold; margin-right: 10px;">Materiais Especiais</span>
+          <div style="display: inline-flex; align-items: center; margin-right: 12px;">
+            <div style="width: 14px; height: 14px; background-color: #ff0000; border-radius: 50%; margin-right: 5px; display: flex; justify-content: center; align-items: center; color: white; font-size: 10px; font-weight: bold;">A</div>
+            <span>ALUMÍNIO</span>
+          </div>
+          <div style="display: inline-flex; align-items: center; margin-right: 12px;">
+            <div style="width: 14px; height: 14px; background-color: #0000ff; border-radius: 50%; margin-right: 5px; display: flex; justify-content: center; align-items: center; color: white; font-size: 10px; font-weight: bold;">K</div>
+            <span>COLA</span>
+          </div>
+          <div style="display: inline-flex; align-items: center;">
+            <div style="width: 14px; height: 14px; background-color: #00aa00; border-radius: 50%; margin-right: 5px; display: flex; justify-content: center; align-items: center; color: white; font-size: 10px; font-weight: bold;">P</div>
+            <span>PINTURA</span>
+          </div>
         </div>
       `;
       printDiv.appendChild(damagesDiv);
@@ -800,11 +818,11 @@ export default function BudgetPage() {
         const notesDiv = document.createElement('div');
         notesDiv.style.marginBottom = '15px';
         notesDiv.innerHTML = `
-          <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; display: flex; align-items: center;">
-            <svg width="16" height="16" viewBox="0 0 24 24" style="margin-right: 5px;">
-              <path fill="#0047AB" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+          <div style="margin-bottom: 8px; font-size: 13px; display: flex; align-items: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 3px; margin-top: 1px;">
+              <path fill="#0047AB" d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z" />
             </svg>
-            Observações
+            <span style="color: #0047AB; font-weight: bold;">Observações</span>
           </div>
           <div style="padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px; background-color: #f9f9f9;">
             ${selectedBudget.note}
@@ -813,14 +831,16 @@ export default function BudgetPage() {
         printDiv.appendChild(notesDiv);
       }
       
-      // Rodapé
+      // Rodapé exatamente como na imagem de referência
       const footerDiv = document.createElement('div');
       footerDiv.style.textAlign = 'center';
-      footerDiv.style.fontSize = '10px';
+      footerDiv.style.fontSize = '9px';
       footerDiv.style.color = '#666';
       footerDiv.style.marginTop = '20px';
+      footerDiv.style.borderTop = '1px solid #eee';
+      footerDiv.style.paddingTop = '5px';
       footerDiv.innerHTML = `
-        Orçamento #${selectedBudget.id} · Euro Dent Experts · Gerado em ${formatDate(new Date().toISOString())}
+        Orçamento #${selectedBudget.id} · Euro Dent Experts · Gerado em ${formatDisplayDate(new Date().toISOString())}
       `;
       printDiv.appendChild(footerDiv);
       
