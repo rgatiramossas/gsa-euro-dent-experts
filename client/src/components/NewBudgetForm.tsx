@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarIcon, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { calculateBudgetTotals } from "@/utils/hailCalculation";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -202,34 +203,15 @@ const NewBudgetForm: React.FC = () => {
     }));
   };
 
-  // Função para calcular os valores totais
+  // Função para calcular os valores totais usando a fórmula avançada
   const calculateTotalValues = (damages: VehicleDamage) => {
-    let totalAw = 0;
-    let totalValue = 0;
-
-    // Lógica para calcular o valor total e AW com base nos danos
-    // Esta é uma implementação básica que pode ser ajustada conforme necessário
-    Object.keys(damages).forEach(part => {
-      if (part !== 'imagem_central') { // Ignorar o espaço da imagem
-        const damage = damages[part];
-        
-        // Calcular AW com base no tamanho e quantidade
-        totalAw += (damage.size20 || 0) * 1;
-        totalAw += (damage.size30 || 0) * 1.5;
-        totalAw += (damage.size40 || 0) * 2;
-        
-        // Adicionar fatores para materiais especiais
-        if (damage.isAluminum) totalAw *= 1.2;
-        if (damage.isGlue) totalAw *= 1.1;
-        if (damage.isPaint) totalAw *= 1.15;
-      }
-    });
-
-    // Valor monetário calculado com base no AW total
-    // Este valor pode ser ajustado conforme a política de preços
-    totalValue = totalAw * 100; // Exemplo: R$100 por unidade de AW
-
-    return { totalAw, totalValue };
+    // Usar a função de cálculo avançada
+    const { totalAW, totalCost } = calculateBudgetTotals(damages);
+    
+    return { 
+      totalAw: totalAW, 
+      totalValue: totalCost 
+    };
   };
 
   // Renderizar o grid de danos do veículo
@@ -420,7 +402,10 @@ const NewBudgetForm: React.FC = () => {
               <div className="bg-gray-50 p-4 rounded-md mt-4">
                 <h4 className="font-medium mb-2">Materiais Especiais</h4>
                 <p className="text-sm">
-                  (A) = Alumínio  |  (K) = Cola  |  (P) = Pintura
+                  (A) = Alumínio (+25%)  |  (K) = Cola (+30%)  |  (P) = Pintura (sem adicional)
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  *Valores calculados automaticamente de acordo com a tabela de referência
                 </p>
               </div>
 
@@ -541,6 +526,7 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
               onCheckedChange={(checked) => onChange(part, "isPaint", !!checked)}
             />
             <label htmlFor={`${part}-paint`} className="ml-1 text-xs">P</label>
+            <span className="ml-2 text-[10px] text-gray-400">(sem adicional)</span>
           </div>
         </div>
       </div>

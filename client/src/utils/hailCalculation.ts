@@ -6,7 +6,7 @@ export const hailCalculation = (
     isGlueTechnique: boolean = false,
     needsVordrucken: boolean = false,
     needsHohlraum: boolean = false,
-    hourlyRate: number = 2.8 // Taxa horária padrão de 2.8€
+    hourlyRate: number = 28 // Taxa horária padrão de 28€
 ): { aw: number; hours: number; cost: number } => {
     const baseData: Record<'horizontal' | 'vertical', Record<number, Record<number, number>>> = {
         horizontal: {
@@ -67,16 +67,19 @@ export const hailCalculation = (
         return { aw: 0, hours: 0, cost: 0 };
     }
     
-    // Caso o tamanho de dente tenha uma entrada exata na tabela
-    if (awTable[size][dents]) {
+    // Obter todos os valores de dents disponíveis na tabela e ordenar
+    const availableDents = Object.keys(awTable[size])
+        .map(Number)
+        .sort((a, b) => a - b);
+    
+    // Se o número exato de amassados existe na tabela, use-o diretamente
+    if (awTable[size][dents] !== undefined) {
         let aw = awTable[size][dents];
         
         // Aplicar multiplicadores
         if (isAluminum) aw *= 1.25;
         if (isGlueTechnique) aw *= 1.30;
-        if (needsVordrucken) aw *= 1.60;
-        if (needsHohlraum) aw += 4;
-
+        
         // Arredondar para inteiro
         aw = Math.round(aw);
         const hours = aw / 10;
@@ -89,32 +92,51 @@ export const hailCalculation = (
         };
     }
     
-    // Se não encontrarmos o valor exato, encontre o mais próximo
-    const denteDisponiveisParaTamanho = Object.keys(awTable[size]).map(Number).sort((a, b) => a - b);
-    
-    // Encontrar o valor mais próximo na tabela
-    let denteProximo = denteDisponiveisParaTamanho[0]; // Começar com o primeiro valor
-    let menorDiferenca = Math.abs(dents - denteProximo);
-    
-    for (const dentesDisponiveis of denteDisponiveisParaTamanho) {
-        const diferenca = Math.abs(dents - dentesDisponiveis);
-        if (diferenca < menorDiferenca) {
-            menorDiferenca = diferenca;
-            denteProximo = dentesDisponiveis;
+    // Se não existe, encontrar o valor mais próximo usando interpolação
+    // 1. Encontrar o valor anterior e posterior
+    let lowerIndex = -1;
+    for (let i = 0; i < availableDents.length; i++) {
+        if (availableDents[i] > dents) {
+            lowerIndex = i - 1;
+            break;
         }
     }
     
-    // Usar o valor encontrado
-    let aw = awTable[size][denteProximo];
+    // Se não encontrou índice anterior, usar o primeiro
+    if (lowerIndex < 0) lowerIndex = 0;
+    // Se já estamos no último, usar o penúltimo
+    if (lowerIndex >= availableDents.length - 1) lowerIndex = availableDents.length - 2;
+    
+    const lowerDent = availableDents[lowerIndex];
+    const upperDent = availableDents[lowerIndex + 1];
+    const lowerAW = awTable[size][lowerDent];
+    const upperAW = awTable[size][upperDent];
+    
+    // Calcular a diferença entre valores de AW
+    const awDiff = upperAW - lowerAW;
+    // Calcular a diferença entre os valores de dents
+    const dentDiff = upperDent - lowerDent;
+    // Calcular ponto médio
+    const midPoint = lowerDent + (dentDiff / 2);
+    
+    let interpolatedAW;
+    
+    // Verificar se dents está abaixo ou acima do ponto médio
+    if (dents < midPoint) {
+        // Abaixo do meio, usar valor inferior + proporção
+        const ratio = (dents - lowerDent) / dentDiff;
+        interpolatedAW = lowerAW + (awDiff * ratio);
+    } else {
+        // Acima do meio, usar valor superior
+        interpolatedAW = upperAW;
+    }
     
     // Aplicar multiplicadores
-    if (isAluminum) aw *= 1.25;
-    if (isGlueTechnique) aw *= 1.30;
-    if (needsVordrucken) aw *= 1.60;
-    if (needsHohlraum) aw += 4;
-
+    if (isAluminum) interpolatedAW *= 1.25;
+    if (isGlueTechnique) interpolatedAW *= 1.30;
+    
     // Arredondar para inteiro
-    aw = Math.round(aw);
+    const aw = Math.round(interpolatedAW);
     const hours = aw / 10;
     const cost = hours * hourlyRate;
 
@@ -125,64 +147,45 @@ export const hailCalculation = (
     };
 };
 
-/**
- * Interface para os tipos de danos
- */
-export interface DanoPeca {
-  pequeno?: number;
-  medio?: number;
-  grande?: number;
-  aluminio?: boolean;
-  cola?: boolean;
-}
+// Função auxiliar para determinar se uma peça é vertical ou horizontal
+export const isVerticalPart = (part: string): boolean => {
+    const horizontalParts = ["capo", "teto", "porta_malas_superior", "porta_malas_inferior"];
+    return !horizontalParts.includes(part);
+};
 
-/**
- * Interface para o objeto de danos
- */
-export interface DanosVeiculo {
-  [peca: string]: DanoPeca | null;
-}
-
-/**
- * Função para calcular totais de um orçamento completo
- * 
- * @param danos - Objeto contendo os danos por parte do veículo
- * @returns Objeto com totalAW e totalCost
- */
-export function calculateOrcamentoTotals(danos: DanosVeiculo): { totalAW: number; totalCost: number } {
+// Função para calcular os totais do orçamento com base nos danos
+export function calculateBudgetTotals(damages: any): { totalAW: number; totalCost: number } {
     let totalAW = 0;
     let totalCost = 0;
-
-    // Lista de peças horizontais
-    const horizontalParts = ["capo", "teto", "tampaPortaMalas", "capoDianteiro", "capoTraseiro"];
     
-    // Para cada parte do veículo que tem danos
-    Object.entries(danos).forEach(([parte, danoParte]) => {
-        if (!danoParte) return;
+    // Para cada parte do veículo com danos
+    Object.entries(damages).forEach(([part, damage]: [string, any]) => {
+        if (!damage || part === 'imagem_central') return;
         
         // Determinar se é uma peça vertical ou horizontal
-        const isVertical = !horizontalParts.includes(parte);
+        const isVertical = isVerticalPart(part);
         
-        // Calcular para cada tamanho de amassado
-        const sizes: Record<string, number> = {
-            "pequeno": 20,
-            "medio": 30, 
-            "grande": 40
-        };
+        // Calcular para cada tamanho de amassado: 20mm, 30mm, 40mm
+        const sizes = [
+            { key: "size20", value: 20 },
+            { key: "size30", value: 30 },
+            { key: "size40", value: 40 }
+        ];
         
-        Object.entries(sizes).forEach(([tamanhoKey, tamanhoMM]) => {
-            const quantidadeAmassados = parseInt(String(danoParte[tamanhoKey as keyof DanoPeca] || 0));
-            if (!quantidadeAmassados || isNaN(quantidadeAmassados)) return;
+        // Calcular AW para cada tamanho existente
+        sizes.forEach(({key, value}) => {
+            const dentsCount = damage[key] || 0;
+            if (dentsCount <= 0) return;
             
             // Calcular AW e custo para estes amassados
+            // Note que apenas aplicamos isAluminum e isGlue como multiplicadores
+            // isPaint não recebe multiplicador extra (conforme solicitado)
             const result = hailCalculation(
-                tamanhoMM,
-                quantidadeAmassados,
+                value,
+                dentsCount, 
                 isVertical,
-                danoParte.aluminio || false,
-                danoParte.cola || false,
-                false, // Vordrucken não implementado na interface
-                false  // Hohlraum não implementado na interface
+                damage.isAluminum || false,
+                damage.isGlue || false
             );
             
             totalAW += result.aw;
@@ -190,7 +193,7 @@ export function calculateOrcamentoTotals(danos: DanosVeiculo): { totalAW: number
         });
     });
     
-    // Valor final é baseado em 2.8€ por AW conforme especificado
+    // Valor final é baseado em 2.8€ por AW
     const finalCost = totalAW * 2.8;
     
     return { 
