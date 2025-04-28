@@ -15,7 +15,7 @@ interface Budget {
 
 /**
  * Gera um PDF básico de orçamento
- * Implementação totalmente nova e simplificada
+ * Implementação totalmente nova com base na imagem de exemplo
  */
 export const generateSimplePdf = async (budget: Budget): Promise<void> => {
   try {
@@ -28,57 +28,52 @@ export const generateSimplePdf = async (budget: Budget): Promise<void> => {
     tempElement.style.padding = '40px';
     document.body.appendChild(tempElement);
 
-    // Função para formatar moeda
-    const formatCurrency = (value?: number) => {
-      if (value === undefined || value === null) return 'R$ 0,00';
-      return `R$ ${value.toFixed(2).replace('.', ',')}`;
-    };
-
     // Função para formatar data
     const formatDate = (dateString: string) => {
       if (!dateString) return 'N/A';
       const date = new Date(dateString);
-      return date.toLocaleDateString('pt-BR');
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
     };
 
-    // Conteúdo do PDF com design simples
+    // Conteúdo do PDF - Apenas o cabeçalho conforme a imagem
     tempElement.innerHTML = `
-      <div style="font-family: Arial, sans-serif; color: #333;">
-        <!-- Cabeçalho -->
-        <div style="text-align: center; margin-bottom: 30px;">
-          <div style="font-size: 24px; font-weight: bold; color: #1a5fb4; margin-bottom: 5px;">ORÇAMENTO</div>
-          <div style="font-size: 14px; color: #666;">#${budget.id}</div>
+      <div style="font-family: Arial, sans-serif; color: #333; width: 100%;">
+        <!-- Cabeçalho com Logo EURO DENT EXPERTS -->
+        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+          <div style="font-size: 22px; font-weight: bold; color: #2563EB;">EURO</div>
+          <div style="font-size: 22px; font-weight: bold; color: #000000; margin-left: 4px;">DENT</div>
+          <div style="font-size: 10px; color: #000000; margin-left: 4px; margin-top: 3px;">EXPERTS</div>
         </div>
-
-        <!-- Informações do cliente e veículo -->
-        <div style="display: flex; margin-bottom: 30px;">
-          <div style="flex: 1; padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9; border-radius: 5px; margin-right: 10px;">
-            <div style="font-weight: bold; margin-bottom: 10px; font-size: 16px;">Informações do Cliente</div>
-            <div style="margin-bottom: 5px;"><strong>Nome:</strong> ${budget.client_name}</div>
-            <div style="margin-bottom: 5px;"><strong>Data:</strong> ${formatDate(budget.date)}</div>
+        
+        <!-- Linha horizontal abaixo do logo -->
+        <div style="height: 2px; background-color: #2563EB; width: 100%; margin-bottom: 15px;"></div>
+        
+        <!-- Barra azul com título ORÇAMENTO e número -->
+        <div style="background-color: #2563EB; color: white; padding: 10px; display: flex; justify-content: space-between; border-radius: 6px; margin-bottom: 20px;">
+          <div style="font-size: 18px; font-weight: bold;">ORÇAMENTO</div>
+          <div style="font-size: 18px; font-weight: bold;">#${budget.id}</div>
+        </div>
+        
+        <!-- Informações do cliente -->
+        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+          <!-- Bloco de informações do cliente -->
+          <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
+            <div style="font-weight: bold; margin-bottom: 15px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO CLIENTE</div>
+            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Nome:</span> ${budget.client_name}</div>
+            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Data:</span> ${formatDate(budget.date)}</div>
           </div>
-
-          <div style="flex: 1; padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9; border-radius: 5px;">
-            <div style="font-weight: bold; margin-bottom: 10px; font-size: 16px;">Informações do Veículo</div>
-            <div style="margin-bottom: 5px;"><strong>Veículo:</strong> ${budget.vehicle_info}</div>
-            <div style="margin-bottom: 5px;"><strong>Placa:</strong> ${budget.plate || '---'}</div>
-            <div style="margin-bottom: 5px;"><strong>Chassi:</strong> ${budget.chassis_number || '---'}</div>
+          
+          <!-- Bloco de informações do veículo -->
+          <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
+            <div style="font-weight: bold; margin-bottom: 15px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO VEÍCULO</div>
+            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Veículo:</span> ${budget.vehicle_info}</div>
+            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Placa:</span> ${budget.plate || '---'}</div>
+            <div style="margin-bottom: 8px; font-size: 13px;"><span style="font-weight: bold;">Chassi:</span> ${budget.chassis_number || '---'}</div>
           </div>
         </div>
-
-        <!-- Valor total -->
-        <div style="padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9; border-radius: 5px; margin-bottom: 30px;">
-          <div style="font-weight: bold; margin-bottom: 10px; font-size: 16px;">Valor do Orçamento</div>
-          <div style="font-size: 20px; font-weight: bold; color: #1a5fb4;">${formatCurrency(budget.total_value)}</div>
-        </div>
-
-        <!-- Observações, se houver -->
-        ${budget.note ? `
-        <div style="padding: 15px; border: 1px solid #ddd; background-color: #f9f9f9; border-radius: 5px; margin-bottom: 30px;">
-          <div style="font-weight: bold; margin-bottom: 10px; font-size: 16px;">Observações</div>
-          <div style="white-space: pre-wrap;">${budget.note}</div>
-        </div>
-        ` : ''}
       </div>
     `;
 
