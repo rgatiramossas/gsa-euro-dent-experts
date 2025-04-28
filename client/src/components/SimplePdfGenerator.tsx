@@ -133,23 +133,23 @@ export const generateSimplePdf = async (budget: Budget): Promise<void> => {
               <!-- Tamanho 20mm -->
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <span style="font-size: 10px; width: 30px; text-align: right; margin-right: -8px;">20mm:</span>
-                <span style="width: 30px; height: 18px; font-size: 10px; text-align: center; border: 1px solid #ddd; border-radius: 3px; padding: 2px;">${damage.size20 || 0}</span>
+                <span style="width: 30px; height: 18px; font-size: 10px; text-align: center; border: 1px solid #ddd; border-radius: 3px; padding: 4px 2px 2px 2px;">${damage.size20 || 0}</span>
               </div>
               
               <!-- Tamanho 30mm -->
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <span style="font-size: 10px; width: 30px; text-align: right; margin-right: -8px;">30mm:</span>
-                <span style="width: 30px; height: 18px; font-size: 10px; text-align: center; border: 1px solid #ddd; border-radius: 3px; padding: 2px;">${damage.size30 || 0}</span>
+                <span style="width: 30px; height: 18px; font-size: 10px; text-align: center; border: 1px solid #ddd; border-radius: 3px; padding: 4px 2px 2px 2px;">${damage.size30 || 0}</span>
               </div>
               
               <!-- Tamanho 40mm -->
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <span style="font-size: 10px; width: 30px; text-align: right; margin-right: -8px;">40mm:</span>
-                <span style="width: 30px; height: 18px; font-size: 10px; text-align: center; border: 1px solid #ddd; border-radius: 3px; padding: 2px;">${damage.size40 || 0}</span>
+                <span style="width: 30px; height: 18px; font-size: 10px; text-align: center; border: 1px solid #ddd; border-radius: 3px; padding: 4px 2px 2px 2px;">${damage.size40 || 0}</span>
               </div>
               
               <!-- Checkboxes -->
-              <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+              <div style="display: flex; justify-content: space-between; margin-top: 8px;">
                 <div style="display: flex; flex-direction: column; align-items: center; width: 20px;">
                   <div style="width: 10px; height: 10px; border: 1px solid #ddd; border-radius: 2px; ${damage.isAluminum ? 'background-color: #2563EB;' : ''}" title="Alumínio"></div>
                   <label style="font-size: 9px; font-weight: bold; color: #DC2626; margin-top: 2px;">A</label>
