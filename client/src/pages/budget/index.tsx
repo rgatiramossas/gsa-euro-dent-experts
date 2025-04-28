@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { generatePdf, generateDamagedPartsGrid } from "@/components/PdfGenerator";
 import { Loader2, Search, Printer, FileText, Trash2, Plus, Edit, FileEdit, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import NewBudgetForm from "@/components/NewBudgetForm";
 
 // Define a type for our budget data
 interface Budget {
@@ -192,33 +193,9 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
   // Neste momento, esses modos são implementados como componentes separados
   // Verificar se estamos em modo de criação ou edição
   if (isNewMode) {
-    // No futuro, implementaremos a criação de orçamentos aqui
+    // Implementação do formulário de novo orçamento
     return (
-      <div className="container mx-auto p-4 sm:p-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center mb-2">
-              <Button 
-                variant="ghost" 
-                className="mr-2 p-0 h-8 w-8" 
-                onClick={() => window.location.href = "/budgets"}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <CardTitle className="text-2xl">Novo Orçamento</CardTitle>
-            </div>
-            <CardDescription>
-              Funcionalidade em desenvolvimento
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center py-8">
-            <p className="mb-4">Esta funcionalidade está sendo implementada.</p>
-            <Button onClick={() => window.location.href = "/budgets"}>
-              Voltar para Orçamentos
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <NewBudgetForm />
     );
   }
   
