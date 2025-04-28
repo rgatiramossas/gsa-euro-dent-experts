@@ -493,6 +493,26 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* New Budget Dialog */}
+      <Dialog 
+        open={showNewBudgetDialog} 
+        onOpenChange={setShowNewBudgetDialog}
+      >
+        <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle>Novo Orçamento</DialogTitle>
+            <DialogDescription>
+              Crie um novo orçamento para o cliente
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-6 max-h-[80vh] overflow-y-auto">
+            <NewBudgetForm 
+              onSuccess={handleNewBudgetSuccess}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

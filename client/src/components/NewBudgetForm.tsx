@@ -105,7 +105,8 @@ const partDisplayNames: Record<string, string> = {
 const NewBudgetForm: React.FC<NewBudgetFormProps> = ({ 
   initialData = null, 
   readOnly = false,
-  onSuccess = () => {} 
+  onSuccess = () => {},
+  isInDialog = false
 }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -551,7 +552,15 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => window.location.href = "/budgets"}
+                onClick={() => {
+                  if (isInDialog) {
+                    // Se estiver em um modal, apenas limpar o formulário
+                    form.reset();
+                  } else {
+                    // Se estiver em uma página própria, voltar para a lista
+                    window.location.href = "/budgets";
+                  }
+                }}
               >
                 Cancelar
               </Button>
@@ -571,6 +580,7 @@ interface NewBudgetFormProps {
   initialData?: any;
   readOnly?: boolean;
   onSuccess?: (data: any) => void;
+  isInDialog?: boolean;
 }
 
 // Componente para renderizar uma unidade de dano (uma parte do veículo)
