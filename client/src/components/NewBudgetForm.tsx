@@ -189,6 +189,12 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
         total_value: totalValues.totalValue,
         vehicle_image: vehicleImage
       };
+      
+      // Log para depuração
+      console.log("Enviando orçamento para o servidor:", {
+        ...budget,
+        vehicle_image: vehicleImage ? `Imagem com ${vehicleImage.length} caracteres` : "Sem imagem"
+      });
 
       if (initialData) {
         // Atualizar orçamento existente
@@ -291,6 +297,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = reader.result as string;
+      console.log("Imagem carregada com tamanho:", base64String.length);
       setVehicleImage(base64String);
     };
     reader.readAsDataURL(file);

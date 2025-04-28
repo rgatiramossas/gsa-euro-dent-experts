@@ -1987,6 +1987,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Extrair damaged_parts do request
         const { damaged_parts, chassisNumber, vehicle_image } = req.body;
         
+        // Log da imagem para depuração
+        console.log("Criando orçamento com imagem:", 
+          vehicle_image ? 
+            `Imagem presente com ${vehicle_image.length} caracteres` : 
+            "Sem imagem (null/undefined)");
+        
         // Construir query de inserção
         const insertQuery = `
           INSERT INTO budgets 
@@ -2140,6 +2146,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (budgetData.vehicle_image !== undefined) {
           query += 'vehicle_image = ?, ';
           values.push(budgetData.vehicle_image);
+          console.log("Adicionando imagem de veículo ao orçamento:", 
+            budgetData.vehicle_image ? 
+              `Imagem presente com ${budgetData.vehicle_image.length} caracteres` : 
+              "Sem imagem (null)");
+        } else {
+          console.log("Nenhuma imagem de veículo definida no orçamento");
         }
         
         // Remover a última vírgula e espaço

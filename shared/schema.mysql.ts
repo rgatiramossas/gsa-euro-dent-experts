@@ -210,6 +210,8 @@ export const budgets = mysqlTable("budgets", {
   note: text("note"),
   plate: text("plate"),
   chassisNumber: text("chassis_number"),
+  damaged_parts: text("damaged_parts"),
+  vehicle_image: text("vehicle_image", { length: 16777215 }), // MEDIUMTEXT para armazenar imagens em base64
   created_at: timestamp("created_at").defaultNow(),
 });
 
