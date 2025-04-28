@@ -217,7 +217,7 @@ const NewBudgetForm: React.FC = () => {
   // Renderizar o grid de danos do veículo
   const renderDamageGrid = () => {
     return (
-      <div className="grid grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-4 max-w-6xl mx-auto">
         {/* Primeira linha: Para-lama Esquerdo - Capô - Para-lama Direito */}
         <DamagePart part="para_lama_esquerdo" damages={damages} onChange={handleDamageChange} />
         <DamagePart part="capo" damages={damages} onChange={handleDamageChange} />
@@ -230,8 +230,8 @@ const NewBudgetForm: React.FC = () => {
 
         {/* Terceira linha: Porta Dianteira Esquerda - Espaço Imagem - Porta Dianteira Direita */}
         <DamagePart part="porta_dianteira_esquerda" damages={damages} onChange={handleDamageChange} />
-        <div className="p-4 border rounded-md bg-gray-50 flex items-center justify-center">
-          <div className="text-center text-gray-400">Imagem do Veículo</div>
+        <div className="p-3 border rounded-md bg-gray-50 flex items-center justify-center">
+          <div className="text-center text-gray-400 text-xs">Veículo</div>
         </div>
         <DamagePart part="porta_dianteira_direita" damages={damages} onChange={handleDamageChange} />
 
@@ -402,7 +402,7 @@ const NewBudgetForm: React.FC = () => {
               <div className="bg-gray-50 p-4 rounded-md mt-4">
                 <h4 className="font-medium mb-2">Materiais Especiais</h4>
                 <p className="text-sm">
-                  (A) = Alumínio (+25%)  |  (K) = Cola (+30%)  |  (P) = Pintura (sem adicional)
+                  (A) = Alumínio (+25%)  |  (K) = Cola (+30%)  |  (P) = Pintura
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   *Valores calculados automaticamente de acordo com a tabela de referência
@@ -467,47 +467,48 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
       <div className="space-y-2">
         {/* Tamanho 20 */}
         <div className="flex items-center">
-          <span className="w-8 text-sm">20</span>
+          <span className="w-6 text-sm">20</span>
           <Input
             type="number"
             value={damage.size20 || 0}
             onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
-            className="w-16 h-8 text-sm"
+            className="w-14 h-7 text-sm px-2"
             min={0}
           />
         </div>
         
         {/* Tamanho 30 */}
         <div className="flex items-center">
-          <span className="w-8 text-sm">30</span>
+          <span className="w-6 text-sm">30</span>
           <Input
             type="number"
             value={damage.size30 || 0}
             onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
-            className="w-16 h-8 text-sm"
+            className="w-14 h-7 text-sm px-2"
             min={0}
           />
         </div>
         
         {/* Tamanho 40 */}
         <div className="flex items-center">
-          <span className="w-8 text-sm">40</span>
+          <span className="w-6 text-sm">40</span>
           <Input
             type="number"
             value={damage.size40 || 0}
             onChange={(e) => onChange(part, "size40", parseInt(e.target.value) || 0)}
-            className="w-16 h-8 text-sm"
+            className="w-14 h-7 text-sm px-2"
             min={0}
           />
         </div>
         
         {/* Checkboxes para materiais especiais */}
-        <div className="flex justify-between mt-2">
+        <div className="flex justify-start gap-3 mt-2">
           <div className="flex items-center">
             <Checkbox 
               id={`${part}-aluminum`}
               checked={damage.isAluminum || false}
               onCheckedChange={(checked) => onChange(part, "isAluminum", !!checked)}
+              className="h-3 w-3"
             />
             <label htmlFor={`${part}-aluminum`} className="ml-1 text-xs">A</label>
           </div>
@@ -516,6 +517,7 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
               id={`${part}-glue`}
               checked={damage.isGlue || false}
               onCheckedChange={(checked) => onChange(part, "isGlue", !!checked)}
+              className="h-3 w-3"
             />
             <label htmlFor={`${part}-glue`} className="ml-1 text-xs">K</label>
           </div>
@@ -524,9 +526,9 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange }) => {
               id={`${part}-paint`}
               checked={damage.isPaint || false}
               onCheckedChange={(checked) => onChange(part, "isPaint", !!checked)}
+              className="h-3 w-3"
             />
             <label htmlFor={`${part}-paint`} className="ml-1 text-xs">P</label>
-            <span className="ml-2 text-[10px] text-gray-400">(sem adicional)</span>
           </div>
         </div>
       </div>
