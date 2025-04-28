@@ -772,9 +772,9 @@ export default function BudgetPage() {
           </svg>
           <span style="color: #0047AB; font-weight: bold;">Danos do Veículo</span>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr; gap: 4px; margin-bottom: 5px;">
           <!-- Grid de peças danificadas em 3 colunas -->
-          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+          <div id="damaged-parts-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%;">
           </div>
         </div>
         
@@ -892,7 +892,7 @@ export default function BudgetPage() {
               placeholderDiv.style.display = 'flex';
               placeholderDiv.style.justifyContent = 'center';
               placeholderDiv.style.alignItems = 'center';
-              placeholderDiv.style.height = '150px'; // Altura suficiente para a imagem
+              placeholderDiv.style.height = '180px'; // Aumentar altura para ficar proporcional às células
               placeholderDiv.style.overflow = 'hidden';
               
               // Adicionamos a imagem ou o placeholder
@@ -933,6 +933,7 @@ export default function BudgetPage() {
             partDiv.style.display = 'flex';
             partDiv.style.flexDirection = 'column';
             partDiv.style.justifyContent = 'flex-start'; // Forçar alinhamento ao topo
+            partDiv.style.minHeight = '75px'; // Aumentar altura para usar melhor o espaço
             
             // Criar o cabeçalho com o nome da peça (estilo exato como no modelo)
             const partHeader = document.createElement('div');
