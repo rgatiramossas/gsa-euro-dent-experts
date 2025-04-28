@@ -64,6 +64,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showNewBudgetDialog, setShowNewBudgetDialog] = useState(false);
   const [filteredBudgets, setFilteredBudgets] = useState<Budget[]>([]);
 
   // Fetch budgets data
@@ -154,6 +155,16 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
       });
     }
   };
+  
+  // Manipulador para quando um novo orçamento é criado com sucesso
+  const handleNewBudgetSuccess = (data: any) => {
+    toast({
+      title: "Orçamento criado",
+      description: "O orçamento foi criado com sucesso.",
+    });
+    queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
+    setShowNewBudgetDialog(false);
+  };
 
   // Format date for display
   const formatDisplayDate = (dateString: string) => {
@@ -240,11 +251,12 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
               Visualize e gerencie todos os orçamentos
             </CardDescription>
           </div>
-          <Button className="mt-4 sm:mt-0" asChild>
-            <Link href="/budgets/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Orçamento
-            </Link>
+          <Button 
+            className="mt-4 sm:mt-0" 
+            onClick={() => setShowNewBudgetDialog(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Orçamento
           </Button>
         </CardHeader>
         <CardContent>
