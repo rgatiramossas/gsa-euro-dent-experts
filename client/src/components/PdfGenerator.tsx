@@ -13,6 +13,7 @@ interface PdfGeneratorProps {
     chassis_number?: string;
     damaged_parts?: any;
     photo_url?: string;
+    vehicle_image?: string;
     total_aw?: number;
     total_value?: number;
     note?: string;
@@ -77,11 +78,11 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
           
           <!-- Grid de peças danificadas -->
           <div id="damage-grid">
-            ${generateDamagedPartsGrid(budgetData.damaged_parts)}
+            ${generateDamagedPartsGrid(budgetData.damaged_parts, budgetData.vehicle_image)}
           </div>
           
           <!-- Script para substituir o placeholder da foto -->
-          ${budgetData.photo_url ? `
+          ${(budgetData.photo_url || budgetData.vehicle_image) ? `
           <script>
             // Este script é executado durante a geração do PDF para inserir a foto no local correto
             (function() {
@@ -93,10 +94,10 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
                 photoPlaceholder.style.border = '1px solid #ddd';
                 
                 var img = document.createElement('img');
-                img.src = "${budgetData.photo_url}";
+                img.src = "${budgetData.vehicle_image || budgetData.photo_url}";
                 img.style.width = '100%';
                 img.style.height = '105px';
-                img.style.objectFit = 'cover';
+                img.style.objectFit = 'contain';
                 img.style.borderRadius = '4px';
                 
                 photoPlaceholder.appendChild(img);
@@ -232,7 +233,7 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
 };
 
 // Função para gerar o grid de peças danificadas de forma elegante
-export function generateDamagedPartsGrid(damagedParts: any): string {
+export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: string): string {
   // Criar o grid completo de layout do carro
   // Definir o layout fixo do grid para representar o carro
   const gridLayout = [
