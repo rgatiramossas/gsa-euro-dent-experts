@@ -106,6 +106,13 @@ const NewBudgetForm: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [damages, setDamages] = useState<VehicleDamage>({});
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  
+  // Buscar a lista de clientes do banco de dados
+  const { data: clients, isLoading: isLoadingClients } = useQuery<any[]>({
+    queryKey: ['/api/clients'],
+    retry: 1,
+  });
 
   // Inicialize os danos com todas as peças
   useEffect(() => {
@@ -282,102 +289,119 @@ const NewBudgetForm: React.FC = () => {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Cabeçalho do orçamento */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Data e Cliente na primeira linha */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>DATA</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={`pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
-                              >
-                                {field.value ? (
-                                  format(field.value, "dd/MM/yyyy", { locale: ptBR })
-                                ) : (
-                                  <span>Selecione uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="client_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CLIENTE</FormLabel>
+              {/* Primeira linha: Data e Cliente (selecionável do BD) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>DATA</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={`pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="client_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CLIENTE</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
                         <FormControl>
-                          <Input placeholder="Nome do cliente" {...field} />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um cliente" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                        <SelectContent>
+                          {isLoadingClients ? (
+                            <SelectItem value="loading">Carregando clientes...</SelectItem>
+                          ) : !clients || clients.length === 0 ? (
+                            <SelectItem value="no-clients">Nenhum cliente encontrado</SelectItem>
+                          ) : (
+                            clients.map((client) => (
+                              <SelectItem key={client.id} value={client.id.toString()}>
+                                {client.name}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                {/* Segunda linha: Veículo - Placa - Chassi */}
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="vehicle_info"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>VEÍCULO</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Marca/Modelo" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="plate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>PLACA</FormLabel>
-                        <FormControl>
-                          <Input placeholder="ABC1234" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="chassis_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CHASSI</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Número do chassi" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              {/* Segunda linha: Veículo - Placa - Chassi (digitados manualmente) */}
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <FormField
+                  control={form.control}
+                  name="vehicle_info"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>VEÍCULO</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Marca/Modelo" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="plate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>PLACA</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ABC1234" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="chassis_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CHASSI</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Número do chassi" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* Separador */}
