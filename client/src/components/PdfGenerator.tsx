@@ -36,17 +36,12 @@ export const generatePdf = async (budgetData: PdfGeneratorProps['budgetData']) =
     // Adicionar o conteúdo elegante ao elemento
     printDiv.innerHTML = `
       <div style="width: 100%; background-color: white; position: relative;">
-        <!-- Cabeçalho com logo e informações da empresa -->
-        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px;">
+        <!-- Cabeçalho com logo (sem informações da empresa) -->
+        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 10px;">
           <div style="display: flex; align-items: center;">
-            <div style="font-size: 32px; font-weight: bold; color: #2563eb;">EURO</div>
-            <div style="font-size: 32px; font-weight: bold; color: #000; margin-left: 5px;">DENT</div>
-            <div style="font-size: 14px; margin-left: 5px; margin-top: 5px; color: #000;">EXPERTS</div>
-          </div>
-          <div style="text-align: right;">
-            <div style="font-size: 12px; color: #666;">R. Alemanha, 86 - Jardim Europa, Sorriso - MT</div>
-            <div style="font-size: 12px; color: #666;">Tel: (66) 3544-0415 / (66) 99963-3169</div>
-            <div style="font-size: 12px; color: #666;">eurodentmt@hotmail.com</div>
+            <div style="font-size: 24px; font-weight: bold; color: #2563eb;">EURO</div>
+            <div style="font-size: 24px; font-weight: bold; color: #000; margin-left: 3px;">DENT</div>
+            <div style="font-size: 10px; margin-left: 3px; margin-top: 3px; color: #000;">EXPERTS</div>
           </div>
         </div>
         
@@ -327,34 +322,30 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
           ${partLayout.isHorizontal ? '<span style="margin-left: 5px; color: #666; font-size: 9px;">(H)</span>' : ''}
         </div>
         
-        ${part.selected ? `
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-          <!-- Diâmetros -->
-          <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px;">
-            ${part.diameter20 > 0 ? `
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <!-- Sempre mostrar todos os diâmetros -->
+          <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 3px;">
+            <!-- 20mm (sempre visível) -->
             <div style="display: flex; justify-content: space-between; align-items: center; height: 16px;">
               <span style="font-size: 10px;">20mm:</span>
-              <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: #f4f4f4; border-radius: 2px;">${part.diameter20}</span>
+              <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter20 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px;">${part.diameter20 > 0 ? part.diameter20 : ''}</span>
             </div>
-            ` : ''}
             
-            ${part.diameter30 > 0 ? `
+            <!-- 30mm (sempre visível) -->
             <div style="display: flex; justify-content: space-between; align-items: center; height: 16px;">
               <span style="font-size: 10px;">30mm:</span>
-              <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: #f4f4f4; border-radius: 2px;">${part.diameter30}</span>
+              <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter30 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px;">${part.diameter30 > 0 ? part.diameter30 : ''}</span>
             </div>
-            ` : ''}
             
-            ${part.diameter40 > 0 ? `
+            <!-- 40mm (sempre visível) -->
             <div style="display: flex; justify-content: space-between; align-items: center; height: 16px;">
               <span style="font-size: 10px;">40mm:</span>
-              <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: #f4f4f4; border-radius: 2px;">${part.diameter40}</span>
+              <span style="font-size: 10px; width: 32px; height: 14px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background-color: ${part.diameter40 > 0 ? '#f4f4f4' : 'white'}; border-radius: 2px;">${part.diameter40 > 0 ? part.diameter40 : ''}</span>
             </div>
-            ` : ''}
           </div>
           
-          <!-- Opções A, K, P -->
-          <div style="display: flex; justify-content: space-between; padding-top: 4px; border-top: 1px solid #eee; margin: 0 5px;">
+          <!-- Opções A, K, P (sempre visíveis) -->
+          <div style="display: flex; justify-content: space-between; padding-top: 2px; border-top: 1px solid #eee; margin: 0 5px;">
             <div style="display: flex; align-items: center; width: 20px; justify-content: center;">
               <div style="width: 9px; height: 9px; border: 1px solid #ccc; margin-right: 2px; display: inline-block; position: relative; border-radius: 2px; background-color: ${part.optionA ? '#f8f8f8' : 'white'};">
                 ${part.optionA ? '<div style="position: absolute; top: -2px; left: 1px; font-size: 7px; color: #333;">✓</div>' : ''}
@@ -377,11 +368,6 @@ export function generateDamagedPartsGrid(damagedParts: any, vehicleImage?: strin
             </div>
           </div>
         </div>
-        ` : `
-        <div style="height: 65px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 11px;">
-          Sem danos
-        </div>
-        `}
       </div>
     `;
   });
