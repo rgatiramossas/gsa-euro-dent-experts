@@ -68,7 +68,6 @@ const budgetSchema = z.object({
   vehicle_info: z.string().min(1, "Informações do veículo são obrigatórias"),
   plate: z.string().optional(),
   chassis_number: z.string().optional(),
-  note: z.string().optional(),
 });
 
 // Tipo inferido a partir do schema
@@ -138,8 +137,7 @@ const NewBudgetForm: React.FC = () => {
       client_name: "",
       vehicle_info: "",
       plate: "",
-      chassis_number: "",
-      note: ""
+      chassis_number: ""
     },
   });
 
@@ -426,24 +424,23 @@ const NewBudgetForm: React.FC = () => {
                 </p>
               </div>
 
-              {/* Campo de observações */}
-              <FormField
-                control={form.control}
-                name="note"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observações</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Observações adicionais sobre o orçamento" 
-                        {...field} 
-                        className="h-24"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Exibição dos Totais */}
+              <div className="bg-gray-50 p-4 rounded-md mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Total AW</h4>
+                    <p className="text-xl font-bold">
+                      {calculateTotalValues(damages).totalAw.toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Total €</h4>
+                    <p className="text-xl font-bold">
+                      {calculateTotalValues(damages).totalValue.toFixed(2)} €
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {/* Botões de ação */}
               <div className="flex justify-end gap-2">
