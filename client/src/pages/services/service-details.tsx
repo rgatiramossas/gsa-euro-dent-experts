@@ -417,19 +417,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         });
       }
       
-      // Adicionar fotos de antes e depois para manter compatibilidade
-      if (beforePhotos && beforePhotos.length > 0) {
-        Array.from(beforePhotos).forEach((file: File) => {
-          formData.append('photos_before', file);
-        });
-      }
-      
-      if (afterPhotos && afterPhotos.length > 0) {
-        Array.from(afterPhotos).forEach((file: File) => {
-          formData.append('photos_after', file);
-        });
-      }
-      
       // Adicionar IDs de fotos a serem removidas
       if (photosToRemove.length > 0) {
         formData.append('photos_to_remove', JSON.stringify(photosToRemove));
@@ -1274,50 +1261,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     </div>
                   </div>
                   
-                  {/* Manter para compatibilidade com sistemas legados */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <Label htmlFor="before_photos">Fotos antes (legado)</Label>
-                      <Input
-                        id="before_photos"
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(e) => e.target.files && handleBeforePhotoChange(e.target.files)}
-                      />
-                      {beforePhotoPreview && (
-                        <div className="mt-2">
-                          <p className="text-xs text-gray-500 mb-1">Preview:</p>
-                          <img 
-                            src={beforePhotoPreview} 
-                            alt="Preview" 
-                            className="h-24 w-auto rounded-md border border-gray-200" 
-                          />
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <Label htmlFor="after_photos">Fotos depois (legado)</Label>
-                      <Input
-                        id="after_photos"
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(e) => e.target.files && handleAfterPhotoChange(e.target.files)}
-                      />
-                      {afterPhotoPreview && (
-                        <div className="mt-2">
-                          <p className="text-xs text-gray-500 mb-1">Preview:</p>
-                          <img 
-                            src={afterPhotoPreview} 
-                            alt="Preview" 
-                            className="h-24 w-auto rounded-md border border-gray-200" 
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  {/* Componentes legados removidos */}
                 </div>
               </CardContent>
             </Card>
