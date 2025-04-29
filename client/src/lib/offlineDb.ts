@@ -567,6 +567,50 @@ class OfflineDatabase extends Dexie {
       throw error;
     }
   }
+  
+  // Método para contar requisições pendentes
+  async countPendingRequests(): Promise<number> {
+    try {
+      return await this.pendingRequests.count();
+    } catch (error) {
+      console.error('Erro ao contar requisições pendentes:', error);
+      return 0;
+    }
+  }
+  
+  // Método para atualizar ID local para o ID do servidor
+  async updateLocalId(tableName: string, localId: string | number, serverId: string | number): Promise<boolean> {
+    try {
+      // Obter a tabela correspondente
+      const table = this.getTableByName(tableName);
+      if (!table) {
+        throw new Error(`Tabela não encontrada: ${tableName}`);
+      }
+      
+      // Obter o item local
+      const item = await table.get(localId);
+      if (!item) {
+        console.warn(`Item não encontrado: ${tableName}/${localId}`);
+        return false;
+      }
+      
+      // Remover o item com ID local
+      await table.delete(localId);
+      
+      // Adicionar o item com ID do servidor
+      item.id = serverId;
+      item._syncedWithServer = true;
+      delete item._offline;
+      
+      await table.put(item);
+      
+      console.log(`ID atualizado com sucesso: ${tableName} ${localId} -> ${serverId}`);
+      return true;
+    } catch (error) {
+      console.error(`Erro ao atualizar ID: ${tableName} ${localId} -> ${serverId}`, error);
+      return false;
+    }
+  }
 }
 
 // Criar e exportar a instância do banco de dados
