@@ -1,5 +1,5 @@
 import { initDb } from "../server/db-mysql";
-import * as schema from "../shared/schema";
+import * as schema from "../shared/schema.mysql";
 import { eq } from "drizzle-orm";
 import { sql } from "drizzle-orm/sql";
 

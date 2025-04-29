@@ -1,7 +1,13 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
+// Nota: Este arquivo não está sendo usado ativamente pelo sistema.
+// A conexão atual usa db-mysql.ts. Este arquivo está mantido apenas
+// como referência para futuros usos do PostgreSQL. 
 import * as schema from "@shared/schema";
+
+// Se este arquivo voltar a ser usado, deverá importar o schema correto:
+// import * as schema from "@shared/schema"; // Para PostgreSQL
 
 neonConfig.webSocketConstructor = ws;
 
