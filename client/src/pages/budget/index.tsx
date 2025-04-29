@@ -260,15 +260,13 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
               Visualize e gerencie todos os orçamentos
             </CardDescription>
           </div>
-          {!isGestor && (
-            <Button 
-              className="mt-4 sm:mt-0" 
-              onClick={() => setShowNewBudgetDialog(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Orçamento
-            </Button>
-          )}
+          <Button 
+            className="mt-4 sm:mt-0" 
+            onClick={() => setShowNewBudgetDialog(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Orçamento
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="mb-6 relative">
@@ -330,17 +328,15 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                           >
                             <Printer className="h-4 w-4" />
                           </Button>
-                          {!isGestor && (
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="text-red-500 hover:text-red-700"
-                              onClick={() => handleDeleteConfirm(budget)}
-                              title="Excluir orçamento"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => handleDeleteConfirm(budget)}
+                            title="Excluir orçamento"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -371,7 +367,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
             <div className="px-6 pb-6 max-h-[80vh] overflow-y-auto">
               <NewBudgetForm
                 initialData={selectedBudget}
-                readOnly={isGestor || !isEditing}
+                readOnly={!isEditing}
                 onSuccess={(data) => {
                   toast({
                     title: "Orçamento atualizado",
@@ -392,14 +388,14 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                     <Printer className="h-4 w-4 mr-2" />
                     Imprimir
                   </Button>
-                  {!isGestor && isEditing ? (
+                  {isEditing ? (
                     <Button 
                       variant="secondary" 
                       onClick={() => setIsEditing(false)}
                     >
                       Cancelar Edição
                     </Button>
-                  ) : !isGestor ? (
+                  ) : (
                     <Button 
                       variant="secondary" 
                       onClick={() => setIsEditing(true)}
@@ -407,7 +403,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                       <Edit className="h-4 w-4 mr-2" />
                       Editar
                     </Button>
-                  ) : null}
+                  )}
                 </div>
                 <Button 
                   variant="outline" 
