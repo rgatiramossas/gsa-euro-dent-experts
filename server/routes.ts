@@ -983,6 +983,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Para admin ou o próprio técnico, retornar todos os detalhes
+      console.log('Enviando detalhes completos para admin ou técnico próprio:', {
+        userRole,
+        userId,
+        values: {
+          price: serviceDetails.price,
+          administrative_fee: serviceDetails.administrative_fee,
+          total: serviceDetails.total
+        }
+      });
       res.json(serviceDetails);
     } catch (error) {
       console.error("Error fetching service details:", error);
