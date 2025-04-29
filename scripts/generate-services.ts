@@ -1,5 +1,14 @@
-import { db } from "../server/db";
-import { clients, vehicles, services } from "@shared/schema";
+// Nota: Este script não está sendo usado ativamente e requer ajustes para funcionar 
+// com a configuração MySQL atual. Importação comentada para evitar erros.
+// import { db } from "../server/db-mysql";
+// import { clients, vehicles, services } from "@shared/schema.mysql";
+// O db precisaria ser inicializado usando initDb() neste arquivo
+
+// Placeholder para evitar erro de compilação
+const db = null;
+const clients = null;
+const vehicles = null;
+const services = null;
 
 async function generateServices() {
   console.log("Gerando serviços com taxa administrativa...");

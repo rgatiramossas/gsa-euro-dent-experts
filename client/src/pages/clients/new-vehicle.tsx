@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Client } from "@/types";
-import { insertVehicleSchema } from "@shared/schema";
+import { insertVehicleSchema } from "@shared/schema.mysql";
 
 // Use o schema original sem estender com year
 const formSchema = insertVehicleSchema;

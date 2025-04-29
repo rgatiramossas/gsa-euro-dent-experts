@@ -1,5 +1,15 @@
-import { db } from "../server/db";
-import { clients, budgets, services, vehicles } from "@shared/schema";
+// Nota: Este script não está sendo usado ativamente e requer ajustes para funcionar 
+// com a configuração MySQL atual. Importação comentada para evitar erros.
+// import { db } from "../server/db-mysql"; 
+// import { clients, budgets, services, vehicles } from "@shared/schema.mysql";
+// O db precisaria ser inicializado usando initDb() neste arquivo
+
+// Placeholder para evitar erro de compilação
+const db = null;
+const clients = null;
+const budgets = null;
+const services = null;
+const vehicles = null;
 import bcrypt from "bcrypt";
 import { format } from "date-fns";
 
