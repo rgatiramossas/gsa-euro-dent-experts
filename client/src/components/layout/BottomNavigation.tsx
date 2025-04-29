@@ -6,8 +6,7 @@ import {
   Home, 
   Briefcase, 
   Users, 
-  FileText,
-  UserCog
+  FileText
 } from "lucide-react";
 
 export function BottomNavigation() {
@@ -17,11 +16,11 @@ export function BottomNavigation() {
   const isGestor = user?.role === "gestor" || user?.role === "manager";
   const isTechnician = user?.role === "technician";
 
-  // Itens padrões para todos os usuários
-  let mobileNavItems = [
+  // Menu fixo padrão para todos os usuários: INÍCIO - CLIENTES - SERVIÇOS - ORÇAMENTOS
+  const mobileNavItems = [
     {
       name: "Início",
-      path: "/dashboard",
+      path: isGestor ? "/manager-dashboard" : "/dashboard",
       icon: <Home className="h-6 w-6" />,
     },
     {
@@ -33,63 +32,18 @@ export function BottomNavigation() {
       name: "Serviços",
       path: "/services",
       icon: <Briefcase className="h-6 w-6" />,
+    },
+    {
+      name: "Orçamentos",
+      path: "/budgets",
+      icon: <FileText className="h-6 w-6" />,
     }
   ];
-  
-  // Se for administrador, adiciona o item de gestores como quarto item
-  if (isAdmin) {
-    mobileNavItems = [
-      ...mobileNavItems, // Mantém todos os itens padrão
-      {
-        name: "Gestores",
-        path: "/managers",
-        icon: <UserCog className="h-6 w-6" />,
-      }
-    ];
-  }
-  
-  // Para gestores, mostra o menu fixo: Início, Clientes, Serviços, Orçamentos
-  if (isGestor) {
-    mobileNavItems = [
-      {
-        name: "Início",
-        path: "/manager-dashboard",
-        icon: <Home className="h-6 w-6" />,
-      },
-      {
-        name: "Clientes",
-        path: "/clients",
-        icon: <Users className="h-6 w-6" />,
-      },
-      {
-        name: "Serviços",
-        path: "/services",
-        icon: <Briefcase className="h-6 w-6" />,
-      },
-      {
-        name: "Orçamentos",
-        path: "/budgets",
-        icon: <FileText className="h-6 w-6" />,
-      }
-    ];
-  }
-  
-  // Para técnicos, adiciona o item "Orçamentos" ao menu fixo
-  if (isTechnician) {
-    mobileNavItems = [
-      ...mobileNavItems, // Mantém os itens padrão
-      {
-        name: "Orçamentos",
-        path: "/budgets",
-        icon: <FileText className="h-6 w-6" />,
-      }
-    ];
-  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">
       <div className="bg-gray-900 shadow-lg">
-        <div className={`grid ${isAdmin || isGestor || isTechnician ? 'grid-cols-4' : 'grid-cols-3'} h-16`}>
+        <div className="grid grid-cols-4 h-16">
           {mobileNavItems.map((item) => {
             const isActive = location === item.path || 
                             (item.path !== "/dashboard" && location.startsWith(item.path));
