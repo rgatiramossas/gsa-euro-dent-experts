@@ -91,7 +91,7 @@ export default function NewService() {
   
   // Queries
   const { data: clients } = useQuery<Client[]>({
-    queryKey: ['/api/clients'],
+    queryKey: ['/api/clients', 'active'], // Apenas clientes ativos (não excluídos)
   });
   
   const { data: vehicles } = useQuery<Vehicle[]>({

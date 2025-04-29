@@ -55,9 +55,9 @@ const NewBudgetPage: React.FC = () => {
   const [_, navigate] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch clients for select dropdown
+  // Fetch clients for select dropdown (apenas ativos/não excluídos)
   const { data: clients, isLoading: isLoadingClients } = useQuery<Client[]>({
-    queryKey: ["/api/clients"],
+    queryKey: ["/api/clients", "active"], // Apenas clientes ativos
     retry: 1,
   });
 
