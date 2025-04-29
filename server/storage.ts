@@ -1997,13 +1997,13 @@ export class DatabaseStorage implements IStorage {
       
       // Calcular o valor de acordo com o tipo de usuário
       if (technicianId) {
-        // Para técnicos: apenas a soma do valor do serviço (aw_value)
+        // Para técnicos: apenas a soma do valor do serviço (price)
         totalRevenue = completedServices.reduce((sum, service) => 
-          sum + (service.aw_value || 0), 0);
+          sum + (service.price || 0), 0);
       } else {
-        // Para administradores: soma do valor total do serviço (total ou aw_value)
+        // Para administradores: soma do valor total do serviço (total ou price)
         totalRevenue = completedServices.reduce((sum, service) => 
-          sum + (service.total || service.aw_value || 0), 0);
+          sum + (service.total || service.price || 0), 0);
       }
       
       // Converter para o formato esperado pelo frontend
@@ -2105,7 +2105,7 @@ export class DatabaseStorage implements IStorage {
     
     // 4. Faturamento total (não será mostrado para o gestor, mas calculamos para manter a estrutura de dados)
     const [revenueResult] = await db.select({
-      total: sql<number>`SUM(${services.aw_value})`
+      total: sql<number>`SUM(${services.price})`
     })
     .from(services)
     .where(
@@ -2390,7 +2390,7 @@ export class DatabaseStorage implements IStorage {
       sum + (service.total || 0), 0);
     
     const technicianTotalValue = servicesDetails.reduce((sum, service) => 
-      sum + (service.aw_value || 0), 0);
+      sum + (service.price || 0), 0);
     
     return {
       ...paymentRequest[0],
