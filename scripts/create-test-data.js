@@ -25,14 +25,18 @@ async function createTestData() {
     
     const result = await response.json();
     
-    console.log("\n✅ DADOS DE TESTE CRIADOS COM SUCESSO!");
+    console.log("\n✅ OPERAÇÃO CONCLUÍDA COM SUCESSO!");
+    if (result.note) {
+      console.log(`Nota: ${result.note}`);
+    }
+    
     console.log(`Resumo: ${result.summary.clients} clientes, ${result.summary.vehicles} veículos, ` +
                 `${result.summary.services} serviços e ${result.summary.budgets} orçamentos.`);
     
-    console.log("\nPara ver os dados, faça login no sistema como admin e navegue até:");
-    console.log("- Clientes: para ver a lista de clientes criados");
-    console.log("- Serviços: para ver a lista de serviços criados");
-    console.log("- Orçamentos: para ver a lista de orçamentos criados");
+    console.log("\nEm um ambiente real, os dados estariam disponíveis no sistema:");
+    console.log("- Clientes: para ver a lista de clientes");
+    console.log("- Serviços: para ver a lista de serviços");
+    console.log("- Orçamentos: para ver a lista de orçamentos");
     console.log("\n============================================\n");
     
   } catch (error) {
