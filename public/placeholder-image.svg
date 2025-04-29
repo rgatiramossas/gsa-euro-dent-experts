@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="300" height="200" fill="#f0f0f0"/>
+  
+  <!-- Icon -->
+  <g transform="translate(125, 65)">
+    <rect x="-15" y="-15" width="80" height="80" rx="5" fill="#cccccc"/>
+    <path d="M0 0 L50 50 M50 0 L0 50" stroke="#ffffff" stroke-width="8"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="150" y="140" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#707070">
+    Imagem não disponível
+  </text>
+</svg>
