@@ -109,7 +109,7 @@ export function MonthlyPaymentsChart({ monthlyData }: { monthlyData: TechnicianF
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="month" />
-        <YAxis tickFormatter={(value) => `€${value}`} />
+        <YAxis tickFormatter={(value) => `${value} €`} />
         <Tooltip 
           formatter={(value: number) => formatCurrency(value)}
           labelFormatter={(label) => label}

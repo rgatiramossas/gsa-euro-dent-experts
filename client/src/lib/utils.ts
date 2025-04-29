@@ -8,11 +8,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(value: number | undefined): string {
-  if (value === undefined) return "€ 0,00";
+  if (value === undefined) return "0,00 €";
   
   return new Intl.NumberFormat("pt-PT", {
     style: "currency",
     currency: "EUR",
+    currencyDisplay: "symbol"
   }).format(value);
 }
 
