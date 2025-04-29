@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -15,22 +15,11 @@ import { DollarSign, Calendar, Settings, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-// Não precisamos mais da interface HeaderProps já que não temos mais o sidebar
+// Componente de cabeçalho principal da aplicação
 export function Header() {
-  const { user, logout, login, isLoading } = useAuth();
+  const { user, logout, login } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  const [showLoginStatus, setShowLoginStatus] = useState(false);
-  
-  useEffect(() => {
-    // Mostrar status por 10 segundos quando a página carrega
-    setShowLoginStatus(true);
-    const timer = setTimeout(() => {
-      setShowLoginStatus(false);
-    }, 10000);
-    
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -71,19 +60,6 @@ export function Header() {
         </div>
         
         <div className="flex items-center space-x-3">
-          {/* Status de Login - temporário para debugging */}
-          {showLoginStatus && (
-            <div className="bg-white text-primary rounded px-2 py-1 text-xs border border-primary">
-              {isLoading ? (
-                <span>Verificando login...</span>
-              ) : user ? (
-                <span>Logado como {user.name} ({user.role})</span>
-              ) : (
-                <span>Não autenticado</span>
-              )}
-            </div>
-          )}
-          
           {/* Botão de login/logout */}
           {!user && (
             <Button 
