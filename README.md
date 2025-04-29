@@ -1,49 +1,96 @@
-# Euro Dent Experts
+# Euro Dent - Sistema de Gerenciamento de Serviços Automotivos
 
-Sistema de gerenciamento de serviços automotivos para profissionais, especializado em reparo de granizo (PDR - Paintless Dent Repair).
+## Sobre o Projeto
+
+Euro Dent é uma plataforma completa de gerenciamento de serviços automotivos que facilita a criação de orçamentos, gestão de técnicos e avaliação de danos para profissionais de serviços.
+
+## Tecnologias Principais
+
+- **Frontend**: React com Tailwind CSS para uma interface moderna e responsiva
+- **Backend**: Node.js com Express
+- **Banco de Dados**: MySQL com Drizzle ORM
+- **Autenticação**: Sistema seguro baseado em sessões
+- **UI/UX**: Componentes shadcn/ui personalizados
 
 ## Estrutura do Projeto
 
-### Diretórios Principais
-- `client/`: Contém o código do frontend React
-- `server/`: Contém o código do backend Express
-- `shared/`: Contém schemas e tipos compartilhados entre frontend e backend
-- `uploads/`: Diretório para upload de arquivos de imagens
-- `public/`: Arquivos estáticos públicos
+```
+/
+├── client/                 # Código frontend React
+├── server/                 # Código backend Express
+├── shared/                 # Tipos e schemas compartilhados
+├── scripts/                # Scripts de utilidade
+│   ├── one-time/           # Scripts executados uma única vez
+│   ├── sql/                # Scripts SQL para manutenção do BD
+│   └── data-generation/    # Scripts para gerar dados de teste
+├── unused_components/      # Componentes não utilizados (arquivados)
+├── unused_schemas/         # Schemas antigos (arquivados)
+├── uploads/                # Arquivos enviados pelos usuários
+└── clean-production-data.cjs  # Script para limpar dados de teste
+```
 
-### Diretórios de Componentes
-- `client/src/components/`: Componentes React utilizados no aplicativo
-- `client/src/pages/`: Páginas principais do aplicativo
+## Otimizações Realizadas
 
-### Diretórios de Utilitários
-- `unused_components/`: Componentes UI removidos do projeto mas mantidos para referência
-- `unused_schemas/`: Schemas antigos (PostgreSQL) mantidos para referência
-- `database_setup_scripts/`: Scripts para configuração inicial do banco de dados MySQL
-- `database_utility_scripts/`: Scripts de utilidades para manutenção do banco de dados
-- `sample_data_scripts/`: Scripts para geração de dados de amostra
+### 1. Remoção de Componentes Não Utilizados
+Para reduzir o tamanho do bundle e melhorar a manutenção, os seguintes componentes não utilizados foram movidos para `unused_components/`:
+- accordion
+- alert-dialog
+- aspect-ratio
+- breadcrumb
+- carousel
+- chart
+- collapsible
+- context-menu
+- drawer
+- hover-card
+- input-otp
+- menubar
+- navigation-menu
+- pagination
+- resizable
+- sidebar
+- slider
+- toggle-group
 
-## Banco de Dados
+### 2. Organização de Schemas
+- Schemas legados foram movidos para `unused_schemas/` mantendo compatibilidade
+- Documentação clara sobre a estrutura atual do banco
 
-O aplicativo utiliza MySQL para armazenamento de dados.
+### 3. Organização de Scripts
+- Scripts de utilidade organizados em diretórios específicos
+- Documentação sobre finalidade e uso de cada script
 
-### Arquivos de Configuração
-- `shared/schema.mysql.ts`: Define o schema do banco de dados usando Drizzle ORM
-- `server/db-mysql.ts`: Configuração de conexão ao banco de dados MySQL
+### 4. Preparação para Produção
+O script `clean-production-data.cjs` realiza:
+- Limpeza de dados de teste preservando contas de usuários
+- Remoção de arquivos de upload de teste
+- Preparação do banco de dados para ambiente de produção
 
-## Principais Recursos
+## Como Usar o Script de Limpeza para Produção
 
-- Cadastro e Gerenciamento de Clientes
-- Cadastro e Gerenciamento de Veículos
-- Criação de Orçamentos com Cálculos Automáticos
-- Gerenciamento de Serviços
-- Dashboard com Estatísticas
-- Sistema de Autenticação e Controle de Acesso
-- Upload de Imagens de Veículos e Serviços
-- Histórico de Serviços por Cliente
+O script `clean-production-data.cjs` limpa todos os dados de teste do sistema enquanto preserva as contas de usuário, preparando o banco de dados para uso em produção.
 
-## Tecnologias Utilizadas
+```bash
+# Executar o script de limpeza
+node clean-production-data.cjs
+```
 
-- **Frontend**: React, TailwindCSS, Shadcn/UI
-- **Backend**: Express.js, Drizzle ORM
-- **Banco de Dados**: MySQL
-- **Autenticação**: Passport.js, Express-Session
+O script realiza as seguintes operações:
+1. Limpa todas as tabelas exceto 'users'
+2. Remove todos os arquivos de upload em uploads/service, uploads/vehicle, uploads/client
+3. Gera um relatório com estatísticas das tabelas após a limpeza
+
+## Desenvolvimento
+
+### Ambientes
+- **Desenvolvimento**: Configurado para desenvolvimento local
+- **Produção**: Otimizado para desempenho e segurança
+
+### Banco de Dados
+- Configuração completa via variáveis de ambiente
+- Migração automática de schema
+- Backup e restauração facilitados
+
+## Contato
+
+Para mais informações sobre o projeto, entre em contato com a equipe de desenvolvimento.

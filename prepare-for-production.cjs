@@ -1,135 +1,46 @@
 /**
- * Script para preparar o banco de dados para ambiente de produção
- * Este script limpa todos os dados de teste, mantendo apenas os usuários
+ * Script para executar todos os passos de preparação para produção
  */
 
-require('dotenv').config();
+const { execSync } = require('child_process');
 const fs = require('fs');
-const mysql = require('mysql2/promise');
 const path = require('path');
 
-// Configuração do banco de dados a partir de variáveis de ambiente
-const dbConfig = {
-  host: process.env.MYSQL_HOST,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE,
-  port: process.env.MYSQL_PORT || 3306,
-};
+console.log('=== PREPARANDO SISTEMA PARA PRODUÇÃO ===');
 
-// Função para limpar arquivos de upload
-const cleanUploadFiles = async () => {
-  console.log('\n--- Limpando arquivos de upload ---');
-  
-  // Diretórios a serem limpos
-  const directories = [
-    './uploads/service',
-    './uploads/vehicle',
-    './uploads/client'
-  ];
-  
-  // Manter um arquivo .gitkeep em cada diretório
-  for (const dir of directories) {
-    if (fs.existsSync(dir)) {
-      console.log(`Limpando diretório: ${dir}`);
-      const files = fs.readdirSync(dir);
-      
-      for (const file of files) {
-        // Pular arquivos .gitkeep
-        if (file === '.gitkeep') continue;
-        
-        const filePath = path.join(dir, file);
-        fs.unlinkSync(filePath);
-        console.log(`Arquivo removido: ${filePath}`);
-      }
-      
-      // Criar .gitkeep se não existir
-      const gitkeepPath = path.join(dir, '.gitkeep');
-      if (!fs.existsSync(gitkeepPath)) {
-        fs.writeFileSync(gitkeepPath, '');
-        console.log(`Criado: ${gitkeepPath}`);
-      }
-    } else {
-      console.log(`Criando diretório: ${dir}`);
-      fs.mkdirSync(dir, { recursive: true });
-      
-      // Criar .gitkeep
-      const gitkeepPath = path.join(dir, '.gitkeep');
-      fs.writeFileSync(gitkeepPath, '');
-      console.log(`Criado: ${gitkeepPath}`);
-    }
-  }
-  
-  console.log('Limpeza de arquivos concluída.');
-};
-
-// Função principal para limpar o banco de dados
-const cleanDatabase = async () => {
-  console.log('\n--- Preparando banco de dados para produção ---');
-  console.log('Conectando ao MySQL...');
-  
-  let connection;
+// Função para executar comandos com tratamento de erro
+function runCommand(command, message) {
+  console.log(`\n> ${message}...`);
   try {
-    // Conectar ao banco de dados
-    connection = await mysql.createConnection(dbConfig);
-    console.log('Conexão estabelecida.');
-    
-    // Ler script SQL
-    const sqlScript = fs.readFileSync('./clean-production-database.sql', 'utf8');
-    
-    // Dividir script em comandos individuais
-    const commands = sqlScript
-      .split(';')
-      .map(command => command.trim())
-      .filter(command => command.length > 0);
-    
-    console.log(`Executando ${commands.length} comandos SQL...`);
-    
-    // Executar cada comando
-    for (const command of commands) {
-      await connection.query(command + ';');
-    }
-    
-    console.log('Comandos SQL executados com sucesso.');
-    
-    // Verificar contagens
-    const [rows] = await connection.query(`
-      SELECT 'payments' as table_name, COUNT(*) as count FROM payments UNION
-      SELECT 'expenses', COUNT(*) FROM expenses UNION
-      SELECT 'payment_orders', COUNT(*) FROM payment_orders UNION
-      SELECT 'service_photos', COUNT(*) FROM service_photos UNION
-      SELECT 'services', COUNT(*) FROM services UNION
-      SELECT 'budgets', COUNT(*) FROM budgets UNION
-      SELECT 'vehicles', COUNT(*) FROM vehicles UNION
-      SELECT 'clients', COUNT(*) FROM clients UNION
-      SELECT 'tasks', COUNT(*) FROM tasks UNION
-      SELECT 'notes', COUNT(*) FROM notes UNION
-      SELECT 'users', COUNT(*) FROM users;
-    `);
-    
-    console.log('\n--- Resultado da limpeza ---');
-    console.log('Tabela\t\tRegistros');
-    console.log('-------------------------');
-    
-    rows.forEach(row => {
-      console.log(`${row.table_name}\t\t${row.count}`);
-    });
-    
-    await cleanUploadFiles();
-    
-    console.log('\n--- BANCO DE DADOS PRONTO PARA PRODUÇÃO ---');
-    console.log('Todos os dados de teste foram removidos.');
-    console.log('Apenas os usuários foram mantidos no sistema.');
-    
+    execSync(command, { stdio: 'inherit' });
+    console.log(`✓ ${message} concluído com sucesso.`);
+    return true;
   } catch (error) {
-    console.error('Erro ao limpar banco de dados:', error);
-  } finally {
-    if (connection) {
-      await connection.end();
-      console.log('Conexão com o banco de dados encerrada.');
-    }
+    console.error(`✗ Erro ao ${message.toLowerCase()}:`);
+    console.error(error.message);
+    return false;
   }
-};
+}
 
-// Executar o script
-cleanDatabase();
+// Verificar se o script de limpeza existe
+if (!fs.existsSync('./clean-production-data.cjs')) {
+  console.error('Erro: O arquivo clean-production-data.cjs não foi encontrado.');
+  console.error('Por favor, verifique se o arquivo existe na pasta raiz do projeto.');
+  process.exit(1);
+}
+
+// Executar os passos de preparação para produção
+console.log('\n1. Limpando dados de teste do banco de dados...');
+const cleanResult = runCommand('node clean-production-data.cjs', 'Limpeza de dados');
+
+if (!cleanResult) {
+  console.error('\nErro durante a preparação. Processo interrompido.');
+  process.exit(1);
+}
+
+console.log('\n=== SISTEMA PREPARADO PARA PRODUÇÃO ===');
+console.log('✓ Dados de teste removidos');
+console.log('✓ Arquivos de upload limpos');
+console.log('✓ Contas de usuário preservadas');
+console.log('\nO sistema está pronto para ser usado em ambiente de produção.');
+console.log('Para mais informações, consulte o arquivo README.md e AVISO-IMPORTANTE.md');
