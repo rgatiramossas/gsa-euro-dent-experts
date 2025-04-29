@@ -918,6 +918,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               src={photo.photo_url} 
                               alt="Foto do veículo" 
                               className="object-cover w-full h-full"
+                              onError={(e) => {
+                                console.error(`Erro ao carregar imagem: ${photo.photo_url}`);
+                                e.currentTarget.src = '/placeholder-image.png';
+                              }}
                             />
                             <Badge className="absolute top-1 left-1 bg-orange-500 text-white">
                               Antes
@@ -942,6 +946,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               src={photo.photo_url} 
                               alt="Foto do veículo" 
                               className="object-cover w-full h-full"
+                              onError={(e) => {
+                                console.error(`Erro ao carregar imagem: ${photo.photo_url}`);
+                                e.currentTarget.src = '/placeholder-image.png';
+                              }}
                             />
                             <Badge className="absolute top-1 left-1 bg-green-500 text-white">
                               Depois
