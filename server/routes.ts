@@ -54,12 +54,18 @@ const storage_config = multer.diskStorage({
   destination: function (req, file, cb) {
     // Determine destination directory based on field name
     let destDir;
+    
+    // Adiciona um atributo personalizado para rastrear qual diretório foi usado
+    // Isso será útil para construir o caminho correto posteriormente
     if (file.fieldname === 'photos_after') {
       destDir = path.join(UPLOADS_DIR, "after");
+      (file as any).destFolder = "after";
     } else if (file.fieldname === 'photos_service') {
       destDir = path.join(UPLOADS_DIR, "service");
+      (file as any).destFolder = "service";
     } else {
       destDir = path.join(UPLOADS_DIR, "before"); // default to 'before' for photos_before
+      (file as any).destFolder = "before";
     }
     
     cb(null, destDir);
@@ -1222,7 +1228,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Adicionar cada foto ao banco de dados
             for (const file of files) {
-              const photoUrl = `/uploads/service/${file.filename}`;
+              // Usar o destFolder que foi adicionado ao arquivo pelo Multer
+              const destFolder = (file as any).destFolder || "service";
+              const photoUrl = `/uploads/${destFolder}/${file.filename}`;
+              console.log(`Adicionando foto de serviço com caminho: ${photoUrl}, destFolder: ${destFolder}`);
+              
               await storage.addServicePhoto({
                 service_id: id,
                 photo_type: 'service',
@@ -1237,7 +1247,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`Processando ${files.length} fotos "antes"`);
             
             for (const file of files) {
-              const photoUrl = `/uploads/before/${file.filename}`;
+              // Usar o destFolder que foi adicionado ao arquivo pelo Multer
+              const destFolder = (file as any).destFolder || "before";
+              const photoUrl = `/uploads/${destFolder}/${file.filename}`;
+              console.log(`Adicionando foto "antes" com caminho: ${photoUrl}, destFolder: ${destFolder}`);
+              
               await storage.addServicePhoto({
                 service_id: id,
                 photo_type: 'before',
@@ -1252,7 +1266,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`Processando ${files.length} fotos "depois"`);
             
             for (const file of files) {
-              const photoUrl = `/uploads/after/${file.filename}`;
+              // Usar o destFolder que foi adicionado ao arquivo pelo Multer
+              const destFolder = (file as any).destFolder || "after";
+              const photoUrl = `/uploads/${destFolder}/${file.filename}`;
+              console.log(`Adicionando foto "depois" com caminho: ${photoUrl}, destFolder: ${destFolder}`);
+              
               await storage.addServicePhoto({
                 service_id: id,
                 photo_type: 'after',
@@ -1465,7 +1483,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Add all photos to the service
       const photoPromises = uploadedFiles.map(async (file) => {
-        const photoUrl = `/uploads/${photoType}/${file.filename}`;
+        // Usar o destFolder que foi adicionado ao arquivo pelo Multer ou o photoType fornecido
+        const destFolder = (file as any).destFolder || photoType;
+        const photoUrl = `/uploads/${destFolder}/${file.filename}`;
+        console.log(`Adicionando foto ao serviço com caminho: ${photoUrl}, destFolder: ${destFolder}`);
+        
         return await storage.addServicePhoto({
           service_id: serviceId,
           photo_type: photoType as 'before' | 'after' | 'service',
