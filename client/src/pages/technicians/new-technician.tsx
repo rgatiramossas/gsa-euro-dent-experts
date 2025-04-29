@@ -26,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema } from "@shared/schema.mysql";
 
 // Extend the schema with more validations
 const formSchema = insertUserSchema.extend({

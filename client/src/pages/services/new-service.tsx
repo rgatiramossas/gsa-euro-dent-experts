@@ -46,7 +46,7 @@ import { CalendarIcon } from "lucide-react";
 import { LocationSelector } from "@/components/common/LocationSelector";
 import { PhotoUpload } from "@/components/common/PhotoUpload";
 import { Client, ServiceType, User, Vehicle } from "@/types";
-import { insertServiceSchema } from "@shared/schema";
+import { insertServiceSchema } from "@shared/schema.mysql";
 
 // Extend the schema with more validations
 const formSchema = insertServiceSchema.extend({
