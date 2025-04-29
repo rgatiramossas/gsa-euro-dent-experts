@@ -208,6 +208,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   listUsers(role?: string): Promise<User[]>;
 
   // Client methods
@@ -565,6 +566,36 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Erro ao atualizar usuário:", error);
       return undefined;
+    }
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    try {
+      console.log(`Excluindo usuário ID ${id}`);
+      
+      // Verificar se existem associações gestor-cliente para este gestor
+      if (managerClientAssignments) {
+        console.log(`Removendo associações de clientes para o gestor ID ${id}`);
+        await db.delete(managerClientAssignments)
+          .where(eq(managerClientAssignments.manager_id, id));
+      }
+      
+      // Em MySQL, não temos rowCount
+      const result = await db.delete(users).where(eq(users.id, id));
+      
+      // Verificar se a exclusão foi bem-sucedida
+      // O resultado pode ser { affectedRows: number } ou outro formato dependendo do driver
+      const affectedRows = Array.isArray(result) 
+        ? result[0]?.affectedRows 
+        : (result as any)?.affectedRows;
+      
+      const success = affectedRows > 0;
+      console.log(`Usuário ID ${id} excluído com sucesso: ${success}`);
+      
+      return success;
+    } catch (error) {
+      console.error(`Erro ao excluir usuário ID ${id}:`, error);
+      return false;
     }
   }
   
