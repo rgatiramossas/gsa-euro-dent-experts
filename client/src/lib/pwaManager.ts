@@ -93,10 +93,71 @@ export const triggerSyncIfNeeded = async () => {
   }
 };
 
+// Importar a DB offline para processamento de mensagens
+import offlineDb from './offlineDb';
+import { offlineStatusStore } from './stores';
+
+// Processar mensagens do service worker 
+const processServiceWorkerMessage = async (event: MessageEvent) => {
+  const data = event.data;
+  
+  if (!data || typeof data !== 'object') return;
+  
+  console.log('Mensagem recebida do service worker:', data.type);
+  
+  switch (data.type) {
+    case 'online':
+      document.body.classList.remove('offline-mode');
+      offlineStatusStore.setOnline(true);
+      break;
+      
+    case 'offline':
+      document.body.classList.add('offline-mode');
+      offlineStatusStore.setOnline(false);
+      break;
+      
+    case 'sync-started':
+      console.log(`Sincronizando ${data.count} requisições...`);
+      offlineStatusStore.setSyncing(true);
+      break;
+      
+    case 'sync-completed':
+      console.log('Sincronização concluída');
+      offlineStatusStore.setSyncing(false);
+      // Atualizar o contador de requisições pendentes
+      offlineDb.countPendingRequests().then(count => {
+        offlineStatusStore.setPendingCount(count);
+      });
+      break;
+      
+    case 'sync-error':
+      console.error('Erro na sincronização:', data.error);
+      offlineStatusStore.setSyncing(false);
+      break;
+      
+    case 'resource-id-updated':
+      // Atualizar o ID local para o ID do servidor após sincronização
+      try {
+        await offlineDb.updateLocalId(
+          data.tableName,
+          data.localId,
+          data.serverId
+        );
+        console.log(`ID atualizado: ${data.tableName} ${data.localId} -> ${data.serverId}`);
+      } catch (error) {
+        console.error('Erro ao atualizar ID local:', error);
+      }
+      break;
+  }
+};
+
 // Inicializar PWA
 export const initPWA = () => {
   // Registrar o service worker
   registerServiceWorker();
+  
+  // Configurar listener para mensagens do service worker
+  navigator.serviceWorker.addEventListener('message', processServiceWorkerMessage);
   
   // Configurar monitoramento de estado da rede
   window.addEventListener('online', checkNetworkStatus);
