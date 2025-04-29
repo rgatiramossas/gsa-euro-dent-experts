@@ -47,7 +47,7 @@ export async function apiRequest(
   url: string,
   method: string = 'GET',
   data?: unknown | undefined,
-  options?: { params?: Record<string, string> }
+  options?: { params?: Record<string, string>; enableOffline?: boolean; offlineTableName?: string }
 ): Promise<any> {
   let finalUrl = url;
   
@@ -66,48 +66,83 @@ export async function apiRequest(
     }
   }
   
-  const res = await fetch(finalUrl, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  
-  // Para o caso de DELETE, que pode não retornar JSON
-  if (method === 'DELETE') {
-    if (res.status === 204) {
-      return true; // No content
+  // Usar o wrapper de API com suporte offline
+  try {
+    // Opções para offline
+    const offlineOptions = {
+      enableOffline: options?.enableOffline !== false, // Padrão é true
+      offlineTableName: options?.offlineTableName
+    };
+    
+    // Usar a função apropriada do wrapper de API de acordo com o método
+    switch (method.toUpperCase()) {
+      case 'GET':
+        return await getApi(finalUrl, offlineOptions);
+      case 'POST':
+        return await postApi(finalUrl, data, offlineOptions);
+      case 'PUT':
+        return await putApi(finalUrl, data, offlineOptions);
+      case 'DELETE':
+        return await deleteApi(finalUrl, offlineOptions);
+      default:
+        // Para métodos não suportados, usar a implementação padrão
+        const res = await fetch(finalUrl, {
+          method,
+          headers: data ? { "Content-Type": "application/json" } : {},
+          body: data ? JSON.stringify(data) : undefined,
+          credentials: "include",
+        });
+        
+        await throwIfResNotOk(res);
+        
+        return method === 'DELETE' && res.status === 204 ? true : await res.json();
     }
-    return res.status < 400; // Success if status is < 400
+  } catch (error) {
+    // Se for erro da nossa API offline, lançar como ApiError
+    if (error instanceof Error) {
+      const status = (error as any).status || 500;
+      const message = error.message || 'Erro na requisição';
+      throw new ApiError(status, message, null as any, null);
+    }
+    throw error;
   }
-  
-  return await res.json();
 }
 
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+// Função para requisições GET com suporte offline
+export function getQueryFn<TQueryFnData = unknown>({ on401 }: { on401: "returnNull" | "throw" }) {
+  return async ({ queryKey }: any): Promise<TQueryFnData> => {
+    try {
+      // O primeiro elemento é a URL, os outros podem ser parâmetros de configuração
+      const url = queryKey[0];
+      
+      // Verificar se o segundo elemento é um objeto de configuração para suporte offline
+      const config = queryKey.length > 1 && typeof queryKey[1] === 'object' 
+        ? queryKey[1] as { enableOffline?: boolean; offlineTableName?: string }
+        : {};
+      
+      // Usar o wrapper offline para GET
+      const result = await getApi<TQueryFnData>(url, config);
+      return result;
+    } catch (error) {
+      // Verificar erro de autenticação
+      if (error instanceof ApiError && error.status === 401) {
+        if (on401 === "returnNull") {
+          // Usar o tipo assertivo para resolver o problema de tipo
+          return null as unknown as TQueryFnData;
+        }
+      }
+      
+      // Propagar outros erros
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      // Não definir queryFn padrão devido a problemas de tipagem
+      // Use getApi diretamente nas consultas quando necessário
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
