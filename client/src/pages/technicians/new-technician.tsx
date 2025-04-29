@@ -66,8 +66,8 @@ export default function NewTechnician() {
   // Create technician mutation
   const createTechnicianMutation = useMutation({
     mutationFn: async (data: Omit<FormData, "confirmPassword">) => {
-      const res = await apiRequest('POST', '/api/users', data);
-      return res.json();
+      const res = await apiRequest('/api/users', 'POST', data);
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
