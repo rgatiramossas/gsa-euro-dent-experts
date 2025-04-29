@@ -142,12 +142,13 @@ export default function ManagersList() {
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o gestor <strong>{managerToDelete?.name}</strong>?
-              <div className="mt-2 flex items-center text-amber-700 bg-amber-50 p-3 rounded-md">
-                <AlertTriangle className="h-5 w-5 mr-2" />
-                Esta ação não pode ser desfeita. O gestor perderá acesso ao sistema e todas suas associações com clientes serão removidas.
-              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          <div className="my-4 flex items-center text-amber-700 bg-amber-50 p-3 rounded-md">
+            <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
+            <span>Esta ação não pode ser desfeita. O gestor perderá acesso ao sistema e todas suas associações com clientes serão removidas.</span>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
