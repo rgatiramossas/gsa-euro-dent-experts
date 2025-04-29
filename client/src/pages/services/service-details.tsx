@@ -109,6 +109,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const { data: service, isLoading, error } = useQuery<ServiceWithDetails>({
     queryKey: [`/api/services/${id}`],
+    onSuccess: (data) => {
+      console.log("Serviço carregado:", data);
+    },
   });
   
   const { data: serviceTypes } = useQuery<ServiceType[]>({
@@ -947,7 +950,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       <>
                         <div className="flex justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600">Valor do serviço</span>
-                          <span className="text-gray-800 font-medium">{formatCurrency(service.price)}</span>
+                          <span className="text-gray-800 font-medium">{formatCurrency(service.price || 0)}</span>
                         </div>
                         
                         {/* Taxa de deslocamento removida */}
@@ -959,7 +962,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         
                         <div className="flex justify-between py-2 font-medium">
                           <span className="text-gray-700">Total</span>
-                          <span className="text-primary text-lg">{formatCurrency(service.total)}</span>
+                          <span className="text-primary text-lg">
+                            {formatCurrency((service.price || 0) + (service.administrative_fee || 0))}
+                          </span>
                         </div>
                       </>
                     )}
@@ -967,7 +972,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     {isTechnician && (
                       <div className="flex justify-between py-2 font-medium mt-2">
                         <span className="text-gray-700">Valor para o técnico</span>
-                        <span className="text-primary text-lg">{formatCurrency(service.price)}</span>
+                        <span className="text-primary text-lg">{formatCurrency(service.price || 0)}</span>
                       </div>
                     )}
                   </div>
