@@ -1035,6 +1035,8 @@ export class DatabaseStorage implements IStorage {
         location_type: services.location_type,
         address: services.address,
         aw_value: services.aw_value,
+        price: services.price,              // Coluna adicionada
+        administrative_fee: services.administrative_fee,  // Coluna adicionada
         total: services.total,
         notes: services.notes,
         dents: services.dents,
@@ -1312,6 +1314,8 @@ export class DatabaseStorage implements IStorage {
         location_type: services.location_type,
         address: services.address,
         aw_value: services.aw_value,
+        price: services.price,              // Coluna adicionada
+        administrative_fee: services.administrative_fee,  // Coluna adicionada
         total: services.total,
         notes: services.notes,
         dents: services.dents,
@@ -1596,6 +1600,8 @@ export class DatabaseStorage implements IStorage {
       location_type: services.location_type,
       address: services.address,
       aw_value: services.aw_value,
+      price: services.price,              // Coluna adicionada
+      administrative_fee: services.administrative_fee,  // Coluna adicionada
       total: services.total,
       notes: services.notes,
       dents: services.dents,
@@ -1783,6 +1789,8 @@ export class DatabaseStorage implements IStorage {
         location_type: services.location_type,
         address: services.address,
         aw_value: services.aw_value,
+        price: services.price,              // Coluna adicionada
+        administrative_fee: services.administrative_fee,  // Coluna adicionada
         total: services.total,
         notes: services.notes,
         dents: services.dents,
@@ -1982,6 +1990,8 @@ export class DatabaseStorage implements IStorage {
           location_type: services.location_type,
           address: services.address,
           aw_value: services.aw_value,
+          price: services.price,              // Coluna adicionada
+          administrative_fee: services.administrative_fee,  // Coluna adicionada
           total: services.total,
           notes: services.notes,
           created_at: services.created_at
