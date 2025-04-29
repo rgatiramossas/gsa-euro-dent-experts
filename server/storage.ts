@@ -739,18 +739,41 @@ export class DatabaseStorage implements IStorage {
         return false;
       }
       
-      // Ao invés de excluir, marcar o cliente como excluído adicionando um campo 'deleted'
-      // Esta é uma exclusão lógica (soft delete)
-      await db.update(clients)
-        .set({ 
-          name: `${client.name} [EXCLUÍDO]`,
-          email: client.email ? `${client.email}.deleted` : null,
-          deleted: true 
-        })
-        .where(eq(clients.id, id));
-      
-      console.log(`Cliente ID ${id} marcado como excluído com sucesso`);
-      return true;
+      // Primeiro, verificar se a coluna "deleted" existe na tabela
+      try {
+        // Ao invés de excluir, marcar o cliente como excluído adicionando um campo 'deleted'
+        // Esta é uma exclusão lógica (soft delete)
+        await db.update(clients)
+          .set({ 
+            name: `${client.name} [EXCLUÍDO]`,
+            email: client.email ? `${client.email}.deleted` : null,
+            deleted: 1 // Usando 1 (número) em vez de true (booleano)
+          })
+          .where(eq(clients.id, id));
+          
+        console.log(`Cliente ID ${id} marcado como excluído com sucesso`);
+        return true;
+      } catch (updateError) {
+        console.log(`Erro ao atualizar o status deleted do cliente. Tentando adicionar a coluna...`, updateError);
+        
+        try {
+          // Se falhou, talvez a coluna 'deleted' não exista. Tente criar e tentar novamente.
+          await pool.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS deleted TINYINT(1) DEFAULT 0`);
+          console.log(`Coluna 'deleted' adicionada à tabela clients`);
+          
+          // Agora tente atualizar novamente
+          await pool.query(`UPDATE clients SET name = ?, email = ?, deleted = 1 WHERE id = ?`, 
+                          [`${client.name} [EXCLUÍDO]`, 
+                           client.email ? `${client.email}.deleted` : null, 
+                           id]);
+          
+          console.log(`Cliente ID ${id} marcado como excluído com sucesso após adicionar coluna`);
+          return true;
+        } catch (alterError) {
+          console.error(`Erro ao adicionar coluna 'deleted':`, alterError);
+          return false;
+        }
+      }
     } catch (error) {
       console.error(`Erro ao excluir cliente ID ${id}:`, error);
       return false;
@@ -780,7 +803,7 @@ export class DatabaseStorage implements IStorage {
         .from(clients)
         .where(
           or(
-            isNull(clients.deleted),
+            sql`${clients.deleted} IS NULL`,
             eq(clients.deleted, 0)
           )
         );
@@ -844,7 +867,7 @@ export class DatabaseStorage implements IStorage {
           and(
             like(clients.name, `%${query}%`),
             or(
-              isNull(clients.deleted),
+              sql`${clients.deleted} IS NULL`,
               eq(clients.deleted, 0)
             )
           )
