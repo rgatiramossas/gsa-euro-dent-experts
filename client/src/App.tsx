@@ -326,6 +326,7 @@ function AppRoutes() {
         {params => {
           const { isAuthenticated, user } = useAuth();
           if (!isAuthenticated) return <Redirect to="/login" />;
+          console.log("User role:", user?.role); // Adicionado para debug
           if (user?.role !== "admin") return <Redirect to="/dashboard" />;
           return (
             <MainLayout>
