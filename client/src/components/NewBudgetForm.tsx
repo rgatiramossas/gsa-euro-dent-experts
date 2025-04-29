@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 // Remover importação de useLocation e usar window.location
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { CalendarIcon, ArrowLeft, Upload, Image } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -109,6 +110,8 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   isInDialog = false
 }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isGestor = user?.role === "gestor" || user?.role === "manager";
   const queryClient = useQueryClient();
   const [damages, setDamages] = useState<VehicleDamage>({});
   const [selectedClientId, setSelectedClientId] = useState<string>("");
