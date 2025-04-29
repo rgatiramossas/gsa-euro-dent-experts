@@ -6,7 +6,18 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 import { initializeDatabase, storage } from "./storage";
+
+// Configurar diretório de uploads
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, "../uploads");
+
+// Garantir que o diretório uploads existe
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 const app = express();
 // Aumentar o limite de tamanho para uploads de imagens e payload JSON
