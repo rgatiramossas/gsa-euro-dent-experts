@@ -795,6 +795,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Internal server error" });
     }
   });
+  
+  // Rota para excluir cliente (soft delete)
+  app.delete("/api/clients/:id", requireAuth, async (req, res) => {
+    try {
+      // Verificar permissões - apenas admin pode excluir clientes
+      if (req.session.userRole !== "admin") {
+        return res.status(403).json({ message: "Apenas administradores podem excluir clientes" });
+      }
+      
+      const clientId = parseInt(req.params.id);
+      
+      if (isNaN(clientId)) {
+        return res.status(400).json({ message: "ID de cliente inválido" });
+      }
+      
+      console.log(`Solicitação para excluir cliente ID ${clientId}`);
+      
+      // Buscar o cliente para confirmar que existe
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Cliente não encontrado" });
+      }
+      
+      // Executar a exclusão (lógica, mantendo serviços e orçamentos)
+      const success = await storage.deleteClient(clientId);
+      
+      if (success) {
+        return res.status(200).json({ 
+          message: "Cliente excluído com sucesso. Os serviços e orçamentos associados foram mantidos no histórico." 
+        });
+      } else {
+        return res.status(500).json({ message: "Falha ao excluir cliente" });
+      }
+    } catch (error) {
+      console.error("Erro ao excluir cliente:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
 
   // Vehicle routes
   app.get("/api/clients/:clientId/vehicles", requireAuth, async (req, res) => {

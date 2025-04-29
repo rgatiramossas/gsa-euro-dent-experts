@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,17 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Client } from "@shared/schema.mysql";
 
 export interface ClientDetailProps {
@@ -29,8 +40,49 @@ export interface ClientDetailProps {
 export default function ClientDetail({ id }: ClientDetailProps) {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
   const clientId = parseInt(id);
   
+  // Mutation para excluir cliente
+  const deleteClientMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao excluir cliente');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Cliente excluído com sucesso",
+        description: "Os serviços e orçamentos associados foram mantidos no histórico.",
+        variant: "default",
+      });
+      
+      // Invalida cache para forçar recarregamento da lista de clientes
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      
+      // Redireciona para a lista de clientes
+      setLocation('/clients');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao excluir cliente",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
   // Query para obter detalhes do cliente
   const { 
     data: client, 
@@ -143,9 +195,49 @@ export default function ClientDetail({ id }: ClientDetailProps) {
             >
               Editar Cliente
             </Button>
+            {/* Botão de excluir - apenas para admin */}
+            {user?.role === "admin" && (
+              <Button 
+                variant="destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                Excluir Cliente
+              </Button>
+            )}
           </div>
         }
       />
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir o cliente <strong>{client.name}</strong>.<br /><br />
+              Este cliente possui:
+              <ul className="list-disc pl-5 my-2">
+                {vehicles.length > 0 && <li>{vehicles.length} veículo(s) registrado(s)</li>}
+                {services.length > 0 && <li>{services.length} serviço(s) registrado(s)</li>}
+              </ul>
+              <br />
+              Os serviços e orçamentos associados a este cliente serão mantidos no sistema para fins de histórico, mas o cliente será marcado como excluído.
+              <br /><br />
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteClientMutation.mutate()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteClientMutation.isPending}
+            >
+              {deleteClientMutation.isPending ? "Excluindo..." : "Confirmar Exclusão"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         {/* Card de Informações */}
