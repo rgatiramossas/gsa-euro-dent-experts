@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,8 @@ interface BudgetPageProps {
 
 const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isGestor = user?.role === "gestor" || user?.role === "manager";
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -293,7 +296,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Veículo</TableHead>
                     <TableHead>Data</TableHead>
-                    <TableHead>Valor</TableHead>
+                    {!isGestor && <TableHead>Valor</TableHead>}
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -304,7 +307,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                       <TableCell>{budget.client_name}</TableCell>
                       <TableCell>{budget.vehicle_info}</TableCell>
                       <TableCell>{formatDisplayDate(budget.date)}</TableCell>
-                      <TableCell>{formatCurrency(budget.total_value)}</TableCell>
+                      {!isGestor && <TableCell>{formatCurrency(budget.total_value)}</TableCell>}
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

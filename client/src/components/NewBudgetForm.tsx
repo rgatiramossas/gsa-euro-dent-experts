@@ -543,23 +543,32 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
             </p>
           </div>
 
-          {/* Exibição dos Totais */}
-          <div className="bg-gray-50 p-4 rounded-md mt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-medium mb-2">Total AW</h4>
-                <p className="text-xl font-bold">
-                  {calculateTotalValues(damages).totalAw.toFixed(2)}
-                </p>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">Total €</h4>
-                <p className="text-xl font-bold">
-                  {calculateTotalValues(damages).totalValue.toFixed(2)} €
-                </p>
+          {/* Exibição dos Totais - Ocultando para gestores */}
+          {!isGestor && (
+            <div className="bg-gray-50 p-4 rounded-md mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Total AW</h4>
+                  <p className="text-xl font-bold">
+                    {calculateTotalValues(damages).totalAw.toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Total €</h4>
+                  <p className="text-xl font-bold">
+                    {calculateTotalValues(damages).totalValue.toFixed(2)} €
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+          {isGestor && (
+            <div className="bg-gray-50 p-4 rounded-md mt-4">
+              <p className="text-center text-sm text-gray-500">
+                Informações financeiras disponíveis apenas para administradores
+              </p>
+            </div>
+          )}
 
           {/* Botões de ação - só mostrar se não for modo somente leitura */}
           {!readOnly && (
@@ -607,12 +616,28 @@ interface DamagePartProps {
 }
 
 const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOnly = false }) => {
+  // Acesso ao contexto de autenticação para verificar se é gestor
+  const { user } = useAuth();
+  const isGestor = user?.role === "gestor" || user?.role === "manager";
+  
   // Se for o espaço para imagem, retornar um espaço vazio
   if (part === "imagem_central") {
     return <div className="border rounded-md p-4"></div>;
   }
 
   const damage = damages[part] || {};
+  
+  // Se for gestor e estiver em modo somente leitura, mostrar apenas o nome da peça sem detalhes
+  if (isGestor && readOnly) {
+    return (
+      <div className="border rounded-md p-2">
+        <h4 className="font-medium text-xs mb-1 text-center">{partDisplayNames[part]}</h4>
+        <div className="h-16 flex items-center justify-center">
+          <p className="text-xs text-gray-500 text-center">Danos registrados</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="border rounded-md p-2">
