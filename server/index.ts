@@ -25,6 +25,10 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+// Importante: Configurar rota para servir arquivos estáticos de uploads ANTES do Vite
+app.use('/uploads', express.static(UPLOADS_DIR));
+console.log(`Servindo arquivos estáticos do diretório: ${UPLOADS_DIR}`);
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
