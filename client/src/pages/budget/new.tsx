@@ -57,7 +57,14 @@ const NewBudgetPage: React.FC = () => {
 
   // Fetch clients for select dropdown (apenas ativos/não excluídos)
   const { data: clients, isLoading: isLoadingClients } = useQuery<Client[]>({
-    queryKey: ["/api/clients", "active"], // Apenas clientes ativos
+    queryKey: ["/api/clients"],
+    queryFn: async () => {
+      const response = await fetch('/api/clients?filterMode=active');
+      if (!response.ok) {
+        throw new Error('Erro ao carregar clientes');
+      }
+      return response.json();
+    },
     retry: 1,
   });
 

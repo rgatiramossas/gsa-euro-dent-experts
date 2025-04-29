@@ -91,7 +91,14 @@ export default function NewService() {
   
   // Queries
   const { data: clients } = useQuery<Client[]>({
-    queryKey: ['/api/clients', 'active'], // Apenas clientes ativos (não excluídos)
+    queryKey: ['/api/clients'],
+    queryFn: async () => {
+      const response = await fetch('/api/clients?filterMode=active');
+      if (!response.ok) {
+        throw new Error('Erro ao carregar clientes');
+      }
+      return response.json();
+    }
   });
   
   const { data: vehicles } = useQuery<Vehicle[]>({

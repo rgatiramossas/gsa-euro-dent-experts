@@ -745,6 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", requireAuth, async (req, res) => {
     try {
       const query = req.query.q as string | undefined;
+      const filterMode = req.query.filterMode as string | undefined;
       const userRole = req.session.userRole;
       const userId = req.session.userId;
       
@@ -755,10 +756,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(clients);
       }
       
+      console.log("Requisição para /api/clients com parâmetros:", { 
+        query, 
+        filterMode,
+        queryKey: req.query[0] // Verificar se está recebendo 'active' como parte da queryKey
+      });
+      
+      // Filtrar por modo 'active' - somente clientes não excluídos
+      // Verifica se temos 'active' como segundo item na queryKey (que vem como '0')
+      const showOnlyActive = req.query[0] === 'active' || filterMode === 'active';
+      
       // Para outros usuários (admin, técnico), mostrar todos os clientes
-      const clients = query
+      let clients = query
         ? await storage.searchClients(query)
         : await storage.listClients();
+        
+      // Se solicitado apenas clientes ativos, filtrar os excluídos
+      if (showOnlyActive) {
+        console.log("Filtrando apenas clientes ativos (não excluídos)");
+        clients = clients.filter(client => {
+          // Verificar pelo campo deleted=1 ou pelo [EXCLUÍDO] no nome
+          return client.deleted !== 1 && !client.name.includes('[EXCLUÍDO]');
+        });
+      }
+        
       res.json(clients);
     } catch (error) {
       console.error("Error fetching clients:", error);
