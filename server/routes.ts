@@ -2430,15 +2430,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Endpoint para criar dados de teste
-  app.post("/api/test-setup", requireAuth, async (req, res) => {
+  // Endpoint para criar dados de teste - acessível diretamente
+  app.post("/api/test-setup", async (req, res) => {
     try {
-      // Verificar se o usuário é admin ou gestor
-      if (req.session.userRole !== 'admin' && req.session.userRole !== 'gestor') {
-        return res.status(403).json({ error: "Não autorizado. Apenas administradores e gestores podem criar dados de teste." });
-      }
-      
-      console.log("Iniciando criação de dados de teste...");
+      // Endpoint para ambiente de desenvolvimento/teste
+      console.log("Iniciando criação de dados de teste (endpoint direto sem autenticação)...");
       
       // Buscar técnicos ativos
       const technicians = await storage.getTechnicians();
