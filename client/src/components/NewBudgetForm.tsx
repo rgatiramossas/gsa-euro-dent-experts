@@ -627,17 +627,8 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
 
   const damage = damages[part] || {};
   
-  // Se for gestor e estiver em modo somente leitura, mostrar apenas o nome da peça sem detalhes
-  if (isGestor && readOnly) {
-    return (
-      <div className="border rounded-md p-2">
-        <h4 className="font-medium text-xs mb-1 text-center">{partDisplayNames[part]}</h4>
-        <div className="h-16 flex items-center justify-center">
-          <p className="text-xs text-gray-500 text-center">Danos registrados</p>
-        </div>
-      </div>
-    );
-  }
+  // Removemos a restrição para gestores, agora todos podem ver os detalhes
+  // mesmo em modo somente leitura
   
   return (
     <div className="border rounded-md p-2">
