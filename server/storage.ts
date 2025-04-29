@@ -1829,7 +1829,7 @@ export class DatabaseStorage implements IStorage {
 
     // 4. Valores de serviços concluídos que ainda não foram pedidos pagamento
     const unpaidCompletedValue = completed.reduce((sum, service) => 
-      sum + (service.aw_value || 0), 0);
+      sum + (service.price || 0), 0);
     
     // Resumir valores por mês nos últimos 6 meses
     const today = new Date();
@@ -2460,7 +2460,7 @@ export class DatabaseStorage implements IStorage {
       // CORREÇÃO: sempre usar o valor do técnico (price) nos pedidos de pagamento
       // Este é o valor que o técnico receberá, não o valor total incluindo taxas administrativas
       const technicianTotalValue = servicesDetails.reduce((sum, service) => 
-        sum + (service.aw_value || 0), 0);
+        sum + (service.price || 0), 0);
       
       // Para o admin, também calculamos o valor total (com taxas) para referência
       const serviceTotalValue = servicesDetails.reduce((sum, service) => 
