@@ -47,6 +47,7 @@ import Finances from "@/pages/finances";
 import Settings from "@/pages/settings";
 import Configuracoes from "@/pages/configuracoes";
 import Eventos from "@/pages/eventos";
+import TestSetup from "@/pages/test-setup";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -317,6 +318,17 @@ function AppRoutes() {
           <MainLayout>
             <Configuracoes />
           </MainLayout>
+        </RequireAuth>
+      </Route>
+      
+      {/* Test Data Setup Page */}
+      <Route path="/test-setup">
+        <RequireAuth>
+          <RequireAdmin>
+            <MainLayout>
+              <TestSetup />
+            </MainLayout>
+          </RequireAdmin>
         </RequireAuth>
       </Route>
       
