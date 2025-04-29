@@ -2429,36 +2429,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
-  // Endpoint para criar dados de teste - acessível diretamente
-  app.post("/api/test-setup", async (req, res) => {
-    try {
-      // Simulação de dados de teste para demonstração
-      console.log("Iniciando simulação de dados de teste...");
-      
-      // Simular criação de dados de teste
-      const simulatedData = {
-        clients: 5,
-        vehicles: 5,
-        services: 25,
-        budgets: 25
-      };
-      
-      // Adicionar um pequeno atraso para simular o processamento
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      console.log("Simulação de dados de teste concluída com sucesso!");
-      res.status(200).json({
-        message: "Simulação de dados de teste realizada com sucesso",
-        note: "Esta é uma versão simplificada que simula a criação de dados para fins de demonstração",
-        summary: simulatedData
-      });
-      
-    } catch (error) {
-      console.error("Erro na simulação de dados de teste:", error);
-      res.status(500).json({ error: `Erro na simulação de dados de teste: ${error.message}` });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;

@@ -4,7 +4,6 @@ import { DashboardStats, ServiceListItem, TechnicianPerformance as TechnicianPer
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TechnicianPerformance } from "@/components/dashboard/TechnicianPerformance";
 import { RecentServicesTable } from "@/components/dashboard/RecentServicesTable";
-import { TestDataButton } from "@/components/dashboard/TestDataButton";
 import { PageHeader } from "@/components/common/PageHeader";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -143,11 +142,6 @@ export default function Dashboard() {
             </svg>
             Novo Orçamento
           </Link>
-          
-          {/* Botão só para administradores criarem dados de teste */}
-          {isAdmin && (
-            <TestDataButton />
-          )}
         </div>
       )}
       

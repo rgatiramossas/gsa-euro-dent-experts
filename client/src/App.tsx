@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Switch, Route, useLocation, Redirect } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -47,7 +47,6 @@ import Finances from "@/pages/finances";
 import Settings from "@/pages/settings";
 import Configuracoes from "@/pages/configuracoes";
 import Eventos from "@/pages/eventos";
-import TestSetup from "@/pages/test-setup";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -319,32 +318,6 @@ function AppRoutes() {
             <Configuracoes />
           </MainLayout>
         </RequireAuth>
-      </Route>
-      
-      {/* Test Data Setup Page */}
-      <Route path="/test-setup">
-        {params => {
-          const { isAuthenticated, user } = useAuth();
-          if (!isAuthenticated) return <Redirect to="/login" />;
-          
-          // Logs detalhados para debug
-          console.log("Usuário:", user);
-          console.log("Role:", user?.role);
-          console.log("É admin?", user?.role === "admin");
-          console.log("É gestor?", user?.role === "gestor");
-          
-          // Permitir acesso para admin ou gestor
-          if (user?.role !== "admin" && user?.role !== "gestor") {
-            console.log("Acesso negado - redirecionando para dashboard");
-            return <Redirect to="/dashboard" />;
-          }
-          
-          return (
-            <MainLayout>
-              <TestSetup />
-            </MainLayout>
-          );
-        }}
       </Route>
       
       {/* Redirect root to dashboard */}
