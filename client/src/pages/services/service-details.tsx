@@ -33,6 +33,12 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
+
+// Função para lidar com erros de carregamento de imagem
+const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, url: string) => {
+  console.error(`Erro ao carregar imagem: ${url}`);
+  e.currentTarget.src = '/assets/placeholder-image.svg';
+};
 import { 
   Select,
   SelectContent,
