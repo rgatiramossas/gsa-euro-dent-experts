@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ImageWithFallback from "@/components/common/ImageWithFallback";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { ServiceWithDetails, ServiceStatus, ServiceType } from "@/types";
