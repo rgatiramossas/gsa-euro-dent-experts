@@ -560,19 +560,50 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const handleServicePhotoChange = (files: FileList) => {
     if (files && files.length > 0) {
-      // Limitar a 4 fotos
-      if (files.length > 4) {
+      // Converter FileList atual (se existir) em array
+      const currentFiles = servicePhotos ? Array.from(servicePhotos) : [];
+      // Converter novas FileList em array
+      const newFiles = Array.from(files);
+      
+      // Verificar o total de fotos após a adição
+      const totalFiles = currentFiles.length + newFiles.length;
+      
+      // Limitar a 4 fotos no total
+      if (totalFiles > 4) {
         toast({
           title: "Limite de fotos excedido",
-          description: "Você pode enviar no máximo 4 fotos por categoria",
+          description: `Você já tem ${currentFiles.length} foto(s) e está tentando adicionar ${newFiles.length}. O limite é de 4 fotos.`,
           variant: "destructive",
         });
         return;
       }
       
-      // Definir fotos e criar preview
-      setServicePhotos(files);
-      setServicePhotoPreview(URL.createObjectURL(files[0]));
+      // Criar novo FileList combinando as fotos atuais e novas
+      const dataTransfer = new DataTransfer();
+      
+      // Adicionar fotos atuais
+      currentFiles.forEach(file => {
+        dataTransfer.items.add(file);
+      });
+      
+      // Adicionar novas fotos
+      newFiles.forEach(file => {
+        dataTransfer.items.add(file);
+      });
+      
+      // Atualizar estado com o novo FileList combinado
+      const combinedFiles = dataTransfer.files;
+      setServicePhotos(combinedFiles);
+      
+      // Atualizar preview com a última foto adicionada
+      const previewFile = newFiles[0]; // Usar a primeira das novas fotos para preview
+      setServicePhotoPreview(URL.createObjectURL(previewFile));
+      
+      // Mostrar mensagem de sucesso
+      toast({
+        title: "Fotos adicionadas",
+        description: `${newFiles.length} foto(s) adicionada(s). Total: ${combinedFiles.length}/4`,
+      });
     }
   };
 
