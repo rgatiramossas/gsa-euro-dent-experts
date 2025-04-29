@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -323,13 +323,16 @@ function AppRoutes() {
       
       {/* Test Data Setup Page */}
       <Route path="/test-setup">
-        <RequireAuth>
-          <RequireAdmin>
+        {params => {
+          const { isAuthenticated, user } = useAuth();
+          if (!isAuthenticated) return <Redirect to="/login" />;
+          if (user?.role !== "admin") return <Redirect to="/dashboard" />;
+          return (
             <MainLayout>
               <TestSetup />
             </MainLayout>
-          </RequireAdmin>
-        </RequireAuth>
+          );
+        }}
       </Route>
       
       {/* Redirect root to dashboard */}

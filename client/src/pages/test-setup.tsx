@@ -300,9 +300,9 @@ export default function TestSetup() {
       });
       
       // Forçar atualização dos dados
-      queryClient.invalidateQueries(['/api/clients']);
-      queryClient.invalidateQueries(['/api/services']);
-      queryClient.invalidateQueries(['/api/budgets']);
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/budgets'] });
     } catch (error: any) {
       console.error("Erro ao criar dados de teste:", error);
       toast({
