@@ -1,4 +1,5 @@
-import { offlineDb, addItemOffline, updateItemOffline, deleteItemOffline } from './offlineDb';
+import offlineDb from './offlineDb';
+import { checkNetworkStatus } from './pwaManager';
 
 // Tipos de método HTTP
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -32,7 +33,9 @@ function mapApiUrlToTable(url: string): string | null {
     'services': 'services',
     'budgets': 'budgets',
     'users': 'technicians',
-    'events': 'events',
+    'technicians': 'technicians',
+    'service_types': 'service_types',
+    'auth': null, // Não suporta offline
     // Adicionar mais mapeamentos conforme necessário
   };
   
@@ -62,91 +65,169 @@ export async function apiRequest<T>({
   offlineTableName
 }: ApiRequestConfig): Promise<T> {
   // Determinar se estamos online
-  const isOnline = navigator.onLine;
+  const isOnline = checkNetworkStatus();
   
-  // Se offline e habilitado para suporte offline
-  if (!isOnline && enableOffline) {
-    // Identificar a tabela local correspondente
-    const tableName = offlineTableName || mapApiUrlToTable(url);
-    
-    if (!tableName) {
-      throw new Error(`Não foi possível determinar a tabela offline para a URL: ${url}`);
-    }
-    
-    // Obter referência para a tabela no Dexie
-    const table = (offlineDb as any)[tableName];
-    
-    if (!table) {
-      throw new Error(`Tabela offline não encontrada: ${tableName}`);
-    }
-    
-    // Operações baseadas no método HTTP
-    if (method === 'GET') {
-      // Para GET em coleções
-      if (!url.includes('/api/') || url.endsWith('/')) {
-        return table.toArray() as Promise<T>;
+  // Algumas operações não devem ser processadas offline
+  const isAuthOperation = url.includes('/api/auth/');
+  const offlineDisabled = !enableOffline || isAuthOperation;
+  
+  // Identificar a tabela local correspondente para operações offline
+  const tableName = offlineTableName || mapApiUrlToTable(url);
+  const resourceId = extractResourceId(url);
+  
+  // Se offline e o suporte offline está habilitado para esta operação
+  if (!isOnline && !offlineDisabled && tableName) {
+    try {
+      console.log(`Operação offline: ${method} ${url}`);
+      
+      // Operações baseadas no método HTTP
+      if (method === 'GET') {
+        if (resourceId !== null) {
+          // GET de um item específico
+          return await offlineDb.getItem(tableName, resourceId, url) as unknown as T;
+        } else {
+          // GET de uma coleção (com possíveis filtros)
+          const urlObj = new URL(window.location.origin + url);
+          const params = Object.fromEntries(urlObj.searchParams.entries());
+          const page = params.page ? parseInt(params.page as string, 10) : 1;
+          const limit = params.limit ? parseInt(params.limit as string, 10) : 50;
+          
+          // Remover parâmetros de paginação dos filtros
+          const { page: _, limit: __, ...filters } = params;
+          
+          return await offlineDb.listItems(tableName, url, page, limit, filters) as unknown as T;
+        }
+      } 
+      else if (method === 'POST') {
+        // Criar novo item
+        const id = await offlineDb.addItem(tableName, data, url);
+        return { id, ...data } as unknown as T;
+      } 
+      else if (method === 'PUT') {
+        // Atualizar item existente
+        if (resourceId === null) {
+          throw new Error(`Não foi possível extrair ID da URL para atualização: ${url}`);
+        }
+        
+        await offlineDb.updateItem(tableName, resourceId, data, url);
+        return { id: resourceId, ...data } as unknown as T;
+      } 
+      else if (method === 'DELETE') {
+        // Excluir item
+        if (resourceId === null) {
+          throw new Error(`Não foi possível extrair ID da URL para exclusão: ${url}`);
+        }
+        
+        await offlineDb.deleteItem(tableName, resourceId, url);
+        return { success: true } as unknown as T;
       }
       
-      // Para GET em item específico
-      const id = extractResourceId(url);
-      if (id !== null) {
-        const item = await table.get(id);
-        if (!item) {
-          throw new Error(`Item com ID ${id} não encontrado offline`);
+      throw new Error(`Método não suportado offline: ${method}`);
+    } catch (error) {
+      console.error("Erro durante operação offline:", error);
+      throw error;
+    }
+  }
+  
+  // Online ou operação não suportada offline
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+      body: method !== 'GET' && data ? JSON.stringify(data) : undefined,
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+    
+    // Sincronizar com o banco de dados offline quando online, para operações GET
+    if (isOnline && method === 'GET' && tableName && enableOffline) {
+      try {
+        const responseData = await response.json();
+        
+        // Para GET de item único
+        if (resourceId !== null) {
+          // Atualizar o item no banco local
+          await offlineDb.getTableByName(tableName).put({
+            ...responseData,
+            last_sync: Date.now()
+          });
+        } 
+        // Para GET de coleções
+        else if (responseData && responseData.data && Array.isArray(responseData.data)) {
+          // Batch update dos itens no banco local
+          await Promise.all(
+            responseData.data.map((item: any) => 
+              offlineDb.getTableByName(tableName).put({
+                ...item,
+                last_sync: Date.now()
+              })
+            )
+          );
         }
-        return item as unknown as T;
+        
+        return responseData as T;
+      } catch (error) {
+        console.error("Erro ao sincronizar dados online com cache local:", error);
+        // Continuar e retornar o resultado da API mesmo se a sincronização falhar
       }
-    } 
-    else if (method === 'POST') {
-      // Criar novo item
-      return addItemOffline(table, data, tableName) as unknown as Promise<T>;
-    } 
-    else if (method === 'PUT') {
-      // Atualizar item existente
-      const id = extractResourceId(url);
-      if (id === null) {
-        throw new Error(`Não foi possível extrair ID da URL para atualização: ${url}`);
-      }
-      await updateItemOffline(table, id, data, tableName);
-      return data as T;
-    } 
-    else if (method === 'DELETE') {
-      // Excluir item
-      const id = extractResourceId(url);
-      if (id === null) {
-        throw new Error(`Não foi possível extrair ID da URL para exclusão: ${url}`);
-      }
-      await deleteItemOffline(table, id, tableName);
+    }
+    
+    // Para DELETE, pode retornar vazio
+    if (method === 'DELETE' && response.status === 204) {
       return { success: true } as unknown as T;
     }
     
-    throw new Error(`Método não suportado offline: ${method}`);
-  }
-  
-  // Caso esteja online, proceder com a requisição normal
-  const response = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-    body: data ? JSON.stringify(data) : undefined,
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`);
-  }
-  
-  // Para DELETE, pode retornar vazio
-  if (method === 'DELETE' && response.status === 204) {
-    return { success: true } as unknown as T;
-  }
-  
-  try {
-    return await response.json();
-  } catch (e) {
-    // Se não puder parsear como JSON, retornar objeto vazio
-    return {} as T;
+    try {
+      return await response.json();
+    } catch (e) {
+      // Se não puder parsear como JSON, retornar objeto vazio
+      return {} as T;
+    }
+  } catch (error) {
+    // Se falhou online, mas temos suporte offline e não é uma operação de autenticação
+    if (enableOffline && tableName && !isAuthOperation) {
+      // Tenta buscar do cache local
+      if (method === 'GET' && resourceId !== null) {
+        try {
+          const cachedItem = await offlineDb.getTableByName(tableName).get(resourceId);
+          if (cachedItem) {
+            console.log(`Usando dados em cache para ${url}`);
+            return cachedItem as unknown as T;
+          }
+        } catch (e) {
+          console.error("Erro ao buscar do cache local:", e);
+        }
+      }
+      
+      // Se não for GET, registra a operação para execução posterior
+      if (method !== 'GET') {
+        try {
+          if (method === 'POST') {
+            const id = await offlineDb.addItem(tableName, data, url);
+            return { id, ...data, _offline: true } as unknown as T;
+          } 
+          else if (method === 'PUT' && resourceId !== null) {
+            await offlineDb.updateItem(tableName, resourceId, data, url);
+            return { id: resourceId, ...data, _offline: true } as unknown as T;
+          } 
+          else if (method === 'DELETE' && resourceId !== null) {
+            await offlineDb.deleteItem(tableName, resourceId, url);
+            return { success: true, _offline: true } as unknown as T;
+          }
+        } catch (e) {
+          console.error("Erro ao processar operação para modo offline:", e);
+        }
+      }
+    }
+    
+    // Se chegamos aqui, não foi possível recuperar de nenhuma forma
+    throw error;
   }
 }
 

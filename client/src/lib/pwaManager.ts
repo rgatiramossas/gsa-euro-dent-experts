@@ -1,146 +1,137 @@
-import { Workbox } from 'workbox-window';
-import { offlineDb, syncPendingData, startPeriodicSync } from './offlineDb';
+// PWA Manager para Euro Dent Experts
 
-// Classe para gerenciar o PWA e sincronização offline
-class PWAManager {
-  private wb: Workbox | null = null;
-  private isRegistered = false;
+// Verifica se o navegador suporta Service Workers
+export const isPWASupported = () => {
+  return 'serviceWorker' in navigator;
+};
 
-  // Inicialização do service worker e sistemas offline
-  public async init(): Promise<void> {
-    if ('serviceWorker' in navigator) {
-      this.wb = new Workbox('/sw.js');
-      
-      // Detectar quando um novo service worker está instalado
-      this.wb.addEventListener('installed', event => {
-        if (event.isUpdate) {
-          // Nova versão disponível, mas não mostramos para o usuário conforme solicitado
-          // Vamos atualizar em segundo plano
-          console.log('Nova versão do aplicativo disponível, atualizando em segundo plano...');
-          this.wb?.messageSkipWaiting();
-        }
-      });
-
-      // Tratamento para quando o service worker controla a página
-      this.wb.addEventListener('controlling', () => {
-        // Service worker atualizado está controlando a página
-        console.log('Service worker atualizado está controlando a página');
-      });
-
-      // Iniciar o service worker
-      try {
-        await this.wb.register();
-        this.isRegistered = true;
-        console.log('Service Worker registrado com sucesso');
-        
-        // Iniciar sincronização periódica
-        this.setupSync();
-      } catch (error) {
-        console.error('Erro ao registrar o Service Worker:', error);
-      }
-    }
+// Registra o service worker
+export const registerServiceWorker = async () => {
+  if (!isPWASupported()) {
+    console.error('Service Workers não são suportados neste navegador.');
+    return false;
   }
 
-  // Configurar sistema de sincronização
-  private setupSync(): void {
-    // Iniciar sincronização periódica
-    startPeriodicSync(30000); // A cada 30 segundos
-    
-    // Tentar sincronizar imediatamente se online
-    if (navigator.onLine) {
-      syncPendingData();
-    }
-    
-    // Configurar verificação de estado de conexão
-    this.setupConnectionMonitoring();
-  }
+  try {
+    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    console.log('Service Worker registrado com sucesso');
 
-  // Monitorar estado da conexão
-  private setupConnectionMonitoring(): void {
-    // Já adicionado na função startPeriodicSync
-    
-    // Outra estratégia é usar o objeto NetworkInformation se disponível
-    if ('connection' in navigator) {
-      const connection = (navigator as any).connection;
-      
-      if (connection) {
-        connection.addEventListener('change', () => {
-          const isOnline = navigator.onLine;
-          const connectionType = connection.type;
-          
-          console.log(`Estado da conexão alterado: ${isOnline ? 'Online' : 'Offline'}, Tipo: ${connectionType}`);
-          
-          if (isOnline && (connectionType === 'wifi' || connectionType === 'ethernet')) {
-            // Conexão forte, sincronizar imediatamente
-            syncPendingData();
+    // Configurar atualização automática quando houver nova versão
+    registration.addEventListener('updatefound', () => {
+      const newWorker = registration.installing;
+      if (newWorker) {
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Há uma nova versão pronta para ser usada
+            if (window.confirm('Uma nova versão está disponível. Atualizar agora?')) {
+              // Enviar mensagem para o service worker atualizar imediatamente
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+              // Recarregar a página para usar o novo service worker
+              window.location.reload();
+            }
           }
         });
       }
-    }
-  }
-
-  // Verificar se o aplicativo está instalado como PWA
-  public isInstalledAsPWA(): boolean {
-    return window.matchMedia('(display-mode: standalone)').matches || 
-           (window.navigator as any).standalone === true;
-  }
-
-  // Verificar se o aplicativo pode ser instalado
-  public async canBeInstalled(): Promise<boolean> {
-    return !!this.getInstallPromptEvent();
-  }
-
-  // Armazenar o evento beforeinstallprompt para uso posterior
-  private installPromptEvent: any = null;
-
-  // Configurar detector de evento de instalação
-  public setupInstallDetection(): void {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      // Prevenir que o navegador mostre a interface de instalação
-      e.preventDefault();
-      
-      // Armazenar o evento para uso posterior
-      this.installPromptEvent = e;
     });
-    
-    // Detectar quando o PWA é instalado
-    window.addEventListener('appinstalled', () => {
-      console.log('Aplicação instalada com sucesso');
-      this.installPromptEvent = null;
-    });
-  }
 
-  // Obter o evento de instalação
-  public getInstallPromptEvent(): any {
-    return this.installPromptEvent;
-  }
+    // Verificar atualizações a cada hora (3600000 ms)
+    setInterval(() => {
+      registration.update();
+    }, 3600000);
 
-  // Mostrar prompt de instalação programaticamente
-  public async promptInstall(): Promise<boolean> {
-    const promptEvent = this.getInstallPromptEvent();
-    
-    if (!promptEvent) {
-      return false;
+    return true;
+  } catch (error) {
+    console.error('Falha ao registrar o Service Worker:', error);
+    return false;
+  }
+};
+
+// Verificar estado da conexão
+export const checkNetworkStatus = () => {
+  const isOnline = navigator.onLine;
+  
+  // Atualizar o estado do aplicativo com base na conectividade
+  if (isOnline) {
+    document.body.classList.remove('offline-mode');
+    triggerSyncIfNeeded();
+  } else {
+    document.body.classList.add('offline-mode');
+  }
+  
+  return isOnline;
+};
+
+// Solicitar sincronização quando online
+export const triggerSyncIfNeeded = async () => {
+  if (!navigator.onLine) return;
+  
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    if ('sync' in registration) {
+      await registration.sync.register('sync-pending-requests');
     }
-    
-    // Mostrar o prompt
-    promptEvent.prompt();
-    
-    // Aguardar pela escolha do usuário
-    const choiceResult = await promptEvent.userChoice;
-    
-    // Limpar o evento
-    this.installPromptEvent = null;
-    
-    return choiceResult.outcome === 'accepted';
+  } catch (error) {
+    console.error('Erro ao registrar sincronização:', error);
   }
-}
+};
 
-// Criar e exportar uma instância única do gerenciador
-export const pwaManager = new PWAManager();
+// Inicializar PWA
+export const initPWA = () => {
+  // Registrar o service worker
+  registerServiceWorker();
+  
+  // Configurar monitoramento de estado da rede
+  window.addEventListener('online', checkNetworkStatus);
+  window.addEventListener('offline', checkNetworkStatus);
+  
+  // Verificar estado inicial da rede
+  checkNetworkStatus();
+};
 
-// Exportar função para inicialização em app.tsx
-export function initPWA(): void {
-  pwaManager.init();
-  pwaManager.setupInstallDetection();
-}
+// Verificar se o aplicativo está sendo executado no modo instalado (PWA)
+export const isRunningAsInstalledPWA = () => {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         (window.navigator as any).standalone || 
+         document.referrer.includes('android-app://');
+};
+
+// Verificar se o aplicativo pode ser instalado
+export const canInstallPWA = () => {
+  return !!window.deferredPrompt;
+};
+
+// Armazenar o evento beforeinstallprompt para uso posterior
+export let deferredPrompt: any = null;
+
+// Configurar captura do evento beforeinstallprompt
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevenir que o Chrome mostre automaticamente o prompt
+  e.preventDefault();
+  // Armazenar o evento para uso posterior
+  deferredPrompt = e;
+});
+
+// Solicitar a instalação do PWA
+export const promptInstall = async () => {
+  if (!deferredPrompt) {
+    console.log('O aplicativo não pode ser instalado agora');
+    return false;
+  }
+  
+  // Mostrar o prompt de instalação
+  deferredPrompt.prompt();
+  
+  // Aguardar a resposta do usuário
+  const choiceResult = await deferredPrompt.userChoice;
+  
+  // Limpar o prompt armazenado - só pode ser usado uma vez
+  deferredPrompt = null;
+  
+  return choiceResult.outcome === 'accepted';
+};
+
+// Limpar o prompt de instalação após a instalação
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  console.log('PWA foi instalado com sucesso!');
+});
