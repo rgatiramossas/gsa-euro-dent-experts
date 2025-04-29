@@ -61,14 +61,32 @@ export const checkNetworkStatus = () => {
   return isOnline;
 };
 
+// Estender a interface ServiceWorkerRegistration para incluir sync
+declare global {
+  interface ServiceWorkerRegistration {
+    sync?: {
+      register(tag: string): Promise<void>;
+    };
+  }
+}
+
 // Solicitar sincronização quando online
 export const triggerSyncIfNeeded = async () => {
   if (!navigator.onLine) return;
   
   try {
     const registration = await navigator.serviceWorker.ready;
-    if ('sync' in registration) {
+    // Verificar se o navegador suporta Background Sync
+    if (registration.sync && typeof registration.sync.register === 'function') {
       await registration.sync.register('sync-pending-requests');
+    } else {
+      console.log('Background Sync não suportado neste navegador');
+      // Tentar sincronizar manualmente
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SYNC_REQUEST'
+        });
+      }
     }
   } catch (error) {
     console.error('Erro ao registrar sincronização:', error);
@@ -87,6 +105,13 @@ export const initPWA = () => {
   // Verificar estado inicial da rede
   checkNetworkStatus();
 };
+
+// Estender a interface Window para incluir deferredPrompt
+declare global {
+  interface Window {
+    deferredPrompt?: any;
+  }
+}
 
 // Verificar se o aplicativo está sendo executado no modo instalado (PWA)
 export const isRunningAsInstalledPWA = () => {
@@ -109,6 +134,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   // Armazenar o evento para uso posterior
   deferredPrompt = e;
+  window.deferredPrompt = e;
 });
 
 // Solicitar a instalação do PWA

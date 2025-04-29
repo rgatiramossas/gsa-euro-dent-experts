@@ -14,6 +14,7 @@ import { getInitials } from "@/lib/utils";
 import { DollarSign, Calendar, Settings, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { InstallPWAButton } from "@/components/ui/install-pwa-button";
 
 // Componente de cabeçalho principal da aplicação
 export function Header() {
@@ -94,6 +95,9 @@ export function Header() {
               <Calendar className="h-6 w-6" />
             </button>
           </div>
+          
+          {/* Botão de instalação do PWA - aparece apenas quando disponível */}
+          {user && <InstallPWAButton className="bg-white text-primary hover:bg-gray-100" />}
           
           {/* Recurso de notificações a ser implementado no futuro */}
           

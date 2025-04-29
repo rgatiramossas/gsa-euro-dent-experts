@@ -78,11 +78,14 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Indicador de modo offline - aparecerá automaticamente quando necessário */}
+      <OfflineIndicator />
+      
       <Header />
       
       <div className="flex flex-1">
         {/* Main Content */}
-        <main className="flex-1 overflow-auto pb-16">
+        <main className="flex-1 overflow-auto pb-16 main-content">
           {children}
         </main>
       </div>
