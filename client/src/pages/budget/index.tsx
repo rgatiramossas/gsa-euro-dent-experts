@@ -257,16 +257,18 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
           <div>
             <CardTitle className="text-2xl">Gerenciamento de Orçamentos</CardTitle>
             <CardDescription>
-              Visualize e gerencie todos os orçamentos
+              {isGestor ? "Visualize todos os orçamentos" : "Visualize e gerencie todos os orçamentos"}
             </CardDescription>
           </div>
-          <Button 
-            className="mt-4 sm:mt-0" 
-            onClick={() => setShowNewBudgetDialog(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Orçamento
-          </Button>
+          {!isGestor && (
+            <Button 
+              className="mt-4 sm:mt-0" 
+              onClick={() => setShowNewBudgetDialog(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Orçamento
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="mb-6 relative">
@@ -328,15 +330,19 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                           >
                             <Printer className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="text-red-500 hover:text-red-700"
-                            onClick={() => handleDeleteConfirm(budget)}
-                            title="Excluir orçamento"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          
+                          {/* Mostrar botão de exclusão apenas para admin e técnicos */}
+                          {!isGestor && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="text-red-500 hover:text-red-700"
+                              onClick={() => handleDeleteConfirm(budget)}
+                              title="Excluir orçamento"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -396,13 +402,16 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                       Cancelar Edição
                     </Button>
                   ) : (
-                    <Button 
-                      variant="secondary" 
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Editar
-                    </Button>
+                    // Mostrar botão de editar apenas para admin e técnicos
+                    !isGestor && (
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar
+                      </Button>
+                    )
                   )}
                 </div>
                 <Button 
