@@ -2815,30 +2815,39 @@ export class DatabaseStorage implements IStorage {
   
   async getManagerClients(managerId: number): Promise<Client[]> {
     try {
-      // Busca todos os clientes atribuídos a um gestor específico
-      // Selecionando explicitamente as colunas que sabemos que existem no MySQL
-      const basicAssignments = await db.select({
-        id: clients.id,
-        name: clients.name,
-        email: clients.email,
-        phone: clients.phone,
-        address: clients.address,
-        notes: clients.notes,
-        created_at: clients.created_at
-      })
-      .from(managerClientAssignments)
-      .innerJoin(clients, eq(managerClientAssignments.client_id, clients.id))
-      .where(eq(managerClientAssignments.manager_id, managerId));
+      console.log(`Listando clientes apenas para o gestor ID: ${managerId}`);
       
-      // Adicionar campos ausentes ao resultado
-      const assignments = basicAssignments.map(client => ({
-        ...client,
+      // Busca todos os clientes atribuídos a um gestor específico usando query direta
+      // Isso é mais confiável com o MySQL e evita o erro de Object.entries em valor null
+      const [result] = await pool.query(`
+        SELECT c.id, c.name, c.email, c.phone, c.address, c.notes, c.created_at
+        FROM manager_client_assignments mca
+        INNER JOIN clients c ON mca.client_id = c.id
+        WHERE mca.manager_id = ?
+      `, [managerId]);
+      
+      if (!result || !Array.isArray(result) || result.length === 0) {
+        console.log(`Nenhum cliente encontrado para o gestor ${managerId}`);
+        return [];
+      }
+      
+      // Converter para o formato esperado
+      const clients = result.map(client => ({
+        id: client.id,
+        name: client.name,
+        email: client.email || null,
+        phone: client.phone || null,
+        address: client.address || null,
+        notes: client.notes || null,
+        created_at: client.created_at,
+        // Campos adicionais necessários
         city: null,
         state: null,
         zip: null
       }));
       
-      return assignments;
+      console.log(`Encontrados ${clients.length} clientes para o gestor ${managerId}`);
+      return clients;
     } catch (error) {
       console.error("Erro ao buscar clientes do gestor:", error);
       return [];
