@@ -187,8 +187,8 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
 
   // Format currency for display
   const formatCurrency = (value?: number) => {
-    if (value === undefined || value === null) return "R$ 0,00";
-    return `R$ ${value.toFixed(2).replace(".", ",")}`;
+    if (value === undefined || value === null) return "0,00 €";
+    return `${value.toFixed(2).replace(".", ",")} €`;
   };
 
   // Show error state
