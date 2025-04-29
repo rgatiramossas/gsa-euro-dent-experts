@@ -33,13 +33,23 @@ import { ClientSelector } from "@/components/forms/ClientSelector";
 // Extend the schema with more validations
 const formSchema = insertUserSchema.extend({
   email: z.string().email("Email inválido"),
-  password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres"),
-  confirmPassword: z.string(),
+  // Para edição, a senha se torna opcional
+  password: z.union([
+    z.string().min(8, "A senha deve ter no mínimo 8 caracteres"),
+    z.string().length(0) // Permite string vazia
+  ]),
+  confirmPassword: z.union([
+    z.string(),
+    z.string().length(0) // Permite string vazia
+  ]),
   // Aqui ajustamos: o active será 1 para true e 0 para false
   active: z.union([z.number(), z.boolean()]).transform(val => 
     typeof val === 'boolean' ? (val ? 1 : 0) : val
   ).default(1),
 }).refine((data) => {
+  // Se a senha estiver vazia, não validar confirmação
+  if (!data.password || data.password.length === 0) return true;
+  // Se a senha for preenchida, ela deve coincidir com a confirmação
   return data.password === data.confirmPassword;
 }, {
   message: "As senhas não conferem",
