@@ -326,8 +326,19 @@ function AppRoutes() {
         {params => {
           const { isAuthenticated, user } = useAuth();
           if (!isAuthenticated) return <Redirect to="/login" />;
-          console.log("User role:", user?.role); // Adicionado para debug
-          if (user?.role !== "admin") return <Redirect to="/dashboard" />;
+          
+          // Logs detalhados para debug
+          console.log("Usuário:", user);
+          console.log("Role:", user?.role);
+          console.log("É admin?", user?.role === "admin");
+          console.log("É gestor?", user?.role === "gestor");
+          
+          // Permitir acesso para admin ou gestor
+          if (user?.role !== "admin" && user?.role !== "gestor") {
+            console.log("Acesso negado - redirecionando para dashboard");
+            return <Redirect to="/dashboard" />;
+          }
+          
           return (
             <MainLayout>
               <TestSetup />
