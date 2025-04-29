@@ -898,7 +898,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         {service.photos?.service && service.photos.service.map((photo) => (
                           <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                             <img 
-                              src={photo.photo_url} 
+                              src={photo.photo_url.startsWith('/uploads') ? photo.photo_url : `/uploads${photo.photo_url}`} 
                               alt="Foto do veículo" 
                               className="object-cover w-full h-full"
                               onError={(e) => {
