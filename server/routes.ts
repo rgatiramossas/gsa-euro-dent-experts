@@ -2429,6 +2429,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Endpoint para criar dados de teste
+  app.post("/api/test-setup", requireAuth, async (req, res) => {
+    try {
+      // Verificar se o usuário é admin ou gestor
+      if (req.session.userRole !== 'admin' && req.session.userRole !== 'gestor') {
+        return res.status(403).json({ error: "Não autorizado. Apenas administradores e gestores podem criar dados de teste." });
+      }
+      
+      console.log("Iniciando criação de dados de teste...");
+      
+      // Buscar técnicos ativos
+      const technicians = await storage.getTechnicians();
+      if (technicians.length === 0) {
+        return res.status(400).json({ error: "Não há técnicos disponíveis para criar dados de teste." });
+      }
+      console.log(`Encontrados ${technicians.length} técnicos`);
+      
+      // Buscar tipos de serviço
+      const serviceTypes = await storage.getServiceTypes();
+      if (serviceTypes.length === 0) {
+        return res.status(400).json({ error: "Não há tipos de serviço disponíveis para criar dados de teste." });
+      }
+      console.log(`Encontrados ${serviceTypes.length} tipos de serviço`);
+      
+      // Criar 5 clientes com 1 veículo, 5 serviços e 5 orçamentos cada
+      const results = {
+        clients: [],
+        vehicles: [],
+        services: [],
+        budgets: []
+      };
+      
+      // Importar conexão do MySQL para usar queries diretas
+      const mysqlConnection = await import('./db-mysql.js');
+      const { initDb } = mysqlConnection;
+      const { pool } = await initDb();
+      
+      for (let i = 1; i <= 5; i++) {
+        // Criar cliente
+        const clientData = {
+          name: `Cliente Teste ${i}`,
+          email: `cliente${i}@teste.com`,
+          phone: `(11) 9${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+          address: `Rua Teste ${i}, ${Math.floor(100 + Math.random() * 900)}, São Paulo/SP`
+        };
+        
+        // Inserir cliente
+        const [clientResult] = await pool.query(
+          'INSERT INTO clients (name, email, phone, address) VALUES (?, ?, ?, ?)',
+          [clientData.name, clientData.email, clientData.phone, clientData.address]
+        );
+        
+        const clientId = clientResult.insertId;
+        console.log(`Cliente criado com ID: ${clientId}`);
+        
+        results.clients.push({id: clientId, ...clientData});
+        
+        // Criar veículo para o cliente
+        const vehicleData = {
+          client_id: clientId,
+          make: ['Toyota', 'Honda', 'Volkswagen', 'Fiat', 'Chevrolet'][Math.floor(Math.random() * 5)],
+          model: ['Corolla', 'Civic', 'Golf', 'Uno', 'Onix'][Math.floor(Math.random() * 5)],
+          year: 2018 + Math.floor(Math.random() * 6),
+          color: ['Branco', 'Preto', 'Prata', 'Vermelho', 'Azul'][Math.floor(Math.random() * 5)],
+          license_plate: `ABC${Math.floor(1000 + Math.random() * 9000)}`
+        };
+        
+        // Inserir veículo
+        const [vehicleResult] = await pool.query(
+          'INSERT INTO vehicles (client_id, make, model, year, color, license_plate) VALUES (?, ?, ?, ?, ?, ?)',
+          [vehicleData.client_id, vehicleData.make, vehicleData.model, vehicleData.year, vehicleData.color, vehicleData.license_plate]
+        );
+        
+        const vehicleId = vehicleResult.insertId;
+        console.log(`Veículo criado com ID: ${vehicleId}`);
+        
+        results.vehicles.push({id: vehicleId, ...vehicleData});
+        
+        // Criar 5 serviços para o cliente
+        for (let j = 1; j <= 5; j++) {
+          const technicianIndex = Math.floor(Math.random() * technicians.length);
+          const serviceTypeIndex = Math.floor(Math.random() * serviceTypes.length);
+          const statusOptions = ['pending', 'in_progress', 'completed'];
+          const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+          
+          const price = Math.round(serviceTypes[serviceTypeIndex].base_price * (0.8 + Math.random() * 0.4) * 100) / 100;
+          const administrativeFee = Math.round(serviceTypes[serviceTypeIndex].base_price * 0.1 * 100) / 100;
+          
+          // Calcular data agendada (entre hoje e 30 dias à frente)
+          const daysToAdd = Math.floor(Math.random() * 30);
+          const scheduleDate = new Date();
+          scheduleDate.setDate(scheduleDate.getDate() + daysToAdd);
+          const formattedDate = scheduleDate.toISOString().split('T')[0];
+          
+          // Inserir serviço
+          const [serviceResult] = await pool.query(
+            'INSERT INTO services (client_id, vehicle_id, technician_id, service_type_id, description, status, price, administrative_fee, schedule_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [clientId, vehicleId, technicians[technicianIndex].id, serviceTypes[serviceTypeIndex].id, 
+             `Serviço de teste ${j} para cliente ${i}`, status, price, administrativeFee, formattedDate]
+          );
+          
+          const serviceId = serviceResult.insertId;
+          console.log(`Serviço criado com ID: ${serviceId}`);
+          
+          results.services.push({
+            id: serviceId,
+            client_id: clientId,
+            vehicle_id: vehicleId,
+            technician_id: technicians[technicianIndex].id,
+            service_type_id: serviceTypes[serviceTypeIndex].id,
+            description: `Serviço de teste ${j} para cliente ${i}`,
+            status,
+            price,
+            administrative_fee: administrativeFee,
+            schedule_date: formattedDate
+          });
+          
+          // Criar orçamento baseado no serviço
+          const totalPrice = price + administrativeFee;
+          
+          // Inserir orçamento
+          const [budgetResult] = await pool.query(
+            'INSERT INTO budgets (client_id, vehicle_id, service_id, technician_id, total_price, status) VALUES (?, ?, ?, ?, ?, ?)',
+            [clientId, vehicleId, serviceId, technicians[technicianIndex].id, totalPrice, 'approved']
+          );
+          
+          const budgetId = budgetResult.insertId;
+          console.log(`Orçamento criado com ID: ${budgetId}`);
+          
+          // Inserir itens do orçamento
+          await pool.query(
+            'INSERT INTO budget_items (budget_id, description, quantity, price) VALUES (?, ?, ?, ?)',
+            [budgetId, `Item ${j}.1 - ${serviceTypes[serviceTypeIndex].name}`, 1, price]
+          );
+          
+          await pool.query(
+            'INSERT INTO budget_items (budget_id, description, quantity, price) VALUES (?, ?, ?, ?)',
+            [budgetId, `Item ${j}.2 - Mão de obra`, 1, administrativeFee]
+          );
+          
+          results.budgets.push({
+            id: budgetId,
+            client_id: clientId,
+            vehicle_id: vehicleId,
+            service_id: serviceId,
+            technician_id: technicians[technicianIndex].id,
+            total_price: totalPrice,
+            status: 'approved'
+          });
+        }
+      }
+      
+      console.log("Criação de dados de teste concluída com sucesso!");
+      res.status(200).json({ 
+        message: "Dados de teste criados com sucesso",
+        summary: {
+          clients: results.clients.length,
+          vehicles: results.vehicles.length,
+          services: results.services.length,
+          budgets: results.budgets.length
+        }
+      });
+      
+    } catch (error) {
+      console.error("Erro ao criar dados de teste:", error);
+      res.status(500).json({ error: `Erro ao criar dados de teste: ${error.message}` });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
