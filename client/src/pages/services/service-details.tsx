@@ -41,7 +41,8 @@ const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWl
 // Função para lidar com erros de carregamento de imagem
 const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, url: string) => {
   console.error(`Erro ao carregar imagem: ${url}`);
-  e.currentTarget.src = PLACEHOLDER_IMAGE;
+  // Usar imagem de placeholder diretamente do projeto
+  e.currentTarget.src = '/placeholder-image.png';
 };
 import { 
   Select,
