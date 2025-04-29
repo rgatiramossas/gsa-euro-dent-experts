@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import ImageWithFallback from "@/components/common/ImageWithFallback";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { ServiceWithDetails, ServiceStatus, ServiceType } from "@/types";
@@ -38,12 +37,6 @@ import { formatCurrency, formatDateTime } from "@/lib/utils";
 // Imagem de placeholder em base64 para garantir que sempre estará disponível
 const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEyNSwgNjUpIj48cmVjdCB4PSItMTUiIHk9Ii0xNSIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iNSIgZmlsbD0iI2NjY2NjYyIvPjxwYXRoIGQ9Ik0wIDAgTDUwIDUwIE01MCAwIEwwIDUwIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iOCIvPjwvZz48dGV4dCB4PSIxNTAiIHk9IjE0MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNzA3MDcwIj5JbWFnZW0gbsOjbyBkaXNwb27DrXZlbDwvdGV4dD48L3N2Zz4=';
 
-// Função para lidar com erros de carregamento de imagem
-const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, url: string) => {
-  console.error(`Erro ao carregar imagem: ${url}`);
-  // Usar imagem de placeholder diretamente do projeto
-  e.currentTarget.src = '/placeholder-image.png';
-};
 import { 
   Select,
   SelectContent,
@@ -51,6 +44,13 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+
+// Função para lidar com erros de carregamento de imagem
+const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, url: string) => {
+  console.error(`Erro ao carregar imagem: ${url}`);
+  // Usar imagem de placeholder em SVG
+  e.currentTarget.src = '/placeholder-image.svg';
+};
 import { ServiceStatusBadge } from "@/components/common/ServiceStatusBadge";
 import { 
   Dialog,
@@ -903,7 +903,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               className="object-cover w-full h-full"
                               onError={(e) => {
                                 console.error(`Erro ao carregar imagem: ${photo.photo_url}`);
-                                e.currentTarget.src = '/placeholder-image.png';
+                                e.currentTarget.src = '/placeholder-image.svg';
                               }}
                             />
                             <Badge className="absolute top-1 left-1 bg-blue-500 text-white">
@@ -931,7 +931,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               className="object-cover w-full h-full"
                               onError={(e) => {
                                 console.error(`Erro ao carregar imagem: ${photo.photo_url}`);
-                                e.currentTarget.src = '/placeholder-image.png';
+                                e.currentTarget.src = '/placeholder-image.svg';
                               }}
                             />
                             <Badge className="absolute top-1 left-1 bg-orange-500 text-white">
@@ -959,7 +959,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               className="object-cover w-full h-full"
                               onError={(e) => {
                                 console.error(`Erro ao carregar imagem: ${photo.photo_url}`);
-                                e.currentTarget.src = '/placeholder-image.png';
+                                e.currentTarget.src = '/placeholder-image.svg';
                               }}
                             />
                             <Badge className="absolute top-1 left-1 bg-green-500 text-white">
@@ -1277,7 +1277,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               className="object-cover w-full h-full"
                               onError={(e) => {
                                 console.error(`Erro ao carregar imagem: ${photo.photo_url}`);
-                                e.currentTarget.src = '/placeholder-image.png';
+                                e.currentTarget.src = '/placeholder-image.svg';
                               }}
                             />
                             <button
@@ -1299,7 +1299,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               className="object-cover w-full h-full"
                               onError={(e) => {
                                 console.error(`Erro ao carregar imagem: ${photo.photo_url}`);
-                                e.currentTarget.src = '/placeholder-image.png';
+                                e.currentTarget.src = '/placeholder-image.svg';
                               }}
                             />
                             <button
@@ -1321,7 +1321,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                               className="object-cover w-full h-full"
                               onError={(e) => {
                                 console.error(`Erro ao carregar imagem: ${photo.photo_url}`);
-                                e.currentTarget.src = '/placeholder-image.png';
+                                e.currentTarget.src = '/placeholder-image.svg';
                               }}
                             />
                             <button
