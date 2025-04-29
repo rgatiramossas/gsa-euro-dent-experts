@@ -954,18 +954,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="mb-4">
+                    {/* Só exibir valores financeiros para admin e técnicos */}
                     {isAdmin && (
                       <>
                         <div className="flex justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600">Valor do serviço</span>
                           <span className="text-gray-800 font-medium">
-                            {(() => {
-                              const rawPrice = service.price;
-                              const numPrice = Number(service.price);
-                              console.log("DEBUG: Raw price value:", rawPrice, "Type:", typeof rawPrice);
-                              console.log("DEBUG: Converted price value:", numPrice, "Type:", typeof numPrice);
-                              return formatCurrency(numPrice || 0);
-                            })()}
+                            {formatCurrency(Number(service.price) || 0)}
                           </span>
                         </div>
                         
@@ -974,26 +969,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         <div className="flex justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600">Taxa administrativa</span>
                           <span className="text-gray-800 font-medium">
-                            {(() => {
-                              const rawFee = service.administrative_fee;
-                              const numFee = Number(service.administrative_fee);
-                              console.log("DEBUG: Raw admin fee value:", rawFee, "Type:", typeof rawFee);
-                              console.log("DEBUG: Converted admin fee value:", numFee, "Type:", typeof numFee);
-                              return formatCurrency(numFee || 0);
-                            })()}
+                            {formatCurrency(Number(service.administrative_fee) || 0)}
                           </span>
                         </div>
                         
                         <div className="flex justify-between py-2 font-medium">
                           <span className="text-gray-700">Total</span>
                           <span className="text-primary text-lg">
-                            {(() => {
-                              const price = Number(service.price || 0);
-                              const fee = Number(service.administrative_fee || 0);
-                              const total = price + fee;
-                              console.log("DEBUG: Calculated total:", price, "+", fee, "=", total);
-                              return formatCurrency(total);
-                            })()}
+                            {formatCurrency(Number(service.price || 0) + Number(service.administrative_fee || 0))}
                           </span>
                         </div>
                       </>
@@ -1003,6 +986,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       <div className="flex justify-between py-2 font-medium mt-2">
                         <span className="text-gray-700">Valor para o técnico</span>
                         <span className="text-primary text-lg">{formatCurrency(Number(service.price) || 0)}</span>
+                      </div>
+                    )}
+                    
+                    {/* Mostrar mensagem explicativa para gestores */}
+                    {isGestor && (
+                      <div className="p-4 bg-gray-50 rounded-md text-center">
+                        <p className="text-gray-600">Valores financeiros não estão disponíveis para gestores</p>
+                        <p className="text-xs text-gray-500 mt-1">Para visualizar valores financeiros, entre em contato com um administrador</p>
                       </div>
                     )}
                   </div>
