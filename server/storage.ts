@@ -2278,41 +2278,61 @@ export class DatabaseStorage implements IStorage {
   
   // Payment Request methods
   async createPaymentRequest(technicianId: number | null, serviceIds: number[]): Promise<PaymentRequest> {
-    // Use a transaction to ensure all operations succeed or fail together
-    const tx = await db.transaction(async (tx) => {
-      // First create the payment request
-      const [paymentRequest] = await tx
-        .insert(paymentRequests)
-        .values({ 
-          technician_id: technicianId,
-          status: "aguardando_aprovacao" 
-        })
-        .returning();
+    try {
+      console.log(`Criando solicitação de pagamento para técnico ${technicianId} com serviços:`, serviceIds);
       
-      // Then add all the service items
-      if (serviceIds.length > 0) {
-        await tx
-          .insert(paymentRequestItems)
-          .values(
-            serviceIds.map(serviceId => ({
-              payment_request_id: paymentRequest.id,
-              service_id: serviceId,
-            }))
-          );
-        
-        // Update all the services to "aguardando_aprovacao" status
-        for (const serviceId of serviceIds) {
-          await tx
-            .update(services)
-            .set({ status: "aguardando_aprovacao" })
-            .where(eq(services.id, serviceId));
-        }
+      // No MySQL, não podemos usar .returning() como no PostgreSQL
+      // Vamos usar uma abordagem mais direta com pool.query
+      
+      // Primeiro, inserimos o registro principal de pedido de pagamento
+      const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      const [result] = await pool.query(
+        "INSERT INTO payment_requests (technician_id, status, created_at) VALUES (?, ?, ?)",
+        [technicianId, "aguardando_aprovacao", now]
+      );
+      
+      // Verificamos e obtemos o ID gerado
+      const paymentRequestId = result.insertId;
+      console.log(`Pedido de pagamento criado com ID: ${paymentRequestId}`);
+      
+      if (!paymentRequestId) {
+        throw new Error("Falha ao criar pedido de pagamento: ID não retornado");
       }
       
-      return paymentRequest;
-    });
-    
-    return tx;
+      // Em seguida, adicionamos os itens do pedido
+      if (serviceIds.length > 0) {
+        // Para cada serviço, criamos um item de pedido
+        for (const serviceId of serviceIds) {
+          await pool.query(
+            "INSERT INTO payment_request_items (payment_request_id, service_id) VALUES (?, ?)",
+            [paymentRequestId, serviceId]
+          );
+          
+          // E atualizamos o status do serviço
+          await pool.query(
+            "UPDATE services SET status = ? WHERE id = ?",
+            ["aguardando_pagamento", serviceId]
+          );
+        }
+        
+        console.log(`${serviceIds.length} serviços associados ao pedido de pagamento ${paymentRequestId}`);
+      }
+      
+      // Buscamos o pedido completo para retornar
+      const [paymentRequests] = await pool.query(
+        "SELECT * FROM payment_requests WHERE id = ?",
+        [paymentRequestId]
+      );
+      
+      if (!paymentRequests.length) {
+        throw new Error(`Pedido de pagamento ${paymentRequestId} não encontrado após criação`);
+      }
+      
+      return paymentRequests[0] as PaymentRequest;
+    } catch (error) {
+      console.error("Erro ao criar pedido de pagamento:", error);
+      throw error;
+    }
   }
   
   async getPaymentRequest(id: number): Promise<any> {
@@ -2460,297 +2480,337 @@ export class DatabaseStorage implements IStorage {
     console.log(`Atualizando pedido ${id} para status ${status}`);
     console.log(`Detalhes de pagamento:`, paymentDetails);
     
-    // Incluir detalhes de pagamento se fornecidos
-    const updateData: any = { status };
-    if (paymentDetails && status === "pago") {
-      // Converter detalhes de pagamento para JSON string para evitar erros
-      updateData.payment_details = JSON.stringify(paymentDetails);
-      updateData.payment_date = new Date();
-      console.log("Dados a serem atualizados:", updateData);
-    }
-    
-    const [updatedRequest] = await db
-      .update(paymentRequests)
-      .set(updateData)
-      .where(eq(paymentRequests.id, id))
-      .returning();
-    
-    console.log("Retorno da atualização:", updatedRequest);
-    
-    // If approved, update all associated services to "faturado"
-    if (status === "aprovado") {
-      const items = await db
-        .select({
-          service_id: paymentRequestItems.service_id,
-        })
-        .from(paymentRequestItems)
-        .where(eq(paymentRequestItems.payment_request_id, id));
+    try {
+      // Incluir detalhes de pagamento se fornecidos
+      const updateData: any = { status };
+      if (paymentDetails && status === "pago") {
+        // Converter detalhes de pagamento para JSON string para evitar erros
+        updateData.payment_details = JSON.stringify(paymentDetails);
+        updateData.payment_date = new Date();
+        console.log("Dados a serem atualizados:", updateData);
+      }
       
-      console.log(`Encontrados ${items.length} serviços para status "faturado"`);
+      // MySQL não suporta returning() como no PostgreSQL
+      // Usar pool.query diretamente
+      await pool.query(
+        "UPDATE payment_requests SET ? WHERE id = ?",
+        [updateData, id]
+      );
       
-      // Atualizar status das ordens de serviço para "faturado"
-      for (const item of items) {
-        await db
-          .update(services)
-          .set({ status: "faturado" })
-          .where(eq(services.id, item.service_id));
-          
-        // Atualizar transações relacionadas a este serviço de "aguardando aprovação" para "faturado"
-        // Buscar todas as transações com status "aguardando_aprovacao" para este serviço
-        const servicesToUpdate = await db
-          .select()
-          .from(services)
-          .where(eq(services.id, item.service_id));
+      // Buscar os dados atualizados
+      const [updatedRequests] = await pool.query(
+        "SELECT * FROM payment_requests WHERE id = ?",
+        [id]
+      );
+      
+      if (!updatedRequests || !updatedRequests.length) {
+        console.error(`Pedido de pagamento ${id} não encontrado após atualização`);
+        return undefined;
+      }
+      
+      const updatedRequest = updatedRequests[0];
+      
+      console.log("Retorno da atualização:", updatedRequest);
+      
+      // Se aprovado, atualizar todos os serviços associados para "faturado"
+      if (status === "aprovado") {
+        const items = await db
+          .select({
+            service_id: paymentRequestItems.service_id,
+          })
+          .from(paymentRequestItems)
+          .where(eq(paymentRequestItems.payment_request_id, id));
         
-        if (servicesToUpdate.length > 0) {
-          const service = servicesToUpdate[0];
-          // Atualizar as transações relacionadas ao cliente e veículo deste serviço
+        console.log(`Encontrados ${items.length} serviços para status "faturado"`);
+        
+        // Atualizar status das ordens de serviço para "faturado"
+        for (const item of items) {
           await db
             .update(services)
             .set({ status: "faturado" })
-            .where(
-              and(
-                eq(services.client_id, service.client_id),
-                eq(services.status, "aguardando_aprovacao")
-              )
-            );
+            .where(eq(services.id, item.service_id));
+            
+          // Atualizar transações relacionadas a este serviço de "aguardando aprovação" para "faturado"
+          // Buscar todas as transações com status "aguardando_aprovacao" para este serviço
+          const servicesToUpdate = await db
+            .select()
+            .from(services)
+            .where(eq(services.id, item.service_id));
+          
+          if (servicesToUpdate.length > 0) {
+            const service = servicesToUpdate[0];
+            // Atualizar as transações relacionadas ao cliente e veículo deste serviço
+            await db
+              .update(services)
+              .set({ status: "faturado" })
+              .where(
+                and(
+                  eq(services.client_id, service.client_id),
+                  eq(services.status, "aguardando_aprovacao")
+                )
+              );
+          }
         }
       }
-    }
-    
-    // If paid, update all associated services to "pago"
-    if (status === "pago") {
-      const items = await db
-        .select({
-          service_id: paymentRequestItems.service_id,
-        })
-        .from(paymentRequestItems)
-        .where(eq(paymentRequestItems.payment_request_id, id));
       
-      console.log(`Encontrados ${items.length} serviços para status "pago"`);
-      
-      // Atualizar status das ordens de serviço para "pago"
-      for (const item of items) {
-        await db
-          .update(services)
-          .set({ status: "pago" })
-          .where(eq(services.id, item.service_id));
-          
-        // Atualizar transações relacionadas a este serviço de "faturado" para "pago"
-        // Buscar todas as transações com status "faturado" para este serviço
-        const servicesToUpdate = await db
-          .select()
-          .from(services)
-          .where(eq(services.id, item.service_id));
+      // Se pago, atualizar todos os serviços associados para "pago"
+      if (status === "pago") {
+        const items = await db
+          .select({
+            service_id: paymentRequestItems.service_id,
+          })
+          .from(paymentRequestItems)
+          .where(eq(paymentRequestItems.payment_request_id, id));
         
-        if (servicesToUpdate.length > 0) {
-          const service = servicesToUpdate[0];
-          // Atualizar as transações relacionadas ao cliente e veículo deste serviço
+        console.log(`Encontrados ${items.length} serviços para status "pago"`);
+        
+        // Atualizar status das ordens de serviço para "pago"
+        for (const item of items) {
           await db
             .update(services)
             .set({ status: "pago" })
-            .where(
-              and(
-                eq(services.client_id, service.client_id),
-                eq(services.status, "faturado")
-              )
-            );
-        }
-      }
-      
-      try {
-        // Registrar despesa automaticamente
-        if (updatedRequest) {
-          // Primeiro, obter o técnico associado e os serviços pagos
-          const [paymentRequestInfo] = await db
-            .select({
-              technician_id: paymentRequests.technician_id
-            })
-            .from(paymentRequests)
-            .where(eq(paymentRequests.id, id));
+            .where(eq(services.id, item.service_id));
             
-          if (!paymentRequestInfo) {
-            console.log("Informações do pedido não encontradas");
-            return updatedRequest;
-          }
-            
-          // Buscar informações do técnico
-          const [technicianInfo] = await db
+          // Atualizar transações relacionadas a este serviço de "faturado" para "pago"
+          // Buscar todas as transações com status "faturado" para este serviço
+          const servicesToUpdate = await db
             .select()
-            .from(users)
-            .where(eq(users.id, paymentRequestInfo.technician_id));
-            
-          const technicianName = technicianInfo ? technicianInfo.name : 'N/A';
+            .from(services)
+            .where(eq(services.id, item.service_id));
           
-          // Buscar IDs dos serviços associados
-          const serviceItems = await db
-            .select({
-              service_id: paymentRequestItems.service_id
-            })
-            .from(paymentRequestItems)
-            .where(eq(paymentRequestItems.payment_request_id, id));
-            
-          const serviceIds = serviceItems.map(item => item.service_id);
-          
-          // Calcular valor técnico total
-          let technicianValue = 0;
-          const serviceDetails = [];
-          
-          for (const serviceId of serviceIds) {
-            const [serviceData] = await db
-              .select()
-              .from(services)
-              .where(eq(services.id, serviceId));
-              
-            if (serviceData) {
-              technicianValue += serviceData.aw_value || 0;
-              serviceDetails.push(serviceId);
-            }
-          }
-          
-          console.log("Valor total para o técnico:", technicianValue);
-          
-          // Criar descrição com detalhes das OS
-          const osNumbers = serviceDetails.map(id => `#${id}`).join(", ");
-          const description = `Pagamento ao técnico ${technicianName} - Pedido #${id} - OS ${osNumbers}`;
-          
-          // Registrar despesa como salário se o valor for maior que zero
-          if (technicianValue > 0) {
-            console.log("Registrando despesa:", description);
-            
-            // Extrair detalhes do pagamento
-            console.log("Detalhes de pagamento recebidos:", JSON.stringify(paymentDetails));
-            let paymentMethod = "outro";
-            let paymentNotes = "";
-            
-            // Verificar a estrutura dos detalhes do pagamento
-            if (typeof paymentDetails === 'string') {
-              try {
-                // Tentar fazer o parse se for uma string JSON
-                const parsed = JSON.parse(paymentDetails);
-                paymentMethod = parsed?.payment_method || "outro";
-                paymentNotes = parsed?.payment_notes || "";
-              } catch (e) {
-                console.log("Erro ao fazer parse dos detalhes do pagamento:", e);
-                paymentNotes = paymentDetails; // Usar como observação se não for JSON
-              }
-            } else if (paymentDetails && typeof paymentDetails === 'object') {
-              // Se já for um objeto
-              paymentMethod = paymentDetails.payment_method || "outro";
-              paymentNotes = paymentDetails.payment_notes || "";
-            }
-            
-            // Extrair a data do pagamento ou usar a data atual
-            let paymentDate = new Date();
-            if (paymentDetails.payment_date) {
-              try {
-                paymentDate = new Date(paymentDetails.payment_date);
-              } catch (e) {
-                console.log("Erro ao converter data de pagamento:", e);
-              }
-            }
-            
-            // Inserir na tabela de despesas
+          if (servicesToUpdate.length > 0) {
+            const service = servicesToUpdate[0];
+            // Atualizar as transações relacionadas ao cliente e veículo deste serviço
             await db
-              .insert(expenses)
-              .values({
-                type: "salario",
-                amount: technicianValue,
-                date: paymentDate,
-                description: description,
-                payment_method: paymentMethod,
-                notes: paymentNotes,
-                provider: technicianName
-              });
-              
-            console.log("Despesa registrada com sucesso");
-          } else {
-            console.log("Nenhuma despesa registrada - valor zero");
+              .update(services)
+              .set({ status: "pago" })
+              .where(
+                and(
+                  eq(services.client_id, service.client_id),
+                  eq(services.status, "faturado")
+                )
+              );
           }
         }
-      } catch (error) {
-        console.error("Erro ao registrar despesa:", error);
-        // Continuar mesmo com erro no registro da despesa
-      }
-    }
-    
-    // If rejected, update all associated services back to "completed"
-    if (status === "rejeitado") {
-      const items = await db
-        .select({
-          service_id: paymentRequestItems.service_id,
-        })
-        .from(paymentRequestItems)
-        .where(eq(paymentRequestItems.payment_request_id, id));
-      
-      console.log(`Encontrados ${items.length} serviços para retornar ao status "completed"`);
-      
-      for (const item of items) {
-        await db
-          .update(services)
-          .set({ status: "completed" })
-          .where(eq(services.id, item.service_id));
-          
-        // Também atualizar transações relacionadas para "completed"
-        const servicesToUpdate = await db
-          .select()
-          .from(services)
-          .where(eq(services.id, item.service_id));
         
-        if (servicesToUpdate.length > 0) {
-          const service = servicesToUpdate[0];
-          // Atualizar as transações relacionadas ao cliente e veículo deste serviço
+        try {
+          // Registrar despesa automaticamente
+          if (updatedRequest) {
+            // Primeiro, obter o técnico associado e os serviços pagos
+            const [paymentRequestInfo] = await db
+              .select({
+                technician_id: paymentRequests.technician_id
+              })
+              .from(paymentRequests)
+              .where(eq(paymentRequests.id, id));
+              
+            if (!paymentRequestInfo) {
+              console.log("Informações do pedido não encontradas");
+              return updatedRequest;
+            }
+              
+            // Buscar informações do técnico
+            const [technicianInfo] = await db
+              .select()
+              .from(users)
+              .where(eq(users.id, paymentRequestInfo.technician_id));
+              
+            const technicianName = technicianInfo ? technicianInfo.name : 'N/A';
+            
+            // Buscar IDs dos serviços associados
+            const serviceItems = await db
+              .select({
+                service_id: paymentRequestItems.service_id
+              })
+              .from(paymentRequestItems)
+              .where(eq(paymentRequestItems.payment_request_id, id));
+              
+            const serviceIds = serviceItems.map(item => item.service_id);
+            
+            // Calcular valor técnico total
+            let technicianValue = 0;
+            const serviceDetails = [];
+            
+            for (const serviceId of serviceIds) {
+              const [serviceData] = await db
+                .select()
+                .from(services)
+                .where(eq(services.id, serviceId));
+                
+              if (serviceData) {
+                technicianValue += serviceData.price || 0; // Usar price em vez de aw_value
+                serviceDetails.push(serviceId);
+              }
+            }
+            
+            console.log("Valor total para o técnico:", technicianValue);
+            
+            // Criar descrição com detalhes das OS
+            const osNumbers = serviceDetails.map(id => `#${id}`).join(", ");
+            const description = `Pagamento ao técnico ${technicianName} - Pedido #${id} - OS ${osNumbers}`;
+            
+            // Registrar despesa como salário se o valor for maior que zero
+            if (technicianValue > 0) {
+              console.log("Registrando despesa:", description);
+              
+              // Extrair detalhes do pagamento
+              console.log("Detalhes de pagamento recebidos:", JSON.stringify(paymentDetails));
+              let paymentMethod = "outro";
+              let paymentNotes = "";
+              
+              // Verificar a estrutura dos detalhes do pagamento
+              if (typeof paymentDetails === 'string') {
+                try {
+                  // Tentar fazer o parse se for uma string JSON
+                  const parsed = JSON.parse(paymentDetails);
+                  paymentMethod = parsed?.payment_method || "outro";
+                  paymentNotes = parsed?.payment_notes || "";
+                } catch (e) {
+                  console.log("Erro ao fazer parse dos detalhes do pagamento:", e);
+                  paymentNotes = paymentDetails; // Usar como observação se não for JSON
+                }
+              } else if (paymentDetails && typeof paymentDetails === 'object') {
+                // Se já for um objeto
+                paymentMethod = paymentDetails.payment_method || "outro";
+                paymentNotes = paymentDetails.payment_notes || "";
+              }
+              
+              // Extrair a data do pagamento ou usar a data atual
+              let paymentDate = new Date();
+              if (paymentDetails.payment_date) {
+                try {
+                  paymentDate = new Date(paymentDetails.payment_date);
+                } catch (e) {
+                  console.log("Erro ao converter data de pagamento:", e);
+                }
+              }
+              
+              // Inserir na tabela de despesas
+              await db
+                .insert(expenses)
+                .values({
+                  type: "salario",
+                  amount: technicianValue,
+                  date: paymentDate,
+                  description: description,
+                  payment_method: paymentMethod,
+                  notes: paymentNotes,
+                  provider: technicianName
+                });
+                
+              console.log("Despesa registrada com sucesso");
+            } else {
+              console.log("Nenhuma despesa registrada - valor zero");
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao registrar despesa:", error);
+          // Continuar mesmo com erro no registro da despesa
+        }
+      }
+      
+      // Se rejeitado, atualizar todos os serviços associados de volta para "completed"
+      if (status === "rejeitado") {
+        const items = await db
+          .select({
+            service_id: paymentRequestItems.service_id,
+          })
+          .from(paymentRequestItems)
+          .where(eq(paymentRequestItems.payment_request_id, id));
+        
+        console.log(`Encontrados ${items.length} serviços para retornar ao status "completed"`);
+        
+        for (const item of items) {
           await db
             .update(services)
             .set({ status: "completed" })
-            .where(
-              and(
-                eq(services.client_id, service.client_id),
-                or(
-                  eq(services.status, "aguardando_aprovacao"),
-                  eq(services.status, "faturado")
+            .where(eq(services.id, item.service_id));
+            
+          // Também atualizar transações relacionadas para "completed"
+          const servicesToUpdate = await db
+            .select()
+            .from(services)
+            .where(eq(services.id, item.service_id));
+          
+          if (servicesToUpdate.length > 0) {
+            const service = servicesToUpdate[0];
+            // Atualizar as transações relacionadas ao cliente e veículo deste serviço
+            await db
+              .update(services)
+              .set({ status: "completed" })
+              .where(
+                and(
+                  eq(services.client_id, service.client_id),
+                  or(
+                    eq(services.status, "aguardando_aprovacao"),
+                    eq(services.status, "faturado")
+                  )
                 )
-              )
-            );
+              );
+          }
         }
       }
+      
+      return updatedRequest;
+    } catch (error) {
+      console.error("Erro ao atualizar status do pedido de pagamento:", error);
+      throw error;
     }
-    
-    return updatedRequest;
   }
   
   // Métodos para gestão de clientes por gestor
   async assignClientToManager(managerId: number, clientId: number): Promise<ManagerClientAssignment> {
-    // Verificar se a atribuição já existe
-    const existingAssignments = await db.select().from(managerClientAssignments)
-      .where(and(
-        eq(managerClientAssignments.manager_id, managerId),
-        eq(managerClientAssignments.client_id, clientId)
-      ));
-    
-    if (existingAssignments.length > 0) {
-      return existingAssignments[0];
+    try {
+      // Verificar se a atribuição já existe
+      const existingAssignments = await db.select().from(managerClientAssignments)
+        .where(and(
+          eq(managerClientAssignments.manager_id, managerId),
+          eq(managerClientAssignments.client_id, clientId)
+        ));
+      
+      if (existingAssignments.length > 0) {
+        return existingAssignments[0];
+      }
+      
+      // MySQL não suporta returning() como no PostgreSQL
+      // Usar pool.query diretamente
+      await pool.query(
+        "INSERT INTO manager_client_assignments (manager_id, client_id) VALUES (?, ?)",
+        [managerId, clientId]
+      );
+      
+      // Buscar a atribuição recém-criada
+      const [assignments] = await pool.query(
+        "SELECT * FROM manager_client_assignments WHERE manager_id = ? AND client_id = ?",
+        [managerId, clientId]
+      );
+      
+      if (!assignments || !assignments.length) {
+        throw new Error("Falha ao criar atribuição de cliente para gestor");
+      }
+      
+      return assignments[0];
+    } catch (error) {
+      console.error("Erro ao atribuir cliente ao gestor:", error);
+      throw error;
     }
-    
-    // Criar nova atribuição
-    const [assignment] = await db.insert(managerClientAssignments)
-      .values({
-        manager_id: managerId,
-        client_id: clientId
-      })
-      .returning();
-    
-    return assignment;
   }
   
   async removeClientFromManager(managerId: number, clientId: number): Promise<boolean> {
-    const result = await db.delete(managerClientAssignments)
-      .where(and(
-        eq(managerClientAssignments.manager_id, managerId),
-        eq(managerClientAssignments.client_id, clientId)
-      ));
-    
-    return result.rowCount > 0;
+    try {
+      // MySQL não suporta returning() como no PostgreSQL
+      // Usar pool.query diretamente
+      const [result] = await pool.query(
+        "DELETE FROM manager_client_assignments WHERE manager_id = ? AND client_id = ?",
+        [managerId, clientId]
+      );
+      
+      // MySQL retorna objeto com affectedRows que indica quantas linhas foram afetadas
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error("Erro ao remover cliente do gestor:", error);
+      throw error;
+    }
   }
   
   async getManagerClients(managerId: number): Promise<Client[]> {
@@ -2786,15 +2846,20 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getClientManagers(clientId: number): Promise<User[]> {
-    // Busca todos os gestores atribuídos a um cliente específico
-    const assignments = await db.select({
-      manager: users
-    })
-    .from(managerClientAssignments)
-    .innerJoin(users, eq(managerClientAssignments.manager_id, users.id))
-    .where(eq(managerClientAssignments.client_id, clientId));
-    
-    return assignments.map(a => a.manager);
+    try {
+      // Busca todos os gestores atribuídos a um cliente específico
+      const assignments = await db.select({
+        manager: users
+      })
+      .from(managerClientAssignments)
+      .innerJoin(users, eq(managerClientAssignments.manager_id, users.id))
+      .where(eq(managerClientAssignments.client_id, clientId));
+      
+      return assignments.map(a => a.manager);
+    } catch (error) {
+      console.error("Erro ao buscar gestores do cliente:", error);
+      return [];
+    }
   }
   
   async getTechnicianFinancialStats(technicianId: number) {
@@ -2871,7 +2936,13 @@ export class DatabaseStorage implements IStorage {
       
       // Calcular valor total deste pedido
       const requestValue = requestServices.reduce(
-        (sum, service) => sum + (service.aw_value || 0), 
+        (sum, service) => {
+          console.log(`Serviço em pedido de pagamento ID ${service.id}:`, {
+            price: service.price,
+            total: service.total
+          });
+          return sum + (service.price || 0);
+        }, 
         0
       );
       
@@ -2910,7 +2981,13 @@ export class DatabaseStorage implements IStorage {
         service.status === 'concluido' && 
         !servicesWithPaymentRequest.has(service.id)
       )
-      .reduce((sum, service) => sum + (service.aw_value || 0), 0);
+      .reduce((sum, service) => {
+        console.log(`Serviço concluído sem solicitação ID ${service.id}:`, {
+          price: service.price,
+          total: service.total
+        });
+        return sum + (service.price || 0);
+      }, 0);
     
     console.log(`Estatísticas calculadas para o técnico ID ${technicianId}:`, {
       pendingValue,
