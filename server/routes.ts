@@ -541,12 +541,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clientIds = userData.client_ids;
       delete userData.client_ids; // Remover do objeto de dados do usuário
       
-      // Se houver senha no corpo da requisição, fazer o hash dela
-      if (userData.password && userData.password.trim() !== '') {
+      // Se houver senha no corpo da requisição e for uma string não vazia, fazer o hash dela
+      if (userData.password && typeof userData.password === 'string' && userData.password.trim() !== '') {
+        console.log("Atualizando senha do usuário", userId);
         const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS || "12");
         userData.password = await bcrypt.hash(userData.password, saltRounds);
       } else {
-        // Se a senha estiver vazia, não atualizar este campo
+        // Se a senha não for fornecida ou estiver vazia, não atualizar este campo
+        console.log("Senha não fornecida ou vazia, mantendo a senha atual para o usuário", userId);
         delete userData.password;
       }
       
