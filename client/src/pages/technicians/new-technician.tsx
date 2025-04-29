@@ -89,7 +89,14 @@ export default function NewTechnician() {
   
   const onSubmit = (data: FormData) => {
     // Remove confirmPassword from the data before sending to the API
-    const { confirmPassword, ...technicianData } = data;
+    const { confirmPassword, ...technicianDataRaw } = data;
+    
+    // Converter o campo active de boolean para número (0/1) para compatibilidade com o MySQL
+    const technicianData = {
+      ...technicianDataRaw,
+      active: technicianDataRaw.active ? 1 : 0 // Converte boolean para 0/1
+    };
+    
     createTechnicianMutation.mutate(technicianData);
   };
   
