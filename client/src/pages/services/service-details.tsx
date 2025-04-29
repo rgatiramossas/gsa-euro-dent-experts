@@ -111,6 +111,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     queryKey: [`/api/services/${id}`],
     onSuccess: (data) => {
       console.log("Serviço carregado:", data);
+      console.log("Valores financeiros:", {
+        price: data?.price,
+        priceType: typeof data?.price,
+        adminFee: data?.administrative_fee,
+        adminFeeType: typeof data?.administrative_fee,
+        total: data?.total,
+        totalType: typeof data?.total
+      });
     },
   });
   
@@ -950,20 +958,42 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       <>
                         <div className="flex justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600">Valor do serviço</span>
-                          <span className="text-gray-800 font-medium">{formatCurrency(Number(service.price) || 0)}</span>
+                          <span className="text-gray-800 font-medium">
+                            {(() => {
+                              const rawPrice = service.price;
+                              const numPrice = Number(service.price);
+                              console.log("DEBUG: Raw price value:", rawPrice, "Type:", typeof rawPrice);
+                              console.log("DEBUG: Converted price value:", numPrice, "Type:", typeof numPrice);
+                              return formatCurrency(numPrice || 0);
+                            })()}
+                          </span>
                         </div>
                         
                         {/* Taxa de deslocamento removida */}
                         
                         <div className="flex justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600">Taxa administrativa</span>
-                          <span className="text-gray-800 font-medium">{formatCurrency(Number(service.administrative_fee) || 0)}</span>
+                          <span className="text-gray-800 font-medium">
+                            {(() => {
+                              const rawFee = service.administrative_fee;
+                              const numFee = Number(service.administrative_fee);
+                              console.log("DEBUG: Raw admin fee value:", rawFee, "Type:", typeof rawFee);
+                              console.log("DEBUG: Converted admin fee value:", numFee, "Type:", typeof numFee);
+                              return formatCurrency(numFee || 0);
+                            })()}
+                          </span>
                         </div>
                         
                         <div className="flex justify-between py-2 font-medium">
                           <span className="text-gray-700">Total</span>
                           <span className="text-primary text-lg">
-                            {formatCurrency(Number(service.price || 0) + Number(service.administrative_fee || 0))}
+                            {(() => {
+                              const price = Number(service.price || 0);
+                              const fee = Number(service.administrative_fee || 0);
+                              const total = price + fee;
+                              console.log("DEBUG: Calculated total:", price, "+", fee, "=", total);
+                              return formatCurrency(total);
+                            })()}
                           </span>
                         </div>
                       </>
