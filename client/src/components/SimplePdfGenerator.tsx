@@ -1,22 +1,5 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useAuth } from '@/contexts/AuthContext';
-
-// Obter o usuário atual (necessário para verificar o papel/role do usuário)
-const getCurrentUser = () => {
-  // Esta é uma maneira segura de obter o usuário sem usar um hook
-  // já que os hooks só podem ser usados em componentes funcionais
-  const authContext = document.querySelector('[data-auth-context]');
-  if (authContext) {
-    try {
-      return JSON.parse(authContext.getAttribute('data-user') || 'null');
-    } catch (e) {
-      console.error('Erro ao parsear user data:', e);
-      return null;
-    }
-  }
-  return null;
-};
 
 // Interface para dados do orçamento
 interface Budget {
@@ -79,12 +62,8 @@ const partDisplayNames: Record<string, string> = {
  * Gera um PDF básico de orçamento
  * Implementação totalmente nova com base na imagem de exemplo
  */
-export const generateSimplePdf = async (budget: Budget): Promise<void> => {
+export const generateSimplePdf = async (budget: Budget, isGestor = false): Promise<void> => {
   try {
-    // Verificar se o usuário atual é um gestor
-    const currentUser = getCurrentUser();
-    const isGestor = currentUser?.role === "gestor" || currentUser?.role === "manager";
-
     // Criar o elemento temporário para renderizar o conteúdo
     const tempElement = document.createElement('div');
     tempElement.style.position = 'fixed';

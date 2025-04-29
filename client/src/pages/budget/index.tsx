@@ -149,7 +149,8 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
     if (!budget) return;
     
     try {
-      await generateSimplePdf(budget);
+      // Passamos o flag isGestor para controlar a exibição de informações financeiras
+      await generateSimplePdf(budget, isGestor);
       toast({
         title: "PDF gerado",
         description: "O PDF do orçamento foi gerado com sucesso.",
