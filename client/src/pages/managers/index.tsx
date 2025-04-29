@@ -62,12 +62,7 @@ export default function ManagersList() {
   // Mutation para excluir um gestor
   const deleteManagerMutation = useMutation({
     mutationFn: async (managerId: number) => {
-      const response = await apiRequest("DELETE", `/api/users/${managerId}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Erro ao excluir gestor");
-      }
-      return response.json();
+      return await apiRequest(`/api/users/${managerId}`, 'DELETE');
     },
     onSuccess: () => {
       toast({
