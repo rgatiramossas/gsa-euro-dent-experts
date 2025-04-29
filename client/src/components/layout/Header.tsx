@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -11,13 +11,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
-import { DollarSign, Calendar, Settings } from "lucide-react";
+import { DollarSign, Calendar, Settings, LogIn } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 // Não precisamos mais da interface HeaderProps já que não temos mais o sidebar
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, login, isLoading } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
+  const [showLoginStatus, setShowLoginStatus] = useState(false);
+  
+  useEffect(() => {
+    // Mostrar status por 10 segundos quando a página carrega
+    setShowLoginStatus(true);
+    const timer = setTimeout(() => {
+      setShowLoginStatus(false);
+    }, 10000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -58,6 +71,32 @@ export function Header() {
         </div>
         
         <div className="flex items-center space-x-3">
+          {/* Status de Login - temporário para debugging */}
+          {showLoginStatus && (
+            <div className="bg-white text-primary rounded px-2 py-1 text-xs border border-primary">
+              {isLoading ? (
+                <span>Verificando login...</span>
+              ) : user ? (
+                <span>Logado como {user.name} ({user.role})</span>
+              ) : (
+                <span>Não autenticado</span>
+              )}
+            </div>
+          )}
+          
+          {/* Botão de login/logout */}
+          {!user && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-white text-primary"
+              onClick={() => setLocation("/login")}
+            >
+              <LogIn className="h-4 w-4 mr-1" />
+              Login
+            </Button>
+          )}
+          
           {/* Ícone Financeiro - não disponível para gestores */}
           {!isGestor && (
             <div>
@@ -79,8 +118,6 @@ export function Header() {
               <Calendar className="h-6 w-6" />
             </button>
           </div>
-          
-
           
           {/* Recurso de notificações a ser implementado no futuro */}
           
