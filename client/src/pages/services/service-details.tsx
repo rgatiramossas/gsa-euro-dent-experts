@@ -413,20 +413,20 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       if (servicePhotos && servicePhotos.length > 0) {
         // Adicionar fotos no novo formato (tipo 'service')
         Array.from(servicePhotos).forEach((file: File) => {
-          formData.append('service_photos', file);
+          formData.append('photos_service', file);
         });
       }
       
       // Adicionar fotos de antes e depois para manter compatibilidade
       if (beforePhotos && beforePhotos.length > 0) {
         Array.from(beforePhotos).forEach((file: File) => {
-          formData.append('before_photos', file);
+          formData.append('photos_before', file);
         });
       }
       
       if (afterPhotos && afterPhotos.length > 0) {
         Array.from(afterPhotos).forEach((file: File) => {
-          formData.append('after_photos', file);
+          formData.append('photos_after', file);
         });
       }
       
