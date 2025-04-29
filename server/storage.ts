@@ -818,27 +818,54 @@ export class DatabaseStorage implements IStorage {
         
         return result;
       } catch (error) {
-        console.log("Coluna 'deleted' não existe, listando todos os clientes");
+        console.log("Coluna 'deleted' não existe, adicionando a coluna e tentando novamente");
         
-        // Se a coluna não existe, lista todos os clientes normalmente
-        const basicResult = await db.select({
-          id: clients.id,
-          name: clients.name,
-          email: clients.email,
-          phone: clients.phone,
-          address: clients.address,
-          created_at: clients.created_at
-        }).from(clients);
-        
-        // Adicionar campos ausentes ao resultado
-        const result = basicResult.map(client => ({
-          ...client,
-          city: null,
-          state: null,
-          zip: null
-        }));
-        
-        return result;
+        try {
+          // Adicionar a coluna 'deleted' se ela não existir
+          await pool.query("ALTER TABLE clients ADD COLUMN IF NOT EXISTS deleted TINYINT(1) DEFAULT 0");
+          console.log("Coluna 'deleted' adicionada com sucesso");
+          
+          // Tentar novamente com a coluna adicionada
+          // Filtrar para retornar apenas clientes não excluídos (ou seja, onde o nome não contém [EXCLUÍDO])
+          const [basicResult] = await pool.query(
+            `SELECT id, name, email, phone, address, created_at 
+             FROM clients 
+             WHERE deleted = 0 OR deleted IS NULL`
+          );
+          
+          console.log(`Encontrados ${basicResult.length} clientes não excluídos`);
+          
+          // Adicionar campos ausentes ao resultado
+          const result = basicResult.map(client => ({
+            ...client,
+            city: null,
+            state: null,
+            zip: null
+          }));
+          
+          return result;
+        } catch (alterError) {
+          console.error("Erro ao adicionar coluna 'deleted':", alterError);
+          
+          // Fallback: filtrar pelo nome para encontrar clientes não excluídos
+          const [basicResult] = await pool.query(
+            `SELECT id, name, email, phone, address, created_at 
+             FROM clients 
+             WHERE name NOT LIKE '%[EXCLUÍDO]%'`
+          );
+          
+          console.log(`Usando filtro de nome, encontrados ${basicResult.length} clientes não excluídos`);
+          
+          // Adicionar campos ausentes ao resultado
+          const result = basicResult.map(client => ({
+            ...client,
+            city: null,
+            state: null,
+            zip: null
+          }));
+          
+          return result;
+        }
       }
     } catch (error) {
       console.error("Erro ao listar clientes:", error);
@@ -883,29 +910,55 @@ export class DatabaseStorage implements IStorage {
         
         return result;
       } catch (error) {
-        console.log("Coluna 'deleted' não existe, buscando todos os clientes");
+        console.log("Coluna 'deleted' não existe, adicionando a coluna e tentando novamente (busca)");
         
-        // Se a coluna não existe, busca normal
-        const basicResult = await db.select({
-          id: clients.id,
-          name: clients.name,
-          email: clients.email,
-          phone: clients.phone,
-          address: clients.address,
-          created_at: clients.created_at
-        })
-        .from(clients)
-        .where(like(clients.name, `%${query}%`));
-        
-        // Adicionar campos ausentes ao resultado
-        const result = basicResult.map(client => ({
-          ...client,
-          city: null,
-          state: null,
-          zip: null
-        }));
-        
-        return result;
+        try {
+          // Adicionar a coluna 'deleted' se ela não existir
+          await pool.query("ALTER TABLE clients ADD COLUMN IF NOT EXISTS deleted TINYINT(1) DEFAULT 0");
+          console.log("Coluna 'deleted' adicionada com sucesso (busca)");
+          
+          // Buscar novamente incluindo a coluna deleted
+          const [basicResult] = await pool.query(
+            `SELECT id, name, email, phone, address, created_at 
+             FROM clients 
+             WHERE name LIKE ? AND (deleted = 0 OR deleted IS NULL)`,
+            [`%${query}%`]
+          );
+          
+          console.log(`Encontrados ${basicResult.length} clientes na busca após adicionar coluna deleted`);
+          
+          // Adicionar campos ausentes ao resultado
+          const result = basicResult.map(client => ({
+            ...client,
+            city: null,
+            state: null,
+            zip: null
+          }));
+          
+          return result;
+        } catch (alterError) {
+          console.error("Erro ao adicionar coluna 'deleted' (busca):", alterError);
+          
+          // Fallback: filtrar pelo nome para excluir clientes marcados como excluídos
+          const [basicResult] = await pool.query(
+            `SELECT id, name, email, phone, address, created_at 
+             FROM clients 
+             WHERE name LIKE ? AND name NOT LIKE '%[EXCLUÍDO]%'`,
+            [`%${query}%`]
+          );
+          
+          console.log(`Usando filtro de nome, encontrados ${basicResult.length} clientes na busca`);
+          
+          // Adicionar campos ausentes ao resultado
+          const result = basicResult.map(client => ({
+            ...client,
+            city: null,
+            state: null,
+            zip: null
+          }));
+          
+          return result;
+        }
       }
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
