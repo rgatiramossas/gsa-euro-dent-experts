@@ -27,7 +27,7 @@ function mapApiUrlToTable(url: string): string | null {
   const resourceName = apiPath[1];
   
   // Mapear nome do recurso para nome da tabela
-  const tableMappings: Record<string, string> = {
+  const tableMappings: Record<string, string | null> = {
     'clients': 'clients',
     'vehicles': 'vehicles',
     'services': 'services',

@@ -17,6 +17,8 @@ import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { RequireAdmin } from "@/components/auth/RequireAdmin";
 import { RequireTechnician } from "@/components/auth/RequireTechnician";
 import { RequireManager } from "@/components/auth/RequireManager";
+// PWA Componentes
+import { OfflineIndicator } from "@/components/ui/offline-indicator";
 
 // Import service related pages
 import ServicesList from "@/pages/services/index";

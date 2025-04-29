@@ -45,6 +45,10 @@
   --sidebar-accent-foreground: 0 0% 100%; /* White */
   --sidebar-border: 0 0% 20%; /* Darker gray */
   --sidebar-ring: 0 85% 35%; /* Red */
+  
+  /* Offline mode colors */
+  --offline-indicator-bg: 35 93% 52%; /* Warning */
+  --offline-indicator-text: 0 0% 10%; /* Dark text */
 }
 
 .dark {
@@ -90,6 +94,10 @@
   --sidebar-accent-foreground: 0 0% 100%; /* White */
   --sidebar-border: 0 0% 15%; /* Very dark gray */
   --sidebar-ring: 0 85% 45%; /* Red */
+  
+  /* Offline mode colors - dark mode */
+  --offline-indicator-bg: 35 93% 40%; /* Darker warning */
+  --offline-indicator-text: 0 0% 100%; /* Light text */
 }
 
 @layer base {
@@ -137,4 +145,64 @@ input::-webkit-inner-spin-button {
 /* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+/* Offline mode styles */
+.offline-mode {
+  /* Indicator for offline status appears at the top of the screen */
+  --offline-banner-height: 2rem;
+}
+
+.offline-mode::before {
+  content: "Modo Offline - Os dados serão sincronizados quando houver conexão";
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--offline-banner-height);
+  background-color: hsl(var(--offline-indicator-bg));
+  color: hsl(var(--offline-indicator-text));
+  z-index: 1000;
+  font-size: 0.875rem;
+  line-height: var(--offline-banner-height);
+  text-align: center;
+  font-weight: 500;
+}
+
+.offline-mode .main-content {
+  margin-top: var(--offline-banner-height);
+}
+
+/* Offline indicator for cards */
+.card-offline-indicator {
+  position: relative;
+}
+
+.card-offline-indicator::after {
+  content: "Offline";
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  background-color: hsl(var(--offline-indicator-bg));
+  color: hsl(var(--offline-indicator-text));
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+}
+
+/* Item styles for data created offline */
+.offline-item {
+  opacity: 0.85;
+  position: relative;
+}
+
+.offline-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: hsl(var(--offline-indicator-bg));
 }
