@@ -728,30 +728,95 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
+  async deleteClient(id: number): Promise<boolean> {
+    try {
+      console.log(`Excluindo cliente ID: ${id}`);
+      
+      // Verificar se o cliente existe
+      const client = await this.getClient(id);
+      if (!client) {
+        console.log(`Cliente ID ${id} não encontrado para exclusão`);
+        return false;
+      }
+      
+      // Ao invés de excluir, marcar o cliente como excluído adicionando um campo 'deleted'
+      // Esta é uma exclusão lógica (soft delete)
+      await db.update(clients)
+        .set({ 
+          name: `${client.name} [EXCLUÍDO]`,
+          email: client.email ? `${client.email}.deleted` : null,
+          deleted: true 
+        })
+        .where(eq(clients.id, id));
+      
+      console.log(`Cliente ID ${id} marcado como excluído com sucesso`);
+      return true;
+    } catch (error) {
+      console.error(`Erro ao excluir cliente ID ${id}:`, error);
+      return false;
+    }
+  }
+  
   async listClients(): Promise<Client[]> {
     try {
       // Precisamos selecionar apenas campos que existem no MySQL
       // e ajustar o resultado para incluir campos que podem não existir na tabela
       console.log("Selecionando clientes apenas com colunas existentes");
       
-      const basicResult = await db.select({
-        id: clients.id,
-        name: clients.name,
-        email: clients.email,
-        phone: clients.phone,
-        address: clients.address,
-        created_at: clients.created_at
-      }).from(clients);
-      
-      // Adicionar campos ausentes ao resultado
-      const result = basicResult.map(client => ({
-        ...client,
-        city: null,
-        state: null,
-        zip: null
-      }));
-      
-      return result;
+      // Verificar se a coluna 'deleted' existe na tabela 'clients'
+      try {
+        await pool.query("SELECT deleted FROM clients LIMIT 1");
+        console.log("Coluna 'deleted' encontrada na tabela 'clients'");
+        
+        // Se a coluna existe, filtra os clientes não excluídos
+        const basicResult = await db.select({
+          id: clients.id,
+          name: clients.name,
+          email: clients.email,
+          phone: clients.phone,
+          address: clients.address,
+          created_at: clients.created_at
+        })
+        .from(clients)
+        .where(
+          or(
+            isNull(clients.deleted),
+            eq(clients.deleted, 0)
+          )
+        );
+        
+        // Adicionar campos ausentes ao resultado
+        const result = basicResult.map(client => ({
+          ...client,
+          city: null,
+          state: null,
+          zip: null
+        }));
+        
+        return result;
+      } catch (error) {
+        console.log("Coluna 'deleted' não existe, listando todos os clientes");
+        
+        // Se a coluna não existe, lista todos os clientes normalmente
+        const basicResult = await db.select({
+          id: clients.id,
+          name: clients.name,
+          email: clients.email,
+          phone: clients.phone,
+          address: clients.address,
+          created_at: clients.created_at
+        }).from(clients);
+        
+        // Adicionar campos ausentes ao resultado
+        const result = basicResult.map(client => ({
+          ...client,
+          city: null,
+          state: null,
+          zip: null
+        }));
+        
+        return result;
+      }
     } catch (error) {
       console.error("Erro ao listar clientes:", error);
       return [];
@@ -760,26 +825,65 @@ export class DatabaseStorage implements IStorage {
   
   async searchClients(query: string): Promise<Client[]> {
     try {
-      const basicResult = await db.select({
-        id: clients.id,
-        name: clients.name,
-        email: clients.email,
-        phone: clients.phone,
-        address: clients.address,
-        created_at: clients.created_at
-      }).from(clients).where(
-        like(clients.name, `%${query}%`)
-      );
-      
-      // Adicionar campos ausentes ao resultado
-      const result = basicResult.map(client => ({
-        ...client,
-        city: null,
-        state: null,
-        zip: null
-      }));
-      
-      return result;
+      // Verificar se a coluna 'deleted' existe na tabela 'clients'
+      try {
+        await pool.query("SELECT deleted FROM clients LIMIT 1");
+        console.log("Coluna 'deleted' encontrada na tabela 'clients' (busca)");
+        
+        // Se a coluna existe, filtra os clientes não excluídos
+        const basicResult = await db.select({
+          id: clients.id,
+          name: clients.name,
+          email: clients.email,
+          phone: clients.phone,
+          address: clients.address,
+          created_at: clients.created_at
+        })
+        .from(clients)
+        .where(
+          and(
+            like(clients.name, `%${query}%`),
+            or(
+              isNull(clients.deleted),
+              eq(clients.deleted, 0)
+            )
+          )
+        );
+        
+        // Adicionar campos ausentes ao resultado
+        const result = basicResult.map(client => ({
+          ...client,
+          city: null,
+          state: null,
+          zip: null
+        }));
+        
+        return result;
+      } catch (error) {
+        console.log("Coluna 'deleted' não existe, buscando todos os clientes");
+        
+        // Se a coluna não existe, busca normal
+        const basicResult = await db.select({
+          id: clients.id,
+          name: clients.name,
+          email: clients.email,
+          phone: clients.phone,
+          address: clients.address,
+          created_at: clients.created_at
+        })
+        .from(clients)
+        .where(like(clients.name, `%${query}%`));
+        
+        // Adicionar campos ausentes ao resultado
+        const result = basicResult.map(client => ({
+          ...client,
+          city: null,
+          state: null,
+          zip: null
+        }));
+        
+        return result;
+      }
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
       return [];
