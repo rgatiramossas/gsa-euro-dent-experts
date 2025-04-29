@@ -373,6 +373,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
             <div className="px-6 pb-6 max-h-[80vh] overflow-y-auto">
               <NewBudgetForm
                 initialData={selectedBudget}
+                // Quando não está em modo de edição, o formulário é somente leitura
                 readOnly={!isEditing}
                 onSuccess={(data) => {
                   toast({
