@@ -2436,15 +2436,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Endpoint para ambiente de desenvolvimento/teste
       console.log("Iniciando criação de dados de teste (endpoint direto sem autenticação)...");
       
-      // Buscar técnicos ativos
-      const technicians = await storage.getTechnicians();
+      // Buscar técnicos ativos diretamente
+      const mysqlConnection = await import('./db-mysql.js');
+      const { initDb } = mysqlConnection;
+      const { pool, db } = await initDb();
+      
+      // Buscar técnicos usando SQL direto
+      const [technicianRows] = await pool.query(
+        'SELECT * FROM users WHERE role = ? AND active = ?',
+        ['technician', 1]
+      );
+      
+      // Verificar se encontrou técnicos
+      const technicians = Array.isArray(technicianRows) ? technicianRows : [];
       if (technicians.length === 0) {
         return res.status(400).json({ error: "Não há técnicos disponíveis para criar dados de teste." });
       }
       console.log(`Encontrados ${technicians.length} técnicos`);
       
-      // Buscar tipos de serviço
-      const serviceTypes = await storage.getServiceTypes();
+      // Buscar tipos de serviço diretamente
+      const [serviceTypeRows] = await pool.query('SELECT * FROM service_types');
+      
+      // Verificar se encontrou tipos de serviço
+      const serviceTypes = Array.isArray(serviceTypeRows) ? serviceTypeRows : [];
       if (serviceTypes.length === 0) {
         return res.status(400).json({ error: "Não há tipos de serviço disponíveis para criar dados de teste." });
       }
@@ -2457,11 +2471,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         services: [],
         budgets: []
       };
-      
-      // Importar conexão do MySQL para usar queries diretas
-      const mysqlConnection = await import('./db-mysql.js');
-      const { initDb } = mysqlConnection;
-      const { pool } = await initDb();
       
       for (let i = 1; i <= 5; i++) {
         // Criar cliente
