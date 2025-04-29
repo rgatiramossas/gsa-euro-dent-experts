@@ -1,5 +1,5 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -21,9 +21,21 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Edit, Trash, Check, X, Users } from "lucide-react";
+import { UserPlus, Edit, Trash2, Check, X, Users, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { apiRequest } from "@/lib/queryClient";
 
 type User = {
   id: number;
@@ -39,7 +51,56 @@ type User = {
 export default function ManagersList() {
   const [_, setLocation] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isAdmin = user?.role === "admin";
+  
+  // Estado para gerenciar o diálogo de confirmação de exclusão
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [managerToDelete, setManagerToDelete] = useState<User | null>(null);
+  
+  // Mutation para excluir um gestor
+  const deleteManagerMutation = useMutation({
+    mutationFn: async (managerId: number) => {
+      const response = await apiRequest("DELETE", `/api/users/${managerId}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao excluir gestor");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Gestor excluído",
+        description: `${managerToDelete?.name} foi removido com sucesso.`,
+        variant: "default",
+      });
+      // Invalidar a consulta para atualizar a lista de gestores
+      queryClient.invalidateQueries({ queryKey: ['/api/users', { role: 'gestor' }] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir gestor",
+        description: error.message || "Ocorreu um erro ao tentar excluir o gestor.",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Função para confirmar exclusão de gestor
+  const handleDeleteManager = async () => {
+    if (managerToDelete) {
+      await deleteManagerMutation.mutateAsync(managerToDelete.id);
+      setDeleteDialogOpen(false);
+      setManagerToDelete(null);
+    }
+  };
+  
+  // Função para abrir o diálogo de confirmação de exclusão
+  const openDeleteDialog = (manager: User) => {
+    setManagerToDelete(manager);
+    setDeleteDialogOpen(true);
+  };
   
   // Fetch managers (role = "gestor")
   const { data: managers = [], isLoading } = useQuery({
@@ -74,6 +135,36 @@ export default function ManagersList() {
   
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
+      {/* Modal de confirmação de exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o gestor <strong>{managerToDelete?.name}</strong>?
+              <div className="mt-2 flex items-center text-amber-700 bg-amber-50 p-3 rounded-md">
+                <AlertTriangle className="h-5 w-5 mr-2" />
+                Esta ação não pode ser desfeita. O gestor perderá acesso ao sistema e todas suas associações com clientes serão removidas.
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteManager}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleteManagerMutation.isPending ? (
+                <span className="flex items-center gap-1">
+                  <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                  Excluindo...
+                </span>
+              ) : "Sim, excluir gestor"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <PageHeader
         title="Gestores"
         description="Gerenciamento de gestores"
@@ -175,6 +266,15 @@ export default function ManagersList() {
                               <Edit className="h-4 w-4" />
                               <span>Editar</span>
                             </Link>
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                            onClick={() => openDeleteDialog(manager)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Excluir</span>
                           </Button>
                         </div>
                       </TableCell>
