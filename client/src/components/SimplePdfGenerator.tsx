@@ -272,15 +272,7 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
             </div>
           </div>
 
-          ${!isGestor && budget.total_value ? `
-          <!-- Seção de Valor Total - Visível apenas para administradores e técnicos -->
-          <div style="margin-top: 20px; border: 2px solid #2563EB; padding: 10px; border-radius: 6px; background-color: #f9fafb;">
-            <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #2563EB; text-align: center;">VALOR TOTAL</h3>
-            <div style="font-size: 18px; text-align: center; font-weight: bold;">
-              R$ ${budget.total_value.toFixed(2).replace('.', ',')}
-            </div>
-          </div>
-          ` : ''}
+          <!-- A seção de valor total foi removida conforme solicitado -->
         </div>
       </div>
     `;
