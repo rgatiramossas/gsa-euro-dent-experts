@@ -116,7 +116,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const [afterPhotoPreview, setAfterPhotoPreview] = useState<string | null>(null);
   // Nova abordagem unificada
   const [servicePhotos, setServicePhotos] = useState<FileList | null>(null);
-  const [servicePhotoPreview, setServicePhotoPreview] = useState<string | null>(null);
   const [photosToRemove, setPhotosToRemove] = useState<number[]>([]);
   
   // Simulação de dados dos técnicos - normalmente viria de uma API
@@ -258,7 +257,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       setIsEditing(false);
       // Limpar fotos nos dois formatos (novo e legado)
       setServicePhotos(null);
-      setServicePhotoPreview(null);
       setBeforePhotos(null);
       setAfterPhotos(null);
       setBeforePhotoPreview(null);
@@ -326,7 +324,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     setAfterPhotoPreview(null);
     // Resetar também as fotos de serviço
     setServicePhotos(null);
-    setServicePhotoPreview(null);
     setPhotosToRemove([]);
   };
   
@@ -595,16 +592,39 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       const combinedFiles = dataTransfer.files;
       setServicePhotos(combinedFiles);
       
-      // Atualizar preview com a última foto adicionada
-      const previewFile = newFiles[0]; // Usar a primeira das novas fotos para preview
-      setServicePhotoPreview(URL.createObjectURL(previewFile));
-      
       // Mostrar mensagem de sucesso
       toast({
         title: "Fotos adicionadas",
         description: `${newFiles.length} foto(s) adicionada(s). Total: ${combinedFiles.length}/4`,
       });
     }
+  };
+  
+  // Função para remover uma foto específica da seleção
+  const handleRemoveSelectedPhoto = (indexToRemove: number) => {
+    if (!servicePhotos || servicePhotos.length === 0) return;
+    
+    const files = Array.from(servicePhotos);
+    if (indexToRemove < 0 || indexToRemove >= files.length) return;
+    
+    // Filtrar a foto a ser removida
+    const updatedFiles = files.filter((_, index) => index !== indexToRemove);
+    
+    // Se não houver mais fotos, limpar o estado
+    if (updatedFiles.length === 0) {
+      setServicePhotos(null);
+      return;
+    }
+    
+    // Caso contrário, criar um novo FileList com as fotos restantes
+    const dataTransfer = new DataTransfer();
+    updatedFiles.forEach(file => dataTransfer.items.add(file));
+    setServicePhotos(dataTransfer.files);
+    
+    toast({
+      title: "Foto removida",
+      description: `Foto ${indexToRemove + 1} removida. Total: ${updatedFiles.length}/4`,
+    });
   };
 
   if (isLoading) {
@@ -1279,14 +1299,34 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         accept="image/*"
                         onChange={(e) => e.target.files && handleServicePhotoChange(e.target.files)}
                       />
-                      {servicePhotoPreview && (
+                      {/* Exibir miniaturas de todas as fotos selecionadas */}
+                      {servicePhotos && servicePhotos.length > 0 && (
                         <div className="mt-2">
-                          <p className="text-xs text-gray-500 mb-1">Preview:</p>
-                          <img 
-                            src={servicePhotoPreview} 
-                            alt="Preview" 
-                            className="h-24 w-auto rounded-md border border-gray-200" 
-                          />
+                          <p className="text-xs text-gray-500 mb-1">
+                            Preview: {servicePhotos.length} foto(s) selecionada(s)
+                          </p>
+                          <div className="flex flex-wrap gap-3">
+                            {Array.from(servicePhotos).map((file, index) => (
+                              <div key={index} className="relative group">
+                                <img 
+                                  src={URL.createObjectURL(file)} 
+                                  alt={`Preview ${index + 1}`} 
+                                  className="h-24 w-auto rounded-md border border-gray-200" 
+                                />
+                                <span className="absolute top-0 right-0 bg-gray-800 text-white text-xs px-1 rounded-bl">
+                                  {index + 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSelectedPhoto(index)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Remover foto"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
