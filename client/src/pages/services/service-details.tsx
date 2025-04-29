@@ -85,6 +85,16 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const isTechnician = currentUser?.role === 'technician';
   const canEditService = isAdmin || isTechnician; // Apenas admin e técnico podem editar
   const canUpdateStatus = isAdmin || isTechnician; // Apenas admin e técnico podem atualizar status
+  
+  // DEBUG: log user role info
+  console.log("VERIFICAÇÃO DE USUÁRIO:", {
+    currentUser,
+    role: currentUser?.role,
+    isAdmin,
+    isTechnician,
+    isGestor,
+    userJson: JSON.stringify(currentUser)
+  });
   const [newStatus, setNewStatus] = useState<ServiceStatus | "">("");
   const [statusNotes, setStatusNotes] = useState("");
   const [showStatusDialog, setShowStatusDialog] = useState(false);
@@ -110,7 +120,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const { data: service, isLoading, error } = useQuery<ServiceWithDetails>({
     queryKey: [`/api/services/${id}`],
     onSuccess: (data) => {
-      console.log("Serviço carregado:", data);
+      console.log("--------------------------------------------");
+      console.log("DETALHAMENTO COMPLETO DO SERVIÇO:", JSON.stringify(data, null, 2));
+      console.log("--------------------------------------------");
+      console.log("Informações de usuário:", { 
+        isAdmin, 
+        isTechnician, 
+        isGestor
+      });
       console.log("Valores financeiros:", {
         price: data?.price,
         priceType: typeof data?.price,
