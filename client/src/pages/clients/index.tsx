@@ -16,6 +16,13 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Client } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,6 +33,7 @@ interface ClientsListProps {
 export default function ClientsList({ managerMode = false }: ClientsListProps) {
   const [location, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"active" | "deleted" | "all">("active");
   const [managerId, setManagerId] = useState<string | null>(null);
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -39,8 +47,10 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
   }, [managerMode, location]);
   
   // Query para buscar os clientes
-  const { data: clients = [], isLoading } = useQuery<Client[]>({
-    queryKey: managerMode && managerId ? ['/api/managers', managerId, 'clients'] : ['/api/clients'],
+  const { data: clients = [], isLoading, refetch } = useQuery<Client[]>({
+    queryKey: managerMode && managerId 
+      ? ['/api/managers', managerId, 'clients'] 
+      : ['/api/clients', statusFilter], // Incluir statusFilter como parte da chave
     queryFn: async () => {
       if (managerMode && managerId) {
         try {
@@ -59,7 +69,10 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
         }
       }
       try {
-        const response = await fetch('/api/clients');
+        const endpoint = '/api/clients';
+        console.log(`Carregando clientes com filtro: ${statusFilter}`);
+        
+        const response = await fetch(endpoint);
         if (!response.ok) {
           console.error('Erro ao carregar clientes, status:', response.status);
           return [];
@@ -70,7 +83,21 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
           console.error('Dados de clientes não é um array:', data);
           return [];
         }
-        return data;
+        
+        // Filtrar clientes com base no status
+        return data.filter((client: Client) => {
+          const isDeleted = client.name?.includes('[EXCLUÍDO]');
+          
+          switch (statusFilter) {
+            case 'active':
+              return !isDeleted;
+            case 'deleted':
+              return isDeleted;
+            case 'all':
+            default:
+              return true;
+          }
+        });
       } catch (error: any) {
         console.error('Erro ao buscar clientes:', error);
         toast({
@@ -81,6 +108,8 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
         return [];
       }
     },
+    // Incluir statusFilter como dependência para atualizar quando mudar
+    enabled: !managerMode || !!managerId,
   });
 
   // Filter clients based on search term
@@ -120,13 +149,38 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
       />
       
       <Card className="mt-6">
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 flex flex-col md:flex-row gap-4 items-start md:items-center">
           <Input
             placeholder="Buscar por nome, email ou telefone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-md"
           />
+          
+          <div className="flex items-center gap-2">
+            <label htmlFor="status-filter" className="text-sm font-medium">
+              Exibir:
+            </label>
+            <Select
+              value={statusFilter}
+              onValueChange={(value: "active" | "deleted" | "all") => {
+                setStatusFilter(value);
+                // O refetch será automático devido ao queryKey incluir o statusFilter
+                // Mas podemos forçar o refetch para garantir
+                console.log(`Alterando filtro para: ${value}`);
+                refetch();
+              }}
+            >
+              <SelectTrigger className="w-40" id="status-filter">
+                <SelectValue placeholder="Selecione um filtro" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativos</SelectItem>
+                <SelectItem value="deleted">Excluídos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         <CardContent className="p-0">
