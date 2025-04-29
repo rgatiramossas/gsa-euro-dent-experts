@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { apiRequest as offlineApiRequest, getApi, postApi, putApi, deleteApi } from "./apiWrapper";
 
 // Classe de erro customizada que inclui detalhes da resposta
 export class ApiError extends Error {
