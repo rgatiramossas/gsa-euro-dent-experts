@@ -897,14 +897,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         {/* Fotos de tipo 'service' (novo formato unificado) */}
                         {service.photos?.service && service.photos.service.map((photo) => (
                           <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
-                            <img 
-                              src={photo.photo_url.startsWith('/uploads') ? photo.photo_url : `/uploads${photo.photo_url}`} 
+                            <ImageWithFallback 
+                              src={photo.photo_url} 
                               alt="Foto do veículo" 
                               className="object-cover w-full h-full"
-                              onError={(e) => {
-                                console.error(`Erro ao carregar imagem: ${photo.photo_url}`);
-                                e.currentTarget.src = '/placeholder-image.svg';
-                              }}
                             />
                             <Badge className="absolute top-1 left-1 bg-blue-500 text-white">
                               Serviço
