@@ -38,7 +38,7 @@ export default function Login() {
     
     try {
       setIsSubmitting(true);
-      await login(username, password);
+      await login(username, password, rememberMe);
       toast({
         title: "Login bem-sucedido",
         description: "Bem-vindo de volta!",

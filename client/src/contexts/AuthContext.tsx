@@ -7,7 +7,7 @@ interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   error: Error | null;
-  login: (username: string, password: string) => Promise<AuthUser>;
+  login: (username: string, password: string, rememberMe?: boolean) => Promise<AuthUser>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   updateUser: (user: AuthUser) => void;
@@ -33,14 +33,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [data]);
 
+  // Verificar localStorage ao inicializar
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser && !user) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        queryClient.setQueryData(['/api/auth/me'], parsedUser);
+      } catch (err) {
+        console.error('Erro ao recuperar usuário do localStorage:', err);
+        localStorage.removeItem('user');
+      }
+    }
+  }, []);
+
   // Login mutation
   const loginMutation = useMutation({
-    mutationFn: async (credentials: { username: string; password: string }) => {
+    mutationFn: async (credentials: { 
+      username: string; 
+      password: string;
+      rememberMe?: boolean;
+    }) => {
       return await apiRequest('/api/auth/login', 'POST', credentials);
     },
-    onSuccess: (userData) => {
+    onSuccess: (userData, variables) => {
       setUser(userData);
       queryClient.setQueryData(['/api/auth/me'], userData);
+      
+      // Se "lembrar-me" estiver marcado, salvar no localStorage
+      if (variables.rememberMe) {
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
     },
   });
 
@@ -53,11 +77,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       queryClient.setQueryData(['/api/auth/me'], null);
       queryClient.clear();
+      // Limpar localStorage ao fazer logout
+      localStorage.removeItem('user');
     },
   });
 
-  const login = async (username: string, password: string): Promise<AuthUser> => {
-    return loginMutation.mutateAsync({ username, password });
+  const login = async (username: string, password: string, rememberMe: boolean = false): Promise<AuthUser> => {
+    return loginMutation.mutateAsync({ username, password, rememberMe });
   };
 
   const logout = async (): Promise<void> => {
