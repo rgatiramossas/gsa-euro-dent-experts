@@ -80,9 +80,10 @@ export function RealtimeNotifications() {
       };
       
       // Use o hook useWebSocket para enviar
-      //send(testData);
+      const result = send(testData);
+      console.log("Enviando teste de notificação:", result);
       
-      // Para teste local sem passar pelo servidor:
+      // Também adicionar notificação local como fallback para teste
       const newNotification: Notification = {
         id: Date.now().toString(),
         title: 'Notificação de teste',

@@ -18,17 +18,31 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [lastMessage, setLastMessage] = useState<any | null>(null);
 
+  // Inicializar conexão WebSocket
+  useEffect(() => {
+    // Iniciar conexão
+    socketService.connect();
+
+    // Limpar conexão ao desmontar
+    return () => {
+      socketService.disconnect();
+    };
+  }, []);
+
   // Mapear estado de conexão
   useEffect(() => {
-    const handleConnection = () => {
+    const handleConnection = (data: any) => {
+      console.log('WebSocket conectado:', data);
       setIsConnected(true);
     };
 
-    const handleDisconnection = () => {
+    const handleDisconnection = (data: any) => {
+      console.log('WebSocket desconectado:', data);
       setIsConnected(false);
     };
 
     const handleMessage = (data: any) => {
+      console.log('Mensagem recebida:', data);
       setLastMessage(data);
     };
 

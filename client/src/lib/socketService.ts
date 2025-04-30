@@ -27,7 +27,10 @@ class SocketService {
     try {
       // Configurar a URL do WebSocket dependendo do ambiente (HTTP/HTTPS)
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      // Obter a porta correta do ambiente
+      const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+      // Usar hostname (sem porta) + a porta explícita
+      const wsUrl = `${protocol}//${window.location.hostname}:${port}/ws`;
       
       console.log(`Tentando conectar ao WebSocket em: ${wsUrl}`);
       
