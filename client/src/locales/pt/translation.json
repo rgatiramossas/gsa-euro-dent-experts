@@ -334,5 +334,25 @@
     "useCurrentLocation": "Usar Localização Atual",
     "getting": "Obtendo Localização...",
     "getCurrent": "Obter Localização Atual"
+  },
+  "photos": {
+    "upload": "Carregar",
+    "singular": "foto",
+    "plural": "fotos",
+    "empty": "Vazio",
+    "dragAndDrop": "ou arraste e solte",
+    "fileTypes": "PNG, JPG, JPEG até 5MB",
+    "maxFiles": "máximo",
+    "filesCount": "arquivos",
+    "remove": "Remover foto",
+    "errors": {
+      "invalidFiles": "Alguns arquivos não foram aceitos",
+      "invalidFilesList": "Arquivos inválidos",
+      "onlyImagesAllowed": "Apenas imagens até 5MB são permitidas",
+      "fileLimit": "Limite de arquivos excedido",
+      "fileLimitDescription": "Você pode selecionar no máximo {{maxFiles}} fotos no total. Você já selecionou {{existingCount}} foto(s).",
+      "processingError": "Erro ao processar arquivos",
+      "processingErrorDescription": "Ocorreu um erro ao processar os arquivos selecionados. Tente novamente."
+    }
   }
 }
