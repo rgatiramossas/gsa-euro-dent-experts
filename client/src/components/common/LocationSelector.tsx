@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { LocationType } from "@/types";
+import { checkNetworkStatus } from "@/lib/pwaManager";
 
 interface LocationSelectorProps {
   value: {
@@ -23,6 +24,30 @@ interface LocationSelectorProps {
 export function LocationSelector({ value, onChange }: LocationSelectorProps) {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [networkOnline, setNetworkOnline] = useState<boolean>(true);
+  
+  // Verifica o status da rede ao carregar o componente e monitorar alterações
+  useEffect(() => {
+    const checkNetwork = async () => {
+      const online = await checkNetworkStatus();
+      setNetworkOnline(online);
+    };
+    
+    // Verificar status inicial
+    checkNetwork();
+    
+    // Monitorar eventos de alteração de status de rede
+    const handleOnline = () => setNetworkOnline(true);
+    const handleOffline = () => setNetworkOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const handleLocationTypeChange = (locationType: LocationType) => {
     onChange({
@@ -44,6 +69,13 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
     setIsGettingLocation(true);
     setLocationError(null);
 
+    // Verificar se está online antes de tentar obter a localização
+    if (!networkOnline) {
+      setLocationError("Você está offline. Por favor, insira o endereço manualmente.");
+      setIsGettingLocation(false);
+      return;
+    }
+    
     if (!navigator.geolocation) {
       setLocationError("Geolocalização não é suportada pelo seu navegador");
       setIsGettingLocation(false);
@@ -116,6 +148,23 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
 
   return (
     <div className="space-y-4">
+      {!networkOnline && (
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-amber-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-amber-700">
+                Você está offline. A localização automática não está disponível. Por favor, digite o endereço manualmente.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <Label>Tipo de Localização</Label>
         <RadioGroup
@@ -157,13 +206,18 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
           variant="outline"
           className="w-full mt-1 bg-gray-50 hover:bg-gray-100"
           onClick={getCurrentLocation}
-          disabled={isGettingLocation}
+          disabled={isGettingLocation || !networkOnline}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          {isGettingLocation ? "Obtendo Localização..." : "Obter Localização Atual"}
+          {isGettingLocation 
+            ? "Obtendo Localização..." 
+            : !networkOnline 
+              ? "Indisponível Offline" 
+              : "Obter Localização Atual"
+          }
         </Button>
         {locationError && (
           <p className="text-sm text-red-500 mt-1">{locationError}</p>
