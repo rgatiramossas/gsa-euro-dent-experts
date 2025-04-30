@@ -58,11 +58,22 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
 
   const handleAddressChange = (address: string) => {
     // Preserva as coordenadas existentes ao alterar manualmente o endereço
-    onChange({
-      ...value,
-      address,
-      // Mantém latitude e longitude existentes se já foram definidos
-    });
+    // Para modo offline, se não tiver coordenadas, insere coordenadas 0,0
+    if (!networkOnline && (!value.latitude || !value.longitude)) {
+      onChange({
+        ...value,
+        address,
+        latitude: 0,
+        longitude: 0
+      });
+      console.log("Offline: Preenchendo coordenadas 0,0 para endereço manual");
+    } else {
+      onChange({
+        ...value,
+        address,
+        // Mantém latitude e longitude existentes se já foram definidos
+      });
+    }
   };
 
   const getCurrentLocation = () => {
@@ -184,13 +195,22 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
       </div>
       
       <div>
-        <Label htmlFor="address">Endereço</Label>
+        <Label htmlFor="address">
+          Endereço
+          {!networkOnline && (
+            <span className="ml-2 text-amber-600 text-xs font-normal">
+              (Digite manualmente)
+            </span>
+          )}
+        </Label>
         <Input
           id="address"
           value={value.address || ""}
           onChange={(e) => handleAddressChange(e.target.value)}
-          placeholder="Digite o endereço completo"
+          placeholder={!networkOnline ? "Digite o endereço manualmente (Offline)" : "Digite o endereço completo"}
           className="mt-1"
+          // Certifique-se de que o campo não esteja desabilitado
+          disabled={false}
         />
         {value.latitude && value.longitude && (
           <p className="text-xs text-muted-foreground mt-1">

@@ -659,8 +659,18 @@ export default function NewService() {
                       onChange={(value) => {
                         form.setValue("location_type", value.locationType);
                         form.setValue("address", value.address || '');
-                        form.setValue("latitude", value.latitude || null);
-                        form.setValue("longitude", value.longitude || null);
+                        
+                        // Se estiver offline e não tiver coordenadas, usar coordenadas 0,0
+                        // para evitar problemas com o formulário
+                        const networkOnline = navigator.onLine;
+                        if (!networkOnline && (!value.latitude || !value.longitude)) {
+                          console.log("Offline: Usando coordenadas 0,0 para habilitar salvamento");
+                          form.setValue("latitude", 0);
+                          form.setValue("longitude", 0);
+                        } else {
+                          form.setValue("latitude", value.latitude || null);
+                          form.setValue("longitude", value.longitude || null);
+                        }
                       }}
                     />
                     <FormMessage />
