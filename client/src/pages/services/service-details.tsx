@@ -13,6 +13,7 @@ import { putApi, deleteApi } from "@/lib/apiWrapper";
 import { checkNetworkStatus } from "@/lib/pwaManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import useOfflineSubmit from "@/hooks/use-offline-submit";
 import { formatCurrency } from "@/lib/utils";
 import { ServiceType, ServiceStatus, ServiceWithDetails } from "@/types";
 import {
