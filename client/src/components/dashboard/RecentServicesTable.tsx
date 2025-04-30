@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/utils";
 import { ServiceStatusBadge } from "@/components/common/ServiceStatusBadge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ServiceListItem } from "@/types";
+import { useTranslation } from "react-i18next";
 
 interface RecentServicesTableProps {
   services: ServiceListItem[];
@@ -17,21 +18,22 @@ interface RecentServicesTableProps {
 }
 
 export function RecentServicesTable({ services, isLoading = false }: RecentServicesTableProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">Serviços Recentes</CardTitle>
+          <CardTitle className="text-lg font-medium">{t("dashboard.recentServices")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Veículo</TableHead>
-                <TableHead>Técnico</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Data</TableHead>
+                <TableHead>{t("services.client")}</TableHead>
+                <TableHead>{t("services.vehicle")}</TableHead>
+                <TableHead>{t("services.technician")}</TableHead>
+                <TableHead>{t("services.status")}</TableHead>
+                <TableHead>{t("services.scheduledDate")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -54,27 +56,27 @@ export function RecentServicesTable({ services, isLoading = false }: RecentServi
   return (
     <Card>
       <CardHeader className="pb-2 flex items-center justify-between">
-        <CardTitle className="text-lg font-medium">Serviços Recentes</CardTitle>
+        <CardTitle className="text-lg font-medium">{t("dashboard.recentServices")}</CardTitle>
         <Link href="/services" className="text-sm font-medium text-primary hover:text-primary/80">
-          Ver todos
+          {t("common.viewAll")}
         </Link>
       </CardHeader>
       <CardContent className="p-0 overflow-x-auto">
         <Table className="min-w-full">
           <TableHeader className="bg-gray-100">
             <TableRow>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Veículo</TableHead>
-              <TableHead>Técnico</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Data</TableHead>
+              <TableHead>{t("services.client")}</TableHead>
+              <TableHead>{t("services.vehicle")}</TableHead>
+              <TableHead>{t("services.technician")}</TableHead>
+              <TableHead>{t("services.status")}</TableHead>
+              <TableHead>{t("services.scheduledDate")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {services.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-4 text-gray-500">
-                  Nenhum serviço registrado
+                  {t("common.noResults")}
                 </TableCell>
               </TableRow>
             ) : (
