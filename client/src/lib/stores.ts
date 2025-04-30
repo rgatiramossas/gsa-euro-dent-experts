@@ -1,79 +1,83 @@
-/**
- * Stores centralizadas para o estado da aplicação
- */
+// Store para gerenciar o estado offline da aplicação
 
 type Listener = () => void;
 
-/**
- * OfflineStatusStore - Gerencia o estado de conectividade da aplicação
- * 
- * Esta store mantém estado sobre:
- * - Se o aplicativo está online
- * - Se há sincronização em andamento
- * - Quantos pedidos estão pendentes de sincronização
- */
+// Store simples para gerenciar estado offline
 class OfflineStatusStore {
-  private _isOnline: boolean;
-  private _isSyncing: boolean;
-  private _pendingCount: number;
-  private listeners: Set<Listener>;
+  private isOnline: boolean = navigator.onLine;
+  private isSyncing: boolean = false;
+  private pendingCount: number = 0;
+  private listeners: Listener[] = [];
 
   constructor() {
-    this._isOnline = navigator.onLine;
-    this._isSyncing = false;
-    this._pendingCount = 0;
-    this.listeners = new Set();
+    // Verificar estado inicial
+    this.isOnline = navigator.onLine;
   }
 
-  // Getters
-  get isOnline(): boolean {
-    return this._isOnline;
-  }
-
-  get isSyncing(): boolean {
-    return this._isSyncing;
-  }
-
-  get pendingCount(): number {
-    return this._pendingCount;
-  }
-
-  // Setters que notificam os listeners
-  setOnline(isOnline: boolean): void {
-    if (this._isOnline !== isOnline) {
-      this._isOnline = isOnline;
-      this.notifyListeners();
-    }
-  }
-
-  setSyncing(isSyncing: boolean): void {
-    if (this._isSyncing !== isSyncing) {
-      this._isSyncing = isSyncing;
-      this.notifyListeners();
-    }
-  }
-
-  setPendingCount(count: number): void {
-    if (this._pendingCount !== count) {
-      this._pendingCount = count;
-      this.notifyListeners();
-    }
-  }
-
-  // Sistema de inscrição para manter componentes atualizados
+  // Adicionar um listener para mudanças de estado
   subscribe(listener: Listener): () => void {
-    this.listeners.add(listener);
-
-    // Retorna função para cancelar inscrição
+    this.listeners.push(listener);
     return () => {
-      this.listeners.delete(listener);
+      this.listeners = this.listeners.filter(l => l !== listener);
     };
   }
 
-  private notifyListeners(): void {
+  // Notificar todos os listeners de mudanças
+  private notify(): void {
     this.listeners.forEach(listener => listener());
+  }
+
+  // Obter o estado atual
+  getState(): { isOnline: boolean; isSyncing: boolean; pendingCount: number } {
+    return {
+      isOnline: this.isOnline,
+      isSyncing: this.isSyncing,
+      pendingCount: this.pendingCount
+    };
+  }
+
+  // Atualizar status online
+  setOnline(status: boolean): void {
+    if (this.isOnline !== status) {
+      this.isOnline = status;
+      this.notify();
+    }
+  }
+
+  // Atualizar status de sincronização
+  setSyncing(status: boolean): void {
+    if (this.isSyncing !== status) {
+      this.isSyncing = status;
+      this.notify();
+    }
+  }
+
+  // Atualizar contagem de requisições pendentes
+  setPendingCount(count: number): void {
+    if (this.pendingCount !== count) {
+      this.pendingCount = count;
+      this.notify();
+    }
   }
 }
 
-// Singleton para estado de conectividade
+// Criar e exportar a instância da store
 export const offlineStatusStore = new OfflineStatusStore();
+
+// Hook React para usar o estado offline (importado no componente)
+// O uso seria assim:
+/*
+import { useOfflineStatus } from '@/lib/stores';
+
+function Component() {
+  const { isOnline, isSyncing, pendingCount } = useOfflineStatus();
+  
+  return (
+    <div>
+      {isOnline ? 'Online' : 'Offline'}
+      {isSyncing && 'Sincronizando...'}
+      {pendingCount > 0 && `${pendingCount} requisições pendentes`}
+    </div>
+  );
+}
+*/

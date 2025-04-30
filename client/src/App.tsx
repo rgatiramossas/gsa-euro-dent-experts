@@ -160,8 +160,6 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      {/* Rota para formulário offline removida - usando o mesmo formulário em ambos os casos */}
-      
       <Route path="/services/:id">
         {(params) => (
           <RequireAuth>

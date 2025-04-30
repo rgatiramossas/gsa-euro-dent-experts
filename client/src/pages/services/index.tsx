@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
+import { getQueryFn } from "@/lib/queryClient";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { 
@@ -28,57 +29,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { OfflineAlert } from "@/components/common/OfflineAlert";
-import { useOfflineStatus } from "@/hooks/useOfflineStatus";
-import { getApi } from "@/lib/apiWrapper";
-import { triggerSyncIfNeeded } from "@/lib/pwaManager";
 
 export default function ServicesList() {
   const [_, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<ServiceStatus | "all">("all");
-  const { isOnline } = useOfflineStatus();
   
-  // Buscar serviços - usando nossa própria função getApi com suporte offline
-  const { data: services, isLoading, error, refetch } = useQuery<ServiceListItem[]>({
-    queryKey: ['/api/services'],
-    queryFn: () => getApi('/api/services'),
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    cacheTime: 24 * 60 * 60 * 1000, // 24 horas (para acesso offline)
+  const { data: services, isLoading } = useQuery<ServiceListItem[]>({
+    queryKey: ['/api/services', { enableOffline: true, offlineTableName: 'services' }],
+    queryFn: getQueryFn({ on401: "throw" }),
+    refetchOnMount: true, // Forçar refetch quando o componente montar
   });
-
-  // Tentar sincronizar quando voltar online
-  useEffect(() => {
-    if (isOnline) {
-      triggerSyncIfNeeded().then(() => {
-        // Recarregar dados após sincronização
-        refetch();
-      });
-    }
-  }, [isOnline, refetch]);
 
   // Filter services based on search term and active tab
   const filteredServices = services?.filter(service => {
     const matchesSearch = 
       searchTerm === "" || 
-      service.client?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicle?.license_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicle?.make?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicle?.model?.toLowerCase().includes(searchTerm.toLowerCase());
+      service.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.vehicle.license_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.vehicle.model.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesTab = activeTab === "all" || service.status === activeTab;
     
     return matchesSearch && matchesTab;
-  }) || [];
+  });
 
   const navigateToServiceDetails = (id: number) => {
     setLocation(`/services/${id}`);
-  };
-
-  // Função para verificar se um serviço foi criado offline
-  const isOfflineService = (service: ServiceListItem) => {
-    return !!(service._offline || service._isOffline || service._pendingSave || 
-              (typeof service.id === 'string' && service.id.includes('offline')));
   };
 
   return (
@@ -97,8 +75,6 @@ export default function ServicesList() {
           </Link>
         }
       />
-      
-      <OfflineAlert showOnlyWhenOffline={true} />
       
       <Card className="mt-6">
         <div className="p-4 border-b border-gray-200">
