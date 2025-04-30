@@ -335,8 +335,10 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      {/* Fallback to 404 */}
-      <Route component={NotFound} />
+      {/* Fallback to 404 - Route deve estar no final para capturar todas as outras rotas */}
+      <Route path="/:rest*">
+        {() => <NotFound />}
+      </Route>
     </Switch>
   );
 }
