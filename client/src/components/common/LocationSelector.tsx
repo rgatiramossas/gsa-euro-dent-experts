@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { LocationType } from "@/types";
@@ -25,6 +24,12 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [networkOnline, setNetworkOnline] = useState<boolean>(true);
+  const [addressValue, setAddressValue] = useState<string>(value.address || "");
+  
+  // Atualiza o valor de endereço quando value.address mudar
+  useEffect(() => {
+    setAddressValue(value.address || "");
+  }, [value.address]);
   
   // Verifica o status da rede ao carregar o componente e monitorar alterações
   useEffect(() => {
@@ -57,7 +62,8 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
   };
 
   const handleAddressChange = (address: string) => {
-    // Preserva as coordenadas existentes ao alterar manualmente o endereço
+    setAddressValue(address);
+    
     // Para modo offline, se não tiver coordenadas, insere coordenadas 0,0
     if (!networkOnline && (!value.latitude || !value.longitude)) {
       onChange({
@@ -123,11 +129,14 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
             endereco = `Localização: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
           }
           
+          // Atualizar estado local primeiro
+          setAddressValue(endereco);
+          
           onChange({
             ...value,
             address: endereco,
-            latitude: latitude,     // Usa as coordenadas reais
-            longitude: longitude,   // Usa as coordenadas reais
+            latitude: latitude,
+            longitude: longitude,
           });
         } catch (error) {
           console.error("Erro ao processar localização:", error);
@@ -195,7 +204,7 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
       </div>
       
       <div>
-        <Label htmlFor="address">
+        <Label htmlFor="address-input">
           Endereço
           {!networkOnline && (
             <span className="ml-2 text-amber-600 text-xs font-normal">
@@ -203,14 +212,14 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
             </span>
           )}
         </Label>
-        <Input
-          id="address"
-          value={value.address || ""}
+        {/* Usando <input> puro para garantir que não haja bloqueios */}
+        <input
+          id="address-input"
+          type="text"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
+          value={addressValue}
           onChange={(e) => handleAddressChange(e.target.value)}
           placeholder={!networkOnline ? "Digite o endereço manualmente (Offline)" : "Digite o endereço completo"}
-          className="mt-1"
-          // Certifique-se de que o campo não esteja desabilitado
-          disabled={false}
         />
         {value.latitude && value.longitude && (
           <p className="text-xs text-muted-foreground mt-1">
