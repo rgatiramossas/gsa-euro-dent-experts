@@ -234,17 +234,37 @@ export async function apiRequest<T>({
 // Funções auxiliares para facilitar o uso
 
 export function getApi<T>(url: string, config: Omit<ApiRequestConfig, 'url' | 'method'> = {}): Promise<T> {
-  return apiRequest<T>({ ...config, url, method: 'GET' });
+  // Default enableOffline to true for better offline support
+  const configWithDefaults = { 
+    enableOffline: true,
+    ...config
+  };
+  return apiRequest<T>({ ...configWithDefaults, url, method: 'GET' });
 }
 
 export function postApi<T>(url: string, data: any, config: Omit<ApiRequestConfig, 'url' | 'method' | 'data'> = {}): Promise<T> {
-  return apiRequest<T>({ ...config, url, method: 'POST', data });
+  // Default enableOffline to true for better offline support
+  const configWithDefaults = { 
+    enableOffline: true,
+    ...config
+  };
+  return apiRequest<T>({ ...configWithDefaults, url, method: 'POST', data });
 }
 
 export function putApi<T>(url: string, data: any, config: Omit<ApiRequestConfig, 'url' | 'method' | 'data'> = {}): Promise<T> {
-  return apiRequest<T>({ ...config, url, method: 'PUT', data });
+  // Default enableOffline to true for better offline support
+  const configWithDefaults = { 
+    enableOffline: true,
+    ...config
+  };
+  return apiRequest<T>({ ...configWithDefaults, url, method: 'PUT', data });
 }
 
 export function deleteApi<T>(url: string, config: Omit<ApiRequestConfig, 'url' | 'method'> = {}): Promise<T> {
-  return apiRequest<T>({ ...config, url, method: 'DELETE' });
+  // Default enableOffline to true for better offline support
+  const configWithDefaults = { 
+    enableOffline: true,
+    ...config
+  };
+  return apiRequest<T>({ ...configWithDefaults, url, method: 'DELETE' });
 }

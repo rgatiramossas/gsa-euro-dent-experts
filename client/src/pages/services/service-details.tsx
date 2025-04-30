@@ -9,6 +9,8 @@ import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { putApi, deleteApi } from "@/lib/apiWrapper";
+import { checkNetworkStatus } from "@/lib/pwaManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
@@ -178,16 +180,42 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data: { status: ServiceStatus; notes?: string }) => {
-      return await apiRequest(`/api/services/${id}`, 'PATCH', data);
+      // Verificar status da rede
+      const isOnline = checkNetworkStatus();
+      console.log("Status da rede:", isOnline ? "Online" : "Offline");
+      
+      try {
+        // Usar apiWrapper para suporte offline
+        const result = await putApi(`/api/services/${id}`, data, {
+          enableOffline: true,
+          offlineTableName: 'services'
+        });
+        
+        if (!isOnline) {
+          return { ...result, _offline: true };
+        }
+        
+        return result;
+      } catch (error) {
+        console.error("Erro na atualização de status:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Verificar se foi atualizado offline
+      const isOfflineData = data && data._offline === true;
+      
       queryClient.invalidateQueries({queryKey: [`/api/services/${id}`]});
       queryClient.invalidateQueries({queryKey: ['/api/services']});
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
+      
       toast({
         title: "Status atualizado",
-        description: "O status do serviço foi atualizado com sucesso",
+        description: isOfflineData 
+          ? "O status foi salvo localmente e será sincronizado quando houver conexão" 
+          : "O status do serviço foi atualizado com sucesso",
       });
+      
       setShowStatusDialog(false);
       setNewStatus("");
       setStatusNotes("");
@@ -447,15 +475,40 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const deleteServiceMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/services/${id}`, 'DELETE');
+      // Verificar status da rede
+      const isOnline = checkNetworkStatus();
+      console.log("Status da rede:", isOnline ? "Online" : "Offline");
+      
+      try {
+        // Usar deleteApi com suporte offline
+        const result = await deleteApi(`/api/services/${id}`, {
+          offlineTableName: 'services'
+        });
+        
+        if (!isOnline) {
+          return { _offline: true, id: Number(id) };
+        }
+        
+        return result;
+      } catch (error) {
+        console.error("Erro na exclusão:", error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Verificar se foi excluído offline
+      const isOfflineData = data && data._offline === true;
+      
       queryClient.invalidateQueries({queryKey: ['/api/services']});
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
+      
       toast({
         title: "Serviço excluído",
-        description: "O serviço foi excluído com sucesso",
+        description: isOfflineData 
+          ? "O serviço foi marcado para exclusão e será sincronizado quando houver conexão" 
+          : "O serviço foi excluído com sucesso",
       });
+      
       setLocation('/services');
     },
     onError: (error) => {
