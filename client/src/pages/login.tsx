@@ -63,12 +63,11 @@ export default function Login() {
           <div className="text-center mb-8">
             <div className="mx-auto mb-4 flex items-center justify-center">
               <img 
-                src="/assets/euro-dent-logo.png" 
+                src="/eurodent-logo.png" 
                 alt="Euro Dent Experts Logo" 
-                className="h-24 w-auto"
+                className="h-40 w-auto"
               />
             </div>
-            <p className="text-gray-500 mt-2">Sistema de Gestão</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">
