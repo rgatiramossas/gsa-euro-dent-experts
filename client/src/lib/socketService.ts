@@ -48,9 +48,14 @@ class SocketService {
 
   // Evento: Conexão estabelecida
   private handleOpen(event: Event): void {
-    console.log('Conexão WebSocket estabelecida com sucesso');
+    console.log('%c[WebSocket] Conexão estabelecida com sucesso', 'color: green; font-weight: bold');
     this.isConnecting = false;
     this.reconnectAttempts = 0;
+    
+    // Log informações da conexão
+    const wsProtocol = this.socket?.protocol || '(sem protocolo)';
+    const wsUrl = this.socket?.url || '(sem URL)';
+    console.log(`[WebSocket] Detalhes da conexão: URL=${wsUrl}, Protocolo=${wsProtocol}`);
     
     // Notificar que a conexão foi estabelecida
     this.notifyListeners('connection', { status: 'connected' });
@@ -76,7 +81,17 @@ class SocketService {
 
   // Evento: Conexão fechada
   private handleClose(event: CloseEvent): void {
-    console.log(`Conexão WebSocket fechada: ${event.code} - ${event.reason}`);
+    console.log(`%c[WebSocket] Conexão fechada: ${event.code} - ${event.reason || 'Sem motivo'}`, 
+      event.wasClean ? 'color: orange' : 'color: red; font-weight: bold');
+    
+    // Log de diagnóstico detalhado
+    console.log(`[WebSocket] Detalhes do fechamento:
+      - Código: ${event.code}
+      - Motivo: ${event.reason || 'Não fornecido'}
+      - Fechamento limpo: ${event.wasClean ? 'Sim' : 'Não'}
+      - Timestamp: ${new Date().toISOString()}
+    `);
+    
     this.isConnecting = false;
     this.socket = null;
     
@@ -87,19 +102,52 @@ class SocketService {
       wasClean: event.wasClean
     });
     
-    // Tentar reconectar se o fechamento não foi limpo
-    if (!event.wasClean) {
+    // Analisar códigos específicos de fechamento
+    if (event.code === 1006) {
+      console.warn('[WebSocket] Conexão fechada anormalmente (código 1006). Possível problema na conexão ou servidor indisponível.');
+    } else if (event.code === 1001) {
+      console.log('[WebSocket] Endpoint indo embora (código 1001). Servidor está sendo desligado ou reiniciado.');
+    } else if (event.code === 1011) {
+      console.error('[WebSocket] Erro interno do servidor (código 1011). Verificar logs do servidor.');
+    }
+    
+    // Tentar reconectar se o fechamento não foi limpo ou foi código 1006 (fechamento anormal)
+    if (!event.wasClean || event.code === 1006) {
       this.scheduleReconnect();
     }
   }
 
   // Evento: Erro na conexão
   private handleError(event: Event): void {
-    console.error('Erro na conexão WebSocket:', event);
+    console.error('%c[WebSocket] Erro na conexão:', 'color: red; font-weight: bold', event);
     this.isConnecting = false;
+    
+    // Log adicional com mais informações
+    console.error(`[WebSocket] Estado atual: ${this.socket ? this.getReadyStateAsString() : 'Socket não inicializado'}`);
+    if (this.socket) {
+      console.error(`[WebSocket] URL: ${this.socket.url}`);
+    }
     
     // Notificar sobre o erro
     this.notifyListeners('error', { event });
+  }
+  
+  // Converter o estado numérico do WebSocket para string
+  private getReadyStateAsString(): string {
+    if (!this.socket) return 'Socket não inicializado';
+    
+    switch (this.socket.readyState) {
+      case WebSocket.CONNECTING:
+        return 'CONNECTING (0) - Conexão em andamento';
+      case WebSocket.OPEN:
+        return 'OPEN (1) - Conexão estabelecida';
+      case WebSocket.CLOSING:
+        return 'CLOSING (2) - Conexão fechando';
+      case WebSocket.CLOSED:
+        return 'CLOSED (3) - Conexão fechada';
+      default:
+        return `Desconhecido (${this.socket.readyState})`;
+    }
   }
 
   // Agendar reconexão após falha

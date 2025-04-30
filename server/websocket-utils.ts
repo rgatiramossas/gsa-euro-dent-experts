@@ -89,8 +89,8 @@ export function setupWebSocketServer(server: Server) {
     });
     
     // Evento de fechamento da conexão
-    ws.on('close', () => {
-      console.log('WebSocket: Conexão fechada');
+    ws.on('close', (code, reason) => {
+      console.log(`WebSocket: Conexão fechada - Código: ${code}, Motivo: ${reason.toString()}`);
       clients.delete(clientId);
     });
     
