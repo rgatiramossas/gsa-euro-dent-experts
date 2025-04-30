@@ -101,7 +101,9 @@
     "serviceStatus": "Estado del Servicio",
     "status": {
       "pending": "Pendiente",
+      "in_progress": "En progreso",
       "completed": "Completado",
+      "canceled": "Cancelado",
       "aguardando_aprovacao": "Esperando Aprobación",
       "faturado": "Facturado",
       "pago": "Pagado"

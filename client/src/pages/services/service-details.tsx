@@ -726,9 +726,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     return (
       <div className="container max-w-5xl mx-auto p-4">
         <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-center">
-          <h2 className="text-xl font-semibold text-red-700 mb-2">Erro ao carregar detalhes do serviço</h2>
-          <p className="text-red-600 mb-4">Ocorreu um erro ao carregar as informações do serviço</p>
-          <Button onClick={handleBack} variant="outline">Voltar para a lista</Button>
+          <h2 className="text-xl font-semibold text-red-700 mb-2">{t("services.errors.loadingDetails", "Erro ao carregar detalhes do serviço")}</h2>
+          <p className="text-red-600 mb-4">{t("services.errors.loadingDetailsDescription", "Ocorreu um erro ao carregar as informações do serviço")}</p>
+          <Button onClick={handleBack} variant="outline">{t("services.backToList", "Voltar para a lista")}</Button>
         </div>
       </div>
     );
@@ -738,9 +738,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     return (
       <div className="container max-w-5xl mx-auto p-4">
         <div className="p-6 bg-amber-50 border border-amber-200 rounded-lg text-center">
-          <h2 className="text-xl font-semibold text-amber-700 mb-2">Serviço não encontrado</h2>
-          <p className="text-amber-600 mb-4">Não foi possível encontrar o serviço solicitado</p>
-          <Button onClick={handleBack} variant="outline">Voltar para a lista</Button>
+          <h2 className="text-xl font-semibold text-amber-700 mb-2">{t("services.errors.serviceNotFound", "Serviço não encontrado")}</h2>
+          <p className="text-amber-600 mb-4">{t("services.errors.serviceNotFoundDescription", "Não foi possível encontrar o serviço solicitado")}</p>
+          <Button onClick={handleBack} variant="outline">{t("services.backToList", "Voltar para a lista")}</Button>
         </div>
       </div>
     );
@@ -756,10 +756,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       <div className="flex justify-between items-center mb-6">
         <div>
           <Button variant="outline" size="sm" onClick={handleBack} className="mb-2">
-            <span className="mr-2">←</span> Voltar para Serviços
+            <span className="mr-2">←</span> {t("services.backToList", "Voltar para Serviços")}
           </Button>
           <h1 className="text-2xl font-bold">
-            Detalhes do Serviço
+            {t("services.serviceDetails", "Detalhes do Serviço")}
             <Badge className={`ml-2 ${getStatusColor(service.status)} text-white`}>
               {formatStatus(service.status)}
             </Badge>
@@ -770,47 +770,47 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleStartEditing}>
               <Edit className="h-4 w-4 mr-2" />
-              Editar
+              {t("common.edit", "Editar")}
             </Button>
             
             <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
               <DialogTrigger asChild>
                 <Button>
                   <Tag className="h-4 w-4 mr-2" />
-                  Alterar Status
+                  {t("services.changeStatus", "Alterar Status")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Alterar Status do Serviço</DialogTitle>
+                  <DialogTitle>{t("services.changeServiceStatus", "Alterar Status do Serviço")}</DialogTitle>
                   <DialogDescription>
-                    Selecione o novo status do serviço e adicione notas se necessário.
+                    {t("services.selectNewStatus", "Selecione o novo status do serviço e adicione notas se necessário.")}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="status">Novo Status</Label>
+                    <Label htmlFor="status">{t("services.newStatus", "Novo Status")}</Label>
                     <Select
                       value={newStatus}
                       onValueChange={(value) => setNewStatus(value as ServiceStatus)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um status" />
+                        <SelectValue placeholder={t("services.selectStatus", "Selecione um status")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">Pendente</SelectItem>
-                        <SelectItem value="in_progress">Em andamento</SelectItem>
-                        <SelectItem value="completed">Concluído</SelectItem>
-                        <SelectItem value="canceled">Cancelado</SelectItem>
-                        <SelectItem value="pago">Pago</SelectItem>
+                        <SelectItem value="pending">{t("services.status.pending", "Pendente")}</SelectItem>
+                        <SelectItem value="in_progress">{t("services.status.in_progress", "Em andamento")}</SelectItem>
+                        <SelectItem value="completed">{t("services.status.completed", "Concluído")}</SelectItem>
+                        <SelectItem value="canceled">{t("services.status.canceled", "Cancelado")}</SelectItem>
+                        <SelectItem value="pago">{t("services.status.pago", "Pago")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="notes">Notas (opcional)</Label>
+                    <Label htmlFor="notes">{t("services.optionalNotes", "Notas (opcional)")}</Label>
                     <Textarea
                       id="notes"
-                      placeholder="Adicione informações sobre a mudança de status"
+                      placeholder={t("services.statusNotesPlaceholder", "Adicione informações sobre a mudança de status")}
                       value={statusNotes}
                       onChange={(e) => setStatusNotes(e.target.value)}
                     />
@@ -818,13 +818,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setShowStatusDialog(false)}>
-                    Cancelar
+                    {t("common.cancel", "Cancelar")}
                   </Button>
                   <Button 
                     onClick={handleStatusUpdate}
                     disabled={!newStatus || updateStatusMutation.isPending}
                   >
-                    {updateStatusMutation.isPending ? "Salvando..." : "Salvar"}
+                    {updateStatusMutation.isPending ? t("common.saving", "Salvando...") : t("common.save", "Salvar")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -840,17 +840,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           {/* Client & Vehicle Card */}
           <Card className="mb-6">
             <CardHeader className="pb-3">
-              <CardTitle>Cliente e Veículo</CardTitle>
+              <CardTitle>{t("services.clientAndVehicle", "Cliente e Veículo")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-base font-medium mb-2">Cliente</h3>
+                  <h3 className="text-base font-medium mb-2">{t("services.client", "Cliente")}</h3>
                   <div className="space-y-2">
                     <div className="flex items-start">
                       <User className="h-5 w-5 text-gray-500 mt-0.5 mr-2" />
                       <div>
-                        <p className="font-medium">{service.client?.name || "Cliente não especificado"}</p>
+                        <p className="font-medium">{service.client?.name || t("clients.notSpecified", "Cliente não especificado")}</p>
                         {service.client?.phone && (
                           <p className="text-sm text-gray-600">{service.client.phone}</p>
                         )}
@@ -868,7 +868,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-base font-medium mb-2">Veículo</h3>
+                  <h3 className="text-base font-medium mb-2">{t("services.vehicle", "Veículo")}</h3>
                   <div className="space-y-2">
                     <div className="flex items-start">
                       <div>
@@ -877,12 +877,12 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         </p>
                         {service.vehicle?.color && (
                           <p className="text-sm text-gray-600">
-                            Cor: {service.vehicle.color}
+                            {t("vehicles.color", "Cor")}: {service.vehicle.color}
                           </p>
                         )}
                         {service.vehicle?.license_plate && (
                           <p className="text-sm text-gray-600">
-                            Placa: {service.vehicle.license_plate}
+                            {t("vehicles.licensePlate", "Placa")}: {service.vehicle.license_plate}
                           </p>
                         )}
                       </div>
@@ -896,26 +896,26 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           {/* Service Details Card */}
           <Card className="mb-6">
             <CardHeader className="pb-3">
-              <CardTitle>Detalhes do Serviço</CardTitle>
+              <CardTitle>{t("services.serviceDetails", "Detalhes do Serviço")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500">Tipo de Serviço</h3>
+                      <h3 className="text-sm font-medium text-gray-500">{t("services.serviceType", "Tipo de Serviço")}</h3>
                       <p className="text-base">{getServiceTypeName(service.service_type_id)}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500">Técnico Responsável</h3>
-                      <p className="text-base">{service.technician?.name || "Não atribuído"}</p>
+                      <h3 className="text-sm font-medium text-gray-500">{t("services.responsibleTechnician", "Técnico Responsável")}</h3>
+                      <p className="text-base">{service.technician?.name || t("services.unassigned", "Não atribuído")}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500">Data Agendada</h3>
+                      <h3 className="text-sm font-medium text-gray-500">{t("services.scheduledDate", "Data Agendada")}</h3>
                       <p className="text-base">{formatDate(service.scheduled_date)}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500">Local de Atendimento</h3>
+                      <h3 className="text-sm font-medium text-gray-500">{t("services.location", "Local de Atendimento")}</h3>
                       <p className="text-base">{formatLocation(service.location_type)}</p>
                       {service.location_type === 'client_location' && service.address && (
                         <p className="text-sm text-gray-600">{service.address}</p>
@@ -926,15 +926,15 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 <div>
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500">Descrição</h3>
+                      <h3 className="text-sm font-medium text-gray-500">{t("services.description", "Descrição")}</h3>
                       <p className="text-base whitespace-pre-line">
-                        {service.description || "Sem descrição"}
+                        {service.description || t("services.noDescription", "Sem descrição")}
                       </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500">Notas</h3>
+                      <h3 className="text-sm font-medium text-gray-500">{t("services.notes", "Notas")}</h3>
                       <p className="text-base whitespace-pre-line">
-                        {service.notes || "Sem notas adicionais"}
+                        {service.notes || t("services.noAdditionalNotes", "Sem notas adicionais")}
                       </p>
                     </div>
                   </div>
@@ -946,7 +946,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           {/* Photos Card */}
           <Card className="mb-6">
             <CardHeader className="pb-3">
-              <CardTitle>Fotos do Serviço</CardTitle>
+              <CardTitle>{t("services.photos", "Fotos do Serviço")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
@@ -961,18 +961,18 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                           <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                             <ImageWithFallback 
                               src={photo.photo_url} 
-                              alt="Foto do veículo" 
+                              alt={t("photos.vehiclePhoto", "Foto do veículo")} 
                               className="object-cover w-full h-full"
                             />
                             <Badge className="absolute top-1 left-1 bg-blue-500 text-white">
-                              Serviço
+                              {t("services.service", "Serviço")}
                             </Badge>
                             {isEditing && (
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(photo.id)}
                                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Remover foto"
+                                title={t("photos.remove", "Remover foto")}
                               >
                                 <X size={16} />
                               </button>
@@ -985,18 +985,18 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                           <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                             <ImageWithFallback 
                               src={photo.photo_url} 
-                              alt="Foto do veículo" 
+                              alt={t("photos.vehiclePhoto", "Foto do veículo")} 
                               className="object-cover w-full h-full"
                             />
                             <Badge className="absolute top-1 left-1 bg-orange-500 text-white">
-                              Antes
+                              {t("photos.before", "Antes")}
                             </Badge>
                             {isEditing && (
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(photo.id)}
                                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Remover foto"
+                                title={t("photos.remove", "Remover foto")}
                               >
                                 <X size={16} />
                               </button>
@@ -1009,18 +1009,18 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                           <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                             <ImageWithFallback 
                               src={photo.photo_url} 
-                              alt="Foto do veículo" 
+                              alt={t("photos.vehiclePhoto", "Foto do veículo")} 
                               className="object-cover w-full h-full"
                             />
                             <Badge className="absolute top-1 left-1 bg-green-500 text-white">
-                              Depois
+                              {t("photos.after", "Depois")}
                             </Badge>
                             {isEditing && (
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(photo.id)}
                                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Remover foto"
+                                title={t("photos.remove", "Remover foto")}
                               >
                                 <X size={16} />
                               </button>
@@ -1029,7 +1029,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-500 italic">Nenhuma foto disponível</p>
+                      <p className="text-gray-500 italic">{t("photos.noPhotosAvailable", "Nenhuma foto disponível")}</p>
                     )}
                   </div>
                 </div>
