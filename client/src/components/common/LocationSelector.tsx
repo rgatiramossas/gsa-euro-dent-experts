@@ -79,7 +79,7 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
             }
           } catch (error) {
             console.error("Erro ao obter endereço:", error);
-            endereco = `Localização: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+            endereco = `${t("location.coordinates", "Localização")}: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
           }
           
           onChange({
@@ -90,7 +90,7 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
           });
         } catch (error) {
           console.error("Erro ao processar localização:", error);
-          setLocationError("Erro ao processar dados de localização");
+          setLocationError(t("location.processingError", "Erro ao processar dados de localização"));
         } finally {
           setIsGettingLocation(false);
         }
@@ -99,16 +99,16 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
         let errorMessage;
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "Permissão para geolocalização negada pelo usuário";
+            errorMessage = t("location.permissionDenied", "Permissão para geolocalização negada pelo usuário");
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "Informações de localização indisponíveis";
+            errorMessage = t("location.unavailable", "Informações de localização indisponíveis");
             break;
           case error.TIMEOUT:
-            errorMessage = "Tempo esgotado para obter localização";
+            errorMessage = t("location.timeout", "Tempo esgotado para obter localização");
             break;
           default:
-            errorMessage = "Erro desconhecido ao obter localização";
+            errorMessage = t("location.unknownError", "Erro desconhecido ao obter localização");
         }
         setLocationError(errorMessage);
         setIsGettingLocation(false);
@@ -119,7 +119,7 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
   return (
     <div className="space-y-4">
       <div>
-        <Label>Tipo de Localização</Label>
+        <Label>{t("services.locationType", "Tipo de Localização")}</Label>
         <RadioGroup
           value={value.locationType}
           onValueChange={(val) => handleLocationTypeChange(val as LocationType)}
@@ -127,33 +127,33 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="client_location" id="client-location" />
-            <Label htmlFor="client-location" className="cursor-pointer">Local do Cliente</Label>
+            <Label htmlFor="client-location" className="cursor-pointer">{t("services.clientLocation", "Local do Cliente")}</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="workshop" id="workshop" />
-            <Label htmlFor="workshop" className="cursor-pointer">Oficina</Label>
+            <Label htmlFor="workshop" className="cursor-pointer">{t("services.workshop", "Oficina")}</Label>
           </div>
         </RadioGroup>
       </div>
       
       <div>
-        <Label htmlFor="address">Endereço</Label>
+        <Label htmlFor="address">{t("services.address", "Endereço")}</Label>
         <Input
           id="address"
           value={value.address || ""}
           onChange={(e) => handleAddressChange(e.target.value)}
-          placeholder="Digite o endereço completo"
+          placeholder={t("location.addressPlaceholder", "Digite o endereço completo")}
           className="mt-1"
         />
         {value.latitude && value.longitude && (
           <p className="text-xs text-muted-foreground mt-1">
-            Coordenadas detectadas: Você pode modificar o endereço mantendo as coordenadas
+            {t("location.coordinatesDetected", "Coordenadas detectadas: Você pode modificar o endereço mantendo as coordenadas")}
           </p>
         )}
       </div>
       
       <div>
-        <Label>Usar Localização Atual</Label>
+        <Label>{t("location.useCurrentLocation", "Usar Localização Atual")}</Label>
         <Button
           type="button"
           variant="outline"
@@ -165,7 +165,7 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          {isGettingLocation ? "Obtendo Localização..." : "Obter Localização Atual"}
+          {isGettingLocation ? t("location.getting", "Obtendo Localização...") : t("location.getCurrent", "Obter Localização Atual")}
         </Button>
         {locationError && (
           <p className="text-sm text-red-500 mt-1">{locationError}</p>

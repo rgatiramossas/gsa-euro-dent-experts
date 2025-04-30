@@ -320,5 +320,19 @@
     "processingPhotos": "Erro ao processar fotos",
     "apiError": "Erro detalhado da API",
     "responseBodyError": "Não foi possível ler o corpo da resposta de erro"
+  },
+  "location": {
+    "browserNotSupported": "Geolocalização não é suportada pelo seu navegador",
+    "processingError": "Erro ao processar dados de localização",
+    "permissionDenied": "Permissão para geolocalização negada pelo usuário",
+    "unavailable": "Informações de localização indisponíveis",
+    "timeout": "Tempo esgotado para obter localização",
+    "unknownError": "Erro desconhecido ao obter localização",
+    "coordinates": "Localização",
+    "addressPlaceholder": "Digite o endereço completo",
+    "coordinatesDetected": "Coordenadas detectadas: Você pode modificar o endereço mantendo as coordenadas",
+    "useCurrentLocation": "Usar Localização Atual",
+    "getting": "Obtendo Localização...",
+    "getCurrent": "Obter Localização Atual"
   }
 }

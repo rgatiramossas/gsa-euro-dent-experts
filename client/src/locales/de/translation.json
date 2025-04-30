@@ -320,5 +320,19 @@
     "processingPhotos": "Fehler bei der Verarbeitung der Fotos",
     "apiError": "Detaillierter API-Fehler",
     "responseBodyError": "Der Antworttext konnte nicht gelesen werden"
+  },
+  "location": {
+    "browserNotSupported": "Geolokalisierung wird von Ihrem Browser nicht unterstützt",
+    "processingError": "Fehler bei der Verarbeitung von Standortdaten",
+    "permissionDenied": "Genehmigung für Geolokalisierung vom Benutzer verweigert",
+    "unavailable": "Standortinformationen nicht verfügbar",
+    "timeout": "Zeitüberschreitung beim Abrufen des Standorts",
+    "unknownError": "Unbekannter Fehler beim Abrufen des Standorts",
+    "coordinates": "Standort",
+    "addressPlaceholder": "Geben Sie die vollständige Adresse ein",
+    "coordinatesDetected": "Koordinaten erkannt: Sie können die Adresse ändern und die Koordinaten beibehalten",
+    "useCurrentLocation": "Aktuellen Standort verwenden",
+    "getting": "Standort wird abgerufen...",
+    "getCurrent": "Aktuellen Standort abrufen"
   }
 }
