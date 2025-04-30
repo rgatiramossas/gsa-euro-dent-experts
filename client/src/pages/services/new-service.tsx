@@ -485,7 +485,7 @@ export default function NewService() {
           {/* Client and Vehicle Information */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Informações do Cliente</CardTitle>
+              <CardTitle>{t("clients.clientInformation")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -493,7 +493,7 @@ export default function NewService() {
                 name="client_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cliente <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("clients.client")} <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => handleClientChange(value)}
                       defaultValue={field.value?.toString()}
@@ -532,7 +532,7 @@ export default function NewService() {
                 name="vehicle_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Veículo <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("clients.vehicle")} <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => form.setValue('vehicle_id', parseInt(value))}
                       defaultValue={field.value?.toString()}
@@ -575,7 +575,7 @@ export default function NewService() {
           {/* Service Information */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Informações do Serviço</CardTitle>
+              <CardTitle>{t("services.serviceInformation")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -583,7 +583,7 @@ export default function NewService() {
                 name="service_type_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo de Serviço <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("services.serviceType")} <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => form.setValue('service_type_id', parseInt(value))}
                       defaultValue={field.value?.toString()}
@@ -709,7 +709,7 @@ export default function NewService() {
           {/* Location */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Localização</CardTitle>
+              <CardTitle>{t("services.location")}</CardTitle>
             </CardHeader>
             <CardContent>
               <FormField
@@ -742,7 +742,7 @@ export default function NewService() {
           {/* Price */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Valores</CardTitle>
+              <CardTitle>{t("services.values")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -807,7 +807,7 @@ export default function NewService() {
           {/* Photos */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Fotos</CardTitle>
+              <CardTitle>{t("services.photos")}</CardTitle>
             </CardHeader>
             <CardContent>
               <PhotoUploader
@@ -824,7 +824,7 @@ export default function NewService() {
           {/* Notes */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Observações</CardTitle>
+              <CardTitle>{t("services.notes")}</CardTitle>
             </CardHeader>
             <CardContent>
               <FormField
@@ -853,13 +853,13 @@ export default function NewService() {
           
           <div className="flex justify-end space-x-2">
             <Button variant="outline" type="button" onClick={() => setLocation('/services')}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button 
               type="submit" 
               disabled={createServiceMutation.isPending || serviceSavedOffline}
             >
-              {createServiceMutation.isPending ? "Salvando..." : "Salvar"}
+              {createServiceMutation.isPending ? t("common.saving", "Salvando...") : t("common.save", "Salvar")}
             </Button>
           </div>
           
