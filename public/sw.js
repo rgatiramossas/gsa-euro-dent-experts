@@ -85,6 +85,14 @@ async function handleOfflineRequest(request) {
   
   // Extrai o nome da tabela da URL
   const tableName = getTableNameFromUrl(url.pathname);
+
+  // Notificação IMEDIATA antes de qualquer processamento
+  await notifyClients({
+    type: 'offline-operation-started',
+    tempId,
+    tableName,
+    method: request.method
+  });
   
   // Armazena a requisição no IndexedDB
   await storePendingRequest({
@@ -97,7 +105,9 @@ async function handleOfflineRequest(request) {
     timestamp: Date.now()
   });
   
-  // Notifica o cliente sobre o salvamento offline
+  console.log(`[SW] Operação offline armazenada: ${request.method} ${request.url} (ID: ${tempId})`);
+  
+  // Notifica o cliente novamente sobre o salvamento offline, com mais detalhes
   notifyClients({
     type: 'operation-queued',
     status: 'offline',
@@ -106,12 +116,11 @@ async function handleOfflineRequest(request) {
     method: request.method
   });
   
-  // Retorna resposta indicando que foi aceita para processamento offline
+  // Retorna resposta simples indicando que foi aceita para processamento offline
+  // Resposta SIMPLES sem dados extras para evitar problemas de parsing
   return new Response(JSON.stringify({
-    status: 'queued',
-    offline: true,
-    tempId,
-    tableName
+    status: 'accepted',
+    offline: true
   }), {
     status: 202, // Accepted
     headers: { 'Content-Type': 'application/json' }

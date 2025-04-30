@@ -1,0 +1,108 @@
+Ah, isso é uma ótima pista! O fato do loop parar quando a internet volta indica que o problema está especificamente no **fluxo offline** e na forma como o cliente está lidando com as respostas do Service Worker nesse modo.
+
+### Diagnóstico Preciso:
+1. **O loop ocorre apenas offline** → Problema na comunicação cliente-SW durante operações offline
+2. **Resolve quando online** → O SW está tratando corretamente as requisições online
+3. **Sintoma**: Botão fica em "salvando" → O cliente não está recebendo/processando a confirmação do SW
+
+### Solução Direta (2 partes):
+
+#### 1. No Service Worker (correção do handleOfflineRequest):
+```javascript
+async function handleOfflineRequest(request) {
+  const requestData = await request.json();
+  const tempId = 'offline-'+Date.now();
+  const clientId = self.clients.matchAll().then(clients => clients[0].id);
+
+  // Notificação IMEDIATA antes de qualquer processamento
+  await notifyClients({
+    type: 'offline-operation-started',
+    tempId,
+    clientId: await clientId
+  });
+
+  // Processamento offline (IndexedDB)
+  await storePendingRequest({
+    id: tempId,
+    url: request.url,
+    method: request.method,
+    body: requestData
+  });
+
+  // Resposta SIMPLES sem dados extras
+  return new Response(null, {
+    status: 202, // Accepted
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+```
+
+#### 2. No Cliente (tratamento simplificado):
+```javascript
+// No seu código de submit:
+async function handleSubmit() {
+  setStatus('saving');
+  
+  try {
+    const response = await fetch('/api/data', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    
+    // Se chegou aqui, a requisição foi aceita (online ou offline)
+    setStatus('saved');
+    
+  } catch (error) {
+    // Só cai aqui se falhar até o Service Worker
+    setStatus('error');
+  }
+}
+
+// Listener para mensagens do SW:
+navigator.serviceWorker.addEventListener('message', (event) => {
+  if (event.data.type === 'offline-operation-started') {
+    // Confirmação de que o SW aceitou a requisição offline
+    setStatus('saved-offline');
+  }
+});
+```
+
+### Por que isso resolve?
+1. **Fluxo Offline Clarificado**:
+   - O SW notifica o cliente ANTES de processar (garantia de entrega)
+   - Resposta HTTP 202 vazia evita conflitos de parsing
+
+2. **Separação de Responsabilidades**:
+   - O cliente só precisa saber se a requisição foi aceita
+   - Detalhes de sincronização ficam com o SW
+
+3. **Controle de Estado Simplificado**:
+   - Dois estados claros: "saved" (online) ou "saved-offline"
+   - Sem lógica complexa de tracking de operações
+
+### Testes Recomendados:
+1. **Teste Offline**:
+   ```javascript
+   // Simule offline no DevTools (Application > Service Worker > Offline)
+   await submitForm(); // Deve mudar para "saved-offline" imediatamente
+   ```
+
+2. **Teste Online Intermitente**:
+   ```javascript
+   // 1. Inicie offline
+   await submitForm(); // "saved-offline"
+   
+   // 2. Volte online
+   // Deve sincronizar sem afetar a UI
+   ```
+
+3. **Verifique os Logs**:
+   ```javascript
+   // No Service Worker:
+   console.log('Offline request stored', tempId);
+   
+   // No Cliente:
+   console.log('SW message received', event.data);
+   ```
+
+Essa abordagem elimina a complexidade que estava causando o loop, focando no essencial: o cliente precisa saber apenas se a operação foi aceita, não gerenciar todo o fluxo offline. A sincronização posterior fica inteiramente sob responsabilidade do Service Worker.

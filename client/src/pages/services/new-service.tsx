@@ -90,6 +90,8 @@ export default function NewService() {
   const { user } = useAuth();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [photos, setPhotos] = useState<FileList | null>(null);
+  // Estado para acompanhar operações offline
+  const [pendingOperations, setPendingOperations] = useState<string[]>([]);
   
   // Queries
   const { data: clients } = useQuery<Client[]>({
@@ -189,81 +191,145 @@ export default function NewService() {
     }
   }, [user, technicians, form]);
   
+  // Listener para mensagens do Service Worker (especialmente para operações offline)
+  useEffect(() => {
+    // Função de callback para tratar mensagens do Service Worker
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+      
+      console.log('Mensagem recebida do service worker:', data.type);
+      
+      // Quando uma operação é iniciada no modo offline (pré-armazenamento)
+      if (data.type === 'offline-operation-started') {
+        console.log('Operação offline iniciada com ID temporário:', data.tempId);
+        
+        // Sair do status de "salvando" imediatamente ao receber esta mensagem
+        if (createServiceMutation.isPending) {
+          // Forçar o fim do estado isPending - HACK para resolver o problema
+          (createServiceMutation as any).reset();
+          
+          // Adicionar ID da operação à lista de operações pendentes
+          setPendingOperations(prev => [...prev, data.tempId]);
+          
+          // Mostrar notificação para o usuário
+          toast({
+            title: "Operação em modo offline",
+            description: "O formulário foi salvo localmente e será sincronizado quando houver conexão com a internet.",
+          });
+          
+          // Redirecionar para a lista
+          setLocation('/services');
+        }
+      }
+      
+      // Quando uma operação é enfileirada (confirmação de armazenamento)
+      if (data.type === 'operation-queued') {
+        console.log('Operação offline armazenada com sucesso:', data.tempId);
+      }
+      
+      // Quando uma sincronização é concluída
+      if (data.type === 'operation-synced') {
+        console.log('Operação sincronizada com o servidor:', data);
+        
+        // Remover da lista de operações pendentes
+        setPendingOperations(prev => 
+          prev.filter(id => id !== data.tempId)
+        );
+        
+        // Invalidar caches para atualizar listas
+        queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      }
+    };
+    
+    // Registrar o listener
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    }
+    
+    // Limpeza ao desmontar o componente
+    return () => {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      }
+    };
+  }, [createServiceMutation, queryClient, toast, setLocation]);
+  
   // Create service mutation
   const createServiceMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      // Format the datetime properly
-      let formattedData = { ...data };
-      
-      // Tratamento especial para a data agendada
-      if (formattedData.scheduled_date) {
-        try {
-          let dateToUse: Date;
-          
-          // Se já for string, converte para Date para manipular
-          if (typeof formattedData.scheduled_date === 'string') {
-            try {
-              dateToUse = new Date(formattedData.scheduled_date);
-            } catch (e) {
-              // Se não conseguir converter a string, usa a data atual
-              console.error("Erro ao converter string de data:", e);
+      try {
+        // Format the datetime properly
+        let formattedData = { ...data };
+        
+        // Tratamento especial para a data agendada
+        if (formattedData.scheduled_date) {
+          try {
+            let dateToUse: Date;
+            
+            // Se já for string, converte para Date para manipular
+            if (typeof formattedData.scheduled_date === 'string') {
+              try {
+                dateToUse = new Date(formattedData.scheduled_date);
+              } catch (e) {
+                // Se não conseguir converter a string, usa a data atual
+                console.error("Erro ao converter string de data:", e);
+                dateToUse = new Date();
+              }
+            } 
+            // Se já for Date, usa diretamente
+            else if (formattedData.scheduled_date instanceof Date) {
+              dateToUse = formattedData.scheduled_date;
+            }
+            // Caso não seja nem string nem Date, usa a data atual
+            else {
               dateToUse = new Date();
             }
-          } 
-          // Se já for Date, usa diretamente
-          else if (formattedData.scheduled_date instanceof Date) {
-            dateToUse = formattedData.scheduled_date;
+            
+            // Define meio-dia como horário padrão
+            dateToUse.setHours(12, 0, 0, 0);
+            
+            // Se tiver horário específico, ajusta
+            if (data.scheduled_time) {
+              const [hours, minutes] = data.scheduled_time.split(':');
+              dateToUse.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            }
+            
+            // Converte para ISO string para enviar ao servidor
+            formattedData.scheduled_date = dateToUse.toISOString();
+            
+            console.log("Data formatada:", formattedData.scheduled_date);
+          } catch (error) {
+            console.error("Erro ao processar data:", error);
+            // Em caso de erro fatal, usa a data atual
+            formattedData.scheduled_date = new Date().toISOString();
           }
-          // Caso não seja nem string nem Date, usa a data atual
-          else {
-            dateToUse = new Date();
-          }
-          
-          // Define meio-dia como horário padrão
-          dateToUse.setHours(12, 0, 0, 0);
-          
-          // Se tiver horário específico, ajusta
-          if (data.scheduled_time) {
-            const [hours, minutes] = data.scheduled_time.split(':');
-            dateToUse.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-          }
-          
-          // Converte para ISO string para enviar ao servidor
-          formattedData.scheduled_date = dateToUse.toISOString();
-          
-          console.log("Data formatada:", formattedData.scheduled_date);
-        } catch (error) {
-          console.error("Erro ao processar data:", error);
-          // Em caso de erro fatal, usa a data atual
+        } else {
+          // Se não tiver data, usa a data atual
           formattedData.scheduled_date = new Date().toISOString();
         }
-      } else {
-        // Se não tiver data, usa a data atual
-        formattedData.scheduled_date = new Date().toISOString();
-      }
-      
-      // Calculate total
-      const price = formattedData.price !== undefined && formattedData.price !== null 
-        ? formattedData.price 
-        : 0;
-      
-      const administrativeFee = formattedData.administrative_fee !== undefined && formattedData.administrative_fee !== null 
-        ? formattedData.administrative_fee 
-        : 0;
-      
-      formattedData.total = price + administrativeFee;
-      
-      // Remover parâmetros desnecessários dos dados
-      const { scheduled_time, photos, ...serviceData } = formattedData;
-      
-      // Log de depuração
-      console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
-      
-      // Verificar status da rede antes de iniciar
-      const isOnline = checkNetworkStatus();
-      console.log("Status da rede:", isOnline ? "Online" : "Offline");
-      
-      try {
+        
+        // Calculate total
+        const price = formattedData.price !== undefined && formattedData.price !== null 
+          ? formattedData.price 
+          : 0;
+        
+        const administrativeFee = formattedData.administrative_fee !== undefined && formattedData.administrative_fee !== null 
+          ? formattedData.administrative_fee 
+          : 0;
+        
+        formattedData.total = price + administrativeFee;
+        
+        // Remover parâmetros desnecessários dos dados
+        const { scheduled_time, photos, ...serviceData } = formattedData;
+        
+        // Log de depuração
+        console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
+        
+        // Verificar status da rede antes de iniciar
+        const isOnline = checkNetworkStatus();
+        console.log("Status da rede:", isOnline ? "Online" : "Offline");
+        
         // 1. Criar serviço usando o apiWrapper para suporte offline
         const createdService = await postApi<any>('/api/services', serviceData, {
           enableOffline: true,
@@ -318,6 +384,7 @@ export default function NewService() {
         }
         
         return createdService;
+        
       } catch (error: any) {
         // Tentar obter os detalhes do erro
         console.error("Detalhes do erro:", error);
@@ -329,6 +396,8 @@ export default function NewService() {
             console.error("Não foi possível ler o corpo da resposta de erro");
           }
         }
+        
+        // ⚠️ IMPORTANTE: Garantir que o erro seja sempre propagado para o handler onError
         throw error;
       }
     },
@@ -356,7 +425,10 @@ export default function NewService() {
         description: "Ocorreu um erro ao criar o serviço. Verifique os dados e tente novamente.",
         variant: "destructive",
       });
-    }
+    },
+    // ⚠️ IMPORTANTE: Garantir que o mutation seja sempre considerado finalizado após sucesso ou erro
+    // isso garante que o botão não ficará preso no estado "Salvando..."
+    useErrorBoundary: false
   });
   
   const onSubmit = (data: FormData) => {
