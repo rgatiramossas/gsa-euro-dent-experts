@@ -27,11 +27,24 @@ export function NewServiceOffline() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verifica se o formulário já está sendo processado
+    if (isSaving) {
+      console.log("Evitando submissão dupla do formulário");
+      return;
+    }
+    
     setIsSaving(true);
+    console.log("Iniciando salvamento offline...");
 
     try {
+      // Obter um ID temporário negativo único
+      const tempId = -(Date.now());
+      console.log("ID temporário gerado:", tempId);
+      
       // Criar um objeto de serviço com dados mínimos
       const serviceData = {
+        id: tempId, // ID negativo temporário
         client_id: 1, // ID padrão para o primeiro cliente
         vehicle_id: 1, // ID padrão para o primeiro veículo
         service_type_id: formData.tipo_servico === "Granizo" ? 2 : (formData.tipo_servico === "Amassado de Rua" ? 1 : 3),
@@ -48,35 +61,43 @@ export function NewServiceOffline() {
         total: parseFloat(formData.valor) || 0,
         notes: `Criado no modo offline - Cliente: ${formData.cliente}, Veículo: ${formData.veiculo}`,
         _isOffline: true,
-        _offline: true
+        created_at: new Date().toISOString()
       };
 
-      // Salvar no banco de dados offline diretamente
-      const offlineId = await offlineDb.getTableByName("services").add({
-        ...serviceData,
-        id: Math.floor(Math.random() * -1000000), // ID negativo temporário
-        created_at: new Date().toISOString()
-      });
+      console.log("Objeto de serviço preparado:", JSON.stringify(serviceData));
 
-      console.log("Serviço salvo offline com ID temporário:", offlineId);
+      // Salvar no banco de dados offline diretamente
+      await offlineDb.getTableByName("services").add(serviceData);
+      console.log("Serviço salvo no IndexedDB com sucesso");
 
       // Adicionar à fila de sincronização
       await offlineDb.getTableByName("pendingRequests").add({
-        id: Date.now(),
+        id: `sync-${Date.now()}`,
         url: "/api/services",
         method: "POST",
-        body: serviceData,
+        body: {
+          ...serviceData,
+          id: undefined // Remover o ID temporário na hora de enviar ao servidor
+        },
         timestamp: Date.now(),
         operationType: "create",
         tableName: "services",
-        resourceId: offlineId
+        resourceId: tempId,
+        headers: { 'Content-Type': 'application/json' }
       });
+      
+      console.log("Requisição pendente adicionada com sucesso");
 
       toast({
         title: "Serviço salvo offline",
         description: "O serviço foi salvo localmente e será sincronizado quando houver conexão."
       });
-
+      
+      // Aguardar um momento para garantir que o toast seja exibido
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Navegar para a lista de serviços
+      console.log("Navegando para a lista de serviços...");
       setLocation("/services");
     } catch (error) {
       console.error("Erro ao salvar serviço offline:", error);
