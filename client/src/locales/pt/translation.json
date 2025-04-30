@@ -83,6 +83,11 @@
     "photos": "Fotos",
     "addPhotos": "Adicionar Fotos",
     "serviceType": "Tipo de Serviço",
+    "unassigned": "Não atribuído",
+    "manage": "Gerencie todos os serviços de martelinho de ouro",
+    "details": "Detalhes",
+    "searchPlaceholder": "Buscar por cliente, veículo ou placa...",
+    "serviceStatus": "Status do Serviço",
     "status": {
       "pending": "Pendente",
       "completed": "Concluído",

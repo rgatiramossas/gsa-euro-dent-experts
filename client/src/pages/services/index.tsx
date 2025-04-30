@@ -29,11 +29,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 export default function ServicesList() {
   const [_, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<ServiceStatus | "all">("all");
+  const { t } = useTranslation();
   
   const { data: services, isLoading } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services', { enableOffline: true, offlineTableName: 'services' }],
@@ -62,15 +64,15 @@ export default function ServicesList() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title="Serviços"
-        description="Gerencie todos os serviços de martelinho de ouro"
+        title={t("services.title")}
+        description={t("services.manage")}
         actions={
           <Link href="/services/new">
             <Button>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Novo Serviço
+              {t("services.newService")}
             </Button>
           </Link>
         }
@@ -80,30 +82,30 @@ export default function ServicesList() {
         <div className="p-4 border-b border-gray-200">
           <div className="flex flex-col gap-4">
             <Input
-              placeholder="Buscar por cliente, veículo ou placa..."
+              placeholder={t("services.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full"
             />
             
             <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-              <div className="text-sm font-medium">Status:</div>
+              <div className="text-sm font-medium">{t("services.status")}:</div>
               <Select 
                 value={activeTab} 
                 onValueChange={(value) => setActiveTab(value as ServiceStatus | "all")}
               >
                 <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Selecione um status" />
+                  <SelectValue placeholder={t("validation.selectOption")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Status do Serviço</SelectLabel>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="pending">Pendentes</SelectItem>
-                    <SelectItem value="completed">Concluídos</SelectItem>
-                    <SelectItem value="aguardando_aprovacao">Aguardando Aprovação</SelectItem>
-                    <SelectItem value="faturado">Faturados</SelectItem>
-                    <SelectItem value="pago">Pagos</SelectItem>
+                    <SelectLabel>{t("services.serviceStatus")}</SelectLabel>
+                    <SelectItem value="all">{t("clients.all")}</SelectItem>
+                    <SelectItem value="pending">{t("services.status.pending")}</SelectItem>
+                    <SelectItem value="completed">{t("services.status.completed")}</SelectItem>
+                    <SelectItem value="aguardando_aprovacao">{t("services.status.aguardando_aprovacao")}</SelectItem>
+                    <SelectItem value="faturado">{t("services.status.faturado")}</SelectItem>
+                    <SelectItem value="pago">{t("services.status.pago")}</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -122,19 +124,19 @@ export default function ServicesList() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Veículo</TableHead>
-                    <TableHead>Técnico</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>{t("services.client")}</TableHead>
+                    <TableHead>{t("services.vehicle")}</TableHead>
+                    <TableHead>{t("services.technician")}</TableHead>
+                    <TableHead>{t("services.status")}</TableHead>
+                    <TableHead>{t("services.scheduledDate")}</TableHead>
+                    <TableHead className="text-right">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredServices?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        Nenhum serviço encontrado
+                        {t("common.noResults")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -149,7 +151,7 @@ export default function ServicesList() {
                           {service.vehicle.make} {service.vehicle.model}
                           {service.vehicle.license_plate && ` - ${service.vehicle.license_plate}`}
                         </TableCell>
-                        <TableCell>{service.technician?.name || "Não atribuído"}</TableCell>
+                        <TableCell>{service.technician?.name || t("services.unassigned")}</TableCell>
                         <TableCell>
                           <ServiceStatusBadge status={service.status} />
                         </TableCell>
@@ -168,7 +170,7 @@ export default function ServicesList() {
                                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
                                 <circle cx="12" cy="12" r="3"/>
                               </svg>
-                              <span>Detalhes</span>
+                              <span>{t("services.details")}</span>
                             </Button>
                           </div>
                         </TableCell>

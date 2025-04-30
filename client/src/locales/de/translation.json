@@ -20,7 +20,8 @@
     "success": "Erfolg!",
     "error": "Fehler",
     "warning": "Warnung",
-    "required": "Erforderlich"
+    "required": "Erforderlich",
+    "backToManagers": "Zurück zu Managern"
   },
   "auth": {
     "login": "Anmelden",
@@ -118,7 +119,20 @@
     "clientCreated": "Kunde erfolgreich erstellt",
     "clientUpdated": "Kunde erfolgreich aktualisiert",
     "clientDeleted": "Kunde erfolgreich gelöscht",
-    "confirmDelete": "Sind Sie sicher, dass Sie diesen Kunden löschen möchten?"
+    "confirmDelete": "Sind Sie sicher, dass Sie diesen Kunden löschen möchten?",
+    "managerClients": "Manager-Kunden",
+    "viewManagerClients": "Manager-Kunden anzeigen",
+    "manageClients": "Kunden und ihre Fahrzeuge verwalten",
+    "searchPlaceholder": "Nach Name, E-Mail oder Telefon suchen...",
+    "show": "Anzeigen",
+    "active": "Aktiv",
+    "deleted": "Gelöscht",
+    "all": "Alle",
+    "noClientsFound": "Keine Kunden gefunden",
+    "details": "Details",
+    "vehicle": "Fahrzeug",
+    "cityState": "Stadt/Land",
+    "notSpecified": "Nicht angegeben"
   },
   "vehicles": {
     "title": "Fahrzeuge",
