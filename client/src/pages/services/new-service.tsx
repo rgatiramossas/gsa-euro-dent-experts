@@ -264,7 +264,7 @@ export default function NewService() {
       console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
       
       // Verificar novamente o status da rede
-      console.log("Status da rede confirmado:", isOnline ? "Online" : "Offline");
+      console.log("Status da rede confirmado:", networkOnline ? "Online" : "Offline");
       
       try {
         // 1. Criar serviço usando o apiWrapper para suporte offline
@@ -275,8 +275,8 @@ export default function NewService() {
         console.log("Resposta do servidor ou cache local:", createdService);
         
         // Verificar se a resposta já indica que é um salvo offline
-        // Tanto apiWrapper.ts quanto quando verificamos isOnline
-        if (!isOnline || createdService._isOffline || createdService._offline) {
+        // Tanto apiWrapper.ts quanto quando verificamos status da rede
+        if (!networkOnline || createdService._isOffline || createdService._offline) {
           console.log("Modo offline detectado: serviço criado localmente, saltando o upload de fotos");
           // Forçamos indicação explícita de modo offline para feedback correto ao usuário
           return { 
@@ -289,7 +289,7 @@ export default function NewService() {
         }
         
         // Processar upload de fotos se houver fotos e APENAS se estivermos online
-        if (isOnline && photos && photos.length > 0) {
+        if (networkOnline && photos && photos.length > 0) {
           try {
             const serviceId = createdService.id;
             
