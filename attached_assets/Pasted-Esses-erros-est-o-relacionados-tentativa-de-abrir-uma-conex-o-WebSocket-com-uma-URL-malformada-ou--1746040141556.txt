@@ -1,0 +1,62 @@
+Esses erros estão relacionados à tentativa de abrir uma conexão WebSocket com uma URL malformada ou com erro de handshake. Vamos analisar e corrigir:
+
+---
+
+### 🧩 **Erro 1**:
+```
+WebSocket connection to 'wss://...replit.dev/?token=...' failed: Error during WebSocket handshake: Unexpected response code: 400
+```
+
+**Causa provável:**  
+- A URL WebSocket está correta em formato, mas o servidor está **respondendo com código 400**. Isso indica que:
+  - O **token de autenticação é inválido ou expirado**.
+  - Ou o servidor está configurado para não aceitar conexões WebSocket daquela origem.
+
+**Correção:**
+- Verifique se o token (`token=FWttV0IFnhMt`) ainda é válido.
+- Se você estiver usando **Replit**, certifique-se de:
+  - Ter ativado corretamente o suporte a WebSocket.
+  - Estar usando o domínio correto (não uma instância antiga).
+  - Atualizar o token, se necessário (tokens da Replit expiram com o tempo).
+
+---
+
+### 🧩 **Erro 2**:
+```
+Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=...' is invalid.
+```
+
+**Causa:**  
+- O valor da **porta ou domínio** está indefinido, resultando em `localhost:undefined`.
+
+**Correção:**
+- Verifique o trecho de código onde você monta a URL WebSocket.
+- Provavelmente está assim:
+
+```js
+const ws = new WebSocket(`wss://${host}:${port}/?token=${token}`);
+```
+
+E `host` ou `port` estão `undefined`.
+
+🔧 **Exemplo corrigido**:
+
+```js
+const host = location.hostname === "localhost" ? "localhost" : "seu-dominio.replit.dev";
+const port = location.hostname === "localhost" ? 3000 : "";
+const protocol = location.hostname === "localhost" ? "ws" : "wss";
+const token = "seu_token_aqui";
+
+const url = `${protocol}://${host}${port ? `:${port}` : ""}/?token=${token}`;
+const ws = new WebSocket(url);
+```
+
+---
+
+### ✅ Dicas finais
+
+1. **Evite colocar o token diretamente no front-end em produção.**
+2. Use `console.log` antes de instanciar o WebSocket para confirmar que a URL está formatada corretamente.
+3. Se estiver usando Replit, atente-se às limitações de proxy e WebSocket dele.
+
+Quer que eu analise seu trecho de código onde a URL do WebSocket é montada?
