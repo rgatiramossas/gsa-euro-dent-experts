@@ -28,6 +28,7 @@
     "selectDate": "Datum auswählen",
     "saving": "Wird gespeichert...",
     "saveChanges": "Änderungen speichern",
+    "notSpecified": "Nicht angegeben",
     "noDescription": "Keine Beschreibung"
   },
   "auth": {

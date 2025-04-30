@@ -212,10 +212,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
       
       toast({
-        title: "Status atualizado",
+        title: t("services.statusUpdated"),
         description: isOfflineData 
-          ? "O status foi salvo localmente e será sincronizado quando houver conexão" 
-          : "O status do serviço foi atualizado com sucesso",
+          ? t("offline.serviceOfflineDescription") 
+          : t("services.statusUpdatedSuccess"),
       });
       
       setShowStatusDialog(false);
@@ -225,8 +225,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     onError: (error) => {
       console.error('Error updating status:', error);
       toast({
-        title: "Erro ao atualizar status",
-        description: "Ocorreu um erro ao atualizar o status do serviço",
+        title: t("errors.updateStatus"),
+        description: t("errors.updateStatusDescription"),
         variant: "destructive",
       });
     }
@@ -298,10 +298,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
       
       toast({
-        title: "Serviço atualizado",
+        title: t("services.serviceUpdated"),
         description: isOfflineData 
-          ? "O serviço foi salvo localmente e será sincronizado quando houver conexão" 
-          : "As informações do serviço foram atualizadas com sucesso",
+          ? t("offline.serviceOfflineDescription") 
+          : t("services.serviceUpdatedSuccess"),
       });
       
       // Resetar o estado de edição
