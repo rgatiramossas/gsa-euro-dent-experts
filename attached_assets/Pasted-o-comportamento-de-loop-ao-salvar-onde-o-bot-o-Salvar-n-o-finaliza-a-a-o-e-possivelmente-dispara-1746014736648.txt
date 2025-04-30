@@ -1,0 +1,86 @@
+o comportamento de loop ao salvar (onde o botão "Salvar" não finaliza a ação e possivelmente dispara várias vezes ou trava o fluxo) geralmente está ligado a algum dos seguintes fatores em aplicações React com react-hook-form, react-query e lógica assíncrona:
+
+Principais suspeitas no seu código:
+Mutação sem finalização: A mutação createServiceMutation está configurada com mutationFn, mas não encontrei o onSuccess, onError ou onSettled definidos. Isso é crucial para "encerrar" o processo no front-end.
+
+Sem isso, o formulário pode permanecer em estado de "submissão" esperando um retorno que nunca será tratado, causando o "loop" no botão.
+
+Função handleSubmit não sendo chamada corretamente ou sendo reinvocada: Se o submit estiver em um useEffect, ou o estado for alterado dentro da submissão e isso provocar novo render/re-execução, isso pode gerar uma nova submissão indesejada.
+
+O form.watch() sendo usado fora do escopo esperado: Se houver uso de form.watch() em outro lugar (não visível no trecho) que altere o estado e dispare a mutação de novo (ex: um useEffect que depende do resultado do watch e chama mutate() novamente), isso pode disparar o ciclo repetidamente.
+
+Execução parcial do código: No final do código que você colou, a função de upload de fotos estava incompleta (const formData...). Isso sugere que o código de salvamento pode estar travando ali — ou nunca chegando ao final, então o estado de carregamento nunca muda.
+
+Soluções imediatas
+Finalize a mutação corretamente:
+
+Adicione um onSuccess ou onSettled à sua useMutation:
+
+ts
+Copiar
+Editar
+const createServiceMutation = useMutation({
+  mutationFn: async (data: FormData) => {
+    // ... sua lógica
+  },
+  onSuccess: (createdService) => {
+    toast({
+      title: "Serviço criado com sucesso",
+      description: createdService._offline ? 
+        "O serviço foi salvo offline e será sincronizado." : 
+        "O serviço foi salvo com sucesso.",
+    });
+
+    queryClient.invalidateQueries(['/api/services']);
+    setLocation('/services');
+  },
+  onError: (error) => {
+    toast({
+      title: "Erro ao salvar",
+      description: "Ocorreu um erro ao salvar o serviço. Verifique sua conexão e tente novamente.",
+      variant: "destructive",
+    });
+  },
+  onSettled: () => {
+    // Resetar estados ou loaders, se necessário
+  }
+});
+Finalize o upload de fotos (o trecho está cortado):
+
+Certifique-se de completar esse bloco:
+
+ts
+Copiar
+Editar
+if (networkOnline && photos && photos.length > 0) {
+  const serviceId = createdService.id;
+  const formData = new FormData();
+  Array.from(photos).forEach(photo => {
+    formData.append('photos', photo);
+  });
+
+  await fetch(`/api/services/${serviceId}/photos`, {
+    method: 'POST',
+    body: formData,
+  });
+}
+Certifique-se de que handleSubmit é chamado apenas uma vez:
+
+Exemplo correto:
+
+tsx
+Copiar
+Editar
+<form onSubmit={form.handleSubmit((data) => createServiceMutation.mutate(data))}>
+  {/* ... */}
+</form>
+Ou usando <Form /> do seu componente:
+
+tsx
+Copiar
+Editar
+<Form {...form}>
+  <form onSubmit={form.handleSubmit((data) => createServiceMutation.mutate(data))}>
+    {/* ... */}
+  </form>
+</Form>

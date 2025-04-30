@@ -277,11 +277,13 @@ export default function NewService() {
           return { ...createdService, _offline: true };
         }
         
+        // Guardar referência ao ID do serviço criado para garantir que não seja perdido
+        const serviceId = createdService.id;
+        
         // Processar upload de fotos se houver fotos e APENAS se estivermos online
+        let photoUploadSuccess = true;
         if (isOnline && photos && photos.length > 0) {
           try {
-            const serviceId = createdService.id;
-            
             // Criar FormData para upload das fotos
             const formData = new FormData();
             
@@ -305,19 +307,25 @@ export default function NewService() {
             if (!uploadRes.ok) {
               console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
               console.warn("Prosseguindo apesar do erro no upload de fotos");
+              photoUploadSuccess = false;
             } else {
               const uploadData = await uploadRes.json();
               console.log("Resposta do upload:", uploadData);
             }
           } catch (photoError) {
             console.error("Erro ao processar fotos:", photoError);
+            photoUploadSuccess = false;
             // Não lança erro para não impedir a criação do serviço
           }
         } else {
           console.log("Nenhuma foto selecionada para upload ou modo offline");
         }
         
-        return createdService;
+        // Retornar as informações do serviço criado junto com status de upload de fotos
+        return {
+          ...createdService,
+          photoUploadSuccess
+        };
       } catch (error: any) {
         // Tentar obter os detalhes do erro
         console.error("Detalhes do erro:", error);
@@ -335,16 +343,26 @@ export default function NewService() {
     onSuccess: (data) => {
       // Verificar se estamos offline e o serviço foi salvo localmente
       const isOfflineData = data && data._offline === true;
+      const photoUploadFailed = data.photoUploadSuccess === false;
+      
+      // Limpar o estado de fotos para evitar loop
+      setPhotos(null);
       
       queryClient.invalidateQueries({ queryKey: ['/api/services'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       
+      // Mensagem de sucesso com ressalva se o upload de fotos falhou
       toast({
         title: "Serviço criado",
         description: isOfflineData 
           ? "O serviço foi salvo localmente e será sincronizado quando houver conexão" 
-          : "O serviço foi criado com sucesso",
+          : photoUploadFailed
+            ? "Serviço criado com sucesso, mas houve um problema ao fazer upload das fotos"
+            : "O serviço foi criado com sucesso",
       });
+      
+      // Limpar o formulário para evitar resubmissões acidentais
+      form.reset();
       
       // Redirecionar para a lista de serviços
       setLocation('/services');
@@ -356,6 +374,10 @@ export default function NewService() {
         description: "Ocorreu um erro ao criar o serviço. Verifique os dados e tente novamente.",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      // Garantir que o estado de submissão seja finalizado
+      console.log("Submissão finalizada (settled)");
     }
   });
   
