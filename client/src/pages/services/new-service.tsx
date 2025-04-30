@@ -191,24 +191,24 @@ export default function NewService() {
 
   // Form definition
   // Criar um resolver personalizado que traduza as mensagens de erro
-  const customResolver = (data: any) => {
+  const customResolver = async (data: any, context: any, options: any) => {
     // Usar o resolver do Zod, mas substituir as mensagens de erro por versões traduzidas
-    return zodResolver(formSchema)(data).then((result) => {
-      if (result.errors) {
-        // Para cada campo com erro, verificar se é um erro de campo obrigatório
-        Object.keys(result.errors).forEach((field) => {
-          const error = result.errors[field];
-          if (error && error.message === "Selecione um cliente") {
-            error.message = t("services.errors.selectClient");
-          } else if (error && error.message === "Selecione um veículo") {
-            error.message = t("services.errors.selectVehicle");
-          } else if (error && error.message === "Selecione o tipo de serviço") {
-            error.message = t("services.errors.selectServiceType");
-          }
-        });
-      }
-      return result;
-    });
+    const result = await zodResolver(formSchema)(data, context, options);
+    
+    if (result.errors) {
+      // Para cada campo com erro, verificar se é um erro de campo obrigatório
+      Object.entries(result.errors).forEach(([field, fieldError]) => {
+        const error = fieldError as { message?: string };
+        if (error && error.message === "Selecione um cliente") {
+          error.message = t("services.errors.selectClient");
+        } else if (error && error.message === "Selecione um veículo") {
+          error.message = t("services.errors.selectVehicle");
+        } else if (error && error.message === "Selecione o tipo de serviço") {
+          error.message = t("services.errors.selectServiceType");
+        }
+      });
+    }
+    return result;
   };
 
   const form = useForm<FormData>({
@@ -324,18 +324,24 @@ export default function NewService() {
               dateToUse.setHours(parseInt(hours), parseInt(minutes), 0, 0);
             }
             
-            // Converte para ISO string para enviar ao servidor
-            formattedData.scheduled_date = dateToUse.toISOString();
+            // Converte para ISO string para enviar ao servidor, mas mantém o tipo Date para o formulário
+            const isoString = dateToUse.toISOString();
+            // @ts-ignore - Ignorar erro de tipagem, a API espera string mas o form espera Date
+            formattedData.scheduled_date = isoString;
             
             console.log("Data formatada:", formattedData.scheduled_date);
           } catch (error) {
             console.error("Erro ao processar data:", error);
             // Em caso de erro fatal, usa a data atual
-            formattedData.scheduled_date = new Date().toISOString();
+            const fallbackDate = new Date().toISOString();
+            // @ts-ignore - Ignorar erro de tipagem, a API espera string mas o form espera Date
+            formattedData.scheduled_date = fallbackDate;
           }
         } else {
           // Se não tiver data, usa a data atual
-          formattedData.scheduled_date = new Date().toISOString();
+          const defaultDate = new Date().toISOString();
+          // @ts-ignore - Ignorar erro de tipagem, a API espera string mas o form espera Date
+          formattedData.scheduled_date = defaultDate;
         }
         
         // Calculate total

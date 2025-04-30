@@ -69,6 +69,11 @@
     "serviceDetails": "Detalhes do Serviço",
     "editService": "Editar Serviço",
     "deleteService": "Excluir Serviço",
+    "errors": {
+      "selectClient": "Selecione um cliente",
+      "selectVehicle": "Selecione um veículo",
+      "selectServiceType": "Selecione o tipo de serviço"
+    },
     "client": "Cliente",
     "vehicle": "Veículo",
     "technician": "Técnico",
