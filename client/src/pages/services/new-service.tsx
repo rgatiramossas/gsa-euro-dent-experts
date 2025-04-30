@@ -860,7 +860,8 @@ export default function NewService() {
                   // Em modo offline, configurar um timer para forçar o reset do botão e redirecionar
                   setTimeout(() => {
                     console.log("[SaveButton] Forçando reset do botão e redirecionamento em new-service");
-                    setIsSubmitting(false);
+                    // Usar form.reset() em vez de setIsSubmitting que não existe neste componente
+                    form.reset();
                     window.location.href = '/services';
                   }, 3000);
                 }

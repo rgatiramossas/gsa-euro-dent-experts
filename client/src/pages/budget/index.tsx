@@ -147,6 +147,16 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
     if (!budget) return;
     
     try {
+      // Verificar se estamos offline antes de tentar gerar o PDF
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+      if (isOffline) {
+        toast({
+          title: "Modo offline detectado",
+          description: "Fotos do veículo não estarão disponíveis no PDF gerado. Considere imprimir novamente quando estiver online.",
+          variant: "warning",
+        });
+      }
+      
       // Passamos o flag isGestor para controlar a exibição de informações financeiras
       await generateSimplePdf(budget, isGestor);
       toast({

@@ -112,21 +112,27 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
       }
     });
 
+    // Verificar se o aplicativo está offline
+    const isOffline = () => {
+      return typeof navigator !== 'undefined' && !navigator.onLine;
+    };
+
     // Renderizar o grid de danos
     const renderDamageGrid = () => {
       let damageParts = '';
       
       // Função para renderizar uma parte dos danos
       const renderDamagePart = (part: string) => {
-        // Se for o espaço para imagem, exibir a imagem do veículo se existir
+        // Se for o espaço para imagem, exibir a imagem do veículo se existir e não estiver offline
         if (part === "imagem_central") {
-          if (budget.vehicle_image) {
+          // Verificar se estamos offline e se há uma imagem
+          if (budget.vehicle_image && !isOffline()) {
             return `<div style="border: 1px solid #ddd; border-radius: 5px; padding: 6px; height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
               <img src="${budget.vehicle_image}" alt="Imagem do veículo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
             </div>`;
           } else {
             return `<div style="border: 1px solid #ddd; border-radius: 5px; padding: 6px; height: 100px; display: flex; align-items: center; justify-content: center;">
-              <div style="color: #888; font-size: 10px;">Sem imagem</div>
+              <div style="color: #888; font-size: 10px;">${isOffline() ? "Modo offline - Imagens não disponíveis" : "Sem imagem"}</div>
             </div>`;
           }
         }

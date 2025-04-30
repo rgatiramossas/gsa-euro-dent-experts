@@ -1,0 +1,25 @@
+<button type="button" role="checkbox" aria-checked="false" data-state="unchecked" value="on" data-replit-metadata="client/src/pages/login.tsx:102:16" data-component-name="Checkbox" class="peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" id="remember-me">
+Open in Elements
+Request
+https://6a78c9e6-66d2-42fd-be5e-869c310e22a3-00-3i3h1brwj3y2v.worf.replit.dev/clients/new
+Further Reading
+Learn more about this axe rule at Deque University
+Learn why this is important and how to fix it on webhint.io
+Compatibility
+'-moz-appearance' is not supported by Chrome, Chrome Android, Edge, Safari. Add 'appearance' to support Chrome 84+, Chrome Android 84+, Edge 84+, Safari 15.4+.
+'-webkit-text-size-adjust' is not supported by Chrome, Chrome Android, Edge 79+, Firefox, Safari. Add 'text-size-adjust' to support Chrome 54+, Chrome Android 54+, Edge 79+.
+The 'viewport' meta element 'content' attribute value should not contain 'maximum-scale'.
+'content-type' header charset value should be 'utf-8'.
+'content-type' header media type value should be 'application/javascript', not 'text/javascript'.
+'content-type' header media type value should be 'text/css', not 'text/javascript'.
+'content-type' header media type value should be 'text/x-typescript', not 'text/javascript'.
+'meta[name=theme-color]' is not supported by Firefox.
+Performance
+A 'cache-control' header is missing or empty.
+A 'cache-control' header contains directives which are not recommended: 'no-store'
+Resource should use cache busting but URL does not match configured patterns.
+Security
+Response should include 'x-content-type-options' header.
+Response should not include disallowed headers: x-powered-by
+Other
+A form field element should have an id or name attribute
