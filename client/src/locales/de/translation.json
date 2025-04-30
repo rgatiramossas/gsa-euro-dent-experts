@@ -13,6 +13,7 @@
     "noResults": "Keine Ergebnisse gefunden",
     "actions": "Aktionen",
     "viewDetails": "Details anzeigen",
+    "viewAll": "Alle anzeigen",
     "back": "Zurück",
     "confirm": "Bestätigen",
     "yes": "Ja",
@@ -21,7 +22,8 @@
     "error": "Fehler",
     "warning": "Warnung",
     "required": "Erforderlich",
-    "backToManagers": "Zurück zu Managern"
+    "backToManagers": "Zurück zu Managern",
+    "description": "Beschreibung"
   },
   "auth": {
     "login": "Anmelden",
@@ -48,6 +50,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "description": "Überblick über Dienstleistungen und Teamleistung",
     "pendingServices": "Ausstehende Dienstleistungen",
     "completedServices": "Abgeschlossene Dienstleistungen",
     "revenue": "Gesamtumsatz",

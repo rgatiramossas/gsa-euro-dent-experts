@@ -13,6 +13,7 @@
     "noResults": "No se encontraron resultados",
     "actions": "Acciones",
     "viewDetails": "Ver detalles",
+    "viewAll": "Ver todos",
     "back": "Volver",
     "confirm": "Confirmar",
     "yes": "Sí",
@@ -21,7 +22,8 @@
     "error": "Error",
     "warning": "Advertencia",
     "required": "Obligatorio",
-    "backToManagers": "Volver a Gestores"
+    "backToManagers": "Volver a Gestores",
+    "description": "Descripción"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -48,6 +50,7 @@
   },
   "dashboard": {
     "title": "Panel de Control",
+    "description": "Visión general de los servicios y productividad del equipo",
     "pendingServices": "Servicios Pendientes",
     "completedServices": "Servicios Completados",
     "revenue": "Facturación Total",
