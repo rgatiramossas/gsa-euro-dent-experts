@@ -149,6 +149,13 @@ self.addEventListener('sync', (event) => {
 
 // Função para processar requisições pendentes
 async function syncPendingRequests() {
+  // Verifica primeiro se está online
+  if (!navigator.onLine) {
+    console.warn('Offline: sincronização adiada até que a conexão seja restabelecida');
+    // Aqui não geramos erro, apenas saímos silenciosamente
+    return;
+  }
+  
   try {
     // Abrir uma conexão para nossa base de dados
     const db = await openDatabase();
@@ -222,10 +229,17 @@ async function syncPendingRequests() {
 
 // Abrir a conexão com o IndexedDB
 async function openDatabase() {
+  // Verifica se está online antes de tentar abrir o banco
+  if (!navigator.onLine) {
+    console.warn('Offline: sincronização adiada até que a conexão seja restabelecida');
+    return Promise.reject(new Error('Offline: sincronização adiada'));
+  }
+
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('EuroDentOfflineDB', 1);
     
     request.onerror = (event) => {
+      console.error('Erro ao abrir banco de dados:', event.target.error);
       reject('Falha ao abrir o banco de dados');
     };
     
