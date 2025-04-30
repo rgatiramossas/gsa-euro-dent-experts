@@ -119,7 +119,8 @@
     },
     "serviceCreated": "Servicio creado con éxito",
     "serviceUpdated": "Servicio actualizado con éxito",
-    "serviceDeleted": "Servicio eliminado con éxito",
+    "serviceDeleted": "Servicio eliminado",
+    "serviceDeletedSuccess": "El servicio ha sido eliminado con éxito",
     "confirmDelete": "¿Está seguro de que desea eliminar este servicio?",
     "hailDamage": "Daño por Granizo",
     "backToList": "Volver a Servicios",
@@ -352,7 +353,9 @@
     "uploadingPhotos": "Error al subir las fotos",
     "processingPhotos": "Error al procesar las fotos",
     "apiError": "Error detallado de la API",
-    "responseBodyError": "No se pudo leer el cuerpo de la respuesta de error"
+    "responseBodyError": "No se pudo leer el cuerpo de la respuesta de error",
+    "deleteService": "Error al eliminar el servicio",
+    "deleteServiceDescription": "Ha ocurrido un error al eliminar el servicio"
   },
   "location": {
     "browserNotSupported": "La geolocalización no es compatible con su navegador",
@@ -394,8 +397,11 @@
     "willBeRemovedOnSave": "La foto se eliminará cuando guarde los cambios",
     "limitExceeded": "Límite de fotos excedido",
     "maxFourPerCategory": "Puede subir un máximo de 4 fotos por categoría",
+    "limitExceededWithCount": "Ya tiene {{current}} foto(s) y está intentando añadir {{new}}. El límite es de 4 fotos.",
     "removed": "Foto eliminada",
     "removedWithCount": "Foto {{index}} eliminada. Total: {{total}}/4",
+    "added": "Fotos añadidas",
+    "addedWithCount": "{{count}} foto(s) añadida(s). Total: {{total}}/4",
     "selectPhotos": "Seleccionar fotos",
     "processing": "Procesando fotos...",
     "noPhotos": "Ninguna foto añadida",
