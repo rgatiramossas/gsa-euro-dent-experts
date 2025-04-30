@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -62,6 +63,7 @@ export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("profile");
   
   // Dark mode toggle (just UI, no actual implementation required)
@@ -211,19 +213,19 @@ export default function Settings() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title="Configurações"
-        description="Gerencie suas preferências e informações de conta"
+        title={t("settings.title")}
+        description={t("settings.description")}
       />
       
       <div className="mt-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
-            <TabsTrigger value="profile">Perfil</TabsTrigger>
-            <TabsTrigger value="password">Senha</TabsTrigger>
-            <TabsTrigger value="appearance">Aparência</TabsTrigger>
-            <TabsTrigger value="notifications">Notificações</TabsTrigger>
+            <TabsTrigger value="profile">{t("settings.profile")}</TabsTrigger>
+            <TabsTrigger value="password">{t("settings.password")}</TabsTrigger>
+            <TabsTrigger value="appearance">{t("settings.appearance")}</TabsTrigger>
+            <TabsTrigger value="notifications">{t("settings.notifications")}</TabsTrigger>
             {user?.role === "admin" && (
-              <TabsTrigger value="technicians">Técnicos</TabsTrigger>
+              <TabsTrigger value="technicians">{t("settings.technicians")}</TabsTrigger>
             )}
           </TabsList>
           
