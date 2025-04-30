@@ -9,9 +9,11 @@ import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "wouter";
 import { getQueryFn } from "@/lib/queryClient";
+import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isAdmin = user?.role === "admin";
   const isGestor = user?.role === "manager";
   
@@ -69,14 +71,14 @@ export default function Dashboard() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader 
-        title="Dashboard" 
-        description="Visão geral dos serviços e produtividade da equipe" 
+        title={t("dashboard.title")} 
+        description={t("dashboard.description", "Visão geral dos serviços e produtividade da equipe")} 
       />
       
       {/* Statistics Cards - Com ações rápidas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
-          title="Total OS Pendentes"
+          title={t("dashboard.pendingServices")}
           value={isLoadingStats ? "..." : stats?.totalPendingServices.toString() || "0"}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,11 +87,11 @@ export default function Dashboard() {
           }
           colorClass="bg-primary"
           actionUrl="/services?status=pendente"
-          actionLabel="Ver pendentes"
+          actionLabel={t("common.viewDetails")}
         />
         
         <StatCard
-          title="Total OS Faturadas"
+          title={t("dashboard.servicesByStatus")}
           value={isLoadingStats ? "..." : stats?.totalInProgressServices.toString() || "0"}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,11 +100,11 @@ export default function Dashboard() {
           }
           colorClass="bg-secondary"
           actionUrl="/services?status=faturado"
-          actionLabel="Ver faturadas"
+          actionLabel={t("common.viewDetails")}
         />
         
         <StatCard
-          title="Total OS Concluídas"
+          title={t("dashboard.completedServices")}
           value={isLoadingStats ? "..." : stats?.totalCompletedServices.toString() || "0"}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -111,13 +113,13 @@ export default function Dashboard() {
           }
           colorClass="bg-success"
           actionUrl="/services?status=concluido"
-          actionLabel="Ver concluídos"
+          actionLabel={t("common.viewDetails")}
         />
         
         {/* Card de Faturamento Total - não visível para gestores */}
         {!isGestor && (
           <StatCard
-            title="Faturamento Total"
+            title={t("dashboard.revenue")}
             value={isLoadingStats ? "..." : formatCurrency(stats?.totalRevenue || 0)}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,7 +128,7 @@ export default function Dashboard() {
             }
             colorClass="bg-amber-500"
             actionUrl="/finances"
-            actionLabel="Ver finanças"
+            actionLabel={t("common.viewDetails")}
           />
         )}
       </div>
@@ -138,7 +140,7 @@ export default function Dashboard() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Novo Serviço
+            {t("services.newService")}
           </Link>
           
           <Link href="/clients/new" className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
