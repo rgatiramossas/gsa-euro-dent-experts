@@ -16,18 +16,19 @@ export const registerServiceWorker = async () => {
     const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     console.log('Service Worker registrado com sucesso');
 
-    // Configurar atualização automática quando houver nova versão
+    // Configurar atualização controlada quando houver nova versão
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       if (newWorker) {
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // Há uma nova versão pronta para ser usada
-            if (window.confirm('Uma nova versão está disponível. Atualizar agora?')) {
-              // Enviar mensagem para o service worker atualizar imediatamente
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
-              // Recarregar a página para usar o novo service worker
-              window.location.reload();
+            // Evita prompt durante operações offline
+            if (navigator.onLine) {
+              // Há uma nova versão pronta para ser usada
+              if (window.confirm('Uma nova versão está disponível. Atualizar agora?')) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                window.location.reload();
+              }
             }
           }
         });

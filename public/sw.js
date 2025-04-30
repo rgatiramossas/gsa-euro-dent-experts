@@ -80,7 +80,30 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Aplica a estratégia network-first para todas as requisições
+  // Verificar se é uma requisição para a API
+  if (event.request.url.includes('/api/')) {
+    const method = event.request.method.toUpperCase();
+    
+    // Para métodos que modificam dados (POST, PUT, DELETE)
+    if (['POST', 'PUT', 'DELETE'].includes(method)) {
+      event.respondWith(
+        fetch(event.request.clone())
+          .catch(error => {
+            // Se offline, retorna resposta simulada para evitar loop
+            return new Response(JSON.stringify({
+              id: -Date.now(), // ID temporário negativo
+              _offline: true,
+              _pending: true
+            }), {
+              headers: { 'Content-Type': 'application/json' }
+            });
+          })
+      );
+      return;
+    }
+  }
+
+  // Para outras requisições, mantém a estratégia network-first
   event.respondWith(networkFirstWithCache(event.request));
 });
 
