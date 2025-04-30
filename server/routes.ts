@@ -168,13 +168,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Função para broadcast para todos os clientes conectados
-  const broadcastMessage = (message) => {
-    clients.forEach((client) => {
+  const broadcastMessage = (message: any) => {
+    clients.forEach((client: WebSocket) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(message));
       }
     });
   };
+  
+  // Expor a função de broadcast para uso em outras partes da aplicação
+  (global as any).websocketBroadcast = broadcastMessage;
   // A configuração de servir arquivos estáticos de uploads foi movida para index.ts
 
   // Auth middleware
