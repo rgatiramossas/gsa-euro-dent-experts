@@ -317,8 +317,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     onError: (error) => {
       console.error('Error updating service:', error);
       toast({
-        title: "Erro ao atualizar serviço",
-        description: "Ocorreu um erro ao atualizar as informações do serviço",
+        title: t("errors.updateService"),
+        description: t("errors.updateServiceDescription"),
         variant: "destructive",
       });
     }
@@ -387,8 +387,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       if (!service) {
         console.error("Serviço não encontrado");
         toast({
-          title: "Erro",
-          description: "Serviço não encontrado",
+          title: t("common.error"),
+          description: t("services.errors.serviceNotFound"),
           variant: "destructive",
         });
         return;
@@ -449,8 +449,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       
       if (!hasFieldChanges && !hasPhotoChanges) {
         toast({
-          title: "Sem alterações",
-          description: "Nenhuma alteração foi detectada no serviço",
+          title: t("services.noChanges"),
+          description: t("services.noChangesDetected"),
           variant: "default",
         });
         setIsEditing(false);
@@ -621,8 +621,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       // Limitar a 4 fotos
       if (files.length > 4) {
         toast({
-          title: "Limite de fotos excedido",
-          description: "Você pode enviar no máximo 4 fotos por categoria",
+          title: t("photos.limitExceeded"),
+          description: t("photos.maxFourPerCategory"),
           variant: "destructive",
         });
         return;
@@ -639,8 +639,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       // Limitar a 4 fotos
       if (files.length > 4) {
         toast({
-          title: "Limite de fotos excedido",
-          description: "Você pode enviar no máximo 4 fotos por categoria",
+          title: t("photos.limitExceeded"),
+          description: t("photos.maxFourPerCategory"),
           variant: "destructive",
         });
         return;
