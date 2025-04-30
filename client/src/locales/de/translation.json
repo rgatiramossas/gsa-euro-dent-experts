@@ -296,6 +296,24 @@
     "savedLocally": "Lokal gespeichert",
     "willSyncWhenOnline": "Wird synchronisiert, wenn online",
     "pendingSync": "Synchronisierung ausstehend",
-    "syncNow": "Jetzt synchronisieren"
+    "syncNow": "Jetzt synchronisieren",
+    "savedOffline": "Im Offline-Modus gespeichert",
+    "serviceOfflineDescription": "Der Dienst wurde lokal gespeichert und wird synchronisiert, wenn eine Internetverbindung besteht."
+  },
+  "errors": {
+    "validation": "Validierungsfehler", 
+    "createService": "Fehler beim Erstellen des Dienstes",
+    "createServiceDescription": "Beim Erstellen des Dienstes ist ein Fehler aufgetreten. Bitte überprüfen Sie die Daten und versuchen Sie es erneut.",
+    "invalidServiceType": "Ungültiger Diensttyp. Verfügbare Werte: {{values}}",
+    "loadingClients": "Fehler beim Laden der Kunden",
+    "loadingVehicles": "Fehler beim Laden der Fahrzeuge",
+    "loadingServiceTypes": "Fehler beim Laden der Diensttypen", 
+    "loadingTechnicians": "Fehler beim Laden der Techniker",
+    "convertingDate": "Fehler beim Konvertieren des Datums",
+    "processingDate": "Fehler bei der Verarbeitung des Datums",
+    "uploadingPhotos": "Fehler beim Hochladen der Fotos",
+    "processingPhotos": "Fehler bei der Verarbeitung der Fotos",
+    "apiError": "Detaillierter API-Fehler",
+    "responseBodyError": "Der Antworttext konnte nicht gelesen werden"
   }
 }

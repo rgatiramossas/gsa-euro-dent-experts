@@ -296,6 +296,24 @@
     "savedLocally": "Salvo localmente",
     "willSyncWhenOnline": "Será sincronizado quando estiver online",
     "pendingSync": "Pendente de sincronização",
-    "syncNow": "Sincronizar agora"
+    "syncNow": "Sincronizar agora",
+    "savedOffline": "Salvo no modo offline",
+    "serviceOfflineDescription": "O serviço foi salvo localmente e será sincronizado quando houver conexão com a internet."
+  },
+  "errors": {
+    "validation": "Erro de validação", 
+    "createService": "Erro ao criar serviço",
+    "createServiceDescription": "Ocorreu um erro ao criar o serviço. Verifique os dados e tente novamente.",
+    "invalidServiceType": "Tipo de serviço inválido. Valores disponíveis: {{values}}",
+    "loadingClients": "Erro ao carregar clientes",
+    "loadingVehicles": "Erro ao carregar veículos",
+    "loadingServiceTypes": "Erro ao carregar tipos de serviço", 
+    "loadingTechnicians": "Erro ao carregar técnicos",
+    "convertingDate": "Erro ao converter string de data",
+    "processingDate": "Erro ao processar data",
+    "uploadingPhotos": "Erro ao fazer upload das fotos",
+    "processingPhotos": "Erro ao processar fotos",
+    "apiError": "Erro detalhado da API",
+    "responseBodyError": "Não foi possível ler o corpo da resposta de erro"
   }
 }

@@ -190,8 +190,29 @@ export default function NewService() {
   });
 
   // Form definition
+  // Criar um resolver personalizado que traduza as mensagens de erro
+  const customResolver = (data: any) => {
+    // Usar o resolver do Zod, mas substituir as mensagens de erro por versões traduzidas
+    return zodResolver(formSchema)(data).then((result) => {
+      if (result.errors) {
+        // Para cada campo com erro, verificar se é um erro de campo obrigatório
+        Object.keys(result.errors).forEach((field) => {
+          const error = result.errors[field];
+          if (error && error.message === "Selecione um cliente") {
+            error.message = t("services.errors.selectClient");
+          } else if (error && error.message === "Selecione um veículo") {
+            error.message = t("services.errors.selectVehicle");
+          } else if (error && error.message === "Selecione o tipo de serviço") {
+            error.message = t("services.errors.selectServiceType");
+          }
+        });
+      }
+      return result;
+    });
+  };
+
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: customResolver,
     defaultValues: {
       client_id: undefined,
       vehicle_id: undefined,
@@ -238,8 +259,8 @@ export default function NewService() {
           
           // Mostrar notificação para o usuário
           toast({
-            title: "Salvo no modo offline",
-            description: "O serviço foi salvo localmente e será sincronizado quando houver conexão com a internet.",
+            title: t("offline.savedOffline"),
+            description: t("offline.serviceOfflineDescription"),
           });
           
           // Redirecionar para a lista após um pequeno tempo
@@ -417,10 +438,10 @@ export default function NewService() {
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       
       toast({
-        title: "Serviço criado",
+        title: t("services.serviceCreated"),
         description: isOfflineData 
-          ? "O serviço foi salvo localmente e será sincronizado quando houver conexão" 
-          : "O serviço foi criado com sucesso",
+          ? t("offline.willSyncWhenOnline") 
+          : t("services.serviceCreatedSuccess"),
       });
       
       // Redirecionar para a lista de serviços
@@ -429,8 +450,8 @@ export default function NewService() {
     onError: (error) => {
       console.error('Error creating service:', error);
       toast({
-        title: "Erro ao criar serviço",
-        description: "Ocorreu um erro ao criar o serviço. Verifique os dados e tente novamente.",
+        title: t("errors.createService"),
+        description: t("errors.createServiceDescription"),
         variant: "destructive",
       });
     }
@@ -443,8 +464,8 @@ export default function NewService() {
     // Garantir que o service_type_id seja um dos valores válidos
     if (serviceTypes && !serviceTypes.some(type => type.id === data.service_type_id)) {
       toast({
-        title: "Erro de validação",
-        description: `Tipo de serviço inválido. Valores disponíveis: ${serviceTypes.map(t => t.name).join(', ')}`,
+        title: t("errors.validation"),
+        description: t("errors.invalidServiceType", { values: serviceTypes.map(t => t.name).join(', ') }),
         variant: "destructive",
       });
       return;

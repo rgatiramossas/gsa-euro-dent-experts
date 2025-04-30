@@ -296,6 +296,24 @@
     "savedLocally": "Guardado localmente",
     "willSyncWhenOnline": "Se sincronizará cuando haya conexión",
     "pendingSync": "Pendiente de sincronización",
-    "syncNow": "Sincronizar ahora"
+    "syncNow": "Sincronizar ahora",
+    "savedOffline": "Guardado en modo sin conexión",
+    "serviceOfflineDescription": "El servicio se ha guardado localmente y se sincronizará cuando haya conexión a internet."
+  },
+  "errors": {
+    "validation": "Error de validación", 
+    "createService": "Error al crear el servicio",
+    "createServiceDescription": "Ha ocurrido un error al crear el servicio. Verifique los datos e intente nuevamente.",
+    "invalidServiceType": "Tipo de servicio no válido. Valores disponibles: {{values}}",
+    "loadingClients": "Error al cargar clientes",
+    "loadingVehicles": "Error al cargar vehículos",
+    "loadingServiceTypes": "Error al cargar tipos de servicio", 
+    "loadingTechnicians": "Error al cargar técnicos",
+    "convertingDate": "Error al convertir la cadena de fecha",
+    "processingDate": "Error al procesar la fecha",
+    "uploadingPhotos": "Error al subir las fotos",
+    "processingPhotos": "Error al procesar las fotos",
+    "apiError": "Error detallado de la API",
+    "responseBodyError": "No se pudo leer el cuerpo de la respuesta de error"
   }
 }
