@@ -334,5 +334,25 @@
     "useCurrentLocation": "Aktuellen Standort verwenden",
     "getting": "Standort wird abgerufen...",
     "getCurrent": "Aktuellen Standort abrufen"
+  },
+  "photos": {
+    "upload": "Hochladen",
+    "singular": "Foto",
+    "plural": "Fotos",
+    "empty": "Leer",
+    "dragAndDrop": "oder per Drag & Drop",
+    "fileTypes": "PNG, JPG, JPEG bis zu 5MB",
+    "maxFiles": "maximal",
+    "filesCount": "Dateien",
+    "remove": "Foto entfernen",
+    "errors": {
+      "invalidFiles": "Einige Dateien wurden nicht akzeptiert",
+      "invalidFilesList": "Ungültige Dateien",
+      "onlyImagesAllowed": "Nur Bilder bis zu 5MB sind erlaubt",
+      "fileLimit": "Dateilimit überschritten",
+      "fileLimitDescription": "Sie können maximal {{maxFiles}} Fotos insgesamt auswählen. Sie haben bereits {{existingCount}} Foto(s) ausgewählt.",
+      "processingError": "Fehler bei der Verarbeitung von Dateien",
+      "processingErrorDescription": "Bei der Verarbeitung der ausgewählten Dateien ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+    }
   }
 }
