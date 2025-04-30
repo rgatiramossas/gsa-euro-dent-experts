@@ -224,6 +224,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       setShowStatusDialog(false);
       setNewStatus("");
       setStatusNotes("");
+      
+      // Resetar estado de submissão offline
+      resetStatusSubmitting();
     },
     onError: (error) => {
       console.error('Error updating status:', error);
@@ -232,6 +235,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         description: "Ocorreu um erro ao atualizar o status do serviço",
         variant: "destructive",
       });
+      
+      // Resetar estado de submissão offline mesmo em caso de erro
+      resetStatusSubmitting();
     }
   });
   
@@ -316,6 +322,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       setBeforePhotoPreview(null);
       setAfterPhotoPreview(null);
       setPhotosToRemove([]);
+      
+      // Resetar estado de submissão offline
+      resetServiceSubmitting();
     },
     onError: (error) => {
       console.error('Error updating service:', error);
@@ -324,6 +333,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         description: "Ocorreu um erro ao atualizar as informações do serviço",
         variant: "destructive",
       });
+      
+      // Resetar estado de submissão offline mesmo em caso de erro
+      resetServiceSubmitting();
     }
   });
   
@@ -521,6 +533,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           : "O serviço foi excluído com sucesso",
       });
       
+      // Resetar estado de submissão offline
+      resetDeleteSubmitting();
+      
       setLocation('/services');
     },
     onError: (error) => {
@@ -530,6 +545,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         description: "Ocorreu um erro ao excluir o serviço",
         variant: "destructive",
       });
+      
+      // Resetar estado de submissão offline mesmo em caso de erro
+      resetDeleteSubmitting();
     }
   });
   
@@ -826,9 +844,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   </Button>
                   <Button 
                     onClick={handleStatusUpdate}
-                    disabled={!newStatus || updateStatusMutation.isPending}
+                    disabled={!newStatus || updateStatusMutation.isPending || isStatusSubmitting}
                   >
-                    {updateStatusMutation.isPending ? "Salvando..." : "Salvar"}
+                    {updateStatusMutation.isPending || isStatusSubmitting ? "Salvando..." : "Salvar"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1118,8 +1136,12 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction 
-                          onClick={() => deleteServiceMutation.mutate()}
-                          disabled={deleteServiceMutation.isPending}
+                          onClick={() => {
+                            // Iniciar estado de submissão offline para exclusão
+                            startDeleteSubmitting();
+                            deleteServiceMutation.mutate();
+                          }}
+                          disabled={deleteServiceMutation.isPending || isDeleteSubmitting}
                         >
                           {deleteServiceMutation.isPending ? "Excluindo..." : "Excluir"}
                         </AlertDialogAction>
@@ -1139,8 +1161,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
               <Button variant="outline" type="button" onClick={handleCancelEditing}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateServiceMutation.isPending}>
-                {updateServiceMutation.isPending ? "Salvando..." : "Salvar"}
+              <Button type="submit" disabled={updateServiceMutation.isPending || isServiceSubmitting}>
+                {updateServiceMutation.isPending || isServiceSubmitting ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           
