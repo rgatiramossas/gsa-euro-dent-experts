@@ -58,8 +58,9 @@ export function InstallPWAButton({ className }: InstallPWAButtonProps) {
       size="sm"
       className={className}
     >
-      <Download className="w-4 h-4 mr-2" />
-      Instalar aplicativo
+      <Download className="w-4 h-4 md:mr-2" />
+      <span className="hidden md:inline">Instalar aplicativo</span>
+      <span className="inline md:hidden ml-1">APP</span>
     </Button>
   );
 }
