@@ -309,32 +309,55 @@ export default function NewService() {
           try {
             const serviceId = createdService.id;
             
-            // Criar FormData para upload das fotos
-            const formData = new FormData();
-            
-            // Foto sem classificação específica
-            formData.append('photo_type', 'service');
-            
-            // Adicionar cada foto ao FormData
+            // Verificação adicional - verificar se as fotos são válidas
+            let validPhotos = false;
             for (let i = 0; i < photos.length; i++) {
-              formData.append('photos', photos[i]);
+              if (photos[i] instanceof File && photos[i].size > 0) {
+                validPhotos = true;
+                break;
+              }
             }
             
-            console.log("Enviando fotos para o serviço:", serviceId);
-            
-            // Upload de fotos - apenas quando online
-            const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
-              method: 'POST',
-              body: formData,
-              credentials: 'include',
-            });
-            
-            if (!uploadRes.ok) {
-              console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
-              console.warn("Prosseguindo apesar do erro no upload de fotos");
+            // Apenas fazer upload se houver fotos válidas
+            if (validPhotos) {
+              // Criar FormData para upload das fotos
+              const formData = new FormData();
+              
+              // Foto sem classificação específica
+              formData.append('photo_type', 'service');
+              
+              // Adicionar cada foto ao FormData
+              let photoCount = 0;
+              for (let i = 0; i < photos.length; i++) {
+                if (photos[i] instanceof File && photos[i].size > 0) {
+                  formData.append('photos', photos[i]);
+                  photoCount++;
+                }
+              }
+              
+              // Só fazer o upload se realmente tiver fotos para enviar
+              if (photoCount > 0) {
+                console.log(`Enviando ${photoCount} fotos válidas para o serviço:`, serviceId);
+                
+                // Upload de fotos - apenas quando online
+                const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
+                  method: 'POST',
+                  body: formData,
+                  credentials: 'include',
+                });
+                
+                if (!uploadRes.ok) {
+                  console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
+                  console.warn("Prosseguindo apesar do erro no upload de fotos");
+                } else {
+                  const uploadData = await uploadRes.json();
+                  console.log("Resposta do upload:", uploadData);
+                }
+              } else {
+                console.log("Nenhuma foto válida para enviar após filtragem");
+              }
             } else {
-              const uploadData = await uploadRes.json();
-              console.log("Resposta do upload:", uploadData);
+              console.log("Nenhuma foto válida encontrada no selecionador de fotos");
             }
           } catch (photoError) {
             console.error("Erro ao processar fotos:", photoError);
