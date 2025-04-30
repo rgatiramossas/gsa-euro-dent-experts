@@ -192,6 +192,10 @@ export default function NewService() {
   // Create service mutation
   const createServiceMutation = useMutation({
     mutationFn: async (data: FormData) => {
+      // Verificar o status da rede imediatamente
+      const networkOnline = checkNetworkStatus();
+      console.log("Status da rede ao iniciar mutação:", networkOnline ? "Online" : "Offline");
+      
       // Format the datetime properly
       let formattedData = { ...data };
       
@@ -259,9 +263,8 @@ export default function NewService() {
       // Log de depuração
       console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
       
-      // Verificar status da rede antes de iniciar
-      const isOnline = checkNetworkStatus();
-      console.log("Status da rede:", isOnline ? "Online" : "Offline");
+      // Verificar novamente o status da rede
+      console.log("Status da rede confirmado:", isOnline ? "Online" : "Offline");
       
       try {
         // 1. Criar serviço usando o apiWrapper para suporte offline
@@ -271,11 +274,18 @@ export default function NewService() {
         });
         console.log("Resposta do servidor ou cache local:", createdService);
         
-        // Se estiver no modo offline, retornar imediatamente para evitar o loop
-        if (!isOnline) {
-          console.log("Modo offline: serviço criado localmente, saltando o upload de fotos");
+        // Verificar se a resposta já indica que é um salvo offline
+        // Tanto apiWrapper.ts quanto quando verificamos isOnline
+        if (!isOnline || createdService._isOffline || createdService._offline) {
+          console.log("Modo offline detectado: serviço criado localmente, saltando o upload de fotos");
           // Forçamos indicação explícita de modo offline para feedback correto ao usuário
-          return { ...createdService, _offline: true };
+          return { 
+            ...createdService, 
+            _offline: true,
+            _isOffline: true,
+            // Adicionamos um ID temporal se não existir para evitar problemas no redirecionamento
+            id: createdService.id || Math.floor(Math.random() * -1000000)
+          };
         }
         
         // Processar upload de fotos se houver fotos e APENAS se estivermos online
