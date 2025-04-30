@@ -308,6 +308,7 @@
     "savedOffline": "Salvo no modo offline",
     "serviceOfflineDescription": "O serviço foi salvo localmente e será sincronizado quando houver conexão com a internet."
   },
+
   "errors": {
     "validation": "Erro de validação", 
     "createService": "Erro ao criar serviço",
@@ -348,6 +349,22 @@
     "maxFiles": "máximo",
     "filesCount": "arquivos",
     "remove": "Remover foto",
+    "vehiclePhoto": "Foto do veículo",
+    "servicePhoto": "Foto do serviço",
+    "beforePhoto": "Foto antes",
+    "afterPhoto": "Foto depois",
+    "before": "Antes",
+    "after": "Depois",
+    "service": "Serviço",
+    "markedForRemoval": "Foto marcada para remoção",
+    "willBeRemovedOnSave": "A foto será removida quando você salvar as alterações",
+    "limitExceeded": "Limite de fotos excedido",
+    "maxFourPerCategory": "Você pode enviar no máximo 4 fotos por categoria",
+    "removed": "Foto removida",
+    "removedWithCount": "Foto {{index}} removida. Total: {{total}}/4",
+    "selectPhotos": "Selecionar fotos",
+    "processing": "Processando fotos...",
+    "noPhotos": "Nenhuma foto adicionada",
     "errors": {
       "invalidFiles": "Alguns arquivos não foram aceitos",
       "invalidFilesList": "Arquivos inválidos",
