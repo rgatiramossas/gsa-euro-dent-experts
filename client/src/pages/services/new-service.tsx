@@ -60,13 +60,13 @@ import { LocationSelector } from "@/components/common/LocationSelector";
 // Schemas
 const formSchema = z.object({
   client_id: z.number({
-    required_error: "Selecione um cliente",
+    required_error: "Selecione um cliente", // Será substituído dinamicamente usando o t()
   }),
   vehicle_id: z.number({
-    required_error: "Selecione um veículo",
+    required_error: "Selecione um veículo", // Será substituído dinamicamente usando o t()
   }),
   service_type_id: z.number({
-    required_error: "Selecione o tipo de serviço",
+    required_error: "Selecione o tipo de serviço", // Será substituído dinamicamente usando o t()
   }),
   technician_id: z.number().optional().nullable(),
   status: z.string(),
