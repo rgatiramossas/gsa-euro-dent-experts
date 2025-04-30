@@ -13,6 +13,7 @@ import {
 export function BottomNavigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isAdmin = user?.role === "admin";
   const isGestor = user?.role === "gestor" || user?.role === "manager";
   const isTechnician = user?.role === "technician";
@@ -20,22 +21,22 @@ export function BottomNavigation() {
   // Menu fixo padrão para todos os usuários: INÍCIO - CLIENTES - SERVIÇOS - ORÇAMENTOS
   const mobileNavItems = [
     {
-      name: "Início",
+      name: t("menu.dashboard"),
       path: isGestor ? "/manager-dashboard" : "/dashboard",
       icon: <Home className="h-6 w-6" />,
     },
     {
-      name: "Clientes",
+      name: t("menu.clients"),
       path: "/clients",
       icon: <Users className="h-6 w-6" />,
     },
     {
-      name: "Serviços",
+      name: t("menu.services"),
       path: "/services",
       icon: <Briefcase className="h-6 w-6" />,
     },
     {
-      name: "Orçamentos",
+      name: t("reports.title"), // Usando "reports" como tradução para "Orçamentos"
       path: "/budgets",
       icon: <FileText className="h-6 w-6" />,
     }
