@@ -261,6 +261,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       
       // Resetar estado de submissão offline
       resetStatusSubmitting();
+      
+      // MUDANÇA CRÍTICA: Se for uma operação offline, redirecionar para a lista
+      if (isOfflineData) {
+        setTimeout(() => {
+          console.log("[updateStatusMutation] Redirecionando para lista após atualização offline de status");
+          setLocation('/services');
+        }, 500);
+      }
     },
     onError: (error) => {
       console.error('Error updating status:', error);
@@ -359,6 +367,15 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       
       // Resetar estado de submissão offline
       resetServiceSubmitting();
+      
+      // MUDANÇA CRÍTICA: Se for uma operação offline, redirecionar de volta para a lista de serviços
+      // em vez de permanecer na página de detalhes
+      if (isOfflineData) {
+        setTimeout(() => {
+          console.log("[updateServiceMutation] Redirecionando para lista após salvamento offline");
+          setLocation('/services');
+        }, 500);
+      }
     },
     onError: (error) => {
       console.error('Error updating service:', error);
@@ -460,7 +477,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     const safetyTimer = setTimeout(() => {
       console.log("[handleSaveChanges] TIMER DE SEGURANÇA MÁXIMO - Forçando reset do estado de submissão");
       resetServiceSubmitting();
+      
+      // MUDANÇA CRÍTICA: Forçar saída do modo de edição
       setIsEditing(false);
+      
+      // MUDANÇA CRÍTICA: Forçar navegação de volta para a lista se em modo offline
+      if (!checkNetworkStatus()) {
+        console.log("[handleSaveChanges] Modo offline detectado, redirecionando para lista");
+        setTimeout(() => {
+          setLocation('/services');
+        }, 500);
+      }
       
       // Disparar evento de reset global
       window.dispatchEvent(new CustomEvent('force-reset-submit-state', { 
@@ -474,7 +501,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           ? "As alterações foram salvas" 
           : "As alterações foram salvas localmente e serão sincronizadas quando houver conexão",
       });
-    }, 3000); // 3 segundos é um bom compromisso
+    }, 2000); // Reduzido para 2 segundos para resposta mais rápida
     
     editForm.handleSubmit((data) => {
       console.log("[handleSaveChanges] Dados do formulário:", data);
