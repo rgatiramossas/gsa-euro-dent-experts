@@ -161,6 +161,16 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
+      <Route path="/services/new-offline">
+        <RequireAuth>
+          <RequireTechnician>
+            <MainLayout>
+              <NewServiceOffline />
+            </MainLayout>
+          </RequireTechnician>
+        </RequireAuth>
+      </Route>
+      
       <Route path="/services/:id">
         {(params) => (
           <RequireAuth>

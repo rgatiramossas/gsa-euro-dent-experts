@@ -8,7 +8,7 @@ import offlineDb from "@/lib/offlineDb";
 
 // Componente de formulário simplificado para criação offline
 export function NewServiceOffline() {
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     cliente: "",
@@ -77,7 +77,7 @@ export function NewServiceOffline() {
         description: "O serviço foi salvo localmente e será sincronizado quando houver conexão."
       });
 
-      navigate("/services");
+      setLocation("/services");
     } catch (error) {
       console.error("Erro ao salvar serviço offline:", error);
       toast({
@@ -96,7 +96,7 @@ export function NewServiceOffline() {
         title="Novo Serviço (Modo Offline)"
         description="Cadastre um serviço em modo offline simplificado"
         actions={
-          <Button variant="outline" onClick={() => navigate('/services')}>
+          <Button variant="outline" onClick={() => setLocation('/services')}>
             Cancelar
           </Button>
         }
@@ -244,7 +244,7 @@ export function NewServiceOffline() {
             type="button" 
             variant="outline" 
             className="flex-1"
-            onClick={() => navigate('/services')}
+            onClick={() => setLocation('/services')}
           >
             Cancelar
           </Button>
