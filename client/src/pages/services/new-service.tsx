@@ -611,7 +611,7 @@ export default function NewService() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descrição do Problema</FormLabel>
+                    <FormLabel>{t("services.problemDescription")}</FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
@@ -630,7 +630,7 @@ export default function NewService() {
                 name="technician_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Técnico Responsável</FormLabel>
+                    <FormLabel>{t("services.responsibleTechnician")}</FormLabel>
                     {user?.role === 'technician' ? (
                       <FormControl>
                         <Input 
@@ -668,7 +668,7 @@ export default function NewService() {
                   name="scheduled_date"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Data <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>{t("common.date")} <span className="text-red-500">*</span></FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -682,7 +682,7 @@ export default function NewService() {
                               {field.value ? (
                                 format(new Date(field.value), "dd/MM/yyyy", { locale: ptBR })
                               ) : (
-                                <span>Selecione a data</span>
+                                <span>{t("common.selectDate")}</span>
                               )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -717,7 +717,7 @@ export default function NewService() {
                 name="location_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Localização <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("services.location")} <span className="text-red-500">*</span></FormLabel>
                     <LocationSelector
                       value={{
                         locationType: field.value,
@@ -751,7 +751,7 @@ export default function NewService() {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valor do Serviço (R$)</FormLabel>
+                      <FormLabel>{t("services.serviceValue")} (R$)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -775,7 +775,7 @@ export default function NewService() {
                   name="administrative_fee"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Taxa Administrativa (R$)</FormLabel>
+                      <FormLabel>{t("services.administrativeFee")} (R$)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -795,7 +795,7 @@ export default function NewService() {
                 />
                 
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium mb-2">Valor Total (R$)</span>
+                  <span className="text-sm font-medium mb-2">{t("services.totalValue")} (R$)</span>
                   <div className="h-10 px-3 py-2 rounded-md border border-input bg-gray-100 text-right">
                     {((form.watch('price') || 0) + (form.watch('administrative_fee') || 0)).toFixed(2)}
                   </div>
@@ -815,8 +815,7 @@ export default function NewService() {
                 maxPhotos={5}
               />
               <p className="text-sm text-muted-foreground mt-2">
-                Adicione fotos do veículo para facilitar a identificação do problema.
-                Máximo de 5 fotos. Tamanho máximo por foto: 5MB.
+                {t("services.photoHelp")}
               </p>
             </CardContent>
           </Card>
@@ -832,7 +831,7 @@ export default function NewService() {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Observações Adicionais</FormLabel>
+                    <FormLabel>{t("services.additionalNotes")}</FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
