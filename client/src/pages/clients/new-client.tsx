@@ -7,6 +7,7 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/common/PageHeader";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { 
   Form,
@@ -43,6 +44,7 @@ export default function NewClient() {
   const queryClient = useQueryClient();
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const { t } = useTranslation();
   
   // Form definition
   const form = useForm<FormData>({
@@ -187,21 +189,20 @@ export default function NewClient() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title="Novo Cliente"
-        description="Cadastre um novo cliente (formulário simplificado)"
+        title={t("clients.newClient")}
+        description={t("clients.newClientDesc", "Cadastre um novo cliente (formulário simplificado)")}
         actions={
           <Button variant="outline" onClick={() => setLocation('/clients')}>
-            Cancelar
+            {t("common.cancel")}
           </Button>
         }
       />
       
       <Card className="mt-6 mb-4">
         <CardHeader>
-          <CardTitle>Formulário Simplificado</CardTitle>
+          <CardTitle>{t("clients.simplifiedForm", "Formulário Simplificado")}</CardTitle>
           <CardDescription>
-            Este é o formulário simplificado para cadastro de clientes,
-            focando apenas nas informações essenciais.
+            {t("clients.simplifiedFormDesc", "Este é o formulário simplificado para cadastro de clientes, focando apenas nas informações essenciais.")}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -210,7 +211,7 @@ export default function NewClient() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Informações do Cliente</CardTitle>
+              <CardTitle>{t("clients.clientInformation", "Informações do Cliente")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -218,9 +219,9 @@ export default function NewClient() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome Completo*</FormLabel>
+                    <FormLabel>{t("clients.fullName", "Nome Completo")}*</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nome do cliente" />
+                      <Input {...field} placeholder={t("clients.clientNamePlaceholder", "Nome do cliente")} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -233,9 +234,9 @@ export default function NewClient() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t("clients.email", "Email")}</FormLabel>
                       <FormControl>
-                        <Input {...field} type="email" placeholder="email@exemplo.com" />
+                        <Input {...field} type="email" placeholder={t("clients.emailPlaceholder", "email@exemplo.com")} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -247,9 +248,9 @@ export default function NewClient() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Telefone</FormLabel>
+                      <FormLabel>{t("clients.phone", "Telefone")}</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="(00) 00000-0000" />
+                        <Input {...field} placeholder={t("clients.phonePlaceholder", "(00) 00000-0000")} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -262,11 +263,11 @@ export default function NewClient() {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Endereço</FormLabel>
+                    <FormLabel>{t("clients.address", "Endereço")}</FormLabel>
                     <div className="flex space-x-2">
                       <div className="flex-1">
                         <FormControl>
-                          <Input {...field} placeholder="Endereço completo" />
+                          <Input {...field} placeholder={t("clients.addressPlaceholder", "Endereço completo")} />
                         </FormControl>
                       </div>
                       <Button
