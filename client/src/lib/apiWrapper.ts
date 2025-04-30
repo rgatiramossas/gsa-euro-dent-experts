@@ -216,24 +216,62 @@ export async function apiRequest<T>({
         try {
           if (method === 'POST') {
             const id = await offlineDb.addItem(tableName, data, url);
-            // Forçar conclusão da UI
+            // Emitir evento imediatamente e novamente após um pequeno atraso
+            // (solução para garantir que listeners recebam o evento)
+            window.dispatchEvent(new CustomEvent('offline-save-completed', {
+              detail: { id, success: true, method: 'POST', tableName }
+            }));
+            
+            // Emitir novamente após um pequeno atraso para garantir que os componentes tenham tempo de reagir
             setTimeout(() => {
               window.dispatchEvent(new CustomEvent('offline-save-completed', {
-                detail: { id, success: true }
+                detail: { id, success: true, method: 'POST', tableName }
               }));
+              // Emitir evento global para qualquer formulário que precise reagir
+              window.dispatchEvent(new CustomEvent('form-save-completed'));
             }, 100);
+            
+            console.log(`Operação offline POST concluída para ${tableName}. ID: ${id}`);
             return { id, ...data, _offline: true } as unknown as T;
           } 
           else if (method === 'PUT' && resourceId !== null) {
             await offlineDb.updateItem(tableName, resourceId, data, url);
+            
+            // Emitir evento para PUT também
+            window.dispatchEvent(new CustomEvent('offline-save-completed', {
+              detail: { id: resourceId, success: true, method: 'PUT', tableName }
+            }));
+            
+            // Garantir que os estados de loading dos formulários sejam resetados
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('form-save-completed'));
+            }, 100);
+            
+            console.log(`Operação offline PUT concluída para ${tableName}. ID: ${resourceId}`);
             return { id: resourceId, ...data, _offline: true } as unknown as T;
           } 
           else if (method === 'DELETE' && resourceId !== null) {
             await offlineDb.deleteItem(tableName, resourceId, url);
+            
+            // Emitir evento para DELETE também
+            window.dispatchEvent(new CustomEvent('offline-save-completed', {
+              detail: { id: resourceId, success: true, method: 'DELETE', tableName }
+            }));
+            
+            // Garantir que os estados de loading dos formulários sejam resetados
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('form-save-completed'));
+            }, 100);
+            
+            console.log(`Operação offline DELETE concluída para ${tableName}. ID: ${resourceId}`);
             return { success: true, _offline: true } as unknown as T;
           }
         } catch (e) {
           console.error("Erro ao processar operação para modo offline:", e);
+          // Garantir que os formulários saiam do estado de loading mesmo em caso de erro
+          window.dispatchEvent(new CustomEvent('form-save-completed', { 
+            detail: { error: e }
+          }));
         }
       }
     }

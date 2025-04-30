@@ -142,6 +142,32 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
       offlineStatusStore.setSyncing(false);
       break;
       
+    case 'save-completed':
+      // Processar operação de salvamento offline concluída
+      console.log('Operação de salvamento offline concluída:', data);
+      // Disparar evento global para notificar componentes sobre o salvamento
+      window.dispatchEvent(new CustomEvent('offline-save-completed', {
+        detail: {
+          id: data.id,
+          success: data.success,
+          offline: data.offline,
+          tableName: data.tableName,
+          method: data.method
+        }
+      }));
+      
+      // Garantir que os formulários saiam do estado de carregamento
+      window.dispatchEvent(new CustomEvent('form-save-completed'));
+      break;
+    
+    case 'form-save-completed':
+      // Processar evento especial para finalizar estado de loading em formulários
+      console.log('Finalizando estado de loading em formulários');
+      window.dispatchEvent(new CustomEvent('form-save-completed', {
+        detail: { success: data.success }
+      }));
+      break;
+      
     case 'resource-id-updated':
       // Atualizar o ID local para o ID do servidor após sincronização
       try {

@@ -96,20 +96,51 @@ self.addEventListener('fetch', (event) => {
             const requestData = await event.request.json();
             const tempId = -Date.now();
             
+            // Determinar o nome da tabela de referência a partir da URL
+            const urlPath = new URL(event.request.url).pathname;
+            const pathSegments = urlPath.split('/').filter(Boolean);
+            let tableName = pathSegments[1]; // Normalmente será "clients", "budgets", etc.
+            
+            if (pathSegments[0] === 'api' && pathSegments.length > 1) {
+              // Mapear nomes de recursos para tabelas
+              const tableMap = {
+                'clients': 'clients',
+                'services': 'services',
+                'budgets': 'budgets',
+                'vehicles': 'vehicles',
+                'users': 'technicians',
+                'technicians': 'technicians',
+                'events': 'events'
+              };
+              tableName = tableMap[pathSegments[1]] || pathSegments[1];
+            }
+            
             // Notificar clientes sobre o sucesso do salvamento offline
             notifyClients({
               type: 'save-completed',
               success: true,
               offline: true,
-              id: tempId
+              id: tempId,
+              tableName: tableName,
+              method: event.request.method
             });
+            
+            // Enviar um segundo evento especial para finalizar formulários
+            setTimeout(() => {
+              notifyClients({
+                type: 'form-save-completed',
+                success: true
+              });
+            }, 200);
 
-            // Retornar resposta simulada
+            // Retornar resposta simulada com informações mais detalhadas
             return new Response(JSON.stringify({
               success: true,
               _offline: true,
               _pending: true,
-              id: tempId
+              id: tempId,
+              tableName: tableName,
+              _timestamp: Date.now()
             }), {
               status: 200,
               headers: { 'Content-Type': 'application/json' }
