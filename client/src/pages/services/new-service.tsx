@@ -345,11 +345,16 @@ export default function NewService() {
     },
     onSuccess: (data) => {
       // Verificar se estamos offline e o serviço foi salvo localmente
-      const isOfflineData = data && data._offline === true;
+      const isOfflineData = data && (data._offline === true || data._isOffline === true);
       
+      // Log para depuração
+      console.log("Serviço criado com sucesso:", data, "Modo offline:", isOfflineData);
+      
+      // Invalidar queries para atualizar listas
       queryClient.invalidateQueries({ queryKey: ['/api/services'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       
+      // Mostrar mensagem de sucesso
       toast({
         title: "Serviço criado",
         description: isOfflineData 
@@ -357,7 +362,7 @@ export default function NewService() {
           : "O serviço foi criado com sucesso",
       });
       
-      // Redirecionar para a lista de serviços
+      // Sempre redirecionar para a lista de serviços, em ambos os casos
       setLocation('/services');
     },
     onError: (error) => {
@@ -370,8 +375,12 @@ export default function NewService() {
     }
   });
   
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     console.log("Formulário enviado com os dados:", data);
+    
+    // Checar se está online ou offline
+    const isOnline = navigator.onLine;
+    console.log(`Submetendo formulário em modo ${isOnline ? 'online' : 'offline'}`);
     
     // Garantir que o service_type_id seja um dos valores válidos
     if (serviceTypes && !serviceTypes.some(type => type.id === data.service_type_id)) {
@@ -390,7 +399,21 @@ export default function NewService() {
       serviceType: serviceTypes?.find(t => t.id === data.service_type_id)?.name,
     });
     
-    createServiceMutation.mutate(data);
+    try {
+      // Se estiver offline, mostrar mensagem especial
+      if (!isOnline) {
+        console.log('Salvando em modo offline...');
+      }
+      
+      createServiceMutation.mutate(data);
+    } catch (error) {
+      console.error('Erro ao salvar serviço:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar o serviço. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleClientChange = (clientId: string) => {
@@ -814,8 +837,15 @@ export default function NewService() {
               type="submit" 
               className="flex-1"
               disabled={createServiceMutation.isPending}
+              onClick={() => {
+                // Verificar se está offline para alterar o comportamento
+                if (!navigator.onLine) {
+                  console.log("Salvando serviço em modo offline...");
+                }
+              }}
             >
               {createServiceMutation.isPending ? "Salvando..." : "Salvar Serviço"}
+              {!navigator.onLine && " (Offline)"}
             </Button>
           </div>
         </form>
