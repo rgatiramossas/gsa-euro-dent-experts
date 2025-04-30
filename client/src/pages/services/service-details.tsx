@@ -8,11 +8,11 @@ import {
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { ServiceType, ServiceStatus } from "@/types";
+import { ServiceType, ServiceStatus, ServiceWithDetails } from "@/types";
 import {
   Clipboard,
   Clock,
@@ -125,29 +125,15 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   ];
   
   const { data: service, isLoading, error } = useQuery<ServiceWithDetails>({
-    queryKey: [`/api/services/${id}`],
-    onSuccess: (data) => {
-      console.log("--------------------------------------------");
-      console.log("DETALHAMENTO COMPLETO DO SERVIÇO:", JSON.stringify(data, null, 2));
-      console.log("--------------------------------------------");
-      console.log("Informações de usuário:", { 
-        isAdmin, 
-        isTechnician, 
-        isGestor
-      });
-      console.log("Valores financeiros:", {
-        price: data?.price,
-        priceType: typeof data?.price,
-        adminFee: data?.administrative_fee,
-        adminFeeType: typeof data?.administrative_fee,
-        total: data?.total,
-        totalType: typeof data?.total
-      });
-    },
+    queryKey: [`/api/services/${id}`, { enableOffline: true, offlineTableName: 'services' }],
+    queryFn: getQueryFn({ on401: "throw" }),
+    refetchOnMount: true
   });
   
   const { data: serviceTypes } = useQuery<ServiceType[]>({
-    queryKey: ['/api/service-types'],
+    queryKey: ['/api/service-types', { enableOffline: true, offlineTableName: 'service_types' }],
+    queryFn: getQueryFn({ on401: "throw" }),
+    refetchOnMount: true,
   });
   
   // Criar um formulário para edição com valores padrão
@@ -218,23 +204,20 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const updateServiceMutation = useMutation({
     mutationFn: async (formData: FormData | Record<string, any>) => {
-      // Verificar se os dados são FormData ou um objeto regular
-      let options: RequestInit = {
-        method: 'PATCH',
-      };
-      
-      // Se for FormData, deixamos o Content-Type ser definido automaticamente
-      if (formData instanceof FormData) {
-        options.body = formData;
-      } else {
-        // Se for um objeto JSON, definimos o Content-Type
-        options.body = JSON.stringify(formData);
-        options.headers = {
-          'Content-Type': 'application/json'
-        };
+      // Se for um objeto comum, usamos o apiRequest normalmente
+      if (!(formData instanceof FormData)) {
+        return await apiRequest(`/api/services/${id}`, 'PATCH', formData);
       }
       
-      const res = await fetch(`/api/services/${id}`, options);
+      // Para FormData, precisamos fazer um tratamento especial:
+      // - Não podemos usar JSON.stringify
+      // - Precisamos deixar o browser definir o Content-Type
+      const res = await fetch(`/api/services/${id}`, {
+        method: 'PATCH',
+        body: formData,
+        // Incluímos o headers de credenciais para manter a sessão
+        credentials: 'include',
+      });
       
       if (!res.ok) {
         const errorText = await res.text();
