@@ -2,6 +2,7 @@ import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -11,30 +12,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
-import { DollarSign, Calendar, Settings, LogIn } from "lucide-react";
+import { DollarSign, Calendar, Settings, LogIn, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { InstallPWAButton } from "@/components/ui/install-pwa-button";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 
 // Componente de cabeçalho principal da aplicação
 export function Header() {
   const { user, logout, login } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     try {
       await logout();
       toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso.",
+        title: t("auth.userLoggedOut"),
+        description: t("auth.userLoggedOut"),
       });
       setLocation("/login");
     } catch (error) {
       console.error("Logout error:", error);
       toast({
-        title: "Erro ao desconectar",
-        description: "Ocorreu um erro ao fazer logout. Tente novamente.",
+        title: t("error"),
+        description: t("auth.logoutError", "Ocorreu um erro ao fazer logout. Tente novamente."),
         variant: "destructive",
       });
     }
@@ -61,6 +64,8 @@ export function Header() {
         </div>
         
         <div className="flex items-center space-x-3">
+          {/* Seletor de idioma */}
+          <LanguageSwitcher />
           {/* Botão de login/logout */}
           {!user && (
             <Button 
@@ -70,7 +75,7 @@ export function Header() {
               onClick={() => setLocation("/login")}
             >
               <LogIn className="h-4 w-4 mr-1" />
-              Login
+              {t("auth.login")}
             </Button>
           )}
           
@@ -126,10 +131,10 @@ export function Header() {
                     <span className="font-medium">{user.name}</span>
                     <span className="text-xs text-gray-500">
                       {user.role === "admin" 
-                        ? "Administrador" 
+                        ? t("users.roles.admin")
                         : user.role === "gestor"
-                          ? "Gestor" 
-                          : "Técnico"
+                          ? t("users.roles.gestor")
+                          : t("users.roles.technician")
                       }
                     </span>
                   </div>
@@ -137,14 +142,14 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => setLocation("/configuracoes")}>
                   <Settings className="h-4 w-4 mr-2" />
-                  Configurações
+                  {t("settings.title")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={handleLogout}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
-                  Sair
+                  {t("auth.logout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
