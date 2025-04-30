@@ -101,7 +101,9 @@
     "serviceStatus": "Servicestatus",
     "status": {
       "pending": "Ausstehend",
+      "in_progress": "In Bearbeitung",
       "completed": "Abgeschlossen",
+      "canceled": "Storniert",
       "aguardando_aprovacao": "Genehmigung ausstehend",
       "faturado": "In Rechnung gestellt",
       "pago": "Bezahlt"

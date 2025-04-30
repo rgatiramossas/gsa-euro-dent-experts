@@ -14,6 +14,7 @@ import { checkNetworkStatus } from "@/lib/pwaManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { ServiceType, ServiceStatus, ServiceWithDetails } from "@/types";
 import {
   Clipboard,
@@ -88,6 +89,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
+  const { t } = useTranslation();
   
   // Variáveis auxiliares para melhorar a legibilidade e evitar erros de tipagem
   const isGestor = currentUser?.role === 'gestor' || currentUser?.role === 'manager'; // Incluir ambas as variações
@@ -523,31 +525,34 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   // Usar o nome do tipo de serviço
   const getServiceTypeName = (serviceTypeId: number | null | undefined) => {
-    if (!serviceTypeId || !serviceTypes) return "Não especificado";
+    if (!serviceTypeId || !serviceTypes) return t("common.notSpecified", "Não especificado");
     const serviceType = serviceTypes.find(type => type.id === serviceTypeId);
-    return serviceType ? serviceType.name : "Não especificado";
+    return serviceType ? serviceType.name : t("common.notSpecified", "Não especificado");
   };
   
   // Formatação de data
   const formatDate = (dateString: string | Date | null | undefined) => {
-    if (!dateString) return "Não especificada";
+    if (!dateString) return t("common.notSpecified", "Não especificada");
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     return format(date, "PPP", { locale: ptBR });
   };
   
   // Formatação do status
   const formatStatus = (status: string | null | undefined) => {
-    if (!status) return "Não especificado";
+    if (!status) return t("common.notSpecified", "Não especificado");
     
-    const statusMap: Record<string, string> = {
-      'pending': 'Pendente',
-      'in_progress': 'Em andamento',
-      'completed': 'Concluído',
-      'canceled': 'Cancelado',
-      'pago': 'Pago'
+    const statusKeys: Record<string, string> = {
+      'pending': 'services.status.pending',
+      'in_progress': 'services.status.in_progress',
+      'completed': 'services.status.completed',
+      'canceled': 'services.status.canceled',
+      'pago': 'services.status.pago'
     };
     
-    return statusMap[status] || status;
+    // Obter a chave de tradução ou usar o status como fallback
+    const translationKey = statusKeys[status] || status;
+    // Traduzir usando a chave
+    return t(translationKey, status);
   };
   
   // Cor do status
@@ -567,14 +572,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   // Formatação da localização
   const formatLocation = (locationType: string | null | undefined) => {
-    if (!locationType) return "Não especificada";
+    if (!locationType) return t("common.notSpecified", "Não especificada");
     
-    const locationMap: Record<string, string> = {
-      'client_location': 'Localização do Cliente',
-      'workshop': 'Oficina'
+    const locationKeys: Record<string, string> = {
+      'client_location': 'services.clientLocation',
+      'workshop': 'services.workshop'
     };
     
-    return locationMap[locationType] || locationType;
+    // Obter a chave de tradução ou usar o tipo de localização como fallback
+    const translationKey = locationKeys[locationType] || locationType;
+    // Traduzir usando a chave
+    return t(translationKey, locationType);
   };
   
   // Função para tratar imagens removidas
