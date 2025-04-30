@@ -500,7 +500,7 @@ export default function NewService() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o cliente" />
+                          <SelectValue placeholder={t("services.selectClient", "Selecione o cliente")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -540,7 +540,7 @@ export default function NewService() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={selectedClientId ? "Selecione o veículo" : "Selecione um cliente primeiro"} />
+                          <SelectValue placeholder={selectedClientId ? t("services.selectVehicle", "Selecione o veículo") : t("services.selectClientFirst", "Selecione um cliente primeiro")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
