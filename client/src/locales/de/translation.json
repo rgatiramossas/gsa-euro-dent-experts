@@ -115,6 +115,7 @@
     "editClient": "Kunde bearbeiten",
     "deleteClient": "Kunde löschen",
     "name": "Name",
+    "fullName": "Vollständiger Name",
     "email": "E-Mail",
     "phone": "Telefon",
     "address": "Adresse",
@@ -140,7 +141,18 @@
     "details": "Details",
     "vehicle": "Fahrzeug",
     "cityState": "Stadt/Land",
-    "notSpecified": "Nicht angegeben"
+    "notSpecified": "Nicht angegeben",
+    "simplifiedForm": "Vereinfachtes Formular",
+    "simplifiedFormDesc": "Dies ist ein vereinfachtes Formular für die Kundenregistrierung, das sich nur auf die wesentlichen Informationen konzentriert.",
+    "clientInformation": "Kundeninformationen",
+    "clientNamePlaceholder": "Kundenname",
+    "emailPlaceholder": "email@beispiel.com",
+    "phonePlaceholder": "(00) 00000-0000",
+    "addressPlaceholder": "Vollständige Adresse",
+    "getting": "Abrufen...",
+    "location": "Standort",
+    "registerClient": "Kunden registrieren",
+    "newClientDesc": "Einen neuen Kunden registrieren (vereinfachtes Formular)"
   },
   "vehicles": {
     "title": "Fahrzeuge",
