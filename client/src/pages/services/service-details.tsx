@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ptBR, enUS, de } from "date-fns/locale";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { putApi, deleteApi } from "@/lib/apiWrapper";
 import { checkNetworkStatus } from "@/lib/pwaManager";
@@ -534,7 +534,20 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const formatDate = (dateString: string | Date | null | undefined) => {
     if (!dateString) return t("common.notSpecified", "Não especificada");
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    return format(date, "PPP", { locale: ptBR });
+    
+    // Escolher o local correto baseado no idioma atual
+    const { i18n } = useTranslation();
+    const currentLanguage = i18n.language;
+    
+    let dateLocale = ptBR; // Português é o padrão
+    if (currentLanguage === 'de') {
+      dateLocale = de;
+    } else if (currentLanguage === 'es') {
+      // Espanhol usa o mesmo formato do inglês, só muda as palavras
+      dateLocale = enUS;
+    }
+    
+    return format(date, "PPP", { locale: dateLocale });
   };
   
   // Formatação do status
