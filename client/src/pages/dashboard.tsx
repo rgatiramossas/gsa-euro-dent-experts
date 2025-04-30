@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "wouter";
+import { getQueryFn } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -19,12 +20,19 @@ export default function Dashboard() {
     data: statsResponse, 
     isLoading: isLoadingStats 
   } = useQuery<any>({
-    queryKey: ['/api/dashboard/stats'],
+    queryKey: ['/api/dashboard/stats', { enableOffline: true, offlineTableName: 'dashboard_stats' }],
+    queryFn: getQueryFn({ on401: "throw" }),
+    refetchOnMount: true,
   });
   
   // Usar os dados do backend diretamente com os novos nomes
-  const stats: DashboardStats = React.useMemo(() => {
-    if (!statsResponse) return undefined;
+  const stats = React.useMemo(() => {
+    if (!statsResponse) return {
+      totalPendingServices: 0,
+      totalInProgressServices: 0,
+      totalCompletedServices: 0,
+      totalRevenue: 0
+    } as DashboardStats;
     
     console.log("Stats recebidos do backend:", statsResponse);
     
@@ -34,7 +42,7 @@ export default function Dashboard() {
       totalInProgressServices: statsResponse.totalInProgressServices || 0,
       totalCompletedServices: statsResponse.totalCompletedServices || 0,
       totalRevenue: statsResponse.totalRevenue || 0
-    };
+    } as DashboardStats;
   }, [statsResponse]);
 
   // Fetch technician performance (only for admins)
@@ -42,8 +50,10 @@ export default function Dashboard() {
     data: techPerformance, 
     isLoading: isLoadingPerformance 
   } = useQuery<TechnicianPerformanceType[]>({
-    queryKey: ['/api/dashboard/technician-performance'],
+    queryKey: ['/api/dashboard/technician-performance', { enableOffline: true, offlineTableName: 'technician_performance' }],
+    queryFn: getQueryFn({ on401: "throw" }),
     enabled: isAdmin, // Só busca os dados se for administrador
+    refetchOnMount: true,
   });
 
   // Fetch recent services
@@ -51,7 +61,9 @@ export default function Dashboard() {
     data: services, 
     isLoading: isLoadingServices 
   } = useQuery<ServiceListItem[]>({
-    queryKey: ['/api/services?limit=5'],
+    queryKey: ['/api/services?limit=5', { enableOffline: true, offlineTableName: 'services' }],
+    queryFn: getQueryFn({ on401: "throw" }),
+    refetchOnMount: true, // Forçar refetch quando o componente montar
   });
 
   return (
