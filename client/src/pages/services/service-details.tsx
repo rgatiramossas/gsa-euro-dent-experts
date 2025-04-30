@@ -1025,7 +1025,19 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     Cancelar
                   </Button>
                   <Button 
-                    onClick={handleStatusUpdate}
+                    onClick={() => {
+                      handleStatusUpdate();
+                      
+                      // SOLUÇÃO RADICAL: Forçar reset do estado após um tempo e redirecionar se offline
+                      if (!checkNetworkStatus()) {
+                        setTimeout(() => {
+                          console.log("[StatusButton] Forçando reset do botão e redirecionamento");
+                          resetStatusSubmitting();
+                          setShowStatusDialog(false);
+                          window.location.href = '/services';
+                        }, 3000);
+                      }
+                    }}
                     disabled={!newStatus || updateStatusMutation.isPending || isStatusSubmitting}
                   >
                     {updateStatusMutation.isPending || isStatusSubmitting ? "Salvando..." : "Salvar"}
