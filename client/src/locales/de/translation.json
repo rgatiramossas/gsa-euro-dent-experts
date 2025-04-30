@@ -23,7 +23,10 @@
     "warning": "Warnung",
     "required": "Erforderlich",
     "backToManagers": "Zurück zu Managern",
-    "description": "Beschreibung"
+    "description": "Beschreibung",
+    "date": "Datum",
+    "selectDate": "Datum auswählen",
+    "saving": "Wird gespeichert..."
   },
   "auth": {
     "login": "Anmelden",
@@ -111,11 +114,15 @@
     "clientInfo": "Kundeninformationen",
     "vehicleInfo": "Fahrzeuginformationen",
     "serviceInfo": "Dienstleistungsinformationen",
+    "serviceInformation": "Dienstleistungsinformationen",
     "problemDescription": "Problembeschreibung",
     "problemPlaceholder": "Beschreiben Sie das Problem ausführlich...",
     "responsibleTechnician": "Verantwortlicher Techniker",
     "selectTechnician": "Techniker auswählen",
     "selectServiceType": "Dienstleistungstyp auswählen",
+    "selectClient": "Kunden auswählen",
+    "selectVehicle": "Fahrzeug auswählen",
+    "selectClientFirst": "Wählen Sie zunächst einen Kunden aus",
     "location": "Standort",
     "values": "Werte",
     "serviceValue": "Dienstleistungswert",
@@ -123,7 +130,9 @@
     "photoHelp": "Fügen Sie Fotos des Fahrzeugs hinzu, um die Identifizierung des Problems zu erleichtern. Maximal 5 Fotos. Maximale Größe pro Foto: 5MB.",
     "additionalNotes": "Zusätzliche Notizen",
     "notesPlaceholder": "Zusätzliche Informationen zur Dienstleistung...",
-    "additionalNotesHelp": "Fügen Sie alle zusätzlichen Informationen hinzu, die für die Dienstleistung relevant sein könnten."
+    "additionalNotesHelp": "Fügen Sie alle zusätzlichen Informationen hinzu, die für die Dienstleistung relevant sein könnten.",
+    "createService": "Dienstleistung erstellen",
+    "savingService": "Dienstleistung wird gespeichert..."
   },
   "clients": {
     "title": "Kunden",

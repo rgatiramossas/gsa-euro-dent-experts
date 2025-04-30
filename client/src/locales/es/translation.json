@@ -23,7 +23,10 @@
     "warning": "Advertencia",
     "required": "Obligatorio",
     "backToManagers": "Volver a Gestores",
-    "description": "Descripción"
+    "description": "Descripción",
+    "date": "Fecha",
+    "selectDate": "Seleccionar fecha",
+    "saving": "Guardando..."
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -111,11 +114,15 @@
     "clientInfo": "Información del Cliente",
     "vehicleInfo": "Información del Vehículo",
     "serviceInfo": "Información del Servicio",
+    "serviceInformation": "Información del Servicio",
     "problemDescription": "Descripción del Problema",
     "problemPlaceholder": "Describa el problema en detalle...",
     "responsibleTechnician": "Técnico Responsable",
     "selectTechnician": "Seleccione el técnico",
     "selectServiceType": "Seleccione el tipo de servicio",
+    "selectClient": "Seleccione el cliente",
+    "selectVehicle": "Seleccione el vehículo",
+    "selectClientFirst": "Seleccione un cliente primero",
     "location": "Ubicación",
     "values": "Valores",
     "serviceValue": "Valor del Servicio",
@@ -123,7 +130,9 @@
     "photoHelp": "Añada fotos del vehículo para facilitar la identificación del problema. Máximo 5 fotos. Tamaño máximo por foto: 5MB.",
     "additionalNotes": "Notas Adicionales",
     "notesPlaceholder": "Información adicional sobre el servicio...",
-    "additionalNotesHelp": "Incluya cualquier información adicional que pueda ser relevante para el servicio."
+    "additionalNotesHelp": "Incluya cualquier información adicional que pueda ser relevante para el servicio.",
+    "createService": "Crear Servicio",
+    "savingService": "Guardando servicio..."
   },
   "clients": {
     "title": "Clientes",

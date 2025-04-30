@@ -114,11 +114,15 @@
     "clientInfo": "Informações do Cliente",
     "vehicleInfo": "Informações do Veículo",
     "serviceInfo": "Informações do Serviço",
+    "serviceInformation": "Informações do Serviço",
     "problemDescription": "Descrição do Problema",
     "problemPlaceholder": "Descreva o problema em detalhes...",
     "responsibleTechnician": "Técnico Responsável",
     "selectTechnician": "Selecione o técnico",
     "selectServiceType": "Selecione o tipo de serviço",
+    "selectClient": "Selecione o cliente",
+    "selectVehicle": "Selecione o veículo",
+    "selectClientFirst": "Selecione um cliente primeiro",
     "location": "Localização",
     "values": "Valores",
     "serviceValue": "Valor do Serviço",
@@ -126,7 +130,9 @@
     "photoHelp": "Adicione fotos do veículo para facilitar a identificação do problema. Máximo de 5 fotos. Tamanho máximo por foto: 5MB.",
     "additionalNotes": "Observações Adicionais",
     "notesPlaceholder": "Informações adicionais sobre o serviço...",
-    "additionalNotesHelp": "Inclua qualquer informação adicional que possa ser relevante para o serviço."
+    "additionalNotesHelp": "Inclua qualquer informação adicional que possa ser relevante para o serviço.",
+    "createService": "Criar Serviço",
+    "savingService": "Salvando serviço..."
   },
   "clients": {
     "title": "Clientes",
