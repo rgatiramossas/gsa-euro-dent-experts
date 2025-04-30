@@ -1041,7 +1041,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           {!isGestor && (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Valores</CardTitle>
+                <CardTitle>{t("services.values", "Valores")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="mb-4">
@@ -1049,7 +1049,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   {isAdmin && (
                     <>
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Valor do serviço</span>
+                        <span className="text-gray-600">{t("services.serviceValue", "Valor do serviço")}</span>
                         <span className="text-gray-800 font-medium">
                           {formatCurrency(Number(service.price) || 0)}
                         </span>
@@ -1058,14 +1058,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       {/* Taxa de deslocamento removida */}
                       
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Taxa administrativa</span>
+                        <span className="text-gray-600">{t("services.administrativeFee", "Taxa administrativa")}</span>
                         <span className="text-gray-800 font-medium">
                           {formatCurrency(Number(service.administrative_fee) || 0)}
                         </span>
                       </div>
                       
                       <div className="flex justify-between py-2 font-medium">
-                        <span className="text-gray-700">Total</span>
+                        <span className="text-gray-700">{t("services.totalValue", "Total")}</span>
                         <span className="text-primary text-lg">
                           {formatCurrency(Number(service.price || 0) + Number(service.administrative_fee || 0))}
                         </span>
@@ -1075,7 +1075,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   
                   {isTechnician && (
                     <div className="flex justify-between py-2 font-medium mt-2">
-                      <span className="text-gray-700">Valor para o técnico</span>
+                      <span className="text-gray-700">{t("services.technicianValue", "Valor para o técnico")}</span>
                       <span className="text-primary text-lg">{formatCurrency(Number(service.price) || 0)}</span>
                     </div>
                   )}
@@ -1083,8 +1083,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   {/* Mostrar mensagem explicativa para gestores */}
                   {isGestor && (
                     <div className="p-4 bg-gray-50 rounded-md text-center">
-                      <p className="text-gray-600">Valores financeiros não estão disponíveis para gestores</p>
-                      <p className="text-xs text-gray-500 mt-1">Para visualizar valores financeiros, entre em contato com um administrador</p>
+                      <p className="text-gray-600">{t("services.financialValuesNotAvailable", "Valores financeiros não estão disponíveis para gestores")}</p>
+                      <p className="text-xs text-gray-500 mt-1">{t("services.contactAdminForFinancial", "Para visualizar valores financeiros, entre em contato com um administrador")}</p>
                     </div>
                   )}
                 </div>
@@ -1101,23 +1101,23 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive">
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Excluir Serviço
+                        {t("services.deleteService", "Excluir Serviço")}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir serviço</AlertDialogTitle>
+                        <AlertDialogTitle>{t("services.deleteService", "Excluir serviço")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.
+                          {t("services.confirmDelete", "Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.")}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel", "Cancelar")}</AlertDialogCancel>
                         <AlertDialogAction 
                           onClick={() => deleteServiceMutation.mutate()}
                           disabled={deleteServiceMutation.isPending}
                         >
-                          {deleteServiceMutation.isPending ? "Excluindo..." : "Excluir"}
+                          {deleteServiceMutation.isPending ? t("services.deleting", "Excluindo...") : t("common.delete", "Excluir")}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -1133,17 +1133,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           <form onSubmit={(e) => { e.preventDefault(); handleSaveChanges(); }} className="space-y-6">
             <div className="flex justify-end gap-2 mb-4">
               <Button variant="outline" type="button" onClick={handleCancelEditing}>
-                Cancelar
+                {t("common.cancel", "Cancelar")}
               </Button>
               <Button type="submit" disabled={updateServiceMutation.isPending}>
-                {updateServiceMutation.isPending ? "Salvando..." : "Salvar"}
+                {updateServiceMutation.isPending ? t("common.saving", "Salvando...") : t("common.save", "Salvar")}
               </Button>
             </div>
           
             {/* Service Information */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Informações do Serviço</CardTitle>
+                <CardTitle>{t("services.serviceInformation", "Informações do Serviço")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -1151,14 +1151,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   name="service_type_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo de Serviço <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>{t("services.serviceType", "Tipo de Serviço")} <span className="text-red-500">*</span></FormLabel>
                       <Select
                         onValueChange={(value) => editForm.setValue('service_type_id', parseInt(value))}
                         value={field.value?.toString()}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo de serviço" />
+                            <SelectValue placeholder={t("services.selectServiceType", "Selecione o tipo de serviço")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -1180,7 +1180,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
             {!isGestor && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle>Valores</CardTitle>
+                  <CardTitle>{t("services.values", "Valores")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
@@ -1188,7 +1188,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Valor do Serviço (R$)</FormLabel>
+                        <FormLabel>{t("services.serviceValue", "Valor do Serviço")} (R$)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -1212,7 +1212,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     name="administrative_fee"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Taxa Administrativa (R$)</FormLabel>
+                        <FormLabel>{t("services.administrativeFee", "Taxa Administrativa")} (R$)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -1235,7 +1235,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
             {/* Details */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Detalhes Adicionais</CardTitle>
+                <CardTitle>{t("services.additionalDetails", "Detalhes Adicionais")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -1243,10 +1243,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição do Serviço</FormLabel>
+                      <FormLabel>{t("services.description", "Descrição do Serviço")}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Descreva o serviço a ser realizado..."
+                          placeholder={t("services.problemPlaceholder", "Descreva o serviço a ser realizado...")}
                           className="min-h-[120px]"
                           {...field}
                         />
@@ -1261,10 +1261,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notas Adicionais</FormLabel>
+                      <FormLabel>{t("services.additionalNotes", "Notas Adicionais")}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Informações adicionais sobre o serviço..."
+                          placeholder={t("services.notesPlaceholder", "Informações adicionais sobre o serviço...")}
                           className="min-h-[80px]"
                           {...field}
                           value={field.value || ""}
@@ -1280,13 +1280,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
             {/* Photos Section */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Fotos</CardTitle>
+                <CardTitle>{t("services.photos", "Fotos")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   {/* Existing photos */}
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Fotos existentes</h3>
+                    <h3 className="text-sm font-medium">{t("photos.existingPhotos", "Fotos existentes")}</h3>
                     {((service.photos?.before && service.photos.before.length > 0) || 
                       (service.photos?.after && service.photos.after.length > 0) ||
                       (service.photos?.service && service.photos.service.length > 0)) ? (
@@ -1298,17 +1298,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                               <ImageWithFallback 
                                 src={photo.photo_url} 
-                                alt="Foto do serviço" 
+                                alt={t("photos.vehiclePhoto", "Foto do serviço")} 
                                 className="object-cover w-full h-full"
                               />
                               <Badge className="absolute top-1 left-1 bg-blue-500 text-white">
-                                Serviço
+                                {t("services.service", "Serviço")}
                               </Badge>
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(photo.id)}
                                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Remover foto"
+                                title={t("photos.remove", "Remover foto")}
                               >
                                 <X size={16} />
                               </button>
@@ -1322,17 +1322,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                               <ImageWithFallback 
                                 src={photo.photo_url} 
-                                alt="Foto antes" 
+                                alt={t("photos.before", "Foto antes")} 
                                 className="object-cover w-full h-full"
                               />
                               <Badge className="absolute top-1 left-1 bg-orange-500 text-white">
-                                Antes
+                                {t("photos.before", "Antes")}
                               </Badge>
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(photo.id)}
                                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Remover foto"
+                                title={t("photos.remove", "Remover foto")}
                               >
                                 <X size={16} />
                               </button>
@@ -1346,17 +1346,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                             <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
                               <ImageWithFallback 
                                 src={photo.photo_url} 
-                                alt="Foto depois" 
+                                alt={t("photos.after", "Foto depois")} 
                                 className="object-cover w-full h-full"
                               />
                               <Badge className="absolute top-1 left-1 bg-green-500 text-white">
-                                Depois
+                                {t("photos.after", "Depois")}
                               </Badge>
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(photo.id)}
                                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Remover foto"
+                                title={t("photos.remove", "Remover foto")}
                               >
                                 <X size={16} />
                               </button>
@@ -1365,15 +1365,15 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         }
                       </div>
                     ) : (
-                      <p className="text-gray-500 italic">Nenhuma foto disponível</p>
+                      <p className="text-gray-500 italic">{t("photos.noPhotosAvailable", "Nenhuma foto disponível")}</p>
                     )}
                   </div>
                   
                   {/* Add new photos - Novo formato unificado */}
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Adicionar novas fotos (máx. 4)</h3>
+                    <h3 className="text-sm font-medium">{t("photos.addNewPhotos", "Adicionar novas fotos")} (máx. 4)</h3>
                     <div className="space-y-1">
-                      <Label htmlFor="service_photos">Fotos do serviço</Label>
+                      <Label htmlFor="service_photos">{t("services.servicePhotos", "Fotos do serviço")}</Label>
                       <Input
                         id="service_photos"
                         type="file"
@@ -1385,14 +1385,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       {servicePhotos && servicePhotos.length > 0 && (
                         <div className="mt-2">
                           <p className="text-xs text-gray-500 mb-1">
-                            Preview: {servicePhotos.length} foto(s) selecionada(s)
+                            {t("photos.preview", "Preview")}: {servicePhotos.length} {t(servicePhotos.length === 1 ? "photos.singular" : "photos.plural", "foto(s)")} {t("photos.selected", "selecionada(s)")}
                           </p>
                           <div className="flex flex-wrap gap-3">
                             {Array.from(servicePhotos).map((file, index) => (
                               <div key={index} className="relative group">
                                 <img 
                                   src={URL.createObjectURL(file)} 
-                                  alt={`Preview ${index + 1}`} 
+                                  alt={`${t("photos.preview", "Preview")} ${index + 1}`} 
                                   className="h-24 w-auto rounded-md border border-gray-200" 
                                 />
                                 <span className="absolute top-0 right-0 bg-gray-800 text-white text-xs px-1 rounded-bl">
@@ -1402,7 +1402,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                                   type="button"
                                   onClick={() => handleRemoveSelectedPhoto(index)}
                                   className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                  title="Remover foto"
+                                  title={t("photos.remove", "Remover foto")}
                                 >
                                   ×
                                 </button>
@@ -1422,10 +1422,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
             {/* Form buttons */}
             <div className="flex justify-end gap-2 mt-6">
               <Button variant="outline" type="button" onClick={handleCancelEditing}>
-                Cancelar
+                {t("common.cancel", "Cancelar")}
               </Button>
               <Button type="submit" disabled={updateServiceMutation.isPending}>
-                {updateServiceMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                {updateServiceMutation.isPending ? t("common.saving", "Salvando...") : t("common.saveChanges", "Salvar Alterações")}
               </Button>
             </div>
           </form>
