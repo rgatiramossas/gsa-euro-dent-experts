@@ -354,13 +354,13 @@
     "serviceOfflineDescription": "El servicio se ha guardado localmente y se sincronizará cuando haya conexión a internet."
   },
   "errors": {
-    "validation": "Error de validación", 
+    "validation": "Error de validación",
     "createService": "Error al crear el servicio",
     "createServiceDescription": "Ha ocurrido un error al crear el servicio. Verifique los datos e intente nuevamente.",
     "invalidServiceType": "Tipo de servicio no válido. Valores disponibles: {{values}}",
     "loadingClients": "Error al cargar clientes",
     "loadingVehicles": "Error al cargar vehículos",
-    "loadingServiceTypes": "Error al cargar tipos de servicio", 
+    "loadingServiceTypes": "Error al cargar tipos de servicio",
     "loadingTechnicians": "Error al cargar técnicos",
     "convertingDate": "Error al convertir la cadena de fecha",
     "processingDate": "Error al procesar la fecha",
@@ -374,7 +374,7 @@
   "location": {
     "browserNotSupported": "La geolocalización no es compatible con su navegador",
     "processingError": "Error al procesar los datos de ubicación",
-    "permissionDenied": "Permiso de geolocalización denegado por el usuario",
+    "permissionDenied": "Permiso de localización denegado por el usuario",
     "unavailable": "Información de ubicación no disponible",
     "timeout": "Tiempo de espera agotado para obtener la ubicación",
     "unknownError": "Error desconocido al obtener la ubicación",
@@ -410,7 +410,7 @@
     "markedForRemoval": "Foto marcada para eliminación",
     "willBeRemovedOnSave": "La foto se eliminará cuando guarde los cambios",
     "limitExceeded": "Límite de fotos excedido",
-    "maxFourPerCategory": "Puede subir un máximo de 4 fotos por categoría",
+    "maxFourPerCategory": "Puede subir máximo 4 fotos por categoría",
     "limitExceededWithCount": "Ya tiene {{current}} foto(s) y está intentando añadir {{new}}. El límite es de 4 fotos.",
     "removed": "Foto eliminada",
     "removedWithCount": "Foto {{index}} eliminada. Total: {{total}}/4",
@@ -428,8 +428,8 @@
       "processingError": "Error al procesar archivos",
       "processingErrorDescription": "Ocurrió un error al procesar los archivos seleccionados. Intente nuevamente."
     }
-  }
-"pdf": {
+  },
+  "pdf": {
     "generate": "Generar PDF",
     "downloading": "Descargando...",
     "preview": "Vista previa",
