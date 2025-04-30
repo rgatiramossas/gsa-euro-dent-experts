@@ -20,7 +20,8 @@
     "success": "¡Éxito!",
     "error": "Error",
     "warning": "Advertencia",
-    "required": "Obligatorio"
+    "required": "Obligatorio",
+    "backToManagers": "Volver a Gestores"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -82,6 +83,11 @@
     "photos": "Fotos",
     "addPhotos": "Añadir Fotos",
     "serviceType": "Tipo de Servicio",
+    "unassigned": "No asignado",
+    "manage": "Administrar todos los servicios de reparación de abolladuras",
+    "details": "Detalles",
+    "searchPlaceholder": "Buscar por cliente, vehículo o matrícula...",
+    "serviceStatus": "Estado del Servicio",
     "status": {
       "pending": "Pendiente",
       "completed": "Completado",
@@ -118,7 +124,20 @@
     "clientCreated": "Cliente creado con éxito",
     "clientUpdated": "Cliente actualizado con éxito",
     "clientDeleted": "Cliente eliminado con éxito",
-    "confirmDelete": "¿Está seguro de que desea eliminar este cliente?"
+    "confirmDelete": "¿Está seguro de que desea eliminar este cliente?",
+    "managerClients": "Clientes del Gestor",
+    "viewManagerClients": "Ver clientes asignados a este gestor",
+    "manageClients": "Administrar clientes y sus vehículos",
+    "searchPlaceholder": "Buscar por nombre, correo o teléfono...",
+    "show": "Mostrar",
+    "active": "Activos",
+    "deleted": "Eliminados",
+    "all": "Todos",
+    "noClientsFound": "No se encontraron clientes",
+    "details": "Detalles",
+    "vehicle": "Vehículo",
+    "cityState": "Ciudad/Estado",
+    "notSpecified": "No especificado"
   },
   "vehicles": {
     "title": "Vehículos",

@@ -83,6 +83,11 @@
     "photos": "Fotos",
     "addPhotos": "Fotos hinzufügen",
     "serviceType": "Dienstleistungstyp",
+    "unassigned": "Nicht zugewiesen",
+    "manage": "Verwalten Sie alle Ausbeuldienstleistungen",
+    "details": "Details",
+    "searchPlaceholder": "Nach Kunde, Fahrzeug oder Kennzeichen suchen...",
+    "serviceStatus": "Servicestatus",
     "status": {
       "pending": "Ausstehend",
       "completed": "Abgeschlossen",
