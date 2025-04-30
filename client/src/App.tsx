@@ -25,7 +25,6 @@ import { SplashScreen } from "@/components/ui/splash-screen";
 import ServicesList from "@/pages/services/index";
 import ServiceDetails from "@/pages/services/service-details";
 import NewService from "@/pages/services/new-service";
-import NewServiceOffline from "@/pages/services/new-service-offline";
 
 // Import client related pages
 import ClientsList from "@/pages/clients/index";
@@ -161,15 +160,7 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      <Route path="/services/new-offline">
-        <RequireAuth>
-          <RequireTechnician>
-            <MainLayout>
-              <NewServiceOffline />
-            </MainLayout>
-          </RequireTechnician>
-        </RequireAuth>
-      </Route>
+      {/* Rota para formulário offline removida - usando o mesmo formulário em ambos os casos */}
       
       <Route path="/services/:id">
         {(params) => (

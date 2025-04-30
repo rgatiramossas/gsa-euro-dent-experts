@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { getQueryFn } from "@/lib/queryClient";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { 
@@ -29,61 +28,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle } from "lucide-react";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { OfflineAlert } from "@/components/common/OfflineAlert";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { getApi } from "@/lib/apiWrapper";
+import { triggerSyncIfNeeded } from "@/lib/pwaManager";
 
 export default function ServicesList() {
   const [_, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<ServiceStatus | "all">("all");
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { isOnline } = useOfflineStatus();
   
-  // Monitorar status da conexão
-  useEffect(() => {
-    function handleOnlineStatus() {
-      setIsOnline(navigator.onLine);
-    }
-    
-    // Adicionar listeners para mudanças de estado da conexão
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOnlineStatus);
-    
-    // Verificar status inicial
-    handleOnlineStatus();
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('online', handleOnlineStatus);
-      window.removeEventListener('offline', handleOnlineStatus);
-    };
-  }, []);
-  
-  const { data: services, isLoading } = useQuery<ServiceListItem[]>({
-    queryKey: ['/api/services', { enableOffline: true, offlineTableName: 'services' }],
-    queryFn: getQueryFn({ on401: "throw" }),
-    refetchOnMount: true, // Forçar refetch quando o componente montar
+  // Buscar serviços - usando nossa própria função getApi com suporte offline
+  const { data: services, isLoading, error, refetch } = useQuery<ServiceListItem[]>({
+    queryKey: ['/api/services'],
+    queryFn: () => getApi('/api/services'),
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 24 * 60 * 60 * 1000, // 24 horas (para acesso offline)
   });
+
+  // Tentar sincronizar quando voltar online
+  useEffect(() => {
+    if (isOnline) {
+      triggerSyncIfNeeded().then(() => {
+        // Recarregar dados após sincronização
+        refetch();
+      });
+    }
+  }, [isOnline, refetch]);
 
   // Filter services based on search term and active tab
   const filteredServices = services?.filter(service => {
     const matchesSearch = 
       searchTerm === "" || 
-      service.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicle.license_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicle.model.toLowerCase().includes(searchTerm.toLowerCase());
+      service.client?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.vehicle?.license_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.vehicle?.make?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.vehicle?.model?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesTab = activeTab === "all" || service.status === activeTab;
     
     return matchesSearch && matchesTab;
-  });
+  }) || [];
 
   const navigateToServiceDetails = (id: number) => {
     setLocation(`/services/${id}`);
+  };
+
+  // Função para verificar se um serviço foi criado offline
+  const isOfflineService = (service: ServiceListItem) => {
+    return !!(service._offline || service._isOffline || service._pendingSave || 
+              (typeof service.id === 'string' && service.id.includes('offline')));
   };
 
   return (
@@ -92,42 +87,18 @@ export default function ServicesList() {
         title="Serviços"
         description="Gerencie todos os serviços de martelinho de ouro"
         actions={
-          isOnline ? (
-            <Link href="/services/new">
-              <Button>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Novo Serviço
-              </Button>
-            </Link>
-          ) : (
-            <Button onClick={() => setLocation('/services/new-offline')}>
+          <Link href="/services/new">
+            <Button>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Novo Serviço (Offline)
+              Novo Serviço
             </Button>
-          )
+          </Link>
         }
       />
       
-      {!isOnline && (
-        <div className="mb-6 mt-4">
-          <div className="bg-amber-50 border-l-4 border-amber-400 p-4 text-sm rounded">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 text-amber-500 mr-2" />
-              <div>
-                <p className="font-medium text-amber-800">Modo Offline Detectado</p>
-                <p className="mt-1 text-amber-700">
-                  Você está offline. Algumas funcionalidades podem estar limitadas. Utilize o formulário 
-                  simplificado para criar serviços que serão sincronizados quando a conexão for restaurada.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <OfflineAlert showOnlyWhenOffline={true} />
       
       <Card className="mt-6">
         <div className="p-4 border-b border-gray-200">
