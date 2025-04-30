@@ -51,11 +51,9 @@ export const checkNetworkStatus = () => {
   const isOnline = navigator.onLine;
   
   // Atualizar o estado do aplicativo com base na conectividade
+  // Removido a pedido do cliente: não mostrar indicador visual de modo offline
   if (isOnline) {
-    document.body.classList.remove('offline-mode');
     triggerSyncIfNeeded();
-  } else {
-    document.body.classList.add('offline-mode');
   }
   
   return isOnline;
@@ -107,12 +105,12 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
   
   switch (data.type) {
     case 'online':
-      document.body.classList.remove('offline-mode');
+      // Removido a pedido do cliente: não mostrar indicador visual de modo offline
       offlineStatusStore.setOnline(true);
       break;
       
     case 'offline':
-      document.body.classList.add('offline-mode');
+      // Removido a pedido do cliente: não mostrar indicador visual de modo offline
       offlineStatusStore.setOnline(false);
       break;
       
