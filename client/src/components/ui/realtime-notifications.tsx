@@ -79,7 +79,8 @@ export function RealtimeNotifications() {
         message: 'Testando notificação em tempo real'
       };
       
-      // Use o hook useWebSocket para enviar
+      // Obter a função de envio do hook useWebSocket
+      const { send } = useWebSocket();
       const result = send(testData);
       console.log("Enviando teste de notificação:", result);
       
