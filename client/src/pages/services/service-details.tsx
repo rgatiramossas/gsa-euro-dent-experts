@@ -1373,7 +1373,38 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       ) : (
         /* Edit Mode - Using the same structure as the new-service form but only for editable fields */
         <Form {...editForm}>
-          <form onSubmit={(e) => { e.preventDefault(); handleSaveChanges(); }} className="space-y-6">
+          <form 
+            onSubmit={(e) => { 
+              e.preventDefault(); 
+              
+              // SOLUÇÃO EXTREMA: Forçar redirecionamento após um tempo fixo
+              if (!checkNetworkStatus()) {
+                console.log("[Form] Modo offline detectado, configurando timer para redirecionamento forçado");
+                
+                // Timer de emergência para garantir que o usuário não fique preso
+                setTimeout(() => {
+                  console.log("[Form] TIMER DE EMERGÊNCIA - Redirecionamento forçado");
+                  try {
+                    const buttons = document.querySelectorAll('button');
+                    buttons.forEach(button => {
+                      if (button.textContent?.includes('Salvando')) {
+                        button.textContent = 'Salvar';
+                        button.disabled = false;
+                      }
+                    });
+                  } catch (err) {
+                    console.error("[Form] Erro ao resetar botões:", err);
+                  }
+                  
+                  // Redirecionamento forçado
+                  window.location.href = '/services';
+                }, 2500);
+              }
+              
+              // Chamar a função normal de salvamento
+              handleSaveChanges(); 
+            }} 
+            className="space-y-6">
             <div className="flex justify-end gap-2 mb-4">
               <Button variant="outline" type="button" onClick={handleCancelEditing}>
                 Cancelar

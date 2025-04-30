@@ -432,7 +432,39 @@ export default function NewService() {
       />
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            
+            // SOLUÇÃO EXTREMA: Forçar redirecionamento após um tempo fixo
+            if (!checkNetworkStatus()) {
+              console.log("[Form] Modo offline detectado, configurando timer para redirecionamento forçado");
+              
+              // Timer de emergência para garantir que o usuário não fique preso
+              setTimeout(() => {
+                console.log("[Form] TIMER DE EMERGÊNCIA - Redirecionamento forçado");
+                
+                try {
+                  const buttons = document.querySelectorAll('button');
+                  buttons.forEach(button => {
+                    if (button.textContent?.includes('Salvando')) {
+                      button.textContent = 'Criar Serviço';
+                      button.disabled = false;
+                    }
+                  });
+                } catch (err) {
+                  console.error("[Form] Erro ao resetar botões:", err);
+                }
+                
+                // Redirecionamento forçado
+                window.location.href = '/services';
+              }, 2500);
+            }
+            
+            // Chamar o submit normal
+            form.handleSubmit(onSubmit)(e);
+          }} 
+          className="space-y-6 mt-6">
           {/* Client and Vehicle Information */}
           <Card>
             <CardHeader className="pb-3">
@@ -823,6 +855,16 @@ export default function NewService() {
               type="submit" 
               className="flex-1"
               disabled={createServiceMutation.isPending || isSubmitting}
+              onClick={() => {
+                if (!checkNetworkStatus()) {
+                  // Em modo offline, configurar um timer para forçar o reset do botão e redirecionar
+                  setTimeout(() => {
+                    console.log("[SaveButton] Forçando reset do botão e redirecionamento em new-service");
+                    setIsSubmitting(false);
+                    window.location.href = '/services';
+                  }, 3000);
+                }
+              }}
             >
               {createServiceMutation.isPending || isSubmitting ? "Salvando..." : "Salvar Serviço"}
             </Button>
