@@ -436,23 +436,7 @@
       "processingErrorDescription": "Ocorreu um erro ao processar os arquivos selecionados. Tente novamente."
     }
   }
-}
-{
-  "photos": {
-    "filesReceived": "Arquivos recebidos",
-    "uploadError": "Erro ao fazer upload",
-    "uploadSuccess": "Upload realizado com sucesso",
-    "processing": "Processando imagens...",
-    "dragDrop": "Arraste e solte imagens aqui",
-    "orClick": "ou clique para selecionar"
-  },
-  "dashboard": {
-    "technicianPerformance": "Desempenho dos Técnicos",
-    "completedServices": "Serviços Concluídos",
-    "averageRating": "Avaliação Média",
-    "revenueGenerated": "Receita Gerada"
-  },
-  "pdf": {
+"pdf": {
     "generate": "Gerar PDF",
     "downloading": "Baixando...",
     "preview": "Visualizar",
