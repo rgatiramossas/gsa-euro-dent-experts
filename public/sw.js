@@ -87,19 +87,35 @@ self.addEventListener('fetch', (event) => {
     // Para métodos que modificam dados (POST, PUT, DELETE)
     if (['POST', 'PUT', 'DELETE'].includes(method)) {
       event.respondWith(
-        fetch(event.request.clone())
-          .catch(error => {
-            // Se offline, retorna resposta simulada imediatamente com sucesso
+        (async () => {
+          try {
+            const response = await fetch(event.request.clone());
+            return response;
+          } catch (error) {
+            // Armazenar requisição para sincronização posterior
+            const requestData = await event.request.json();
+            const tempId = -Date.now();
+            
+            // Notificar clientes sobre o sucesso do salvamento offline
+            notifyClients({
+              type: 'save-completed',
+              success: true,
+              offline: true,
+              id: tempId
+            });
+
+            // Retornar resposta simulada
             return new Response(JSON.stringify({
               success: true,
               _offline: true,
               _pending: true,
-              id: -Date.now() // ID temporário negativo
+              id: tempId
             }), {
               status: 200,
               headers: { 'Content-Type': 'application/json' }
             });
-          })
+          }
+        })()
       );
       return;
     }
