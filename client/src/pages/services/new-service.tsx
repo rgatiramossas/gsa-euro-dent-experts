@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
+import { getApi } from "@/lib/apiWrapper";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -93,25 +94,67 @@ export default function NewService() {
   const { data: clients } = useQuery<Client[]>({
     queryKey: ['/api/clients'],
     queryFn: async () => {
-      const response = await fetch('/api/clients?filterMode=active');
-      if (!response.ok) {
+      try {
+        // Usar o getApi com suporte a PWA para carregar clientes
+        return await getApi<Client[]>('/api/clients?filterMode=active', {
+          enableOffline: true,
+          offlineTableName: 'clients'
+        });
+      } catch (error) {
+        console.error("Erro ao carregar clientes:", error);
         throw new Error('Erro ao carregar clientes');
       }
-      return response.json();
     }
   });
   
   const { data: vehicles } = useQuery<Vehicle[]>({
     queryKey: [selectedClientId ? `/api/clients/${selectedClientId}/vehicles` : null],
     enabled: !!selectedClientId,
+    queryFn: async ({ queryKey }) => {
+      const url = queryKey[0];
+      if (!url) return [];
+      
+      try {
+        // Usar o getApi com suporte a PWA em vez do fetch diretamente
+        return await getApi<Vehicle[]>(url as string, {
+          enableOffline: true,
+          offlineTableName: 'vehicles'
+        });
+      } catch (error) {
+        console.error("Erro ao carregar veículos:", error);
+        return []; // Retornar array vazio em caso de erro para evitar quebra da UI
+      }
+    }
   });
   
   const { data: serviceTypes } = useQuery<ServiceType[]>({
     queryKey: ['/api/service-types'],
+    queryFn: async () => {
+      try {
+        return await getApi<ServiceType[]>('/api/service-types', {
+          enableOffline: true,
+          offlineTableName: 'serviceTypes'
+        });
+      } catch (error) {
+        console.error("Erro ao carregar tipos de serviço:", error);
+        return [];
+      }
+    }
   });
   
   const { data: technicians } = useQuery<User[]>({
     queryKey: ['/api/users?role=technician'],
+    queryFn: async () => {
+      try {
+        return await getApi<User[]>('/api/users?role=technician', {
+          enableOffline: true,
+          offlineTableName: 'users'
+        });
+      } catch (error) {
+        console.error("Erro ao carregar técnicos:", error);
+        return [];
+      }
+    }
   });
 
   // Form definition
@@ -240,10 +283,12 @@ export default function NewService() {
             
             console.log("Enviando fotos para o serviço:", serviceId);
             
-            // Fazer o upload das fotos
+            // Fazer o upload das fotos - upload de fotos não precisa do apiWrapper pois só funciona online
+            // e no momento não é necessário suporte offline para upload de fotos
             const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
               method: 'POST',
               body: formData,
+              credentials: 'include',
               // Não definir Content-Type, pois o browser vai definir automaticamente com o boundary correto
             });
             
@@ -324,7 +369,7 @@ export default function NewService() {
     const id = parseInt(clientId);
     setSelectedClientId(id);
     form.setValue("client_id", id);
-    form.setValue("vehicle_id", undefined);
+    form.setValue("vehicle_id", null as any);
   };
   
   return (
