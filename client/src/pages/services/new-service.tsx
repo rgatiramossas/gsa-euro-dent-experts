@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
-import { getApi } from "@/lib/apiWrapper";
+import { getApi, postApi } from "@/lib/apiWrapper";
+import { checkNetworkStatus } from "@/lib/pwaManager";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -259,14 +260,18 @@ export default function NewService() {
       console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
       
       try {
-        // 1. Criar serviço
-        const createdService = await apiRequest('/api/services', 'POST', serviceData);
+        // 1. Criar serviço usando o apiWrapper para suporte offline
+        const createdService = await postApi('/api/services', serviceData, {
+          enableOffline: true,
+          offlineTableName: 'services'
+        });
         console.log("Resposta do servidor:", createdService);
         
-        // Processar upload de fotos se houver
-        console.log("Serviço criado com sucesso, verificando fotos para upload");
+        // Verificar se estamos online antes de tentar o upload de fotos
+        const isOnline = checkNetworkStatus();
         
-        if (photos && photos.length > 0) {
+        // Processar upload de fotos se houver e estivermos online
+        if (isOnline && photos && photos.length > 0) {
           try {
             const serviceId = createdService.id;
             
@@ -283,18 +288,15 @@ export default function NewService() {
             
             console.log("Enviando fotos para o serviço:", serviceId);
             
-            // Fazer o upload das fotos - upload de fotos não precisa do apiWrapper pois só funciona online
-            // e no momento não é necessário suporte offline para upload de fotos
+            // Upload de fotos só funciona online
             const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
               method: 'POST',
               body: formData,
               credentials: 'include',
-              // Não definir Content-Type, pois o browser vai definir automaticamente com o boundary correto
             });
             
             if (!uploadRes.ok) {
               console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
-              // Não lança erro para não impedir a criação do serviço
               console.warn("Prosseguindo apesar do erro no upload de fotos");
             } else {
               const uploadData = await uploadRes.json();
@@ -304,6 +306,9 @@ export default function NewService() {
             console.error("Erro ao processar fotos:", photoError);
             // Não lança erro para não impedir a criação do serviço
           }
+        } else if (!isOnline && photos && photos.length > 0) {
+          console.log("Modo offline: upload de fotos será feito quando a conexão for restaurada");
+          // Aqui poderíamos armazenar fotos para upload futuro quando online
         } else {
           console.log("Nenhuma foto selecionada para upload");
         }
