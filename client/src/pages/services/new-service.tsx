@@ -590,7 +590,7 @@ export default function NewService() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo de serviço" />
+                          <SelectValue placeholder={t("services.selectServiceType")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -615,7 +615,7 @@ export default function NewService() {
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Descreva o problema em detalhes..."
+                        placeholder={t("services.problemPlaceholder")}
                         rows={3}
                         value={field.value || ''}
                       />
@@ -645,7 +645,7 @@ export default function NewService() {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione o técnico" />
+                            <SelectValue placeholder={t("services.selectTechnician")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -835,13 +835,13 @@ export default function NewService() {
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Informações adicionais sobre o serviço..."
+                        placeholder={t("services.notesPlaceholder")}
                         rows={3}
                         value={field.value || ''}
                       />
                     </FormControl>
                     <FormDescription>
-                      Inclua qualquer informação adicional que possa ser relevante para o serviço.
+                      {t("services.additionalNotesHelp")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
