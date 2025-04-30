@@ -72,7 +72,7 @@ export default function Dashboard() {
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader 
         title={t("dashboard.title")} 
-        description={t("dashboard.description", "Visão geral dos serviços e produtividade da equipe")} 
+        description={t("dashboard.description")} 
       />
       
       {/* Statistics Cards - Com ações rápidas */}
