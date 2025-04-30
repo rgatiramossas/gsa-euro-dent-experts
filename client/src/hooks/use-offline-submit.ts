@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { checkNetworkStatus } from '@/lib/pwaManager';
 
 /**
- * Hook personalizado para lidar com o estado de submissão de formulários no modo offline
+ * Hook personalizado aprimorado para lidar com o estado de submissão de formulários,
+ * especialmente no modo offline.
  * 
- * Este hook adiciona um listener para o evento 'form-save-completed' que é disparado
- * quando uma operação offline é concluída (com sucesso ou erro).
+ * Características:
+ * - Detecta automaticamente estado online/offline
+ * - Timeout de segurança reduzido para 5 segundos
+ * - Melhor detecção de eventos para garantir que o estado seja sempre resetado
  * 
  * Exemplo de uso:
  * ```
@@ -24,47 +28,91 @@ import { useState, useEffect } from 'react';
  */
 export function useOfflineSubmit() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Efeito para adicionar listener para o evento de salvamento concluído
+  // Função para iniciar o estado de submissão
+  const startSubmitting = useCallback(() => {
+    console.log('[useOfflineSubmit] Iniciando estado de submissão');
+    setIsSubmitting(true);
+    
+    // Se estiver offline, já configura um timeout mais curto
+    if (!checkNetworkStatus()) {
+      console.log('[useOfflineSubmit] Modo offline detectado, configurando timeout automático');
+      // Limpar qualquer timeout anterior que possa existir
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      // Configurar novo timeout (mais curto em modo offline)
+      timeoutRef.current = setTimeout(() => {
+        console.log('[useOfflineSubmit] Offline safety timeout: resetting isSubmitting');
+        setIsSubmitting(false);
+        
+        // Notificar a aplicação que a submissão offline foi concluída
+        window.dispatchEvent(new CustomEvent('form-save-completed', {
+          detail: { source: 'safety-timeout' }
+        }));
+      }, 5000); // Reduzido para 5 segundos em vez de 10
+    }
+  }, []);
+  
+  // Função para resetar manualmente o estado de submissão
+  const resetSubmitting = useCallback(() => {
+    console.log('[useOfflineSubmit] Resetting submission state manually');
+    
+    // Limpar qualquer timeout pendente
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    setIsSubmitting(false);
+  }, []);
+  
+  // Efeito para adicionar listeners para eventos de salvamento concluído
   useEffect(() => {
-    // Função de tratamento de evento para resetar o estado de submissão
-    const handleFormSaveCompleted = () => {
-      console.log('Form-save-completed event received, resetting isSubmitting');
+    // Função de tratamento de eventos combinada
+    const handleFormSaveCompleted = (event: Event) => {
+      console.log('[useOfflineSubmit] Form save completion event received', event.type);
+      
+      // Limpar timeout de segurança ao receber o evento
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      
       setIsSubmitting(false);
     };
     
-    // Adicionar listener ao evento "form-save-completed"
+    // Adicionar listeners para ambos os tipos de eventos
     window.addEventListener('form-save-completed', handleFormSaveCompleted);
-    
-    // Adicionar também listener ao evento antigo "offline-save-completed" para compatibilidade
     window.addEventListener('offline-save-completed', handleFormSaveCompleted);
     
     // Limpar listeners na desmontagem do componente
     return () => {
       window.removeEventListener('form-save-completed', handleFormSaveCompleted);
       window.removeEventListener('offline-save-completed', handleFormSaveCompleted);
+      
+      // Garantir que o timeout seja limpo
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
   
-  // Função para iniciar o estado de submissão
-  const startSubmitting = () => setIsSubmitting(true);
-  
-  // Função para resetar manualmente o estado de submissão (se necessário)
-  const resetSubmitting = () => setIsSubmitting(false);
-  
-  // Timeout de segurança - reseta isSubmitting após 10 segundos caso nenhum evento ocorra
+  // Timeout de segurança geral - reseta isSubmitting após 8 segundos em qualquer situação
   useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
+    let generalTimeout: ReturnType<typeof setTimeout>;
     
     if (isSubmitting) {
-      timeout = setTimeout(() => {
-        console.log('Safety timeout: resetting isSubmitting after 10 seconds');
+      generalTimeout = setTimeout(() => {
+        console.log('[useOfflineSubmit] General safety timeout: forcing reset of isSubmitting');
         setIsSubmitting(false);
-      }, 10000);
+      }, 8000);
     }
     
     return () => {
-      if (timeout) clearTimeout(timeout);
+      if (generalTimeout) clearTimeout(generalTimeout);
     };
   }, [isSubmitting]);
   

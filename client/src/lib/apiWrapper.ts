@@ -159,6 +159,14 @@ export async function apiRequest<T>({
       throw new Error(`Método não suportado offline: ${method}`);
     } catch (error) {
       console.error("Erro durante operação offline:", error);
+      
+      // Garantir que o evento seja sempre disparado, mesmo em caso de erro
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('form-save-completed', {
+          detail: { error, source: 'offline-error' }
+        }));
+      }, 100);
+      
       throw error;
     }
   }
@@ -305,6 +313,12 @@ export async function apiRequest<T>({
     }
 
     // Se chegamos aqui, não foi possível recuperar de nenhuma forma
+    // Garantir que os formulários saiam do estado de loading, mesmo se todas as tentativas anteriores falharem
+    console.error("Falha final na operação com API:", error);
+    window.dispatchEvent(new CustomEvent('form-save-completed', {
+      detail: { error, source: 'api-final-error' }
+    }));
+    
     throw error;
   }
 }
