@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
+import useOfflineSubmit from "@/hooks/use-offline-submit";
 import { 
   Form,
   FormControl,
@@ -90,6 +91,7 @@ export default function NewService() {
   const { user } = useAuth();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [photos, setPhotos] = useState<FileList | null>(null);
+  const { isSubmitting, startSubmitting, resetSubmitting } = useOfflineSubmit();
   
   // Queries
   const { data: clients } = useQuery<Client[]>({
@@ -188,6 +190,31 @@ export default function NewService() {
       }
     }
   }, [user, technicians, form]);
+  
+  // Ouvir eventos de conclusão de salvamento offline
+  useEffect(() => {
+    const handleOfflineSaveCompleted = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.tableName === 'services') {
+        console.log('Serviço salvo offline com sucesso:', customEvent.detail);
+        resetSubmitting();
+        toast({
+          title: "Serviço cadastrado offline",
+          description: "O serviço foi salvo localmente e será sincronizado quando houver conexão",
+        });
+        // Redirecionar para a lista de serviços após um pequeno atraso
+        setTimeout(() => {
+          setLocation('/services');
+        }, 500);
+      }
+    };
+    
+    window.addEventListener('offline-save-completed', handleOfflineSaveCompleted);
+    
+    return () => {
+      window.removeEventListener('offline-save-completed', handleOfflineSaveCompleted);
+    };
+  }, [toast, setLocation, resetSubmitting]);
   
   // Create service mutation
   const createServiceMutation = useMutation({
@@ -378,6 +405,9 @@ export default function NewService() {
       vehicle: vehicles?.find(v => v.id === data.vehicle_id)?.make,
       serviceType: serviceTypes?.find(t => t.id === data.service_type_id)?.name,
     });
+    
+    // Iniciar estado de submissão (complementa o isPending da mutação)
+    startSubmitting();
     
     createServiceMutation.mutate(data);
   };
@@ -792,9 +822,9 @@ export default function NewService() {
             <Button 
               type="submit" 
               className="flex-1"
-              disabled={createServiceMutation.isPending}
+              disabled={createServiceMutation.isPending || isSubmitting}
             >
-              {createServiceMutation.isPending ? "Salvando..." : "Salvar Serviço"}
+              {createServiceMutation.isPending || isSubmitting ? "Salvando..." : "Salvar Serviço"}
             </Button>
           </div>
         </form>
