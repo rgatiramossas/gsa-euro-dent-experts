@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getApi } from "@/lib/apiWrapper";
+import { getApi, deleteApi } from "@/lib/apiWrapper";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import {
@@ -79,19 +79,16 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
     error: budgetsError,
   } = useQuery<Budget[]>({
     queryKey: ["/api/budgets"],
+    queryFn: async () => {
+      return await getApi<Budget[]>("/api/budgets");
+    },
     retry: 1,
   });
 
   // Setup mutation for deleting a budget
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/budgets/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        throw new Error("Falha ao excluir orçamento");
-      }
-      return response.json();
+      return await deleteApi<any>(`/api/budgets/${id}`);
     },
     onSuccess: () => {
       toast({
