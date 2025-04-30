@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
+import { getQueryFn } from "@/lib/queryClient";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { 
@@ -35,7 +36,9 @@ export default function ServicesList() {
   const [activeTab, setActiveTab] = useState<ServiceStatus | "all">("all");
   
   const { data: services, isLoading } = useQuery<ServiceListItem[]>({
-    queryKey: ['/api/services'],
+    queryKey: ['/api/services', { enableOffline: true, offlineTableName: 'services' }],
+    queryFn: getQueryFn({ on401: "throw" }),
+    refetchOnMount: true, // Forçar refetch quando o componente montar
   });
 
   // Filter services based on search term and active tab
