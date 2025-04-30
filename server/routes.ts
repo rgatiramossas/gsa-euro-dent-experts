@@ -712,6 +712,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`${validAssignments.length} clientes associados ao gestor ${user.id}`);
       }
       
+      // Enviar notificação de novo usuário criado
+      try {
+        const adminUser = await storage.getUser(Number(req.session.userId));
+        
+        // Enviar notificação global via WebSocket
+        sendGlobalNotification(
+          'Novo usuário criado',
+          `O usuário ${user.name} (${user.role}) foi adicionado por ${adminUser?.name || 'administrador'}.`,
+          'success'
+        );
+        
+        console.log(`Notificação enviada: Novo usuário ${user.id} (${user.role}) criado`);
+      } catch (notificationError) {
+        console.error("Erro ao enviar notificação WebSocket:", notificationError);
+        // Não interromper o fluxo principal
+      }
+      
       res.status(201).json({
         id: user.id,
         username: user.username,
@@ -1432,6 +1449,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Em uma implementação real, você implementaria um método de exclusão no storage
       // Por enquanto, vamos simular a exclusão usando o updateService com um status "deleted"
       const updatedService = await storage.updateService(id, { status: "deleted" });
+      
+      // Enviar notificação via WebSocket que o serviço foi excluído
+      try {
+        const user = await storage.getUser(Number(req.session.userId));
+        const client = await storage.getClient(service.client_id);
+        
+        // Utilizar função de notificação global
+        sendGlobalNotification(
+          `Serviço excluído`,
+          `O serviço ${service.service_number || '#' + service.id} para o cliente ${client?.name || 'desconhecido'} foi excluído por ${user?.name || 'um usuário'}.`,
+          'warning'
+        );
+        
+        console.log(`Notificação enviada: Serviço ${service.id} excluído por ${user?.name || 'usuário'}`);
+      } catch (notificationError) {
+        console.error("Erro ao enviar notificação WebSocket:", notificationError);
+        // Não interromper o fluxo principal se falhar a notificação
+      }
+      
       res.status(200).json({ message: "Service deleted successfully" });
     } catch (error) {
       console.error("Error deleting service:", error);
