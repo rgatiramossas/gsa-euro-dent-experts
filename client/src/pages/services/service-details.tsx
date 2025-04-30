@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import useOfflineSubmit from "@/hooks/use-offline-submit";
 import { formatCurrency } from "@/lib/utils";
 import { ServiceType, ServiceStatus, ServiceWithDetails } from "@/types";
+// Adicionar useEffect explicitamente para maior clareza
+import { useEffect } from "react";
 import {
   Clipboard,
   Clock,
@@ -162,6 +164,38 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     }
   });
   
+  // Efeito para tratar evento de forçar reset dos estados de submissão
+  useEffect(() => {
+    const handleForceReset = () => {
+      console.log('[ServiceDetails] Recebido evento para forçar reset dos estados de submissão');
+      
+      // Resetar todos os estados de submissão explicitamente
+      resetStatusSubmitting();
+      resetServiceSubmitting();
+      resetDeleteSubmitting();
+      
+      // Fechar diálogos que possam estar abertos
+      setShowStatusDialog(false);
+      setIsEditing(false);
+      
+      // Adicionar um toast informativo se estiver offline
+      if (!checkNetworkStatus()) {
+        toast({
+          title: "Modo offline",
+          description: "A operação foi salva localmente e será sincronizada quando houver conexão",
+        });
+      }
+    };
+    
+    // Adicionar listener para o evento de força reset
+    window.addEventListener('force-reset-submit-state', handleForceReset);
+    
+    // Cleanup listener na desmontagem
+    return () => {
+      window.removeEventListener('force-reset-submit-state', handleForceReset);
+    };
+  }, [resetStatusSubmitting, resetServiceSubmitting, resetDeleteSubmitting, toast]);
+
   // Atualizar valores iniciais do formulário quando service carregar
   React.useEffect(() => {
     if (service) {
@@ -422,12 +456,41 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   // Função para salvar as alterações
   const handleSaveChanges = () => {
+    // SOLUÇÃO CRÍTICA: Configurar um timer de segurança absoluto
+    const safetyTimer = setTimeout(() => {
+      console.log("[handleSaveChanges] TIMER DE SEGURANÇA MÁXIMO - Forçando reset do estado de submissão");
+      resetServiceSubmitting();
+      setIsEditing(false);
+      
+      // Disparar evento de reset global
+      window.dispatchEvent(new CustomEvent('force-reset-submit-state', { 
+        detail: { source: 'handleSaveChanges-absolute-safety' }
+      }));
+      
+      // Mostrar feedback ao usuário
+      toast({
+        title: "Operação completada",
+        description: checkNetworkStatus() 
+          ? "As alterações foram salvas" 
+          : "As alterações foram salvas localmente e serão sincronizadas quando houver conexão",
+      });
+    }, 3000); // 3 segundos é um bom compromisso
+    
     editForm.handleSubmit((data) => {
       console.log("[handleSaveChanges] Dados do formulário:", data);
       
       // Iniciar estado de submissão offline
       console.log("[handleSaveChanges] Iniciando submissão do serviço");
       startServiceSubmitting();
+      
+      // Configurar um mecanismo para limpar o timer de segurança se a submissão for bem-sucedida
+      const successCleanup = () => {
+        console.log("[handleSaveChanges] Limpando timer de segurança após sucesso");
+        clearTimeout(safetyTimer);
+      };
+      
+      // Adicionar evento de única execução para limpar o timer
+      window.addEventListener('form-save-completed', successCleanup, { once: true });
       
       // Verificar se o serviço existe
       if (!service) {

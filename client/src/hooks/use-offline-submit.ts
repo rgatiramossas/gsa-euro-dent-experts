@@ -108,7 +108,25 @@ export function useOfflineSubmit() {
       generalTimeout = setTimeout(() => {
         console.log('[useOfflineSubmit] General safety timeout: forcing reset of isSubmitting');
         setIsSubmitting(false);
-      }, 8000);
+        
+        // Disparar evento de forma explícita para garantir que a UI se atualize
+        window.dispatchEvent(new CustomEvent('force-reset-submit-state', { 
+          detail: { source: 'general-safety-timeout' }
+        }));
+        
+        // SOLUÇÃO CRÍTICA: Forçar atualização da UI com evento DOM padrão
+        try {
+          // Criar e disparar um evento "submit" cancelado para forçar atualização da UI
+          const resetEvent = new Event('reset', { bubbles: true, cancelable: true });
+          document.dispatchEvent(resetEvent);
+          
+          // Criar e disparar um evento "click" para forçar atualização dos handlers
+          const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+          document.dispatchEvent(clickEvent);
+        } catch (e) {
+          console.error('[useOfflineSubmit] Erro ao tentar forçar reset da UI:', e);
+        }
+      }, 3000); // Reduzido para 3 segundos para resposta mais rápida
     }
     
     return () => {
