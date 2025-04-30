@@ -663,10 +663,23 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       
       // Adicionar fotos se existirem
       if (servicePhotos && servicePhotos.length > 0) {
-        // Adicionar fotos no novo formato (tipo 'service')
+        // Verificar se cada foto é válida
+        let validPhotosCount = 0;
+        
         Array.from(servicePhotos).forEach((file: File) => {
-          formData.append('photos_service', file);
+          // Verificar se é um arquivo válido com tamanho > 0
+          if (file instanceof File && file.size > 0) {
+            formData.append('photos_service', file);
+            validPhotosCount++;
+          }
         });
+        
+        // Log para depuração
+        if (validPhotosCount !== servicePhotos.length) {
+          console.log(`Filtradas ${servicePhotos.length - validPhotosCount} fotos inválidas. Enviando ${validPhotosCount} fotos.`);
+        } else {
+          console.log(`Enviando ${validPhotosCount} fotos válidas.`);
+        }
       }
       
       // Adicionar IDs de fotos a serem removidas
@@ -845,8 +858,32 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     if (files && files.length > 0) {
       // Converter FileList atual (se existir) em array
       const currentFiles = servicePhotos ? Array.from(servicePhotos) : [];
-      // Converter novas FileList em array
-      const newFiles = Array.from(files);
+      
+      // Converter novas FileList em array e filtrar apenas arquivos válidos
+      const newFiles = Array.from(files).filter(file => 
+        file instanceof File && file.size > 0 && file.type.startsWith('image/')
+      );
+      
+      // Verificar se há fotos válidas
+      if (newFiles.length === 0) {
+        console.log("Nenhuma foto válida selecionada");
+        toast({
+          title: "Arquivos inválidos",
+          description: "Nenhuma imagem válida foi selecionada.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Se algumas fotos foram filtradas, mostrar aviso
+      if (newFiles.length < files.length) {
+        console.log(`Filtradas ${files.length - newFiles.length} fotos inválidas`);
+        toast({
+          title: "Alguns arquivos foram ignorados",
+          description: `${files.length - newFiles.length} arquivo(s) inválido(s) foram ignorados.`,
+          variant: "destructive",
+        });
+      }
       
       // Verificar o total de fotos após a adição
       const totalFiles = currentFiles.length + newFiles.length;
@@ -864,12 +901,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       // Criar novo FileList combinando as fotos atuais e novas
       const dataTransfer = new DataTransfer();
       
-      // Adicionar fotos atuais
+      // Adicionar fotos atuais válidas
       currentFiles.forEach(file => {
-        dataTransfer.items.add(file);
+        if (file instanceof File && file.size > 0) {
+          dataTransfer.items.add(file);
+        }
       });
       
-      // Adicionar novas fotos
+      // Adicionar novas fotos válidas
       newFiles.forEach(file => {
         dataTransfer.items.add(file);
       });
