@@ -274,6 +274,7 @@ export default function NewService() {
         // Se estiver no modo offline, retornar imediatamente para evitar o loop
         if (!isOnline) {
           console.log("Modo offline: serviço criado localmente, saltando o upload de fotos");
+          // Forçamos indicação explícita de modo offline para feedback correto ao usuário
           return { ...createdService, _offline: true };
         }
         

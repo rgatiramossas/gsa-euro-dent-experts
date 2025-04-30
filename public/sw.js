@@ -96,7 +96,21 @@ self.addEventListener('message', (event) => {
     case 'SYNC_REQUEST':
       // Solicitação manual de sincronização (para navegadores sem suporte a background sync)
       console.log('Recebida solicitação manual de sincronização');
-      event.waitUntil(syncPendingRequests());
+      // Notificar o cliente que a sincronização foi iniciada
+      notifyClients({ type: 'sync-started' });
+      
+      // Executar sincronização e notificar sobre o resultado
+      event.waitUntil(
+        syncPendingRequests()
+          .then(() => {
+            console.log('Sincronização manual concluída com sucesso');
+            notifyClients({ type: 'sync-completed' });
+          })
+          .catch(err => {
+            console.error('Falha na sincronização manual:', err);
+            notifyClients({ type: 'sync-error', error: err.message });
+          })
+      );
       break;
       
     case 'CHECK_SYNC_STATUS':

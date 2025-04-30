@@ -77,6 +77,7 @@ export const triggerSyncIfNeeded = async () => {
     // Verificar se o navegador suporta Background Sync
     if (registration.sync && typeof registration.sync.register === 'function') {
       await registration.sync.register('sync-pending-requests');
+      console.log('Background Sync registrado com sucesso');
     } else {
       console.log('Background Sync não suportado neste navegador');
       // Tentar sincronizar manualmente
@@ -84,10 +85,17 @@ export const triggerSyncIfNeeded = async () => {
         navigator.serviceWorker.controller.postMessage({
           type: 'SYNC_REQUEST'
         });
+        console.log('Solicitação de sincronização manual enviada');
+      } else {
+        console.warn('Service Worker controller não disponível para sincronização manual');
       }
     }
+    
+    // Retornar true para indicar que a sincronização foi solicitada
+    return true;
   } catch (error) {
     console.error('Erro ao registrar sincronização:', error);
+    return false;
   }
 };
 
