@@ -31,6 +31,7 @@ i18n
     resources,
     // Idioma padrão é português
     fallbackLng: 'pt',
+    supportedLngs: ['pt', 'de', 'es'],
     // Usar chaves de objeto mesmo para strings simples
     keySeparator: '.',
     interpolation: {
@@ -40,7 +41,8 @@ i18n
     // Opções de detecção de idioma
     detection: {
       // Ordem de detecção
-      order: ['localStorage', 'navigator'],
+      order: ['querystring', 'localStorage', 'navigator'],
+      lookupQuerystring: 'lang',
       // Armazenar o idioma em localStorage
       caches: ['localStorage'],
       // Chave usada no localStorage

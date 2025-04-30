@@ -271,6 +271,7 @@
   },
   "settings": {
     "title": "Configuración",
+    "description": "Gestione sus preferencias e información de cuenta",
     "general": "General",
     "users": "Usuarios",
     "serviceTypes": "Tipos de Servicio",
@@ -281,7 +282,20 @@
     "restore": "Restaurar",
     "exportData": "Exportar Datos",
     "importData": "Importar Datos",
-    "changesSaved": "Cambios guardados con éxito"
+    "changesSaved": "Cambios guardados con éxito",
+    "profile": "Perfil",
+    "password": "Contraseña",
+    "appearance": "Apariencia",
+    "technicians": "Técnicos",
+    "personalInfo": "Información Personal",
+    "updatePersonalInfo": "Actualice su información personal",
+    "fullName": "Nombre Completo",
+    "phone": "Teléfono",
+    "phoneExample": "(11) 98765-4321",
+    "saveChanges": "Guardar Cambios",
+    "saving": "Guardando...",
+    "photoUpdated": "Foto actualizada",
+    "photoUpdatedDescription": "Su foto de perfil ha sido actualizada con éxito"
   },
   "users": {
     "title": "Usuarios",
