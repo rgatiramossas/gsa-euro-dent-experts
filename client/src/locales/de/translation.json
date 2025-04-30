@@ -331,7 +331,9 @@
     "uploadingPhotos": "Fehler beim Hochladen der Fotos",
     "processingPhotos": "Fehler bei der Verarbeitung der Fotos",
     "apiError": "Detaillierter API-Fehler",
-    "responseBodyError": "Der Antworttext konnte nicht gelesen werden"
+    "responseBodyError": "Der Antworttext konnte nicht gelesen werden",
+    "deleteService": "Fehler beim Löschen des Dienstes",
+    "deleteServiceDescription": "Beim Löschen des Dienstes ist ein Fehler aufgetreten"
   },
   "location": {
     "browserNotSupported": "Geolokalisierung wird von Ihrem Browser nicht unterstützt",
@@ -373,8 +375,11 @@
     "willBeRemovedOnSave": "Das Foto wird entfernt, wenn Sie die Änderungen speichern",
     "limitExceeded": "Fotolimit überschritten",
     "maxFourPerCategory": "Sie können maximal 4 Fotos pro Kategorie hochladen",
+    "limitExceededWithCount": "Sie haben bereits {{current}} Foto(s) und versuchen {{new}} hinzuzufügen. Das Limit beträgt 4 Fotos.",
     "removed": "Foto entfernt",
     "removedWithCount": "Foto {{index}} entfernt. Gesamt: {{total}}/4",
+    "added": "Fotos hinzugefügt",
+    "addedWithCount": "{{count}} Foto(s) hinzugefügt. Gesamt: {{total}}/4",
     "selectPhotos": "Fotos auswählen",
     "processing": "Fotos werden verarbeitet...",
     "noPhotos": "Keine Fotos hinzugefügt",
