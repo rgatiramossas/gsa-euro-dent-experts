@@ -255,7 +255,7 @@ async function syncPendingRequests() {
 // Abrir a conexão com o IndexedDB
 async function openDatabase() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('EuroDentOfflineDB', 1);
+    const request = indexedDB.open('EuroDentOfflineDB', 10);
 
     request.onerror = (event) => {
       console.error('Erro ao abrir banco:', event.target.error);
@@ -299,8 +299,13 @@ async function openDatabase() {
 
     // Esta função é chamada se o banco não existir ou for atualizado de versão
     request.onupgradeneeded = (event) => {
-      // Isso não deve acontecer no service worker, já que o banco é inicializado pelo aplicativo
-      console.warn('Atualização do banco de dados acontecendo no service worker - isso não deveria ocorrer');
+      const db = event.target.result;
+      console.log('Service Worker: Criando/atualizando estruturas do banco offline');
+      
+      // Criar object store se não existir
+      if (!db.objectStoreNames.contains('pendingRequests')) {
+        db.createObjectStore('pendingRequests', { keyPath: 'id' });
+      }
     };
   });
 }
