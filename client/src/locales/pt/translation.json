@@ -26,7 +26,8 @@
     "description": "Descrição",
     "date": "Data",
     "selectDate": "Selecione uma data",
-    "saving": "Salvando..."
+    "saving": "Salvando...",
+    "notSpecified": "Não especificado"
   },
   "auth": {
     "login": "Entrar",

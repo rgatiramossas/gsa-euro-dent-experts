@@ -530,13 +530,15 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     return serviceType ? serviceType.name : t("common.notSpecified", "Não especificado");
   };
   
+  // Buscar a instância do i18n uma única vez no componente
+  const { i18n } = useTranslation();
+  
   // Formatação de data
   const formatDate = (dateString: string | Date | null | undefined) => {
     if (!dateString) return t("common.notSpecified", "Não especificada");
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     
     // Escolher o local correto baseado no idioma atual
-    const { i18n } = useTranslation();
     const currentLanguage = i18n.language;
     
     let dateLocale = ptBR; // Português é o padrão
@@ -608,8 +610,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     // os dados serão recarregados automaticamente do backend
     
     toast({
-      title: "Foto marcada para remoção",
-      description: "A foto será removida quando você salvar as alterações",
+      title: t("photos.markedForRemoval", "Foto marcada para remoção"),
+      description: t("photos.willBeRemovedOnSave", "A foto será removida quando você salvar as alterações"),
     });
   };
   
@@ -717,8 +719,11 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     setServicePhotos(dataTransfer.files);
     
     toast({
-      title: "Foto removida",
-      description: `Foto ${indexToRemove + 1} removida. Total: ${updatedFiles.length}/4`,
+      title: t("photos.removed", "Foto removida"),
+      description: t("photos.removedWithCount", "Foto {{index}} removida. Total: {{total}}/4", {
+        index: indexToRemove + 1,
+        total: updatedFiles.length
+      }),
     });
   };
 
