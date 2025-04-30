@@ -42,12 +42,6 @@ export const initializeDatabase = async () => {
     return { db, pool };
   } catch (error) {
     console.error("Erro ao inicializar o banco de dados:", error);
-    
-    // Se quiser implementar um fallback para um banco em memória em caso de falha:
-    // console.log("Usando armazenamento em memória como fallback...");
-    // ... lógica de fallback aqui ...
-    
-    // Por enquanto, propagamos o erro para interromper a aplicação
     throw error;
   }
 };
@@ -201,6 +195,92 @@ async function createEssentialTables() {
 
 // Usar MemoryStore como alternativa temporária para sessões até configurar MySQL
 const MemoryStore = memorystore(session);
+
+// Função para criar armazenamento em memória para testes
+function createMemoryStorage() {
+  console.log("Criando banco de dados em memória para testes...");
+  
+  // Criar objeto que simula o banco de dados
+  const memoryDb = {
+    // Tabelas em memória
+    _data: {
+      users: [],
+      clients: [],
+      vehicles: [],
+      services: [],
+      service_types: [
+        { id: 1, name: 'Amassado de Rua', description: 'Serviço de reparo de amassados simples', base_price: 100 },
+        { id: 2, name: 'Granizo', description: 'Reparo de danos causados por granizo', base_price: 200 },
+        { id: 3, name: 'Outros', description: 'Outros tipos de serviços', base_price: 150 }
+      ],
+      service_photos: [],
+      events: [],
+      event_types: [],
+      payment_requests: [],
+      payment_request_items: []
+    },
+    
+    // Métodos que simulam o comportamento do Drizzle ORM
+    select: function() {
+      return {
+        from: (table) => {
+          const tableName = table.name || '';
+          return {
+            where: (condition) => {
+              // Simulação simples de where
+              return Promise.resolve(this._data[tableName] || []);
+            },
+            limit: () => Promise.resolve(this._data[tableName] || [])
+          };
+        }
+      };
+    },
+    
+    insert: function(table) {
+      const tableName = table.name || '';
+      return {
+        values: (data) => {
+          // Gerar ID incremental
+          const items = this._data[tableName] || [];
+          const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
+          
+          // Adicionar novo item
+          const newItem = { ...data, id: newId };
+          this._data[tableName] = [...(this._data[tableName] || []), newItem];
+          
+          return Promise.resolve({ insertId: newId });
+        }
+      };
+    }
+  };
+  
+  return memoryDb;
+}
+
+// Criar usuário de teste para autenticação
+async function createTestUser() {
+  console.log("Criando usuário de teste para autenticação...");
+  
+  try {
+    // Hash para senha "123456"
+    const hashedPassword = "$2b$10$4QvRwUY1GW9SuYzXzNGH1.IfFT2/Ls0/Da21FssUnZgWHvWtZ0Dg.";
+    
+    // Inserir usuário teste na tabela de usuários
+    await db.insert(users).values({
+      username: "admin",
+      password: hashedPassword,
+      name: "Administrador",
+      email: "admin@exemplo.com",
+      role: "admin",
+      phone: "5551999999999",
+      active: 1
+    });
+    
+    console.log("Usuário de teste criado com sucesso. Login: admin / Senha: 123456");
+  } catch (error) {
+    console.error("Erro ao criar usuário de teste:", error);
+  }
+}
 
 export interface IStorage {
   // User methods
