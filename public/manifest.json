@@ -12,9 +12,9 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/icons/icon-512x512.svg",
+      "src": "/app-icon.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
@@ -27,9 +27,9 @@
       "url": "/budget/new",
       "icons": [
         {
-          "src": "/icons/icon-512x512.svg",
+          "src": "/app-icon.png",
           "sizes": "512x512",
-          "type": "image/svg+xml"
+          "type": "image/png"
         }
       ]
     },
@@ -40,9 +40,9 @@
       "url": "/clients/new",
       "icons": [
         {
-          "src": "/icons/icon-512x512.svg",
+          "src": "/app-icon.png",
           "sizes": "512x512",
-          "type": "image/svg+xml"
+          "type": "image/png"
         }
       ]
     }
