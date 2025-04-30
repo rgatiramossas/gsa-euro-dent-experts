@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { getApi } from "@/lib/apiWrapper";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import {
