@@ -261,17 +261,20 @@ export default function NewService() {
       
       try {
         // 1. Criar serviço usando o apiWrapper para suporte offline
-        const createdService = await postApi('/api/services', serviceData, {
+        const createdService = await postApi<any>('/api/services', serviceData, {
           enableOffline: true,
           offlineTableName: 'services'
         });
         console.log("Resposta do servidor:", createdService);
         
-        // Verificar se estamos online antes de tentar o upload de fotos
-        const isOnline = checkNetworkStatus();
+        // Se estiver no modo offline, retornar imediatamente para evitar o loop
+        if (!checkNetworkStatus()) {
+          console.log("Modo offline: serviço criado localmente, saltando o upload de fotos");
+          return createdService;
+        }
         
-        // Processar upload de fotos se houver e estivermos online
-        if (isOnline && photos && photos.length > 0) {
+        // Processar upload de fotos se houver fotos
+        if (photos && photos.length > 0) {
           try {
             const serviceId = createdService.id;
             
@@ -288,7 +291,7 @@ export default function NewService() {
             
             console.log("Enviando fotos para o serviço:", serviceId);
             
-            // Upload de fotos só funciona online
+            // Upload de fotos - apenas quando online
             const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
               method: 'POST',
               body: formData,
@@ -306,9 +309,6 @@ export default function NewService() {
             console.error("Erro ao processar fotos:", photoError);
             // Não lança erro para não impedir a criação do serviço
           }
-        } else if (!isOnline && photos && photos.length > 0) {
-          console.log("Modo offline: upload de fotos será feito quando a conexão for restaurada");
-          // Aqui poderíamos armazenar fotos para upload futuro quando online
         } else {
           console.log("Nenhuma foto selecionada para upload");
         }

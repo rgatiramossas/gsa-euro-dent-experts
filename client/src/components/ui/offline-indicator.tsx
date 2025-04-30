@@ -12,73 +12,10 @@ interface OfflineIndicatorProps {
  * e também indica quando está sincronizando dados com o servidor
  */
 export function OfflineIndicator({ className }: OfflineIndicatorProps) {
-  const [isOnline, setIsOnline] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  useEffect(() => {
-    // Verificar o estado online inicialmente
-    setIsOnline(navigator.onLine);
-
-    // Configurar manipuladores de eventos para atualizar quando o status da rede mudar
-    const handleOnline = () => {
-      setIsOnline(true);
-      // Simular um estado de sincronização quando voltamos online
-      setIsSyncing(true);
-      setTimeout(() => setIsSyncing(false), 2000);
-    };
-
-    const handleOffline = () => {
-      setIsOnline(false);
-      setIsSyncing(false);
-    };
-
-    // Adicionar ouvintes de eventos
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Também ouvir eventos personalizados para sincronização
-    window.addEventListener('sync-started', () => setIsSyncing(true));
-    window.addEventListener('sync-completed', () => setIsSyncing(false));
-
-    // Remover ouvintes de eventos ao desmontar
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('sync-started', () => setIsSyncing(true));
-      window.removeEventListener('sync-completed', () => setIsSyncing(false));
-    };
-  }, []);
-
-  // Não mostrar nada se estiver online e não estiver sincronizando
-  if (isOnline && !isSyncing) {
-    return null;
-  }
-
-  return (
-    <div
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 p-2 text-center text-sm font-medium transition-all duration-300',
-        isOnline 
-          ? 'bg-green-600 text-white bg-opacity-90' 
-          : 'bg-orange-600 text-white bg-opacity-90',
-        className
-      )}
-    >
-      <div className="flex items-center justify-center gap-2">
-        {isOnline ? (
-          <>
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            <span>Sincronizando dados com o servidor...</span>
-          </>
-        ) : (
-          <>
-            <WifiOff className="h-4 w-4" />
-            <span>Você está offline. Suas alterações serão sincronizadas quando a conexão for restaurada.</span>
-          </>
-        )}
-      </div>
-    </div>
-  );
+  // O cliente pediu para remover as notificações de modo offline completamente
+  // Esse componente agora não renderiza nada, mas mantemos ele para não quebrar
+  // outras partes da aplicação que o utilizam
+  return null;
 }
 
 /**
