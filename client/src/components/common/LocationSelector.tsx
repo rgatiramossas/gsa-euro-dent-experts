@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { LocationType } from "@/types";
+import { useTranslation } from "react-i18next";
 
 interface LocationSelectorProps {
   value: {
@@ -23,6 +24,7 @@ interface LocationSelectorProps {
 export function LocationSelector({ value, onChange }: LocationSelectorProps) {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const handleLocationTypeChange = (locationType: LocationType) => {
     onChange({
@@ -45,7 +47,7 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
     setLocationError(null);
 
     if (!navigator.geolocation) {
-      setLocationError("Geolocalização não é suportada pelo seu navegador");
+      setLocationError(t("location.browserNotSupported", "Geolocalização não é suportada pelo seu navegador"));
       setIsGettingLocation(false);
       return;
     }
@@ -72,7 +74,7 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
               console.log("Endereço obtido:", endereco);
             } else {
               // Caso não conseguirmos obter o endereço, usar coordenadas
-              endereco = `Localização: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+              endereco = `${t("location.coordinates", "Localização")}: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
               console.log("Endereço não encontrado, usando coordenadas");
             }
           } catch (error) {

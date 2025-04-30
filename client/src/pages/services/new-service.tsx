@@ -71,7 +71,7 @@ const formSchema = z.object({
   technician_id: z.number().optional().nullable(),
   status: z.string(),
   description: z.string().optional().nullable(),
-  location_type: z.string(),
+  location_type: z.enum(['client_location', 'workshop'] as const),
   address: z.string().optional().nullable(),
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
@@ -747,7 +747,7 @@ export default function NewService() {
                     <FormLabel>{t("services.location")} <span className="text-red-500">*</span></FormLabel>
                     <LocationSelector
                       value={{
-                        locationType: field.value,
+                        locationType: field.value as 'client_location' | 'workshop',
                         address: form.watch('address') || '',
                         latitude: form.watch('latitude') || 0,
                         longitude: form.watch('longitude') || 0,
