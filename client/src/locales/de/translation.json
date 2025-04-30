@@ -26,7 +26,9 @@
     "description": "Beschreibung",
     "date": "Datum",
     "selectDate": "Datum auswählen",
-    "saving": "Wird gespeichert..."
+    "saving": "Wird gespeichert...",
+    "saveChanges": "Änderungen speichern",
+    "noDescription": "Keine Beschreibung"
   },
   "auth": {
     "login": "Anmelden",
@@ -72,13 +74,18 @@
     "errors": {
       "selectClient": "Wählen Sie einen Kunden aus",
       "selectVehicle": "Wählen Sie ein Fahrzeug aus",
-      "selectServiceType": "Wählen Sie einen Servicetyp aus"
+      "selectServiceType": "Wählen Sie einen Servicetyp aus",
+      "loadingDetails": "Fehler beim Laden der Dienstleistungsdetails",
+      "loadingDetailsDescription": "Beim Laden der Dienstleistungsinformationen ist ein Fehler aufgetreten",
+      "serviceNotFound": "Dienstleistung nicht gefunden",
+      "serviceNotFoundDescription": "Die angeforderte Dienstleistung konnte nicht gefunden werden"
     },
     "client": "Kunde",
     "vehicle": "Fahrzeug",
     "technician": "Techniker",
     "status": "Status",
     "description": "Beschreibung",
+    "noDescription": "Keine Beschreibung", 
     "scheduledDate": "Geplantes Datum",
     "startDate": "Startdatum",
     "completionDate": "Abschlussdatum",
@@ -91,7 +98,8 @@
     "administrativeFee": "Verwaltungsgebühr",
     "total": "Gesamt",
     "notes": "Notizen",
-    "photos": "Fotos",
+    "noAdditionalNotes": "Keine zusätzlichen Notizen",
+    "photos": "Fotos der Dienstleistung",
     "addPhotos": "Fotos hinzufügen",
     "serviceType": "Dienstleistungstyp",
     "unassigned": "Nicht zugewiesen",
@@ -347,6 +355,14 @@
     "maxFiles": "maximal",
     "filesCount": "Dateien",
     "remove": "Foto entfernen",
+    "existingPhotos": "Vorhandene Fotos",
+    "noPhotosAvailable": "Keine Fotos verfügbar",
+    "addNewPhotos": "Neue Fotos hinzufügen",
+    "preview": "Vorschau",
+    "selected": "ausgewählt",
+    "vehiclePhoto": "Foto des Fahrzeugs",
+    "before": "Vorher",
+    "after": "Nachher",
     "errors": {
       "invalidFiles": "Einige Dateien wurden nicht akzeptiert",
       "invalidFilesList": "Ungültige Dateien",
