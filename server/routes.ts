@@ -103,6 +103,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       cookie: { secure: process.env.NODE_ENV === "production" },
     })
   );
+  
+  // Criar servidor HTTP
+  const httpServer = createServer(app);
+  
+  // Configurar WebSocket Server
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    path: '/ws'
+  });
+  
+  // Mapa para armazenar conexões ativas
+  const clients = new Map();
+  
+  wss.on('connection', (ws) => {
+    console.log('WebSocket: Nova conexão estabelecida');
+    
+    // Gerar ID único para o cliente
+    const clientId = Date.now();
+    clients.set(clientId, ws);
+    
+    // Enviar mensagem de boas-vindas
+    ws.send(JSON.stringify({
+      type: 'connection',
+      message: 'Conexão WebSocket estabelecida com sucesso',
+      clientId: clientId
+    }));
+    
+    // Eventos da conexão
+    ws.on('message', (message) => {
+      try {
+        console.log('WebSocket: Mensagem recebida:', message.toString());
+        const data = JSON.parse(message.toString());
+        
+        // Implementar lógica de processamento de mensagens aqui
+        // Por exemplo, notificações em tempo real, atualizações de status, etc.
+        
+        // Exemplo de resposta
+        ws.send(JSON.stringify({
+          type: 'response',
+          message: 'Mensagem recebida pelo servidor',
+          received: data
+        }));
+      } catch (error) {
+        console.error('WebSocket: Erro ao processar mensagem:', error);
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'Erro ao processar mensagem'
+        }));
+      }
+    });
+    
+    // Evento de fechamento da conexão
+    ws.on('close', () => {
+      console.log('WebSocket: Conexão fechada');
+      clients.delete(clientId);
+    });
+    
+    // Evento de erro
+    ws.on('error', (error) => {
+      console.error('WebSocket: Erro na conexão:', error);
+      clients.delete(clientId);
+    });
+  });
+  
+  // Função para broadcast para todos os clientes conectados
+  const broadcastMessage = (message) => {
+    clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(message));
+      }
+    });
+  };
   // A configuração de servir arquivos estáticos de uploads foi movida para index.ts
 
   // Auth middleware
@@ -2474,6 +2546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
+  // Aqui não precisamos criar um novo servidor HTTP pois já criamos antes
+  // Apenas retornamos o servidor HTTP que já foi configurado com WebSockets
   return httpServer;
 }
