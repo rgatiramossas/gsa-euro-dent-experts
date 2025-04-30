@@ -114,18 +114,34 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
       offlineStatusStore.setOnline(false);
       break;
       
-    case 'sync-started':
-      console.log(`Sincronizando ${data.count} requisições...`);
-      offlineStatusStore.setSyncing(true);
+    case 'offline-operation-started':
+      // Nova mensagem quando uma operação offline é iniciada
+      console.log(`Operação offline iniciada: ${data.method} para ${data.tableName} (ID: ${data.tempId})`);
+      // Aqui não fazemos nada específico - cada componente deve ouvir este evento individualmente
       break;
       
-    case 'sync-completed':
-      console.log('Sincronização concluída');
-      offlineStatusStore.setSyncing(false);
-      // Atualizar o contador de requisições pendentes
-      offlineDb.countPendingRequests().then(count => {
-        offlineStatusStore.setPendingCount(count);
-      });
+    case 'operation-queued':
+      // Quando a operação é efetivamente armazenada para sincronização futura
+      console.log(`Operação enfileirada para sincronização futura: ${data.tempId}`);
+      break;
+      
+    case 'operation-synced':
+      // Quando uma operação específica é sincronizada com sucesso
+      console.log(`Operação sincronizada com sucesso: ${data.tempId}`);
+      break;
+      
+    case 'sync-status':
+      // Mudança no status geral de sincronização
+      console.log(`Status de sincronização: ${data.status}`);
+      if (data.status === 'in-progress') {
+        offlineStatusStore.setSyncing(true);
+      } else if (data.status === 'completed' || data.status === 'error') {
+        offlineStatusStore.setSyncing(false);
+        // Atualizar o contador de requisições pendentes
+        offlineDb.countPendingRequests().then(count => {
+          offlineStatusStore.setPendingCount(count);
+        });
+      }
       break;
       
     case 'sync-error':
