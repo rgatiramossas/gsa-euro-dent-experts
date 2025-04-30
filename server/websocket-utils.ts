@@ -8,10 +8,22 @@ import { Server } from 'http';
  * @returns O servidor WebSocket configurado e uma função de broadcast
  */
 export function setupWebSocketServer(server: Server) {
+  console.log('[WebSocket] Inicializando servidor WebSocket no caminho /ws');
+  
   // Configurar WebSocket Server
   const wss = new WebSocketServer({ 
     server,
     path: '/ws'
+  });
+  
+  // Log quando o servidor WebSocket estiver pronto
+  wss.on('listening', () => {
+    console.log('[WebSocket] Servidor WebSocket está ouvindo conexões');
+  });
+  
+  // Log de erros no servidor WebSocket
+  wss.on('error', (error) => {
+    console.error('[WebSocket] Erro no servidor WebSocket:', error);
   });
   
   // Mapa para armazenar conexões ativas
@@ -31,9 +43,66 @@ export function setupWebSocketServer(server: Server) {
     });
   };
   
+  // Configurar intervalo de ping para todos os clientes (a cada 30 segundos)
+  const pingInterval = setInterval(() => {
+    console.log('[WebSocket] Enviando ping para manter conexões ativas');
+    
+    wss.clients.forEach((client) => {
+      // Verificar se o cliente ainda está ativo
+      // @ts-ignore - Propriedade adicionada por nós
+      if (client.isAlive === false) {
+        console.log('[WebSocket] Terminando conexão inativa');
+        client.terminate();
+        return;
+      }
+      
+      // Marcar como inativo até que responda com pong
+      // @ts-ignore
+      client.isAlive = false;
+      
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          // Enviar ping nativo do WebSocket
+          client.ping();
+          
+          // Enviar também um "ping" como mensagem para clientes que processam mensagens
+          client.send(JSON.stringify({ 
+            type: 'ping', 
+            timestamp: new Date().toISOString() 
+          }));
+        } catch (err) {
+          console.error('[WebSocket] Erro ao enviar ping:', err);
+        }
+      }
+    });
+  }, 30000); // 30 segundos
+  
+  // Limpar intervalo quando o servidor for fechado
+  wss.on('close', () => {
+    console.log('[WebSocket] Servidor WebSocket fechado, limpando intervalos');
+    clearInterval(pingInterval);
+  });
+
   // Evento de nova conexão
-  wss.on('connection', (ws) => {
-    console.log('WebSocket: Nova conexão estabelecida');
+  wss.on('connection', (ws, req) => {
+    const ip = req.socket.remoteAddress || 'desconhecido';
+    console.log(`WebSocket: Nova conexão estabelecida de ${ip}`);
+    
+    // Verificar se o objeto WebSocket está OK
+    if (!ws || typeof ws.send !== 'function') {
+      console.error('[WebSocket] Objeto de conexão inválido');
+      return;
+    }
+    
+    // Configurar heartbeat para esta conexão
+    // @ts-ignore - Adicionamos esta propriedade para rastrear a última atividade
+    ws.isAlive = true;
+    
+    // Configurar handler para pong (resposta ao ping)
+    ws.on('pong', () => {
+      // @ts-ignore
+      ws.isAlive = true;
+    });
     
     // Gerar ID único para o cliente
     const clientId = clientIdCounter++;
@@ -43,7 +112,8 @@ export function setupWebSocketServer(server: Server) {
     ws.send(JSON.stringify({
       type: 'connection',
       message: 'Conexão WebSocket estabelecida com sucesso',
-      clientId: clientId
+      clientId: clientId,
+      timestamp: new Date().toISOString()
     }));
     
     // Eventos da conexão

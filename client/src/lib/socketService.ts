@@ -65,6 +65,21 @@ class SocketService {
   private handleMessage(event: MessageEvent): void {
     try {
       const data = JSON.parse(event.data);
+      
+      // Tratar mensagens de ping de maneira especial
+      if (data && data.type === 'ping') {
+        // Responder com um pong
+        this.send({
+          type: 'pong',
+          timestamp: new Date().toISOString(),
+          echo: data.timestamp // ecoar o timestamp do ping para debug
+        });
+        
+        // Não registrar cada ping/pong para não poluir o console
+        return;
+      }
+      
+      // Log apenas para mensagens que não são ping
       console.log('Mensagem WebSocket recebida:', data);
       
       // Notificar listeners baseado no tipo de mensagem
