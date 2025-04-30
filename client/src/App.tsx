@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Router, Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -335,57 +335,11 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      {/* Fallback to 404 - Route deve estar no final para capturar todas as outras rotas */}
-      <Route path="/:rest*">
-        {() => <NotFound />}
-      </Route>
+      {/* Fallback to 404 */}
+      <Route component={NotFound} />
     </Switch>
   );
 }
-
-// Função para personalizar o roteador - garante URLs corretos
-const customMatcher = (path: string, pathname: string) => {
-  // Remove trailing slashes for consistent matching
-  const normalizedPath = path.replace(/\/$/, '');
-  const normalizedPathname = pathname.replace(/\/$/, '');
-  
-  // Exact match (with normalized paths)
-  if (normalizedPath === normalizedPathname) {
-    return [true, {}];
-  }
-  
-  // Check dynamic segments (e.g., :id)
-  if (normalizedPath.includes(':')) {
-    const pathSegments = normalizedPath.split('/').filter(Boolean);
-    const pathnameSegments = normalizedPathname.split('/').filter(Boolean);
-    
-    if (pathSegments.length !== pathnameSegments.length) {
-      return [false, null];
-    }
-    
-    const params: Record<string, string> = {};
-    
-    for (let i = 0; i < pathSegments.length; i++) {
-      if (pathSegments[i].startsWith(':')) {
-        // This is a parameter
-        const paramName = pathSegments[i].substring(1);
-        params[paramName] = pathnameSegments[i];
-      } else if (pathSegments[i] !== pathnameSegments[i]) {
-        // Static segment doesn't match
-        return [false, null];
-      }
-    }
-    
-    return [true, params];
-  }
-  
-  // Rest path for 404 handling
-  if (normalizedPath === '/:rest*') {
-    return [true, { rest: normalizedPathname }];
-  }
-  
-  return [false, null];
-};
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);

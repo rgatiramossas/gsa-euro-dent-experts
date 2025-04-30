@@ -4,8 +4,6 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { LocationType } from "@/types";
-import { checkNetworkStatus } from "@/lib/pwaManager";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LocationSelectorProps {
   value: {
@@ -25,28 +23,6 @@ interface LocationSelectorProps {
 export function LocationSelector({ value, onChange }: LocationSelectorProps) {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState<boolean>(checkNetworkStatus());
-  const [hasManuallyEnteredAddress, setHasManuallyEnteredAddress] = useState<boolean>(false);
-
-  // Monitorar o estado da conexão
-  useEffect(() => {
-    const handleOnlineStatus = () => {
-      setIsOnline(checkNetworkStatus());
-    };
-
-    // Adicionar event listeners para detectar mudanças de conectividade
-    window.addEventListener("online", handleOnlineStatus);
-    window.addEventListener("offline", handleOnlineStatus);
-
-    // Verificar status inicial da rede
-    handleOnlineStatus();
-
-    // Cleanup event listeners
-    return () => {
-      window.removeEventListener("online", handleOnlineStatus);
-      window.removeEventListener("offline", handleOnlineStatus);
-    };
-  }, []);
 
   const handleLocationTypeChange = (locationType: LocationType) => {
     onChange({
@@ -56,16 +32,11 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
   };
 
   const handleAddressChange = (address: string) => {
-    // Marcar o endereço como manualmente editado
-    setHasManuallyEnteredAddress(true);
-    
     // Preserva as coordenadas existentes ao alterar manualmente o endereço
     onChange({
       ...value,
       address,
-      // Se estiver offline e o usuário estiver digitando manualmente,
-      // podemos manter as coordenadas antigas ou definir como nulas
-      // dependendo do requisito de negócio
+      // Mantém latitude e longitude existentes se já foram definidos
     });
   };
 
@@ -87,43 +58,33 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
           // Usar as coordenadas reais obtidas do dispositivo
           console.log(`Localização obtida: ${latitude}, ${longitude}`);
           
+          // Tentar obter o endereço usando a API Nominatim (OpenStreetMap)
           let endereco = "";
-          
-          // Tentar obter o endereço apenas se estiver online
-          if (isOnline) {
-            try {
-              const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-                { headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' } }
-              );
-              const data = await response.json();
-              
-              if (data && data.display_name) {
-                endereco = data.display_name;
-                console.log("Endereço obtido:", endereco);
-              } else {
-                // Caso não conseguirmos obter o endereço, usar coordenadas
-                endereco = `Localização: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-                console.log("Endereço não encontrado, usando coordenadas");
-              }
-            } catch (error) {
-              console.error("Erro ao obter endereço:", error);
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+              { headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' } }
+            );
+            const data = await response.json();
+            
+            if (data && data.display_name) {
+              endereco = data.display_name;
+              console.log("Endereço obtido:", endereco);
+            } else {
+              // Caso não conseguirmos obter o endereço, usar coordenadas
               endereco = `Localização: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+              console.log("Endereço não encontrado, usando coordenadas");
             }
-          } else {
-            // Se estiver offline, usar apenas as coordenadas
+          } catch (error) {
+            console.error("Erro ao obter endereço:", error);
             endereco = `Localização: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-            console.log("Modo offline: usando coordenadas apenas");
           }
-          
-          // Desmarcar o endereço manual já que estamos usando localização automática
-          setHasManuallyEnteredAddress(false);
           
           onChange({
             ...value,
             address: endereco,
-            latitude: latitude,
-            longitude: longitude,
+            latitude: latitude,     // Usa as coordenadas reais
+            longitude: longitude,   // Usa as coordenadas reais
           });
         } catch (error) {
           console.error("Erro ao processar localização:", error);
@@ -173,20 +134,6 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
         </RadioGroup>
       </div>
       
-      {/* Alerta para modo offline */}
-      {!isOnline && (
-        <Alert variant="warning" className="bg-amber-50 border-amber-200">
-          <AlertDescription>
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span>Você está offline. Digite o endereço manualmente ou use as coordenadas do GPS.</span>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-      
       <div>
         <Label htmlFor="address">Endereço</Label>
         <Input
@@ -198,12 +145,7 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
         />
         {value.latitude && value.longitude && (
           <p className="text-xs text-muted-foreground mt-1">
-            Coordenadas detectadas: {value.latitude.toFixed(6)}, {value.longitude.toFixed(6)}
-            {hasManuallyEnteredAddress && (
-              <span className="ml-1 text-amber-600">
-                (Endereço editado manualmente)
-              </span>
-            )}
+            Coordenadas detectadas: Você pode modificar o endereço mantendo as coordenadas
           </p>
         )}
       </div>
@@ -225,11 +167,6 @@ export function LocationSelector({ value, onChange }: LocationSelectorProps) {
         </Button>
         {locationError && (
           <p className="text-sm text-red-500 mt-1">{locationError}</p>
-        )}
-        {!isOnline && !locationError && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Mesmo offline, o GPS ainda pode obter suas coordenadas atuais.
-          </p>
         )}
       </div>
     </div>
