@@ -176,9 +176,14 @@ self.addEventListener('sync', (event) => {
 
 // Função para processar requisições pendentes
 async function syncPendingRequests() {
+  let db;
   try {
+    console.log('Iniciando sincronização...');
     // Abrir uma conexão para nossa base de dados
-    const db = await openDatabase();
+    db = await openDatabase();
+    if (!db) {
+      throw new Error('Falha ao abrir banco de dados');
+    }
 
     // Obter solicitações pendentes da tabela pendingRequests
     const pendingRequests = await db.getAll('pendingRequests');
@@ -253,7 +258,14 @@ async function openDatabase() {
     const request = indexedDB.open('EuroDentOfflineDB', 1);
 
     request.onerror = (event) => {
-      reject('Falha ao abrir o banco de dados');
+      console.error('Erro ao abrir banco:', event.target.error);
+      reject(new Error('Falha ao abrir o banco de dados: ' + event.target.error));
+    };
+
+    request.onblocked = (event) => {
+      console.warn('Banco bloqueado, fechando conexões antigas...');
+      // Tentar fechar outras conexões
+      db?.close();
     };
 
     request.onsuccess = (event) => {
