@@ -184,15 +184,59 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           title: "Modo offline",
           description: "A operação foi salva localmente e será sincronizada quando houver conexão",
         });
+        
+        // SOLUÇÃO EXTREMA: Forçar redirecionamento em modo offline
+        setTimeout(() => {
+          console.log('[ServiceDetails] Redirecionamento forçado para lista de serviços');
+          window.location.href = '/services';
+        }, 1000);
       }
     };
     
     // Adicionar listener para o evento de força reset
     window.addEventListener('force-reset-submit-state', handleForceReset);
     
-    // Cleanup listener na desmontagem
+    // SOLUÇÃO CRÍTICA: Adicionar um observador de mutação para detectar quando o botão está com "Salvando..."
+    // e forçar mudança para estado normal após um período
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' || mutation.type === 'characterData') {
+          const saveButtons = document.querySelectorAll('button');
+          saveButtons.forEach(button => {
+            if (button.textContent?.includes('Salvando')) {
+              console.log('[MutationObserver] Botão "Salvando..." detectado, programando reset');
+              setTimeout(() => {
+                if (button.textContent?.includes('Salvando')) {
+                  console.log('[MutationObserver] Forçando reset do botão');
+                  // Forçar texto do botão de volta para estado normal
+                  if (button.textContent === 'Salvando...') {
+                    button.textContent = 'Salvar';
+                  }
+                  // Remover atributo disabled
+                  button.removeAttribute('disabled');
+                  // Forçar redirecionamento
+                  if (!checkNetworkStatus()) {
+                    window.location.href = '/services';
+                  }
+                }
+              }, 3000);
+            }
+          });
+        }
+      });
+    });
+    
+    // Iniciar observação
+    observer.observe(document.body, { 
+      subtree: true, 
+      childList: true,
+      characterData: true
+    });
+    
+    // Cleanup listener e observer na desmontagem
     return () => {
       window.removeEventListener('force-reset-submit-state', handleForceReset);
+      observer.disconnect();
     };
   }, [resetStatusSubmitting, resetServiceSubmitting, resetDeleteSubmitting, toast]);
 
@@ -1322,7 +1366,20 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
               <Button variant="outline" type="button" onClick={handleCancelEditing}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateServiceMutation.isPending || isServiceSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={updateServiceMutation.isPending || isServiceSubmitting}
+                onClick={() => {
+                  if (!checkNetworkStatus()) {
+                    // Em modo offline, configurar um timer para forçar o reset do botão e redirecionar
+                    setTimeout(() => {
+                      console.log("[SaveButton] Forçando reset do botão e redirecionamento");
+                      resetServiceSubmitting();
+                      window.location.href = '/services';
+                    }, 3000);
+                  }
+                }}
+              >
                 {updateServiceMutation.isPending || isServiceSubmitting ? "Salvando..." : "Salvar"}
               </Button>
             </div>
