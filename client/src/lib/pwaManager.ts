@@ -103,6 +103,7 @@ export const triggerSyncIfNeeded = async () => {
 // Importar a DB offline para processamento de mensagens
 import offlineDb from './offlineDb';
 import { offlineStatusStore } from './stores';
+import socketService from './socketService';
 
 // Processar mensagens do service worker 
 const processServiceWorkerMessage = async (event: MessageEvent) => {
@@ -193,11 +194,23 @@ export const initPWA = () => {
   navigator.serviceWorker.addEventListener('message', processServiceWorkerMessage);
   
   // Configurar monitoramento de estado da rede
-  window.addEventListener('online', checkNetworkStatus);
+  window.addEventListener('online', () => {
+    checkNetworkStatus();
+    // Iniciar conexão WebSocket quando ficar online
+    socketService.connect();
+  });
   window.addEventListener('offline', checkNetworkStatus);
   
   // Verificar estado inicial da rede
   checkNetworkStatus();
+  
+  // Iniciar conexão WebSocket
+  if (navigator.onLine) {
+    // Pequeno atraso para garantir que a aplicação carregue completamente
+    setTimeout(() => {
+      socketService.connect();
+    }, 1000);
+  }
 };
 
 // Estender a interface Window para incluir deferredPrompt
