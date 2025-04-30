@@ -101,7 +101,9 @@ export async function apiRequest<T>({
       else if (method === 'POST') {
         // Criar novo item
         const id = await offlineDb.addItem(tableName, data, url);
-        return { id, ...data } as unknown as T;
+        console.log("Item criado offline com ID temporário:", id);
+        // Marcar explicitamente como offline para impedir loop
+        return { id, ...data, _isOffline: true, _offline: true } as unknown as T;
       } 
       else if (method === 'PUT') {
         // Atualizar item existente
@@ -210,7 +212,8 @@ export async function apiRequest<T>({
         try {
           if (method === 'POST') {
             const id = await offlineDb.addItem(tableName, data, url);
-            return { id, ...data, _offline: true } as unknown as T;
+            console.log("Item criado offline após erro de rede com ID temporário:", id);
+            return { id, ...data, _isOffline: true, _offline: true } as unknown as T;
           } 
           else if (method === 'PUT' && resourceId !== null) {
             await offlineDb.updateItem(tableName, resourceId, data, url);
