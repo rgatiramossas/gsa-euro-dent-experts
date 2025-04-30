@@ -49,10 +49,12 @@
     "title": "Panel de Control",
     "pendingServices": "Servicios Pendientes",
     "completedServices": "Servicios Completados",
-    "revenue": "Ingresos",
+    "revenue": "Facturación Total",
     "todayServices": "Servicios de Hoy",
     "servicesByStatus": "Servicios por Estado",
-    "techniciansPerformance": "Rendimiento de Técnicos"
+    "techniciansPerformance": "Rendimiento de Técnicos",
+    "teamPerformance": "Rendimiento del Equipo",
+    "recentServices": "Servicios Recientes"
   },
   "services": {
     "title": "Servicios",

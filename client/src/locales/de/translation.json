@@ -49,10 +49,12 @@
     "title": "Dashboard",
     "pendingServices": "Ausstehende Dienstleistungen",
     "completedServices": "Abgeschlossene Dienstleistungen",
-    "revenue": "Umsatz",
+    "revenue": "Gesamtumsatz",
     "todayServices": "Heutige Dienstleistungen",
     "servicesByStatus": "Dienstleistungen nach Status",
-    "techniciansPerformance": "Leistung der Techniker"
+    "techniciansPerformance": "Leistung der Techniker",
+    "teamPerformance": "Team Leistung",
+    "recentServices": "Neueste Dienstleistungen"
   },
   "services": {
     "title": "Dienstleistungen",
