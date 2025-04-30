@@ -13,11 +13,8 @@ import { putApi, deleteApi } from "@/lib/apiWrapper";
 import { checkNetworkStatus } from "@/lib/pwaManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import useOfflineSubmit from "@/hooks/use-offline-submit";
 import { formatCurrency } from "@/lib/utils";
 import { ServiceType, ServiceStatus, ServiceWithDetails } from "@/types";
-// Adicionar useEffect explicitamente para maior clareza
-import { useEffect } from "react";
 import {
   Clipboard,
   Clock,
@@ -91,10 +88,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
-  // Adicionar hooks para controle de estado offline
-  const { isSubmitting: isStatusSubmitting, startSubmitting: startStatusSubmitting, resetSubmitting: resetStatusSubmitting } = useOfflineSubmit();
-  const { isSubmitting: isServiceSubmitting, startSubmitting: startServiceSubmitting, resetSubmitting: resetServiceSubmitting } = useOfflineSubmit();
-  const { isSubmitting: isDeleteSubmitting, startSubmitting: startDeleteSubmitting, resetSubmitting: resetDeleteSubmitting } = useOfflineSubmit();
   
   // Variáveis auxiliares para melhorar a legibilidade e evitar erros de tipagem
   const isGestor = currentUser?.role === 'gestor' || currentUser?.role === 'manager'; // Incluir ambas as variações
@@ -164,82 +157,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     }
   });
   
-  // Efeito para tratar evento de forçar reset dos estados de submissão
-  useEffect(() => {
-    const handleForceReset = () => {
-      console.log('[ServiceDetails] Recebido evento para forçar reset dos estados de submissão');
-      
-      // Resetar todos os estados de submissão explicitamente
-      resetStatusSubmitting();
-      resetServiceSubmitting();
-      resetDeleteSubmitting();
-      
-      // Fechar diálogos que possam estar abertos
-      setShowStatusDialog(false);
-      setIsEditing(false);
-      
-      // Adicionar um toast informativo se estiver offline
-      if (!checkNetworkStatus()) {
-        toast({
-          title: "Modo offline",
-          description: "A operação foi salva localmente e será sincronizada quando houver conexão",
-        });
-        
-        // SOLUÇÃO EXTREMA: Forçar redirecionamento em modo offline
-        setTimeout(() => {
-          console.log('[ServiceDetails] Redirecionamento forçado para lista de serviços');
-          window.location.href = '/services';
-        }, 1000);
-      }
-    };
-    
-    // Adicionar listener para o evento de força reset
-    window.addEventListener('force-reset-submit-state', handleForceReset);
-    
-    // SOLUÇÃO CRÍTICA: Adicionar um observador de mutação para detectar quando o botão está com "Salvando..."
-    // e forçar mudança para estado normal após um período
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'childList' || mutation.type === 'characterData') {
-          const saveButtons = document.querySelectorAll('button');
-          saveButtons.forEach(button => {
-            if (button.textContent?.includes('Salvando')) {
-              console.log('[MutationObserver] Botão "Salvando..." detectado, programando reset');
-              setTimeout(() => {
-                if (button.textContent?.includes('Salvando')) {
-                  console.log('[MutationObserver] Forçando reset do botão');
-                  // Forçar texto do botão de volta para estado normal
-                  if (button.textContent === 'Salvando...') {
-                    button.textContent = 'Salvar';
-                  }
-                  // Remover atributo disabled
-                  button.removeAttribute('disabled');
-                  // Forçar redirecionamento
-                  if (!checkNetworkStatus()) {
-                    window.location.href = '/services';
-                  }
-                }
-              }, 3000);
-            }
-          });
-        }
-      });
-    });
-    
-    // Iniciar observação
-    observer.observe(document.body, { 
-      subtree: true, 
-      childList: true,
-      characterData: true
-    });
-    
-    // Cleanup listener e observer na desmontagem
-    return () => {
-      window.removeEventListener('force-reset-submit-state', handleForceReset);
-      observer.disconnect();
-    };
-  }, [resetStatusSubmitting, resetServiceSubmitting, resetDeleteSubmitting, toast]);
-
   // Atualizar valores iniciais do formulário quando service carregar
   React.useEffect(() => {
     if (service) {
@@ -302,17 +219,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       setShowStatusDialog(false);
       setNewStatus("");
       setStatusNotes("");
-      
-      // Resetar estado de submissão offline
-      resetStatusSubmitting();
-      
-      // MUDANÇA CRÍTICA: Se for uma operação offline, redirecionar para a lista
-      if (isOfflineData) {
-        setTimeout(() => {
-          console.log("[updateStatusMutation] Redirecionando para lista após atualização offline de status");
-          setLocation('/services');
-        }, 500);
-      }
     },
     onError: (error) => {
       console.error('Error updating status:', error);
@@ -321,9 +227,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         description: "Ocorreu um erro ao atualizar o status do serviço",
         variant: "destructive",
       });
-      
-      // Resetar estado de submissão offline mesmo em caso de erro
-      resetStatusSubmitting();
     }
   });
   
@@ -408,18 +311,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       setBeforePhotoPreview(null);
       setAfterPhotoPreview(null);
       setPhotosToRemove([]);
-      
-      // Resetar estado de submissão offline
-      resetServiceSubmitting();
-      
-      // MUDANÇA CRÍTICA: Se for uma operação offline, redirecionar de volta para a lista de serviços
-      // em vez de permanecer na página de detalhes
-      if (isOfflineData) {
-        setTimeout(() => {
-          console.log("[updateServiceMutation] Redirecionando para lista após salvamento offline");
-          setLocation('/services');
-        }, 500);
-      }
     },
     onError: (error) => {
       console.error('Error updating service:', error);
@@ -428,18 +319,11 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         description: "Ocorreu um erro ao atualizar as informações do serviço",
         variant: "destructive",
       });
-      
-      // Resetar estado de submissão offline mesmo em caso de erro
-      resetServiceSubmitting();
     }
   });
   
   const handleStatusUpdate = () => {
     if (!newStatus) return;
-    
-    // Iniciar estado de submissão offline
-    console.log("[handleStatusUpdate] Iniciando submissão do status");
-    startStatusSubmitting();
     
     const data: { status: ServiceStatus; notes?: string } = {
       status: newStatus as ServiceStatus
@@ -447,29 +331,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     
     if (statusNotes.trim()) {
       data.notes = statusNotes.trim();
-    }
-    
-    // Verificar status da rede para logging
-    const isOnline = checkNetworkStatus();
-    console.log("[handleStatusUpdate] Estado da rede:", isOnline ? "Online" : "Offline");
-    
-    // Em caso offline, adicionar um timer de segurança extra para garantir que o estado seja resetado
-    if (!isOnline) {
-      console.log("[handleStatusUpdate] Modo offline detectado, configurando timer de segurança adicional");
-      setTimeout(() => {
-        console.log("[handleStatusUpdate] Timer de segurança acionado");
-        resetStatusSubmitting();
-        
-        // Se o diálogo ainda estiver aberto, fechá-lo
-        if (showStatusDialog) {
-          console.log("[handleStatusUpdate] Fechando diálogo de status");
-          setShowStatusDialog(false);
-          toast({
-            title: "Operação offline",
-            description: "O status foi salvo localmente e será sincronizado quando houver conexão",
-          });
-        }
-      }, 3000); // Timer menor que o do hook (3s vs 5s)
     }
     
     updateStatusMutation.mutate(data);
@@ -517,85 +378,18 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   // Função para salvar as alterações
   const handleSaveChanges = () => {
-    // SOLUÇÃO CRÍTICA: Configurar um timer de segurança absoluto
-    const safetyTimer = setTimeout(() => {
-      console.log("[handleSaveChanges] TIMER DE SEGURANÇA MÁXIMO - Forçando reset do estado de submissão");
-      resetServiceSubmitting();
-      
-      // MUDANÇA CRÍTICA: Forçar saída do modo de edição
-      setIsEditing(false);
-      
-      // MUDANÇA CRÍTICA: Forçar navegação de volta para a lista se em modo offline
-      if (!checkNetworkStatus()) {
-        console.log("[handleSaveChanges] Modo offline detectado, redirecionando para lista");
-        setTimeout(() => {
-          setLocation('/services');
-        }, 500);
-      }
-      
-      // Disparar evento de reset global
-      window.dispatchEvent(new CustomEvent('force-reset-submit-state', { 
-        detail: { source: 'handleSaveChanges-absolute-safety' }
-      }));
-      
-      // Mostrar feedback ao usuário
-      toast({
-        title: "Operação completada",
-        description: checkNetworkStatus() 
-          ? "As alterações foram salvas" 
-          : "As alterações foram salvas localmente e serão sincronizadas quando houver conexão",
-      });
-    }, 2000); // Reduzido para 2 segundos para resposta mais rápida
-    
     editForm.handleSubmit((data) => {
-      console.log("[handleSaveChanges] Dados do formulário:", data);
-      
-      // Iniciar estado de submissão offline
-      console.log("[handleSaveChanges] Iniciando submissão do serviço");
-      startServiceSubmitting();
-      
-      // Configurar um mecanismo para limpar o timer de segurança se a submissão for bem-sucedida
-      const successCleanup = () => {
-        console.log("[handleSaveChanges] Limpando timer de segurança após sucesso");
-        clearTimeout(safetyTimer);
-      };
-      
-      // Adicionar evento de única execução para limpar o timer
-      window.addEventListener('form-save-completed', successCleanup, { once: true });
+      console.log("Dados do formulário:", data);
       
       // Verificar se o serviço existe
       if (!service) {
-        console.error("[handleSaveChanges] Serviço não encontrado");
+        console.error("Serviço não encontrado");
         toast({
           title: "Erro",
           description: "Serviço não encontrado",
           variant: "destructive",
         });
-        resetServiceSubmitting(); // Resetar estado de submissão em caso de erro
         return;
-      }
-      
-      // Verificar status da rede para logging
-      const isOnline = checkNetworkStatus();
-      console.log("[handleSaveChanges] Estado da rede:", isOnline ? "Online" : "Offline");
-      
-      // Em caso offline, adicionar um timer de segurança extra para garantir que o estado seja resetado
-      if (!isOnline) {
-        console.log("[handleSaveChanges] Modo offline detectado, configurando timer de segurança adicional");
-        setTimeout(() => {
-          console.log("[handleSaveChanges] Timer de segurança acionado");
-          resetServiceSubmitting();
-          
-          // Se ainda estiver editando, sair do modo de edição
-          if (isEditing) {
-            console.log("[handleSaveChanges] Saindo do modo de edição");
-            setIsEditing(false);
-            toast({
-              title: "Operação offline",
-              description: "As alterações foram salvas localmente e serão sincronizadas quando houver conexão",
-            });
-          }
-        }, 3000); // Timer menor que o do hook (3s vs 5s)
       }
       
       // Sempre usaremos FormData para simplificar e unificar o processo
@@ -663,23 +457,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       
       // Adicionar fotos se existirem
       if (servicePhotos && servicePhotos.length > 0) {
-        // Verificar se cada foto é válida
-        let validPhotosCount = 0;
-        
+        // Adicionar fotos no novo formato (tipo 'service')
         Array.from(servicePhotos).forEach((file: File) => {
-          // Verificar se é um arquivo válido com tamanho > 0
-          if (file instanceof File && file.size > 0) {
-            formData.append('photos_service', file);
-            validPhotosCount++;
-          }
+          formData.append('photos_service', file);
         });
-        
-        // Log para depuração
-        if (validPhotosCount !== servicePhotos.length) {
-          console.log(`Filtradas ${servicePhotos.length - validPhotosCount} fotos inválidas. Enviando ${validPhotosCount} fotos.`);
-        } else {
-          console.log(`Enviando ${validPhotosCount} fotos válidas.`);
-        }
       }
       
       // Adicionar IDs de fotos a serem removidas
@@ -728,9 +509,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           : "O serviço foi excluído com sucesso",
       });
       
-      // Resetar estado de submissão offline
-      resetDeleteSubmitting();
-      
       setLocation('/services');
     },
     onError: (error) => {
@@ -740,9 +518,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         description: "Ocorreu um erro ao excluir o serviço",
         variant: "destructive",
       });
-      
-      // Resetar estado de submissão offline mesmo em caso de erro
-      resetDeleteSubmitting();
     }
   });
   
@@ -858,32 +633,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     if (files && files.length > 0) {
       // Converter FileList atual (se existir) em array
       const currentFiles = servicePhotos ? Array.from(servicePhotos) : [];
-      
-      // Converter novas FileList em array e filtrar apenas arquivos válidos
-      const newFiles = Array.from(files).filter(file => 
-        file instanceof File && file.size > 0 && file.type.startsWith('image/')
-      );
-      
-      // Verificar se há fotos válidas
-      if (newFiles.length === 0) {
-        console.log("Nenhuma foto válida selecionada");
-        toast({
-          title: "Arquivos inválidos",
-          description: "Nenhuma imagem válida foi selecionada.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Se algumas fotos foram filtradas, mostrar aviso
-      if (newFiles.length < files.length) {
-        console.log(`Filtradas ${files.length - newFiles.length} fotos inválidas`);
-        toast({
-          title: "Alguns arquivos foram ignorados",
-          description: `${files.length - newFiles.length} arquivo(s) inválido(s) foram ignorados.`,
-          variant: "destructive",
-        });
-      }
+      // Converter novas FileList em array
+      const newFiles = Array.from(files);
       
       // Verificar o total de fotos após a adição
       const totalFiles = currentFiles.length + newFiles.length;
@@ -901,14 +652,12 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       // Criar novo FileList combinando as fotos atuais e novas
       const dataTransfer = new DataTransfer();
       
-      // Adicionar fotos atuais válidas
+      // Adicionar fotos atuais
       currentFiles.forEach(file => {
-        if (file instanceof File && file.size > 0) {
-          dataTransfer.items.add(file);
-        }
+        dataTransfer.items.add(file);
       });
       
-      // Adicionar novas fotos válidas
+      // Adicionar novas fotos
       newFiles.forEach(file => {
         dataTransfer.items.add(file);
       });
@@ -1064,22 +813,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     Cancelar
                   </Button>
                   <Button 
-                    onClick={() => {
-                      handleStatusUpdate();
-                      
-                      // SOLUÇÃO RADICAL: Forçar reset do estado após um tempo e redirecionar se offline
-                      if (!checkNetworkStatus()) {
-                        setTimeout(() => {
-                          console.log("[StatusButton] Forçando reset do botão e redirecionamento");
-                          resetStatusSubmitting();
-                          setShowStatusDialog(false);
-                          window.location.href = '/services';
-                        }, 3000);
-                      }
-                    }}
-                    disabled={!newStatus || updateStatusMutation.isPending || isStatusSubmitting}
+                    onClick={handleStatusUpdate}
+                    disabled={!newStatus || updateStatusMutation.isPending}
                   >
-                    {updateStatusMutation.isPending || isStatusSubmitting ? "Salvando..." : "Salvar"}
+                    {updateStatusMutation.isPending ? "Salvando..." : "Salvar"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1212,62 +949,52 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       (service.photos?.service && service.photos.service.length > 0)) ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                         {/* Fotos de tipo 'service' (novo formato unificado) */}
-                        {service.photos?.service && service.photos.service
-                          .filter(photo => photo && photo.photo_url && typeof photo.photo_url === 'string')
-                          .map((photo) => (
-                            <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
-                              <ImageWithFallback 
-                                src={photo.photo_url} 
-                                alt="Foto do veículo" 
-                                className="object-cover w-full h-full"
-                                onError={(e) => {
-                                  console.log(`Erro ao carregar imagem: ${photo.photo_url}`);
-                                }}
-                              />
-                              <Badge className="absolute top-1 left-1 bg-blue-500 text-white">
-                                Serviço
-                              </Badge>
-                              {isEditing && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeletePhoto(photo.id)}
-                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  title="Remover foto"
-                                >
-                                  <X size={16} />
-                                </button>
-                              )}
-                            </div>
-                          ))}
+                        {service.photos?.service && service.photos.service.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
+                            <ImageWithFallback 
+                              src={photo.photo_url} 
+                              alt="Foto do veículo" 
+                              className="object-cover w-full h-full"
+                            />
+                            <Badge className="absolute top-1 left-1 bg-blue-500 text-white">
+                              Serviço
+                            </Badge>
+                            {isEditing && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePhoto(photo.id)}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Remover foto"
+                              >
+                                <X size={16} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
                         
                         {/* Fotos de tipo 'before' (retrocompatibilidade) */}
-                        {service.photos?.before && service.photos.before
-                          .filter(photo => photo && photo.photo_url && typeof photo.photo_url === 'string')
-                          .map((photo) => (
-                            <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
-                              <ImageWithFallback 
-                                src={photo.photo_url} 
-                                alt="Foto do veículo" 
-                                className="object-cover w-full h-full"
-                                onError={(e) => {
-                                  console.log(`Erro ao carregar imagem: ${photo.photo_url}`);
-                                }}
-                              />
-                              <Badge className="absolute top-1 left-1 bg-orange-500 text-white">
-                                Antes
-                              </Badge>
-                              {isEditing && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeletePhoto(photo.id)}
-                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  title="Remover foto"
-                                >
-                                  <X size={16} />
-                                </button>
-                              )}
-                            </div>
-                          ))}
+                        {service.photos?.before && service.photos.before.map((photo) => (
+                          <div key={photo.id} className="relative aspect-w-4 aspect-h-3 bg-gray-100 rounded-lg overflow-hidden group">
+                            <ImageWithFallback 
+                              src={photo.photo_url} 
+                              alt="Foto do veículo" 
+                              className="object-cover w-full h-full"
+                            />
+                            <Badge className="absolute top-1 left-1 bg-orange-500 text-white">
+                              Antes
+                            </Badge>
+                            {isEditing && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePhoto(photo.id)}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Remover foto"
+                              >
+                                <X size={16} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
                         
                         {/* Fotos de tipo 'after' (retrocompatibilidade) */}
                         {service.photos?.after && service.photos.after.map((photo) => (
@@ -1379,35 +1106,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction 
-                          onClick={() => {
-                            // Iniciar estado de submissão offline para exclusão
-                            console.log("[handleDelete] Iniciando submissão de exclusão");
-                            startDeleteSubmitting();
-                            
-                            // Verificar status da rede para logging
-                            const isOnline = checkNetworkStatus();
-                            console.log("[handleDelete] Estado da rede:", isOnline ? "Online" : "Offline");
-                            
-                            // Em caso offline, adicionar um timer de segurança extra
-                            if (!isOnline) {
-                              console.log("[handleDelete] Modo offline detectado, configurando timer de segurança adicional");
-                              setTimeout(() => {
-                                console.log("[handleDelete] Timer de segurança acionado");
-                                resetDeleteSubmitting();
-                                
-                                // Fechar diálogo e redirecionar
-                                toast({
-                                  title: "Operação offline",
-                                  description: "O serviço foi marcado para exclusão e será sincronizado quando houver conexão",
-                                });
-                                
-                                setLocation('/services');
-                              }, 3000);
-                            }
-                            
-                            deleteServiceMutation.mutate();
-                          }}
-                          disabled={deleteServiceMutation.isPending || isDeleteSubmitting}
+                          onClick={() => deleteServiceMutation.mutate()}
+                          disabled={deleteServiceMutation.isPending}
                         >
                           {deleteServiceMutation.isPending ? "Excluindo..." : "Excluir"}
                         </AlertDialogAction>
@@ -1422,57 +1122,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       ) : (
         /* Edit Mode - Using the same structure as the new-service form but only for editable fields */
         <Form {...editForm}>
-          <form 
-            onSubmit={(e) => { 
-              e.preventDefault(); 
-              
-              // SOLUÇÃO EXTREMA: Forçar redirecionamento após um tempo fixo
-              if (!checkNetworkStatus()) {
-                console.log("[Form] Modo offline detectado, configurando timer para redirecionamento forçado");
-                
-                // Timer de emergência para garantir que o usuário não fique preso
-                setTimeout(() => {
-                  console.log("[Form] TIMER DE EMERGÊNCIA - Redirecionamento forçado");
-                  try {
-                    const buttons = document.querySelectorAll('button');
-                    buttons.forEach(button => {
-                      if (button.textContent?.includes('Salvando')) {
-                        button.textContent = 'Salvar';
-                        button.disabled = false;
-                      }
-                    });
-                  } catch (err) {
-                    console.error("[Form] Erro ao resetar botões:", err);
-                  }
-                  
-                  // Redirecionamento forçado
-                  window.location.href = '/services';
-                }, 2500);
-              }
-              
-              // Chamar a função normal de salvamento
-              handleSaveChanges(); 
-            }} 
-            className="space-y-6">
+          <form onSubmit={(e) => { e.preventDefault(); handleSaveChanges(); }} className="space-y-6">
             <div className="flex justify-end gap-2 mb-4">
               <Button variant="outline" type="button" onClick={handleCancelEditing}>
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
-                disabled={updateServiceMutation.isPending || isServiceSubmitting}
-                onClick={() => {
-                  if (!checkNetworkStatus()) {
-                    // Em modo offline, configurar um timer para forçar o reset do botão e redirecionar
-                    setTimeout(() => {
-                      console.log("[SaveButton] Forçando reset do botão e redirecionamento");
-                      resetServiceSubmitting();
-                      window.location.href = '/services';
-                    }, 3000);
-                  }
-                }}
-              >
-                {updateServiceMutation.isPending || isServiceSubmitting ? "Salvando..." : "Salvar"}
+              <Button type="submit" disabled={updateServiceMutation.isPending}>
+                {updateServiceMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </div>
           

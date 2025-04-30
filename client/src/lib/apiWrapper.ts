@@ -18,14 +18,14 @@ interface ApiRequestConfig {
 function mapApiUrlToTable(url: string): string | null {
   // Extrair o caminho de API sem parâmetros ou IDs específicos
   const apiPath = url.split('/').filter(Boolean);
-
+  
   if (apiPath.length === 0 || apiPath[0] !== 'api') {
     return null;
   }
-
+  
   // Obter o segundo segmento (após 'api/')
   const resourceName = apiPath[1];
-
+  
   // Mapear nome do recurso para nome da tabela
   const tableMappings: Record<string, string | null> = {
     'clients': 'clients',
@@ -38,7 +38,7 @@ function mapApiUrlToTable(url: string): string | null {
     'auth': null, // Não suporta offline
     // Adicionar mais mapeamentos conforme necessário
   };
-
+  
   return tableMappings[resourceName] || null;
 }
 
@@ -46,12 +46,12 @@ function mapApiUrlToTable(url: string): string | null {
 function extractResourceId(url: string): number | null {
   const parts = url.split('/');
   const lastPart = parts[parts.length - 1];
-
+  
   // Verificar se o último segmento é um número
   if (/^\d+$/.test(lastPart)) {
     return parseInt(lastPart, 10);
   }
-
+  
   return null;
 }
 
@@ -66,20 +66,20 @@ export async function apiRequest<T>({
 }: ApiRequestConfig): Promise<T> {
   // Determinar se estamos online
   const isOnline = checkNetworkStatus();
-
+  
   // Algumas operações não devem ser processadas offline
   const isAuthOperation = url.includes('/api/auth/');
   const offlineDisabled = !enableOffline || isAuthOperation;
-
+  
   // Identificar a tabela local correspondente para operações offline
   const tableName = offlineTableName || mapApiUrlToTable(url);
   const resourceId = extractResourceId(url);
-
+  
   // Se offline e o suporte offline está habilitado para esta operação
   if (!isOnline && !offlineDisabled && tableName) {
     try {
       console.log(`Operação offline: ${method} ${url}`);
-
+      
       // Operações baseadas no método HTTP
       if (method === 'GET') {
         if (resourceId !== null) {
@@ -91,26 +91,16 @@ export async function apiRequest<T>({
           const params = Object.fromEntries(urlObj.searchParams.entries());
           const page = params.page ? parseInt(params.page as string, 10) : 1;
           const limit = params.limit ? parseInt(params.limit as string, 10) : 50;
-
+          
           // Remover parâmetros de paginação dos filtros
           const { page: _, limit: __, ...filters } = params;
-
+          
           return await offlineDb.listItems(tableName, url, page, limit, filters) as unknown as T;
         }
       } 
       else if (method === 'POST') {
         // Criar novo item
         const id = await offlineDb.addItem(tableName, data, url);
-        // Forçar conclusão da UI - emitir dois eventos para garantir que todos os listeners capturem
-        setTimeout(() => {
-          // Evento específico com detalhes da operação
-          window.dispatchEvent(new CustomEvent('offline-save-completed', {
-            detail: { id, success: true }
-          }));
-          
-          // Evento genérico para finalizar estados de loading
-          window.dispatchEvent(new CustomEvent('form-save-completed'));
-        }, 100);
         return { id, ...data } as unknown as T;
       } 
       else if (method === 'PUT') {
@@ -118,20 +108,8 @@ export async function apiRequest<T>({
         if (resourceId === null) {
           throw new Error(`Não foi possível extrair ID da URL para atualização: ${url}`);
         }
-
+        
         await offlineDb.updateItem(tableName, resourceId, data, url);
-        
-        // Emitir evento para concluir UI
-        setTimeout(() => {
-          // Evento específico com detalhes da operação
-          window.dispatchEvent(new CustomEvent('offline-save-completed', {
-            detail: { id: resourceId, success: true, method: 'PUT', tableName }
-          }));
-          
-          // Evento genérico para finalizar estados de loading
-          window.dispatchEvent(new CustomEvent('form-save-completed'));
-        }, 100);
-        
         return { id: resourceId, ...data } as unknown as T;
       } 
       else if (method === 'DELETE') {
@@ -139,38 +117,18 @@ export async function apiRequest<T>({
         if (resourceId === null) {
           throw new Error(`Não foi possível extrair ID da URL para exclusão: ${url}`);
         }
-
+        
         await offlineDb.deleteItem(tableName, resourceId, url);
-        
-        // Emitir evento para concluir UI
-        setTimeout(() => {
-          // Evento específico com detalhes da operação
-          window.dispatchEvent(new CustomEvent('offline-save-completed', {
-            detail: { id: resourceId, success: true, method: 'DELETE', tableName }
-          }));
-          
-          // Evento genérico para finalizar estados de loading
-          window.dispatchEvent(new CustomEvent('form-save-completed'));
-        }, 100);
-        
         return { success: true } as unknown as T;
       }
-
+      
       throw new Error(`Método não suportado offline: ${method}`);
     } catch (error) {
       console.error("Erro durante operação offline:", error);
-      
-      // Garantir que o evento seja sempre disparado, mesmo em caso de erro
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('form-save-completed', {
-          detail: { error, source: 'offline-error' }
-        }));
-      }, 100);
-      
       throw error;
     }
   }
-
+  
   // Online ou operação não suportada offline
   try {
     const response = await fetch(url, {
@@ -182,16 +140,16 @@ export async function apiRequest<T>({
       body: method !== 'GET' && data ? JSON.stringify(data) : undefined,
       credentials: 'include'
     });
-
+    
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
-
+    
     // Sincronizar com o banco de dados offline quando online, para operações GET
     if (isOnline && method === 'GET' && tableName && enableOffline) {
       try {
         const responseData = await response.json();
-
+        
         // Para GET de item único
         if (resourceId !== null) {
           // Atualizar o item no banco local
@@ -212,19 +170,19 @@ export async function apiRequest<T>({
             )
           );
         }
-
+        
         return responseData as T;
       } catch (error) {
         console.error("Erro ao sincronizar dados online com cache local:", error);
         // Continuar e retornar o resultado da API mesmo se a sincronização falhar
       }
     }
-
+    
     // Para DELETE, pode retornar vazio
     if (method === 'DELETE' && response.status === 204) {
       return { success: true } as unknown as T;
     }
-
+    
     try {
       return await response.json();
     } catch (e) {
@@ -246,79 +204,29 @@ export async function apiRequest<T>({
           console.error("Erro ao buscar do cache local:", e);
         }
       }
-
+      
       // Se não for GET, registra a operação para execução posterior
       if (method !== 'GET') {
         try {
           if (method === 'POST') {
             const id = await offlineDb.addItem(tableName, data, url);
-            // Emitir evento imediatamente e novamente após um pequeno atraso
-            // (solução para garantir que listeners recebam o evento)
-            window.dispatchEvent(new CustomEvent('offline-save-completed', {
-              detail: { id, success: true, method: 'POST', tableName }
-            }));
-            
-            // Emitir novamente após um pequeno atraso para garantir que os componentes tenham tempo de reagir
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('offline-save-completed', {
-                detail: { id, success: true, method: 'POST', tableName }
-              }));
-              // Emitir evento global para qualquer formulário que precise reagir
-              window.dispatchEvent(new CustomEvent('form-save-completed'));
-            }, 100);
-            
-            console.log(`Operação offline POST concluída para ${tableName}. ID: ${id}`);
             return { id, ...data, _offline: true } as unknown as T;
           } 
           else if (method === 'PUT' && resourceId !== null) {
             await offlineDb.updateItem(tableName, resourceId, data, url);
-            
-            // Emitir evento para PUT também
-            window.dispatchEvent(new CustomEvent('offline-save-completed', {
-              detail: { id: resourceId, success: true, method: 'PUT', tableName }
-            }));
-            
-            // Garantir que os estados de loading dos formulários sejam resetados
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('form-save-completed'));
-            }, 100);
-            
-            console.log(`Operação offline PUT concluída para ${tableName}. ID: ${resourceId}`);
             return { id: resourceId, ...data, _offline: true } as unknown as T;
           } 
           else if (method === 'DELETE' && resourceId !== null) {
             await offlineDb.deleteItem(tableName, resourceId, url);
-            
-            // Emitir evento para DELETE também
-            window.dispatchEvent(new CustomEvent('offline-save-completed', {
-              detail: { id: resourceId, success: true, method: 'DELETE', tableName }
-            }));
-            
-            // Garantir que os estados de loading dos formulários sejam resetados
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('form-save-completed'));
-            }, 100);
-            
-            console.log(`Operação offline DELETE concluída para ${tableName}. ID: ${resourceId}`);
             return { success: true, _offline: true } as unknown as T;
           }
         } catch (e) {
           console.error("Erro ao processar operação para modo offline:", e);
-          // Garantir que os formulários saiam do estado de loading mesmo em caso de erro
-          window.dispatchEvent(new CustomEvent('form-save-completed', { 
-            detail: { error: e }
-          }));
         }
       }
     }
-
-    // Se chegamos aqui, não foi possível recuperar de nenhuma forma
-    // Garantir que os formulários saiam do estado de loading, mesmo se todas as tentativas anteriores falharem
-    console.error("Falha final na operação com API:", error);
-    window.dispatchEvent(new CustomEvent('form-save-completed', {
-      detail: { error, source: 'api-final-error' }
-    }));
     
+    // Se chegamos aqui, não foi possível recuperar de nenhuma forma
     throw error;
   }
 }

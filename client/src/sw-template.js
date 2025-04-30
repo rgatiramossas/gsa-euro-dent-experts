@@ -73,44 +73,34 @@ const bgSyncPlugin = new BackgroundSyncPlugin('offline-mutations-queue', {
   maxRetentionTime: 24 * 60, // 24 horas em minutos
 });
 
-// Estratégia para requisições que modificam dados (POST, PUT, DELETE)
+// Capturar e enfileirar requisições POST
 registerRoute(
-  ({ url, method }) => {
-    return url.pathname.startsWith('/api/') && 
-           ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
-  },
-  new NetworkFirst({
+  ({ url }) => url.pathname.startsWith('/api/') &&
+               (self.navigator.onLine === false),
+  new NetworkOnly({
     plugins: [bgSyncPlugin],
-    networkTimeoutSeconds: 3,
-    cacheName: 'api-mutations',
-    matchOptions: {
-      ignoreVary: true
-    },
-    fetchOptions: {
-      credentials: 'include'
-    }
-  })
+  }),
+  'POST'
 );
 
-// Estratégia para requisições GET da API
+// Capturar e enfileirar requisições PUT
 registerRoute(
-  ({ url, method }) => url.pathname.startsWith('/api/') && method === 'GET',
-  new NetworkFirst({
-    cacheName: 'api-cache',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 100,
-        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 dias
-      }),
-    ],
-    networkTimeoutSeconds: 3,
-    matchOptions: {
-      ignoreVary: true
-    },
-    fetchOptions: {
-      credentials: 'include'
-    }
-  })
+  ({ url }) => url.pathname.startsWith('/api/') &&
+               (self.navigator.onLine === false),
+  new NetworkOnly({
+    plugins: [bgSyncPlugin],
+  }),
+  'PUT'
+);
+
+// Capturar e enfileirar requisições DELETE
+registerRoute(
+  ({ url }) => url.pathname.startsWith('/api/') &&
+               (self.navigator.onLine === false),
+  new NetworkOnly({
+    plugins: [bgSyncPlugin],
+  }),
+  'DELETE'
 );
 
 // Navegação: StaleWhileRevalidate para páginas

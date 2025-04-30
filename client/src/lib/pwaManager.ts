@@ -13,30 +13,21 @@ export const registerServiceWorker = async () => {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js', { 
-      scope: '/',
-      updateViaCache: 'none'
-    });
+    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     console.log('Service Worker registrado com sucesso');
 
-    // Ativar o worker imediatamente
-    if (registration.active) {
-      registration.active.postMessage({ type: 'INIT' });
-    }
-
-    // Configurar atualização controlada quando houver nova versão
+    // Configurar atualização automática quando houver nova versão
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       if (newWorker) {
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // Evita prompt durante operações offline
-            if (navigator.onLine) {
-              // Há uma nova versão pronta para ser usada
-              if (window.confirm('Uma nova versão está disponível. Atualizar agora?')) {
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
-                window.location.reload();
-              }
+            // Há uma nova versão pronta para ser usada
+            if (window.confirm('Uma nova versão está disponível. Atualizar agora?')) {
+              // Enviar mensagem para o service worker atualizar imediatamente
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+              // Recarregar a página para usar o novo service worker
+              window.location.reload();
             }
           }
         });
@@ -103,7 +94,6 @@ export const triggerSyncIfNeeded = async () => {
 // Importar a DB offline para processamento de mensagens
 import offlineDb from './offlineDb';
 import { offlineStatusStore } from './stores';
-import socketService from './socketService';
 
 // Processar mensagens do service worker 
 const processServiceWorkerMessage = async (event: MessageEvent) => {
@@ -143,32 +133,6 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
       offlineStatusStore.setSyncing(false);
       break;
       
-    case 'save-completed':
-      // Processar operação de salvamento offline concluída
-      console.log('Operação de salvamento offline concluída:', data);
-      // Disparar evento global para notificar componentes sobre o salvamento
-      window.dispatchEvent(new CustomEvent('offline-save-completed', {
-        detail: {
-          id: data.id,
-          success: data.success,
-          offline: data.offline,
-          tableName: data.tableName,
-          method: data.method
-        }
-      }));
-      
-      // Garantir que os formulários saiam do estado de carregamento
-      window.dispatchEvent(new CustomEvent('form-save-completed'));
-      break;
-    
-    case 'form-save-completed':
-      // Processar evento especial para finalizar estado de loading em formulários
-      console.log('Finalizando estado de loading em formulários');
-      window.dispatchEvent(new CustomEvent('form-save-completed', {
-        detail: { success: data.success }
-      }));
-      break;
-      
     case 'resource-id-updated':
       // Atualizar o ID local para o ID do servidor após sincronização
       try {
@@ -194,23 +158,11 @@ export const initPWA = () => {
   navigator.serviceWorker.addEventListener('message', processServiceWorkerMessage);
   
   // Configurar monitoramento de estado da rede
-  window.addEventListener('online', () => {
-    checkNetworkStatus();
-    // Iniciar conexão WebSocket quando ficar online
-    socketService.connect();
-  });
+  window.addEventListener('online', checkNetworkStatus);
   window.addEventListener('offline', checkNetworkStatus);
   
   // Verificar estado inicial da rede
   checkNetworkStatus();
-  
-  // Iniciar conexão WebSocket
-  if (navigator.onLine) {
-    // Pequeno atraso para garantir que a aplicação carregue completamente
-    setTimeout(() => {
-      socketService.connect();
-    }, 1000);
-  }
 };
 
 // Estender a interface Window para incluir deferredPrompt

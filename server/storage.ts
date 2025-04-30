@@ -42,6 +42,12 @@ export const initializeDatabase = async () => {
     return { db, pool };
   } catch (error) {
     console.error("Erro ao inicializar o banco de dados:", error);
+    
+    // Se quiser implementar um fallback para um banco em memória em caso de falha:
+    // console.log("Usando armazenamento em memória como fallback...");
+    // ... lógica de fallback aqui ...
+    
+    // Por enquanto, propagamos o erro para interromper a aplicação
     throw error;
   }
 };
@@ -195,8 +201,6 @@ async function createEssentialTables() {
 
 // Usar MemoryStore como alternativa temporária para sessões até configurar MySQL
 const MemoryStore = memorystore(session);
-
-// Implementação para armazenamento MySQL
 
 export interface IStorage {
   // User methods
@@ -1694,41 +1698,20 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getServicePhotos(serviceId: number, type?: string): Promise<ServicePhoto[]> {
-    try {
-      let query = "SELECT * FROM service_photos WHERE service_id = ?";
-      const params = [serviceId];
-      
-      if (type) {
-        query += " AND photo_type = ?";
-        params.push(type);
-      }
-      
-      // Adicionar ordenação por ID para garantir consistência
-      query += " ORDER BY id ASC";
-      
-      console.log(`Buscando fotos para serviço ID ${serviceId}${type ? `, tipo ${type}` : ''}`);
-      const [results] = await pool.query(query, params);
-      
-      console.log(`Encontradas ${Array.isArray(results) ? results.length : 0} fotos`);
-      
-      // Verificar validade dos caminhos das fotos
-      const validatedResults = Array.isArray(results) ? results.filter((photo: any) => {
-        const isValid = photo && photo.photo_url && typeof photo.photo_url === 'string';
-        if (!isValid) {
-          console.log(`Foto inválida encontrada para serviço ${serviceId}:`, photo);
-        }
-        return isValid;
-      }) : [];
-      
-      if (validatedResults.length !== (Array.isArray(results) ? results.length : 0)) {
-        console.log(`Filtradas ${(Array.isArray(results) ? results.length : 0) - validatedResults.length} fotos inválidas`);
-      }
-      
-      return validatedResults as ServicePhoto[];
-    } catch (error) {
-      console.error(`Erro ao buscar fotos do serviço ${serviceId}:`, error);
-      return [];
+    if (type) {
+      return db.select()
+        .from(servicePhotos)
+        .where(
+          and(
+            eq(servicePhotos.service_id, serviceId),
+            eq(servicePhotos.photo_type, type)
+          )
+        );
     }
+    
+    return db.select()
+      .from(servicePhotos)
+      .where(eq(servicePhotos.service_id, serviceId));
   }
   
   async removeServicePhoto(photoId: number): Promise<boolean> {

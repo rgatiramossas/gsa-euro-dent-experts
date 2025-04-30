@@ -45,7 +45,7 @@ async function networkFirstWithCache(request) {
   try {
     // Primeiro tenta pegar da rede
     const networkResponse = await fetch(request);
-
+    
     // Se for navegação ou recurso estático, cache o resultado mais recente
     if (request.method === 'GET') {
       // Exclui URLs de API (exceto GETs) de serem cacheados
@@ -53,7 +53,7 @@ async function networkFirstWithCache(request) {
         await cache.put(request, networkResponse.clone());
       }
     }
-
+    
     return networkResponse;
   } catch (error) {
     // Se a rede falhou, tenta o cache
@@ -61,12 +61,12 @@ async function networkFirstWithCache(request) {
     if (cachedResponse) {
       return cachedResponse;
     }
-
+    
     // Se não estiver no cache, retorna para página offline (para navegação)
     if (request.mode === 'navigate') {
       return caches.match('/');
     }
-
+    
     // Caso contrário, propaga o erro
     throw error;
   }
@@ -80,91 +80,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Verificar se é uma requisição para a API
-  if (event.request.url.includes('/api/')) {
-    const method = event.request.method.toUpperCase();
-
-    // Para métodos que modificam dados (POST, PUT, DELETE)
-    if (['POST', 'PUT', 'DELETE'].includes(method)) {
-      event.respondWith(
-        (async () => {
-          try {
-            const response = await fetch(event.request.clone());
-            return response;
-          } catch (error) {
-            // Armazenar requisição para sincronização posterior
-            const requestData = await event.request.json();
-            const tempId = -Date.now();
-            
-            // Determinar o nome da tabela de referência a partir da URL
-            const urlPath = new URL(event.request.url).pathname;
-            const pathSegments = urlPath.split('/').filter(Boolean);
-            let tableName = pathSegments[1]; // Normalmente será "clients", "budgets", etc.
-            
-            if (pathSegments[0] === 'api' && pathSegments.length > 1) {
-              // Mapear nomes de recursos para tabelas
-              const tableMap = {
-                'clients': 'clients',
-                'services': 'services',
-                'budgets': 'budgets',
-                'vehicles': 'vehicles',
-                'users': 'technicians',
-                'technicians': 'technicians',
-                'events': 'events'
-              };
-              tableName = tableMap[pathSegments[1]] || pathSegments[1];
-            }
-            
-            // Notificar clientes sobre o sucesso do salvamento offline
-            notifyClients({
-              type: 'save-completed',
-              success: true,
-              offline: true,
-              id: tempId,
-              tableName: tableName,
-              method: event.request.method
-            });
-            
-            // Não enviar o segundo evento que pode causar confusão
-            // Simplificamos o protocolo de comunicação para evitar o loop
-
-            // Retornar resposta simulada com status 202 (Accepted) para indicar que foi aceito para processamento
-            return new Response(JSON.stringify({
-              success: true,
-              offline: true,  // Nome mais consistente
-              id: tempId,
-              tableName: tableName,
-              timestamp: Date.now()
-            }), {
-              status: 202,  // 202 Accepted é mais apropriado para operações assíncronas
-              headers: { 'Content-Type': 'application/json' }
-            });
-          }
-        })()
-      );
-      return;
-    }
-  }
-
-  // Para outras requisições, mantém a estratégia network-first
+  // Aplica a estratégia network-first para todas as requisições
   event.respondWith(networkFirstWithCache(event.request));
 });
 
 // Responder a mensagens do cliente
 self.addEventListener('message', (event) => {
   if (!event.data) return;
-
+  
   switch (event.data.type) {
     case 'SKIP_WAITING':
       self.skipWaiting();
       break;
-
+    
     case 'SYNC_REQUEST':
       // Solicitação manual de sincronização (para navegadores sem suporte a background sync)
       console.log('Recebida solicitação manual de sincronização');
       event.waitUntil(syncPendingRequests());
       break;
-
+      
     case 'CHECK_SYNC_STATUS':
       // Enviar status atual de sincronização
       notifyClients({ 
@@ -179,7 +113,7 @@ self.addEventListener('message', (event) => {
 self.addEventListener('online', () => {
   console.log('Service Worker detectou que está online');
   notifyClients({ type: 'online' });
-
+  
   // Tentar sincronizar automaticamente quando voltar a estar online
   syncPendingRequests().catch(err => {
     console.error('Falha na sincronização automática:', err);
@@ -201,61 +135,48 @@ self.addEventListener('sync', (event) => {
 
 // Função para processar requisições pendentes
 async function syncPendingRequests() {
-  // Criar um controller para timeout de segurança
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    console.log('Timeout de sincronização atingido - abortando');
-    controller.abort();
-  }, 30000); // 30 segundos de timeout máximo
-  
-  let db;
   try {
-    console.log('Iniciando sincronização...');
     // Abrir uma conexão para nossa base de dados
-    db = await openDatabase();
-    if (!db) {
-      throw new Error('Falha ao abrir banco de dados');
-    }
-
+    const db = await openDatabase();
+    
     // Obter solicitações pendentes da tabela pendingRequests
     const pendingRequests = await db.getAll('pendingRequests');
-
+    
     if (pendingRequests.length === 0) {
       console.log('Nenhuma solicitação pendente para sincronizar');
       return;
     }
-
+    
     console.log(`Sincronizando ${pendingRequests.length} solicitações pendentes`);
-
+    
     // Notificar o cliente de que a sincronização começou
     notifyClients({ type: 'sync-started', count: pendingRequests.length });
-
+    
     // Processar cada solicitação pendente
     for (const request of pendingRequests) {
       try {
         console.log(`Sincronizando: ${request.method} ${request.url}`);
-
+        
         // Tentar enviar a requisição pendente para o servidor
         const response = await fetch(request.url, {
           method: request.method,
           headers: request.headers || { 'Content-Type': 'application/json' },
           body: request.body ? JSON.stringify(request.body) : undefined,
-          credentials: 'include',
-          signal: controller.signal // Usar o signal do AbortController para o timeout
+          credentials: 'include'
         });
-
+        
         if (!response.ok) {
           throw new Error(`Falha ao sincronizar requisição: ${response.status} ${response.statusText}`);
         }
-
+        
         // Remover a requisição processada com sucesso
         await db.delete('pendingRequests', request.id);
-
+        
         // Se for uma operação de criação, precisamos atualizar o ID local no banco de dados offline
         if (request.operationType === 'create' && request.tableName && request.resourceId) {
           try {
             const result = await response.json();
-
+            
             if (result.id) {
               // Notificar os clientes sobre a atualização de ID
               notifyClients({
@@ -274,74 +195,59 @@ async function syncPendingRequests() {
         // Manter no banco de dados para tentar novamente mais tarde
       }
     }
-
+    
     // Notificar o cliente de que a sincronização terminou
     notifyClients({ type: 'sync-completed' });
-
+    
   } catch (error) {
     console.error('Erro durante sincronização:', error);
     // Notificar o cliente do erro
     notifyClients({ type: 'sync-error', error: error.message });
-  } finally {
-    // Limpar o timeout independentemente do resultado
-    clearTimeout(timeoutId);
   }
 }
 
 // Abrir a conexão com o IndexedDB
 async function openDatabase() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('EuroDentOfflineDB', 10);
-
+    const request = indexedDB.open('EuroDentOfflineDB', 1);
+    
     request.onerror = (event) => {
-      console.error('Erro ao abrir banco:', event.target.error);
-      reject(new Error('Falha ao abrir o banco de dados: ' + event.target.error));
+      reject('Falha ao abrir o banco de dados');
     };
-
-    request.onblocked = (event) => {
-      console.warn('Banco bloqueado, fechando conexões antigas...');
-      // Tentar fechar outras conexões
-      db?.close();
-    };
-
+    
     request.onsuccess = (event) => {
       const db = event.target.result;
-
+      
       // Definir funções auxiliares para trabalhar com o banco de dados
       db.getAll = (storeName) => {
         return new Promise((resolve, reject) => {
           const transaction = db.transaction(storeName, 'readonly');
           const store = transaction.objectStore(storeName);
           const request = store.getAll();
-
+          
           request.onsuccess = () => resolve(request.result);
           request.onerror = () => reject(request.error);
         });
       };
-
+      
       db.delete = (storeName, key) => {
         return new Promise((resolve, reject) => {
           const transaction = db.transaction(storeName, 'readwrite');
           const store = transaction.objectStore(storeName);
           const request = store.delete(key);
-
+          
           request.onsuccess = () => resolve();
           request.onerror = () => reject(request.error);
         });
       };
-
+      
       resolve(db);
     };
-
+    
     // Esta função é chamada se o banco não existir ou for atualizado de versão
     request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      console.log('Service Worker: Criando/atualizando estruturas do banco offline');
-      
-      // Criar object store se não existir
-      if (!db.objectStoreNames.contains('pendingRequests')) {
-        db.createObjectStore('pendingRequests', { keyPath: 'id' });
-      }
+      // Isso não deve acontecer no service worker, já que o banco é inicializado pelo aplicativo
+      console.warn('Atualização do banco de dados acontecendo no service worker - isso não deveria ocorrer');
     };
   });
 }

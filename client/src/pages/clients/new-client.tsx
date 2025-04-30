@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import useOfflineSubmit from "@/hooks/use-offline-submit";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { 
@@ -44,7 +43,6 @@ export default function NewClient() {
   const queryClient = useQueryClient();
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const { isSubmitting, startSubmitting, resetSubmitting } = useOfflineSubmit();
   
   // Form definition
   const form = useForm<FormData>({
@@ -167,31 +165,6 @@ export default function NewClient() {
     );
   };
   
-  // Ouvir eventos de conclusão de salvamento offline
-  useEffect(() => {
-    const handleOfflineSaveCompleted = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.tableName === 'clients') {
-        console.log('Cliente salvo offline com sucesso:', customEvent.detail);
-        resetSubmitting();
-        toast({
-          title: "Cliente cadastrado offline",
-          description: "O cliente foi salvo localmente e será sincronizado quando houver conexão",
-        });
-        // Redirecionar para a lista de clientes após um pequeno atraso
-        setTimeout(() => {
-          setLocation('/clients');
-        }, 500);
-      }
-    };
-    
-    window.addEventListener('offline-save-completed', handleOfflineSaveCompleted);
-    
-    return () => {
-      window.removeEventListener('offline-save-completed', handleOfflineSaveCompleted);
-    };
-  }, [toast, setLocation, resetSubmitting]);
-
   const onSubmit = (data: FormData) => {
     // Limpar dados vazios para evitar problemas com MySQL
     const cleanData = Object.entries(data).reduce((acc, [key, value]) => {
@@ -206,9 +179,6 @@ export default function NewClient() {
       form.setError('name', { message: 'O nome é obrigatório' });
       return;
     }
-    
-    // Iniciar estado de submissão (complementa o isPending da mutação)
-    startSubmitting();
     
     console.log("Enviando dados limpos:", cleanData);
     createClientMutation.mutate(cleanData as FormData);
@@ -335,9 +305,9 @@ export default function NewClient() {
             <Button 
               type="submit" 
               className="flex-1"
-              disabled={createClientMutation.isPending || isSubmitting}
+              disabled={createClientMutation.isPending}
             >
-              {createClientMutation.isPending || isSubmitting ? "Salvando..." : "Cadastrar Cliente"}
+              {createClientMutation.isPending ? "Salvando..." : "Cadastrar Cliente"}
             </Button>
           </div>
         </form>

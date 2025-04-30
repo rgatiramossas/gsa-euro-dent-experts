@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import useOfflineSubmit from "@/hooks/use-offline-submit";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { 
@@ -40,7 +39,6 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isSubmitting, startSubmitting, resetSubmitting } = useOfflineSubmit();
   
   // Get client details
   const { data: client, isLoading: isLoadingClient } = useQuery<Client>({
@@ -60,31 +58,6 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
     },
   });
   
-  // Ouvir eventos de conclusão de salvamento offline
-  useEffect(() => {
-    const handleOfflineSaveCompleted = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.tableName === 'vehicles') {
-        console.log('Veículo salvo offline com sucesso:', customEvent.detail);
-        resetSubmitting();
-        toast({
-          title: "Veículo cadastrado offline",
-          description: "O veículo foi salvo localmente e será sincronizado quando houver conexão",
-        });
-        // Redirecionar para a lista de clientes após um pequeno atraso
-        setTimeout(() => {
-          setLocation('/clients');
-        }, 500);
-      }
-    };
-    
-    window.addEventListener('offline-save-completed', handleOfflineSaveCompleted);
-    
-    return () => {
-      window.removeEventListener('offline-save-completed', handleOfflineSaveCompleted);
-    };
-  }, [toast, setLocation, resetSubmitting]);
-
   // Create vehicle mutation
   const createVehicleMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -109,8 +82,6 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
   });
   
   const onSubmit = (data: FormData) => {
-    // Iniciar estado de submissão
-    startSubmitting();
     createVehicleMutation.mutate(data);
   };
   
@@ -246,9 +217,9 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
             <Button 
               type="submit" 
               className="flex-1"
-              disabled={createVehicleMutation.isPending || isSubmitting}
+              disabled={createVehicleMutation.isPending}
             >
-              {createVehicleMutation.isPending || isSubmitting ? "Salvando..." : "Cadastrar Veículo"}
+              {createVehicleMutation.isPending ? "Salvando..." : "Cadastrar Veículo"}
             </Button>
           </div>
         </form>

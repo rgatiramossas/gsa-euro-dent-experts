@@ -1,7 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
-import { WebSocket } from "ws";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import session from "express-session";
@@ -13,7 +12,6 @@ import { fileURLToPath } from "url";
 // MySQL connection (que será obtida mais tarde)
 let pool: any;
 import { desc } from "drizzle-orm";
-import { setupWebSocketServer, sendGlobalNotification } from "./websocket-utils";
 import { 
   insertUserSchema, 
   insertClientSchema, 
@@ -104,12 +102,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       cookie: { secure: process.env.NODE_ENV === "production" },
     })
   );
-  
-  // Criar servidor HTTP
-  const httpServer = createServer(app);
-  
-  // Configurar WebSocket Server com a nova utilidade
-  const { wss, broadcastMessage } = setupWebSocketServer(httpServer);
   // A configuração de servir arquivos estáticos de uploads foi movida para index.ts
 
   // Auth middleware
@@ -710,23 +702,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Filtrar associações válidas
         const validAssignments = clientAssignments.filter(a => a !== null);
         console.log(`${validAssignments.length} clientes associados ao gestor ${user.id}`);
-      }
-      
-      // Enviar notificação de novo usuário criado
-      try {
-        const adminUser = await storage.getUser(Number(req.session.userId));
-        
-        // Enviar notificação global via WebSocket
-        sendGlobalNotification(
-          'Novo usuário criado',
-          `O usuário ${user.name} (${user.role}) foi adicionado por ${adminUser?.name || 'administrador'}.`,
-          'success'
-        );
-        
-        console.log(`Notificação enviada: Novo usuário ${user.id} (${user.role}) criado`);
-      } catch (notificationError) {
-        console.error("Erro ao enviar notificação WebSocket:", notificationError);
-        // Não interromper o fluxo principal
       }
       
       res.status(201).json({
@@ -1449,25 +1424,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Em uma implementação real, você implementaria um método de exclusão no storage
       // Por enquanto, vamos simular a exclusão usando o updateService com um status "deleted"
       const updatedService = await storage.updateService(id, { status: "deleted" });
-      
-      // Enviar notificação via WebSocket que o serviço foi excluído
-      try {
-        const user = await storage.getUser(Number(req.session.userId));
-        const client = await storage.getClient(service.client_id);
-        
-        // Utilizar função de notificação global
-        sendGlobalNotification(
-          `Serviço excluído`,
-          `O serviço ${service.service_number || '#' + service.id} para o cliente ${client?.name || 'desconhecido'} foi excluído por ${user?.name || 'um usuário'}.`,
-          'warning'
-        );
-        
-        console.log(`Notificação enviada: Serviço ${service.id} excluído por ${user?.name || 'usuário'}`);
-      } catch (notificationError) {
-        console.error("Erro ao enviar notificação WebSocket:", notificationError);
-        // Não interromper o fluxo principal se falhar a notificação
-      }
-      
       res.status(200).json({ message: "Service deleted successfully" });
     } catch (error) {
       console.error("Error deleting service:", error);
@@ -2517,7 +2473,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Aqui não precisamos criar um novo servidor HTTP pois já criamos antes
-  // Apenas retornamos o servidor HTTP que já foi configurado com WebSockets
+  const httpServer = createServer(app);
   return httpServer;
 }

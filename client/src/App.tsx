@@ -5,7 +5,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { WebSocketProvider } from "@/components/ui/websocket-provider";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -26,7 +25,6 @@ import { SplashScreen } from "@/components/ui/splash-screen";
 import ServicesList from "@/pages/services/index";
 import ServiceDetails from "@/pages/services/service-details";
 import NewService from "@/pages/services/new-service";
-import WebSocketTestPage from "@/pages/websocket-test";
 
 // Import client related pages
 import ClientsList from "@/pages/clients/index";
@@ -328,15 +326,6 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      {/* Página de teste WebSocket */}
-      <Route path="/websocket-test">
-        <RequireAuth>
-          <MainLayout>
-            <WebSocketTestPage />
-          </MainLayout>
-        </RequireAuth>
-      </Route>
-      
       {/* Redirect root to dashboard */}
       <Route path="/">
         <RequireAuth>
@@ -377,17 +366,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WebSocketProvider>
-          <TooltipProvider>
-            <Toaster />
-            
-            {/* Tela de splash */}
-            {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
-            
-            {/* Rotas da aplicação */}
-            <AppRoutes />
-          </TooltipProvider>
-        </WebSocketProvider>
+        <TooltipProvider>
+          <Toaster />
+          
+          {/* Tela de splash */}
+          {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+          
+          {/* Rotas da aplicação */}
+          <AppRoutes />
+        </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import useOfflineSubmit from "@/hooks/use-offline-submit";
 import { 
   Form,
   FormControl,
@@ -91,7 +90,6 @@ export default function NewService() {
   const { user } = useAuth();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [photos, setPhotos] = useState<FileList | null>(null);
-  const { isSubmitting, startSubmitting, resetSubmitting } = useOfflineSubmit();
   
   // Queries
   const { data: clients } = useQuery<Client[]>({
@@ -191,31 +189,6 @@ export default function NewService() {
     }
   }, [user, technicians, form]);
   
-  // Ouvir eventos de conclusão de salvamento offline
-  useEffect(() => {
-    const handleOfflineSaveCompleted = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.tableName === 'services') {
-        console.log('Serviço salvo offline com sucesso:', customEvent.detail);
-        resetSubmitting();
-        toast({
-          title: "Serviço cadastrado offline",
-          description: "O serviço foi salvo localmente e será sincronizado quando houver conexão",
-        });
-        // Redirecionar para a lista de serviços após um pequeno atraso
-        setTimeout(() => {
-          setLocation('/services');
-        }, 500);
-      }
-    };
-    
-    window.addEventListener('offline-save-completed', handleOfflineSaveCompleted);
-    
-    return () => {
-      window.removeEventListener('offline-save-completed', handleOfflineSaveCompleted);
-    };
-  }, [toast, setLocation, resetSubmitting]);
-  
   // Create service mutation
   const createServiceMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -309,55 +282,32 @@ export default function NewService() {
           try {
             const serviceId = createdService.id;
             
-            // Verificação adicional - verificar se as fotos são válidas
-            let validPhotos = false;
+            // Criar FormData para upload das fotos
+            const formData = new FormData();
+            
+            // Foto sem classificação específica
+            formData.append('photo_type', 'service');
+            
+            // Adicionar cada foto ao FormData
             for (let i = 0; i < photos.length; i++) {
-              if (photos[i] instanceof File && photos[i].size > 0) {
-                validPhotos = true;
-                break;
-              }
+              formData.append('photos', photos[i]);
             }
             
-            // Apenas fazer upload se houver fotos válidas
-            if (validPhotos) {
-              // Criar FormData para upload das fotos
-              const formData = new FormData();
-              
-              // Foto sem classificação específica
-              formData.append('photo_type', 'service');
-              
-              // Adicionar cada foto ao FormData
-              let photoCount = 0;
-              for (let i = 0; i < photos.length; i++) {
-                if (photos[i] instanceof File && photos[i].size > 0) {
-                  formData.append('photos', photos[i]);
-                  photoCount++;
-                }
-              }
-              
-              // Só fazer o upload se realmente tiver fotos para enviar
-              if (photoCount > 0) {
-                console.log(`Enviando ${photoCount} fotos válidas para o serviço:`, serviceId);
-                
-                // Upload de fotos - apenas quando online
-                const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
-                  method: 'POST',
-                  body: formData,
-                  credentials: 'include',
-                });
-                
-                if (!uploadRes.ok) {
-                  console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
-                  console.warn("Prosseguindo apesar do erro no upload de fotos");
-                } else {
-                  const uploadData = await uploadRes.json();
-                  console.log("Resposta do upload:", uploadData);
-                }
-              } else {
-                console.log("Nenhuma foto válida para enviar após filtragem");
-              }
+            console.log("Enviando fotos para o serviço:", serviceId);
+            
+            // Upload de fotos - apenas quando online
+            const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
+              method: 'POST',
+              body: formData,
+              credentials: 'include',
+            });
+            
+            if (!uploadRes.ok) {
+              console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
+              console.warn("Prosseguindo apesar do erro no upload de fotos");
             } else {
-              console.log("Nenhuma foto válida encontrada no selecionador de fotos");
+              const uploadData = await uploadRes.json();
+              console.log("Resposta do upload:", uploadData);
             }
           } catch (photoError) {
             console.error("Erro ao processar fotos:", photoError);
@@ -429,9 +379,6 @@ export default function NewService() {
       serviceType: serviceTypes?.find(t => t.id === data.service_type_id)?.name,
     });
     
-    // Iniciar estado de submissão (complementa o isPending da mutação)
-    startSubmitting();
-    
     createServiceMutation.mutate(data);
   };
   
@@ -455,39 +402,7 @@ export default function NewService() {
       />
       
       <Form {...form}>
-        <form 
-          onSubmit={(e) => {
-            e.preventDefault();
-            
-            // SOLUÇÃO EXTREMA: Forçar redirecionamento após um tempo fixo
-            if (!checkNetworkStatus()) {
-              console.log("[Form] Modo offline detectado, configurando timer para redirecionamento forçado");
-              
-              // Timer de emergência para garantir que o usuário não fique preso
-              setTimeout(() => {
-                console.log("[Form] TIMER DE EMERGÊNCIA - Redirecionamento forçado");
-                
-                try {
-                  const buttons = document.querySelectorAll('button');
-                  buttons.forEach(button => {
-                    if (button.textContent?.includes('Salvando')) {
-                      button.textContent = 'Criar Serviço';
-                      button.disabled = false;
-                    }
-                  });
-                } catch (err) {
-                  console.error("[Form] Erro ao resetar botões:", err);
-                }
-                
-                // Redirecionamento forçado
-                window.location.href = '/services';
-              }, 2500);
-            }
-            
-            // Chamar o submit normal
-            form.handleSubmit(onSubmit)(e);
-          }} 
-          className="space-y-6 mt-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
           {/* Client and Vehicle Information */}
           <Card>
             <CardHeader className="pb-3">
@@ -877,20 +792,9 @@ export default function NewService() {
             <Button 
               type="submit" 
               className="flex-1"
-              disabled={createServiceMutation.isPending || isSubmitting}
-              onClick={() => {
-                if (!checkNetworkStatus()) {
-                  // Em modo offline, configurar um timer para forçar o reset do botão e redirecionar
-                  setTimeout(() => {
-                    console.log("[SaveButton] Forçando reset do botão e redirecionamento em new-service");
-                    // Usar form.reset() em vez de setIsSubmitting que não existe neste componente
-                    form.reset();
-                    window.location.href = '/services';
-                  }, 3000);
-                }
-              }}
+              disabled={createServiceMutation.isPending}
             >
-              {createServiceMutation.isPending || isSubmitting ? "Salvando..." : "Salvar Serviço"}
+              {createServiceMutation.isPending ? "Salvando..." : "Salvar Serviço"}
             </Button>
           </div>
         </form>
