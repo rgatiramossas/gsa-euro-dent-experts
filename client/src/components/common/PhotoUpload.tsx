@@ -26,7 +26,7 @@ export function PhotoUpload({
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const { t } = useTranslation();
-  
+
   // Converter string de preview para array se necessário
   useEffect(() => {
     if (preview) {
@@ -36,7 +36,7 @@ export function PhotoUpload({
           URL.revokeObjectURL(url);
         }
       });
-      
+
       // Se o preview for uma string separada por vírgulas, dividi-la
       const urls = preview.includes(',') ? preview.split(',') : [preview];
       setPreviewUrls(urls);
@@ -44,7 +44,7 @@ export function PhotoUpload({
       setPreviewUrls([]);
     }
   }, [preview]);
-  
+
   // Limpar URLs de pré-visualização quando o componente for desmontado
   useEffect(() => {
     return () => {
@@ -55,42 +55,42 @@ export function PhotoUpload({
       });
     };
   }, [previewUrls]);
-  
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
     } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   };
-  
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFiles(e.dataTransfer.files);
     }
   };
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    
+
     if (e.target.files && e.target.files.length > 0) {
       handleFiles(e.target.files);
     }
   };
-  
+
   const handleFiles = (files: FileList) => {
     try {
       // Validar os arquivos selecionados
       const validFiles: File[] = [];
       const invalidFiles: string[] = [];
-      
+
       // Verificar se os arquivos são de tipos válidos (imagens)
       Array.from(files).forEach(file => {
         if (file.type.startsWith('image/')) {
@@ -104,7 +104,7 @@ export function PhotoUpload({
           invalidFiles.push(`${file.name} (tipo inválido: ${file.type || 'desconhecido'})`);
         }
       });
-      
+
       // Alertar sobre arquivos inválidos, se houver
       if (invalidFiles.length > 0) {
         toast({
@@ -112,16 +112,16 @@ export function PhotoUpload({
           description: `${t("photos.errors.invalidFilesList", "Arquivos inválidos")}: ${invalidFiles.join(', ')}. ${t("photos.errors.onlyImagesAllowed", "Apenas imagens até 5MB são permitidas")}.`,
           variant: "destructive",
         });
-        
+
         // Se não tiver nenhum arquivo válido, saia da função
         if (validFiles.length === 0) return;
       }
-      
+
       // Se o componente já tem arquivos selecionados, verificamos a soma total
       const existingCount = selectedFiles ? selectedFiles.length : 0;
       const newCount = validFiles.length;
       const totalCount = existingCount + newCount;
-      
+
       // Verificar se o número total de arquivos excede o limite
       if (multiple && totalCount > maxFiles) {
         toast({
@@ -134,10 +134,10 @@ export function PhotoUpload({
         });
         return;
       }
-      
+
       // Criar um novo DataTransfer para combinar os arquivos
       const dataTransfer = new DataTransfer();
-      
+
       // Se estivermos combinando arquivos existentes com novos arquivos
       if (selectedFiles && existingCount > 0) {
         // Adicionar arquivos existentes
@@ -145,27 +145,27 @@ export function PhotoUpload({
           dataTransfer.items.add(file);
         });
       }
-      
+
       // Adicionar novos arquivos válidos
       validFiles.forEach(file => {
         dataTransfer.items.add(file);
       });
-      
+
       // Gerar o novo FileList combinado
       const combinedFiles = dataTransfer.files;
       setSelectedFiles(combinedFiles);
       onChange(combinedFiles);
-      
+
       // Limpar previews antigos
       previewUrls.forEach(url => {
         if (url.startsWith('blob:')) {
           URL.revokeObjectURL(url);
         }
       });
-      
+
       // Criar URLs de preview para cada arquivo
       const newPreviewUrls: string[] = [];
-      
+
       if (multiple) {
         // Gerar previews para todos os arquivos no caso de múltiplos arquivos
         for (let i = 0; i < combinedFiles.length; i++) {
@@ -175,9 +175,9 @@ export function PhotoUpload({
         // Apenas um preview para um único arquivo
         newPreviewUrls.push(URL.createObjectURL(combinedFiles[0]));
       }
-      
+
       setPreviewUrls(newPreviewUrls);
-      
+
       console.log(`${validFiles.length} arquivos válidos processados`);
     } catch (error) {
       console.error("Erro ao processar arquivos:", error);
@@ -188,7 +188,7 @@ export function PhotoUpload({
       });
     }
   };
-  
+
   return (
     <div className={className}>
       <div

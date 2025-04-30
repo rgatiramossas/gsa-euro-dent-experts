@@ -408,3 +408,25 @@
     }
   }
 }
+{
+  "photos": {
+    "filesReceived": "Dateien empfangen",
+    "uploadError": "Upload-Fehler",
+    "uploadSuccess": "Upload erfolgreich",
+    "processing": "Bilder werden verarbeitet...",
+    "dragDrop": "Bilder hierher ziehen",
+    "orClick": "oder klicken zum Auswählen"
+  },
+  "dashboard": {
+    "technicianPerformance": "Techniker-Leistung",
+    "completedServices": "Abgeschlossene Dienste",
+    "averageRating": "Durchschnittliche Bewertung",
+    "revenueGenerated": "Generierter Umsatz"
+  },
+  "pdf": {
+    "generate": "PDF generieren",
+    "downloading": "Wird heruntergeladen...",
+    "preview": "Vorschau",
+    "documentTitle": "Servicebericht"
+  }
+}

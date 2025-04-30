@@ -37,7 +37,7 @@ export function TechnicianPerformance({ technicians, isLoading = false }: Techni
       </Card>
     );
   }
-  
+
   return (
     <Card>
       <CardHeader className="pb-2 flex items-center justify-between">

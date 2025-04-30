@@ -430,3 +430,25 @@
     }
   }
 }
+{
+  "photos": {
+    "filesReceived": "Archivos recibidos",
+    "uploadError": "Error al subir",
+    "uploadSuccess": "Carga realizada con éxito",
+    "processing": "Procesando imágenes...",
+    "dragDrop": "Arrastra y suelta imágenes aquí",
+    "orClick": "o haz clic para seleccionar"
+  },
+  "dashboard": {
+    "technicianPerformance": "Rendimiento de los Técnicos",
+    "completedServices": "Servicios Completados",
+    "averageRating": "Calificación Promedio",
+    "revenueGenerated": "Ingresos Generados"
+  },
+  "pdf": {
+    "generate": "Generar PDF",
+    "downloading": "Descargando...",
+    "preview": "Vista previa",
+    "documentTitle": "Informe de Servicio"
+  }
+}
