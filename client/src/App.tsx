@@ -19,6 +19,7 @@ import { RequireTechnician } from "@/components/auth/RequireTechnician";
 import { RequireManager } from "@/components/auth/RequireManager";
 // PWA Componentes
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
+import { SplashScreen } from "@/components/ui/splash-screen";
 
 // Import service related pages
 import ServicesList from "@/pages/services/index";
@@ -341,11 +342,37 @@ function AppRoutes() {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+  
+  // Verificar se é a primeira inicialização do aplicativo nesta sessão
+  useEffect(() => {
+    // Usar localStorage para rastrear se já mostramos a splash na mesma sessão
+    const hasShownSplash = sessionStorage.getItem('hasShownSplash');
+    
+    if (hasShownSplash) {
+      // Se já mostrou a splash nesta sessão, não mostrar novamente
+      setShowSplash(false);
+    } else {
+      // Se for a primeira vez nesta sessão, marcar como mostrado
+      sessionStorage.setItem('hasShownSplash', 'true');
+    }
+  }, []);
+  
+  // Função para desativar a tela de splash
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+  };
+  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
+          
+          {/* Tela de splash */}
+          {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+          
+          {/* Rotas da aplicação */}
           <AppRoutes />
         </TooltipProvider>
       </AuthProvider>
