@@ -26,6 +26,7 @@ import { SplashScreen } from "@/components/ui/splash-screen";
 import ServicesList from "@/pages/services/index";
 import ServiceDetails from "@/pages/services/service-details";
 import NewService from "@/pages/services/new-service";
+import WebSocketTestPage from "@/pages/websocket-test";
 
 // Import client related pages
 import ClientsList from "@/pages/clients/index";
@@ -323,6 +324,15 @@ function AppRoutes() {
         <RequireAuth>
           <MainLayout>
             <Configuracoes />
+          </MainLayout>
+        </RequireAuth>
+      </Route>
+      
+      {/* Página de teste WebSocket */}
+      <Route path="/websocket-test">
+        <RequireAuth>
+          <MainLayout>
+            <WebSocketTestPage />
           </MainLayout>
         </RequireAuth>
       </Route>

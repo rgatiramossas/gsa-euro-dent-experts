@@ -96,7 +96,7 @@ export default function WebSocketTester() {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Teste de WebSocket</h3>
         <Badge 
-          variant={connected ? "success" : "destructive"} 
+          variant={connected ? "default" : "destructive"} 
           className={connected ? "bg-green-500" : "bg-red-500"}
         >
           {connected ? 'Conectado' : 'Desconectado'}
