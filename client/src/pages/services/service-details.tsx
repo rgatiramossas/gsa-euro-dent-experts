@@ -343,6 +343,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     if (!newStatus) return;
     
     // Iniciar estado de submissão offline
+    console.log("[handleStatusUpdate] Iniciando submissão do status");
     startStatusSubmitting();
     
     const data: { status: ServiceStatus; notes?: string } = {
@@ -351,6 +352,29 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     
     if (statusNotes.trim()) {
       data.notes = statusNotes.trim();
+    }
+    
+    // Verificar status da rede para logging
+    const isOnline = checkNetworkStatus();
+    console.log("[handleStatusUpdate] Estado da rede:", isOnline ? "Online" : "Offline");
+    
+    // Em caso offline, adicionar um timer de segurança extra para garantir que o estado seja resetado
+    if (!isOnline) {
+      console.log("[handleStatusUpdate] Modo offline detectado, configurando timer de segurança adicional");
+      setTimeout(() => {
+        console.log("[handleStatusUpdate] Timer de segurança acionado");
+        resetStatusSubmitting();
+        
+        // Se o diálogo ainda estiver aberto, fechá-lo
+        if (showStatusDialog) {
+          console.log("[handleStatusUpdate] Fechando diálogo de status");
+          setShowStatusDialog(false);
+          toast({
+            title: "Operação offline",
+            description: "O status foi salvo localmente e será sincronizado quando houver conexão",
+          });
+        }
+      }, 3000); // Timer menor que o do hook (3s vs 5s)
     }
     
     updateStatusMutation.mutate(data);
@@ -399,14 +423,15 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   // Função para salvar as alterações
   const handleSaveChanges = () => {
     editForm.handleSubmit((data) => {
-      console.log("Dados do formulário:", data);
+      console.log("[handleSaveChanges] Dados do formulário:", data);
       
       // Iniciar estado de submissão offline
+      console.log("[handleSaveChanges] Iniciando submissão do serviço");
       startServiceSubmitting();
       
       // Verificar se o serviço existe
       if (!service) {
-        console.error("Serviço não encontrado");
+        console.error("[handleSaveChanges] Serviço não encontrado");
         toast({
           title: "Erro",
           description: "Serviço não encontrado",
@@ -414,6 +439,29 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
         });
         resetServiceSubmitting(); // Resetar estado de submissão em caso de erro
         return;
+      }
+      
+      // Verificar status da rede para logging
+      const isOnline = checkNetworkStatus();
+      console.log("[handleSaveChanges] Estado da rede:", isOnline ? "Online" : "Offline");
+      
+      // Em caso offline, adicionar um timer de segurança extra para garantir que o estado seja resetado
+      if (!isOnline) {
+        console.log("[handleSaveChanges] Modo offline detectado, configurando timer de segurança adicional");
+        setTimeout(() => {
+          console.log("[handleSaveChanges] Timer de segurança acionado");
+          resetServiceSubmitting();
+          
+          // Se ainda estiver editando, sair do modo de edição
+          if (isEditing) {
+            console.log("[handleSaveChanges] Saindo do modo de edição");
+            setIsEditing(false);
+            toast({
+              title: "Operação offline",
+              description: "As alterações foram salvas localmente e serão sincronizadas quando houver conexão",
+            });
+          }
+        }, 3000); // Timer menor que o do hook (3s vs 5s)
       }
       
       // Sempre usaremos FormData para simplificar e unificar o processo
@@ -1138,7 +1186,30 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         <AlertDialogAction 
                           onClick={() => {
                             // Iniciar estado de submissão offline para exclusão
+                            console.log("[handleDelete] Iniciando submissão de exclusão");
                             startDeleteSubmitting();
+                            
+                            // Verificar status da rede para logging
+                            const isOnline = checkNetworkStatus();
+                            console.log("[handleDelete] Estado da rede:", isOnline ? "Online" : "Offline");
+                            
+                            // Em caso offline, adicionar um timer de segurança extra
+                            if (!isOnline) {
+                              console.log("[handleDelete] Modo offline detectado, configurando timer de segurança adicional");
+                              setTimeout(() => {
+                                console.log("[handleDelete] Timer de segurança acionado");
+                                resetDeleteSubmitting();
+                                
+                                // Fechar diálogo e redirecionar
+                                toast({
+                                  title: "Operação offline",
+                                  description: "O serviço foi marcado para exclusão e será sincronizado quando houver conexão",
+                                });
+                                
+                                setLocation('/services');
+                              }, 3000);
+                            }
+                            
                             deleteServiceMutation.mutate();
                           }}
                           disabled={deleteServiceMutation.isPending || isDeleteSubmitting}
