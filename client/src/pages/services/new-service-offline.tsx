@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/common/PageHeader";
+import { useQueryClient } from "@tanstack/react-query";
 import offlineDb from "@/lib/offlineDb";
 
 // Componente de formulário simplificado para criação offline
 export function NewServiceOffline() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
+  const submissionInProgress = useRef(false);
+  
   const [formData, setFormData] = useState({
     cliente: "",
     veiculo: "",
@@ -25,21 +29,26 @@ export function NewServiceOffline() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Usamos useCallback para evitar múltiplas instâncias da função em re-renders
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Verifica se o formulário já está sendo processado
-    if (isSaving) {
+    // Verificação dupla para evitar submissões múltiplas
+    if (isSaving || submissionInProgress.current) {
       console.log("Evitando submissão dupla do formulário");
       return;
     }
     
+    // Marcar como em progresso imediatamente com uma ref (não causa re-render)
+    submissionInProgress.current = true;
+    // Atualizar o state visual (causa re-render)
     setIsSaving(true);
+    
     console.log("Iniciando salvamento offline...");
 
     try {
-      // Obter um ID temporário negativo único
-      const tempId = -(Date.now());
+      // Criar ID temporário baseado em timestamp para ser único
+      const tempId = -(Date.now() + Math.floor(Math.random() * 1000));
       console.log("ID temporário gerado:", tempId);
       
       // Criar um objeto de serviço com dados mínimos
@@ -61,23 +70,27 @@ export function NewServiceOffline() {
         total: parseFloat(formData.valor) || 0,
         notes: `Criado no modo offline - Cliente: ${formData.cliente}, Veículo: ${formData.veiculo}`,
         _isOffline: true,
+        _pendingSave: true,
         created_at: new Date().toISOString()
       };
 
       console.log("Objeto de serviço preparado:", JSON.stringify(serviceData));
 
       // Salvar no banco de dados offline diretamente
-      await offlineDb.getTableByName("services").add(serviceData);
-      console.log("Serviço salvo no IndexedDB com sucesso");
+      const savedId = await offlineDb.getTableByName("services").add(serviceData);
+      console.log("Serviço salvo no IndexedDB com ID:", savedId);
 
       // Adicionar à fila de sincronização
+      const pendingRequestId = `sync-${Date.now()}`;
       await offlineDb.getTableByName("pendingRequests").add({
-        id: `sync-${Date.now()}`,
+        id: pendingRequestId,
         url: "/api/services",
         method: "POST",
         body: {
           ...serviceData,
-          id: undefined // Remover o ID temporário na hora de enviar ao servidor
+          id: undefined, // Remover o ID temporário para o servidor gerar um novo
+          _isOffline: undefined,
+          _pendingSave: undefined
         },
         timestamp: Date.now(),
         operationType: "create",
@@ -86,19 +99,35 @@ export function NewServiceOffline() {
         headers: { 'Content-Type': 'application/json' }
       });
       
-      console.log("Requisição pendente adicionada com sucesso");
+      console.log("Requisição pendente adicionada com ID:", pendingRequestId);
 
+      // Atualizar o cache de serviços para incluir o novo serviço
+      queryClient.setQueryData(['/api/services'], (oldData: any[] = []) => {
+        return [...oldData, serviceData];
+      });
+      
+      // Notificar o usuário
       toast({
         title: "Serviço salvo offline",
         description: "O serviço foi salvo localmente e será sincronizado quando houver conexão."
       });
       
-      // Aguardar um momento para garantir que o toast seja exibido
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Limpar formulário e estado
+      setFormData({
+        cliente: "",
+        veiculo: "",
+        tipo_servico: "Granizo",
+        descricao: "",
+        endereco: "",
+        data: new Date().toISOString().split('T')[0],
+        valor: "0"
+      });
       
-      // Navegar para a lista de serviços
-      console.log("Navegando para a lista de serviços...");
-      setLocation("/services");
+      // Depois de todas as operações bem-sucedidas, navegamos para a lista
+      console.log("Salvamento concluído, navegando para a lista de serviços...");
+      setTimeout(() => {
+        setLocation("/services");
+      }, 800); // Pequeno delay para garantir que o toast seja visto
     } catch (error) {
       console.error("Erro ao salvar serviço offline:", error);
       toast({
@@ -107,9 +136,11 @@ export function NewServiceOffline() {
         variant: "destructive"
       });
     } finally {
+      // Limpar flags de estado
       setIsSaving(false);
+      submissionInProgress.current = false;
     }
-  };
+  }, [formData, queryClient, setLocation, setIsSaving, toast]);
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
