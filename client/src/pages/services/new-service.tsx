@@ -259,22 +259,26 @@ export default function NewService() {
       // Log de depuração
       console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
       
+      // Verificar status da rede antes de iniciar
+      const isOnline = checkNetworkStatus();
+      console.log("Status da rede:", isOnline ? "Online" : "Offline");
+      
       try {
         // 1. Criar serviço usando o apiWrapper para suporte offline
         const createdService = await postApi<any>('/api/services', serviceData, {
           enableOffline: true,
           offlineTableName: 'services'
         });
-        console.log("Resposta do servidor:", createdService);
+        console.log("Resposta do servidor ou cache local:", createdService);
         
         // Se estiver no modo offline, retornar imediatamente para evitar o loop
-        if (!checkNetworkStatus()) {
+        if (!isOnline) {
           console.log("Modo offline: serviço criado localmente, saltando o upload de fotos");
-          return createdService;
+          return { ...createdService, _offline: true };
         }
         
-        // Processar upload de fotos se houver fotos
-        if (photos && photos.length > 0) {
+        // Processar upload de fotos se houver fotos e APENAS se estivermos online
+        if (isOnline && photos && photos.length > 0) {
           try {
             const serviceId = createdService.id;
             
@@ -310,7 +314,7 @@ export default function NewService() {
             // Não lança erro para não impedir a criação do serviço
           }
         } else {
-          console.log("Nenhuma foto selecionada para upload");
+          console.log("Nenhuma foto selecionada para upload ou modo offline");
         }
         
         return createdService;
@@ -328,13 +332,21 @@ export default function NewService() {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Verificar se estamos offline e o serviço foi salvo localmente
+      const isOfflineData = data && data._offline === true;
+      
       queryClient.invalidateQueries({ queryKey: ['/api/services'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      
       toast({
         title: "Serviço criado",
-        description: "O serviço foi criado com sucesso",
+        description: isOfflineData 
+          ? "O serviço foi salvo localmente e será sincronizado quando houver conexão" 
+          : "O serviço foi criado com sucesso",
       });
+      
+      // Redirecionar para a lista de serviços
       setLocation('/services');
     },
     onError: (error) => {

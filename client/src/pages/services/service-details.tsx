@@ -204,36 +204,74 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const updateServiceMutation = useMutation({
     mutationFn: async (formData: FormData | Record<string, any>) => {
-      // Se for um objeto comum, usamos o apiRequest normalmente
-      if (!(formData instanceof FormData)) {
-        return await apiRequest(`/api/services/${id}`, 'PATCH', formData);
+      // Verificar status da rede
+      const isOnline = checkNetworkStatus();
+      console.log("Status da rede:", isOnline ? "Online" : "Offline");
+      
+      try {
+        // Se for um objeto comum, usamos o apiRequest com suporte offline
+        if (!(formData instanceof FormData)) {
+          return await putApi(`/api/services/${id}`, formData, {
+            enableOffline: true,
+            offlineTableName: 'services'
+          });
+        }
+        
+        // Para FormData em modo offline, precisamos converter para JSON
+        if (!isOnline) {
+          console.log("Modo offline: convertendo FormData para JSON");
+          const jsonData: Record<string, any> = {};
+          
+          for (const [key, value] of formData.entries()) {
+            if (key === 'photos_to_remove') {
+              jsonData[key] = JSON.parse(value as string);
+            } else if (!key.startsWith('photos_')) { // Ignorar campos de foto em modo offline
+              jsonData[key] = value;
+            }
+          }
+          
+          // Usar putApi com suporte offline
+          const result = await putApi(`/api/services/${id}`, jsonData, {
+            enableOffline: true,
+            offlineTableName: 'services'
+          });
+          
+          console.log("Serviço atualizado offline:", result);
+          return { ...result, _offline: true };
+        }
+        
+        // Para FormData em modo online, fazer tratamento normal
+        const res = await fetch(`/api/services/${id}`, {
+          method: 'PATCH',
+          body: formData,
+          credentials: 'include',
+        });
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Erro na resposta:", errorText);
+          throw new Error(`Erro ao atualizar serviço: ${res.status} ${res.statusText}`);
+        }
+        
+        return res.json();
+      } catch (error) {
+        console.error("Erro na atualização:", error);
+        throw error;
       }
-      
-      // Para FormData, precisamos fazer um tratamento especial:
-      // - Não podemos usar JSON.stringify
-      // - Precisamos deixar o browser definir o Content-Type
-      const res = await fetch(`/api/services/${id}`, {
-        method: 'PATCH',
-        body: formData,
-        // Incluímos o headers de credenciais para manter a sessão
-        credentials: 'include',
-      });
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("Erro na resposta:", errorText);
-        throw new Error(`Erro ao atualizar serviço: ${res.status} ${res.statusText}`);
-      }
-      
-      return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Verificar se foi atualizado offline
+      const isOfflineData = data && data._offline === true;
+      
       queryClient.invalidateQueries({queryKey: [`/api/services/${id}`]});
       queryClient.invalidateQueries({queryKey: ['/api/services']});
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
+      
       toast({
         title: "Serviço atualizado",
-        description: "As informações do serviço foram atualizadas com sucesso",
+        description: isOfflineData 
+          ? "O serviço foi salvo localmente e será sincronizado quando houver conexão" 
+          : "As informações do serviço foram atualizadas com sucesso",
       });
       
       // Resetar o estado de edição
