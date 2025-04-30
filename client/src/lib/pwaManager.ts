@@ -13,8 +13,16 @@ export const registerServiceWorker = async () => {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    const registration = await navigator.serviceWorker.register('/sw.js', { 
+      scope: '/',
+      updateViaCache: 'none'
+    });
     console.log('Service Worker registrado com sucesso');
+
+    // Ativar o worker imediatamente
+    if (registration.active) {
+      registration.active.postMessage({ type: 'INIT' });
+    }
 
     // Configurar atualização controlada quando houver nova versão
     registration.addEventListener('updatefound', () => {
