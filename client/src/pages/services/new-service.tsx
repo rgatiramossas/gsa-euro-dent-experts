@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { getApi, postApi } from "@/lib/apiWrapper";
 import { checkNetworkStatus } from "@/lib/pwaManager";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -116,6 +117,7 @@ export default function NewService() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [photos, setPhotos] = useState<FileList | null>(null);
   const [serviceSavedOffline, setServiceSavedOffline] = useState<boolean>(false);
@@ -469,11 +471,11 @@ export default function NewService() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title="Novo Serviço"
-        description="Cadastre um novo serviço de reparo sem pintura"
+        title={t("services.newService")}
+        description={t("services.newServiceDesc", "Cadastre um novo serviço de reparo sem pintura")}
         actions={
           <Button variant="outline" onClick={() => setLocation('/services')}>
-            Cancelar
+            {t("common.cancel")}
           </Button>
         }
       />
