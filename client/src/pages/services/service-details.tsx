@@ -505,10 +505,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
       
       toast({
-        title: "Serviço excluído",
+        title: t("services.serviceDeleted"),
         description: isOfflineData 
-          ? "O serviço foi marcado para exclusão e será sincronizado quando houver conexão" 
-          : "O serviço foi excluído com sucesso",
+          ? t("offline.serviceOfflineDescription") 
+          : t("services.serviceDeletedSuccess", "O serviço foi excluído com sucesso"),
       });
       
       setLocation('/services');
@@ -516,8 +516,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     onError: (error) => {
       console.error('Error deleting service:', error);
       toast({
-        title: "Erro ao excluir serviço",
-        description: "Ocorreu um erro ao excluir o serviço",
+        title: t("errors.deleteService"),
+        description: t("errors.deleteServiceDescription"),
         variant: "destructive",
       });
     }
@@ -665,8 +665,11 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       // Limitar a 4 fotos no total
       if (totalFiles > 4) {
         toast({
-          title: "Limite de fotos excedido",
-          description: `Você já tem ${currentFiles.length} foto(s) e está tentando adicionar ${newFiles.length}. O limite é de 4 fotos.`,
+          title: t("photos.limitExceeded"),
+          description: t("photos.limitExceededWithCount", "Você já tem {{current}} foto(s) e está tentando adicionar {{new}}. O limite é de 4 fotos.", {
+            current: currentFiles.length,
+            new: newFiles.length
+          }),
           variant: "destructive",
         });
         return;
@@ -691,8 +694,11 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       
       // Mostrar mensagem de sucesso
       toast({
-        title: "Fotos adicionadas",
-        description: `${newFiles.length} foto(s) adicionada(s). Total: ${combinedFiles.length}/4`,
+        title: t("photos.added", "Fotos adicionadas"),
+        description: t("photos.addedWithCount", "{{count}} foto(s) adicionada(s). Total: {{total}}/4", {
+          count: newFiles.length,
+          total: combinedFiles.length
+        }),
       });
     }
   };
