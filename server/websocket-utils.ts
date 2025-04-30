@@ -1,6 +1,7 @@
 // Utilidades para comunicação via WebSocket 
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
+import { randomUUID } from 'crypto';
 
 /**
  * Configurar servidor WebSocket com funcionalidades de broadcast
@@ -10,10 +11,20 @@ import { Server } from 'http';
 export function setupWebSocketServer(server: Server) {
   console.log('[WebSocket] Inicializando servidor WebSocket no caminho /ws');
   
-  // Configurar WebSocket Server
+  // Configurar WebSocket Server com opções mais relaxadas
   const wss = new WebSocketServer({ 
     server,
-    path: '/ws'
+    path: '/ws',
+    // A configuração abaixo permite origens cruzadas (CORS para WebSockets)
+    verifyClient: (info) => {
+      // Registrar tentativas de conexão
+      console.log(`[WebSocket] Tentativa de conexão de ${info.req.socket.remoteAddress} - Origem: ${info.origin || 'Desconhecida'}`);
+      
+      // Aceitar todas as conexões
+      return true;
+    },
+    // Aumentar os timeouts
+    clientTracking: true, // Rastrear clientes automaticamente
   });
   
   // Log quando o servidor WebSocket estiver pronto
@@ -86,7 +97,9 @@ export function setupWebSocketServer(server: Server) {
   // Evento de nova conexão
   wss.on('connection', (ws, req) => {
     const ip = req.socket.remoteAddress || 'desconhecido';
-    console.log(`WebSocket: Nova conexão estabelecida de ${ip}`);
+    const connectionId = randomUUID().substring(0, 8);
+    
+    console.log(`[WebSocket] Nova conexão estabelecida de ${ip} (ID: ${connectionId})`);
     
     // Verificar se o objeto WebSocket está OK
     if (!ws || typeof ws.send !== 'function') {
@@ -97,11 +110,14 @@ export function setupWebSocketServer(server: Server) {
     // Configurar heartbeat para esta conexão
     // @ts-ignore - Adicionamos esta propriedade para rastrear a última atividade
     ws.isAlive = true;
+    // @ts-ignore - ID para rastreamento em logs
+    ws.connectionId = connectionId;
     
     // Configurar handler para pong (resposta ao ping)
     ws.on('pong', () => {
       // @ts-ignore
       ws.isAlive = true;
+      console.log(`[WebSocket] Recebido pong da conexão ${connectionId} (nativo)`);
     });
     
     // Gerar ID único para o cliente
@@ -119,55 +135,159 @@ export function setupWebSocketServer(server: Server) {
     // Eventos da conexão
     ws.on('message', (message) => {
       try {
-        console.log('WebSocket: Mensagem recebida:', message.toString());
-        const data = JSON.parse(message.toString());
+        // @ts-ignore
+        const connId = ws.connectionId || 'desconhecido';
+        const messageStr = message.toString();
         
-        // Verificar se é uma mensagem de notificação para broadcast
-        if (data.type === 'notification' && data.broadcast === true) {
-          // Remover a flag de broadcast antes de enviar
-          const { broadcast, ...messageWithoutBroadcast } = data;
-          broadcastMessage(messageWithoutBroadcast);
-          return;
+        // Tentativa de parsing/tratamento da mensagem
+        try {
+          const data = JSON.parse(messageStr);
+          
+          // Tratar resposta de ping/pong
+          if (data.type === 'pong') {
+            // @ts-ignore
+            ws.isAlive = true;
+            console.log(`[WebSocket] Recebido pong da conexão ${connId} (via JSON)`);
+            return;
+          }
+          
+          console.log(`[WebSocket] Mensagem recebida da conexão ${connId}:`, 
+            JSON.stringify(data).substring(0, 200) + (JSON.stringify(data).length > 200 ? '...' : ''));
+          
+          // Verificar se é uma mensagem de notificação para broadcast
+          if (data.type === 'notification' && data.broadcast === true) {
+            // Remover a flag de broadcast antes de enviar
+            const { broadcast, ...messageWithoutBroadcast } = data;
+            broadcastMessage(messageWithoutBroadcast);
+            return;
+          }
+          
+          // Verificar se é uma mensagem de teste
+          if (data.type === 'test') {
+            console.log(`[WebSocket] Mensagem de teste recebida de ${connId}, enviando notificação`);
+            // Responder com uma notificação de teste
+            broadcastMessage({
+              type: 'notification',
+              title: 'Notificação de Teste',
+              message: data.message || 'Esta é uma notificação de teste do servidor',
+              notificationType: 'info',
+              id: Date.now().toString()
+            });
+            return;
+          }
+          
+          // Resposta padrão
+          ws.send(JSON.stringify({
+            type: 'response',
+            message: 'Mensagem recebida pelo servidor',
+            received: data,
+            timestamp: new Date().toISOString()
+          }));
+        } catch (jsonError) {
+          // Se não for JSON válido, apenas registrar a mensagem
+          console.log(`[WebSocket] Mensagem não-JSON recebida da conexão ${connId}:`, messageStr);
+          ws.send(JSON.stringify({
+            type: 'error',
+            message: 'Formato de mensagem inválido - esperado JSON',
+            timestamp: new Date().toISOString()
+          }));
         }
-        
-        // Verificar se é uma mensagem de teste
-        if (data.type === 'test') {
-          // Responder com uma notificação de teste
-          broadcastMessage({
-            type: 'notification',
-            title: 'Notificação de Teste',
-            message: data.message || 'Esta é uma notificação de teste do servidor',
-            notificationType: 'info',
-            id: Date.now().toString()
-          });
-          return;
-        }
-        
-        // Resposta padrão
-        ws.send(JSON.stringify({
-          type: 'response',
-          message: 'Mensagem recebida pelo servidor',
-          received: data
-        }));
       } catch (error) {
-        console.error('WebSocket: Erro ao processar mensagem:', error);
-        ws.send(JSON.stringify({
-          type: 'error',
-          message: 'Erro ao processar mensagem'
-        }));
+        console.error('[WebSocket] Erro ao processar mensagem:', error);
+        try {
+          ws.send(JSON.stringify({
+            type: 'error',
+            message: 'Erro ao processar mensagem',
+            timestamp: new Date().toISOString()
+          }));
+        } catch (e) {
+          console.error('[WebSocket] Erro ao enviar resposta de erro:', e);
+        }
       }
     });
     
     // Evento de fechamento da conexão
     ws.on('close', (code, reason) => {
-      console.log(`WebSocket: Conexão fechada - Código: ${code}, Motivo: ${reason.toString()}`);
+      // @ts-ignore
+      const connId = ws.connectionId || 'desconhecido';
+      console.log(`[WebSocket] Conexão ${connId} fechada - Código: ${code}, Motivo: ${reason.toString() || 'Não fornecido'}`);
+      
+      let explanationMsg = '';
+      
+      // Explicações para os códigos comuns
+      switch (code) {
+        case 1000:
+          explanationMsg = 'Fechamento normal';
+          break;
+        case 1001:
+          explanationMsg = 'Endpoint desligando (indo embora)';
+          break;
+        case 1002:
+          explanationMsg = 'Erro de protocolo';
+          break;
+        case 1003:
+          explanationMsg = 'Tipo de dados não aceito';
+          break;
+        case 1005:
+          explanationMsg = 'Sem código de status (fechamento anormal)';
+          break;
+        case 1006:
+          explanationMsg = 'Fechamento anormal (sem evento de fechamento)';
+          break;
+        case 1007:
+          explanationMsg = 'Dados inválidos (não UTF-8)';
+          break;
+        case 1008:
+          explanationMsg = 'Violação de política';
+          break;
+        case 1009:
+          explanationMsg = 'Mensagem muito grande';
+          break;
+        case 1010:
+          explanationMsg = 'Cliente esperava uma extensão não negociada';
+          break;
+        case 1011:
+          explanationMsg = 'Erro interno do servidor';
+          break;
+        case 1012:
+          explanationMsg = 'Servidor reiniciando';
+          break;
+        case 1013:
+          explanationMsg = 'Servidor temporariamente indisponível';
+          break;
+        case 1014:
+          explanationMsg = 'Servidor atuando como gateway ou proxy recebeu resposta inválida';
+          break;
+        case 1015:
+          explanationMsg = 'Falha na verificação TLS';
+          break;
+        default:
+          explanationMsg = 'Código de fechamento não padronizado';
+      }
+      
+      console.log(`[WebSocket] Explicação do código ${code}: ${explanationMsg}`);
       clients.delete(clientId);
     });
     
     // Evento de erro
     ws.on('error', (error) => {
-      console.error('WebSocket: Erro na conexão:', error);
+      // @ts-ignore
+      const connId = ws.connectionId || 'desconhecido';
+      console.error(`[WebSocket] Erro na conexão ${connId}:`, error);
       clients.delete(clientId);
+      
+      // Tentamos enviar uma mensagem antes de desconectar
+      try {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'error',
+            message: 'Erro na conexão WebSocket',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      } catch (e) {
+        console.error('[WebSocket] Erro ao enviar mensagem de erro:', e);
+      }
     });
   });
   

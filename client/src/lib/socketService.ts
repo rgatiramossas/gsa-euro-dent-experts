@@ -27,20 +27,88 @@ class SocketService {
     try {
       // Configurar a URL do WebSocket dependendo do ambiente (HTTP/HTTPS)
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // Usar a mesma origem (host:porta) que a página atual - deixar o navegador resolver a porta correta
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
       
-      console.log(`Tentando conectar ao WebSocket em: ${wsUrl}`);
+      // Determinar o host adequado para o ambiente
+      let host = window.location.host;
+      let attempts = 0;
+      const MAX_ATTEMPTS = 1; // Apenas uma tentativa por conexão
       
-      this.socket = new WebSocket(wsUrl);
+      const connectWithTimeout = () => {
+        if (attempts >= MAX_ATTEMPTS) {
+          console.error('[WebSocket] Máximo de tentativas atingido');
+          this.isConnecting = false;
+          this.scheduleReconnect();
+          return;
+        }
+        
+        const attemptHost = attempts === 0 ? host : window.location.hostname;
+        const wsUrl = `${protocol}//${attemptHost}/ws`;
+        
+        console.log(`[WebSocket] Tentativa ${attempts+1}/${MAX_ATTEMPTS} - Conectando em: ${wsUrl}`);
+        attempts++;
+        
+        // Criar nova conexão
+        this.socket = new WebSocket(wsUrl);
+        
+        // Definir timeout para a tentativa (5 segundos)
+        const connectionTimeout = setTimeout(() => {
+          if (this.socket && this.socket.readyState !== WebSocket.OPEN) {
+            console.log('[WebSocket] Timeout de conexão, tentando próxima opção...');
+            
+            // Limpar handlers para evitar eventos duplicados
+            this.socket.onopen = null;
+            this.socket.onclose = null;
+            this.socket.onerror = null;
+            this.socket.onmessage = null;
+            
+            try {
+              this.socket.close();
+            } catch (e) {}
+            
+            this.socket = null;
+            
+            // Tentar próxima opção
+            connectWithTimeout();
+          }
+        }, 5000);
+        
+        // Configurar eventos
+        this.socket.onopen = (event) => {
+          clearTimeout(connectionTimeout);
+          this.handleOpen(event);
+        };
+        
+        this.socket.onmessage = this.handleMessage.bind(this);
+        
+        this.socket.onclose = (event) => {
+          clearTimeout(connectionTimeout);
+          this.handleClose(event);
+        };
+        
+        this.socket.onerror = (event) => {
+          clearTimeout(connectionTimeout);
+          this.handleError(event);
+          
+          if (this.socket?.readyState !== WebSocket.OPEN) {
+            clearTimeout(connectionTimeout);
+            
+            // Limpar socket atual
+            try {
+              this.socket?.close();
+            } catch (e) {}
+            
+            this.socket = null;
+            
+            // Tentar próxima opção
+            connectWithTimeout();
+          }
+        };
+      };
       
-      // Configurar eventos
-      this.socket.onopen = this.handleOpen.bind(this);
-      this.socket.onmessage = this.handleMessage.bind(this);
-      this.socket.onclose = this.handleClose.bind(this);
-      this.socket.onerror = this.handleError.bind(this);
+      // Iniciar tentativas de conexão
+      connectWithTimeout();
     } catch (error) {
-      console.error('Erro ao inicializar WebSocket:', error);
+      console.error('[WebSocket] Erro ao inicializar WebSocket:', error);
       this.isConnecting = false;
       this.scheduleReconnect();
     }
