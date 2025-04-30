@@ -20,7 +20,8 @@
     "success": "Sucesso!",
     "error": "Erro",
     "warning": "Aviso",
-    "required": "Obrigatório"
+    "required": "Obrigatório",
+    "backToManagers": "Voltar para Gestores"
   },
   "auth": {
     "login": "Entrar",
@@ -118,7 +119,20 @@
     "clientCreated": "Cliente criado com sucesso",
     "clientUpdated": "Cliente atualizado com sucesso",
     "clientDeleted": "Cliente excluído com sucesso",
-    "confirmDelete": "Tem certeza que deseja excluir este cliente?"
+    "confirmDelete": "Tem certeza que deseja excluir este cliente?",
+    "managerClients": "Clientes do Gestor",
+    "viewManagerClients": "Visualize os clientes atribuídos a este gestor",
+    "manageClients": "Gerencie os clientes e seus veículos",
+    "searchPlaceholder": "Buscar por nome, email ou telefone...",
+    "show": "Exibir",
+    "active": "Ativos",
+    "deleted": "Excluídos",
+    "all": "Todos",
+    "noClientsFound": "Nenhum cliente encontrado",
+    "details": "Detalhes",
+    "vehicle": "Veículo",
+    "cityState": "Cidade/Estado",
+    "notSpecified": "Não informado"
   },
   "vehicles": {
     "title": "Veículos",

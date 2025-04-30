@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Client } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface ClientsListProps {
   managerMode?: boolean;
@@ -37,6 +38,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
   const [managerId, setManagerId] = useState<string | null>(null);
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
   
   // Extrai o ID do gerente da URL se estivermos no modo gestor
   useEffect(() => {
@@ -126,14 +128,14 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title={managerMode ? "Clientes do Gestor" : "Clientes"}
+        title={managerMode ? t("clients.managerClients") : t("clients.title")}
         description={managerMode 
-          ? "Visualize os clientes atribuídos a este gestor" 
-          : "Gerencie os clientes e seus veículos"}
+          ? t("clients.viewManagerClients") 
+          : t("clients.manageClients")}
         actions={
           managerMode ? (
             <Button variant="outline" onClick={() => setLocation('/managers')}>
-              Voltar para Gestores
+              {t("common.backToManagers")}
             </Button>
           ) : (
             <Link href="/clients/new">
@@ -141,7 +143,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Novo Cliente
+                {t("clients.newClient")}
               </Button>
             </Link>
           )
@@ -151,7 +153,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
       <Card className="mt-6">
         <div className="p-4 border-b border-gray-200 flex flex-col md:flex-row gap-4 items-start md:items-center">
           <Input
-            placeholder="Buscar por nome, email ou telefone..."
+            placeholder={t("clients.searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-md"
@@ -159,7 +161,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
           
           <div className="flex items-center gap-2">
             <label htmlFor="status-filter" className="text-sm font-medium">
-              Exibir:
+              {t("clients.show")}:
             </label>
             <Select
               value={statusFilter}
@@ -172,12 +174,12 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
               }}
             >
               <SelectTrigger className="w-40" id="status-filter">
-                <SelectValue placeholder="Selecione um filtro" />
+                <SelectValue placeholder={t("validation.selectOption")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Ativos</SelectItem>
-                <SelectItem value="deleted">Excluídos</SelectItem>
-                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">{t("clients.active")}</SelectItem>
+                <SelectItem value="deleted">{t("clients.deleted")}</SelectItem>
+                <SelectItem value="all">{t("clients.all")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -193,18 +195,18 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Cidade/Estado</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>{t("clients.name")}</TableHead>
+                    <TableHead>{t("clients.email")}</TableHead>
+                    <TableHead>{t("clients.phone")}</TableHead>
+                    <TableHead>{t("clients.cityState")}</TableHead>
+                    <TableHead className="text-right">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredClients?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                        Nenhum cliente encontrado
+                        {t("clients.noClientsFound")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -214,7 +216,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
                         <TableCell>{client.email}</TableCell>
                         <TableCell>{client.phone}</TableCell>
                         <TableCell>
-                          {client.city && client.state ? `${client.city}/${client.state}` : "Não informado"}
+                          {client.city && client.state ? `${client.city}/${client.state}` : t("clients.notSpecified")}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
@@ -229,7 +231,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
                                 <path d="M12 16v-4"/>
                                 <path d="M12 8h.01"/>
                               </svg>
-                              <span>Detalhes</span>
+                              <span>{t("clients.details")}</span>
                             </Button>
                             <Link href={`/clients/${client.id}/vehicle/new`}>
                               <Button
@@ -242,7 +244,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
                                   <circle cx="6.5" cy="16.5" r="2.5"/>
                                   <circle cx="16.5" cy="16.5" r="2.5"/>
                                 </svg>
-                                <span>Veículo</span>
+                                <span>{t("clients.vehicle")}</span>
                               </Button>
                             </Link>
                           </div>
