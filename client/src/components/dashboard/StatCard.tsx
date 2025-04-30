@@ -2,6 +2,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 
 interface StatCardProps {
   title: string;

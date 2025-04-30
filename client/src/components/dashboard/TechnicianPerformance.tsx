@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn, getInitials } from "@/lib/utils";
 import { Link } from "wouter";
 import { TechnicianPerformance as TechnicianPerformanceType } from "@/types";
+import { useTranslation } from "react-i18next";
 
 interface TechnicianPerformanceProps {
   technicians: TechnicianPerformanceType[];
@@ -12,11 +13,12 @@ interface TechnicianPerformanceProps {
 }
 
 export function TechnicianPerformance({ technicians, isLoading = false }: TechnicianPerformanceProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">Desempenho da Equipe</CardTitle>
+          <CardTitle className="text-lg font-medium">{t("dashboard.teamPerformance")}</CardTitle>
         </CardHeader>
         <CardContent>
           {Array.from({ length: 4 }).map((_, i) => (
@@ -39,9 +41,9 @@ export function TechnicianPerformance({ technicians, isLoading = false }: Techni
   return (
     <Card>
       <CardHeader className="pb-2 flex items-center justify-between">
-        <CardTitle className="text-lg font-medium">Desempenho da Equipe</CardTitle>
+        <CardTitle className="text-lg font-medium">{t("dashboard.teamPerformance")}</CardTitle>
         <Link href="/technicians" className="text-sm font-medium text-primary hover:text-primary/80">
-          Ver detalhes
+          {t("common.viewDetails")}
         </Link>
       </CardHeader>
       <CardContent>
