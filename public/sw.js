@@ -125,24 +125,18 @@ self.addEventListener('fetch', (event) => {
               method: event.request.method
             });
             
-            // Enviar um segundo evento especial para finalizar formulários
-            setTimeout(() => {
-              notifyClients({
-                type: 'form-save-completed',
-                success: true
-              });
-            }, 200);
+            // Não enviar o segundo evento que pode causar confusão
+            // Simplificamos o protocolo de comunicação para evitar o loop
 
-            // Retornar resposta simulada com informações mais detalhadas
+            // Retornar resposta simulada com status 202 (Accepted) para indicar que foi aceito para processamento
             return new Response(JSON.stringify({
               success: true,
-              _offline: true,
-              _pending: true,
+              offline: true,  // Nome mais consistente
               id: tempId,
               tableName: tableName,
-              _timestamp: Date.now()
+              timestamp: Date.now()
             }), {
-              status: 200,
+              status: 202,  // 202 Accepted é mais apropriado para operações assíncronas
               headers: { 'Content-Type': 'application/json' }
             });
           }
@@ -207,6 +201,13 @@ self.addEventListener('sync', (event) => {
 
 // Função para processar requisições pendentes
 async function syncPendingRequests() {
+  // Criar um controller para timeout de segurança
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    console.log('Timeout de sincronização atingido - abortando');
+    controller.abort();
+  }, 30000); // 30 segundos de timeout máximo
+  
   let db;
   try {
     console.log('Iniciando sincronização...');
@@ -239,7 +240,8 @@ async function syncPendingRequests() {
           method: request.method,
           headers: request.headers || { 'Content-Type': 'application/json' },
           body: request.body ? JSON.stringify(request.body) : undefined,
-          credentials: 'include'
+          credentials: 'include',
+          signal: controller.signal // Usar o signal do AbortController para o timeout
         });
 
         if (!response.ok) {
@@ -280,6 +282,9 @@ async function syncPendingRequests() {
     console.error('Erro durante sincronização:', error);
     // Notificar o cliente do erro
     notifyClients({ type: 'sync-error', error: error.message });
+  } finally {
+    // Limpar o timeout independentemente do resultado
+    clearTimeout(timeoutId);
   }
 }
 
