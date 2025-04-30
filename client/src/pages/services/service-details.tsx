@@ -809,7 +809,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-gray-500">Técnico Responsável</h3>
-                      <p className="text-base">{service.technician_name || "Não atribuído"}</p>
+                      <p className="text-base">{service.technician?.name || "Não atribuído"}</p>
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-gray-500">Data Agendada</h3>
