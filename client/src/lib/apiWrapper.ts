@@ -101,11 +101,15 @@ export async function apiRequest<T>({
       else if (method === 'POST') {
         // Criar novo item
         const id = await offlineDb.addItem(tableName, data, url);
-        // Forçar conclusão da UI
+        // Forçar conclusão da UI - emitir dois eventos para garantir que todos os listeners capturem
         setTimeout(() => {
+          // Evento específico com detalhes da operação
           window.dispatchEvent(new CustomEvent('offline-save-completed', {
             detail: { id, success: true }
           }));
+          
+          // Evento genérico para finalizar estados de loading
+          window.dispatchEvent(new CustomEvent('form-save-completed'));
         }, 100);
         return { id, ...data } as unknown as T;
       } 
@@ -116,6 +120,18 @@ export async function apiRequest<T>({
         }
 
         await offlineDb.updateItem(tableName, resourceId, data, url);
+        
+        // Emitir evento para concluir UI
+        setTimeout(() => {
+          // Evento específico com detalhes da operação
+          window.dispatchEvent(new CustomEvent('offline-save-completed', {
+            detail: { id: resourceId, success: true, method: 'PUT', tableName }
+          }));
+          
+          // Evento genérico para finalizar estados de loading
+          window.dispatchEvent(new CustomEvent('form-save-completed'));
+        }, 100);
+        
         return { id: resourceId, ...data } as unknown as T;
       } 
       else if (method === 'DELETE') {
@@ -125,6 +141,18 @@ export async function apiRequest<T>({
         }
 
         await offlineDb.deleteItem(tableName, resourceId, url);
+        
+        // Emitir evento para concluir UI
+        setTimeout(() => {
+          // Evento específico com detalhes da operação
+          window.dispatchEvent(new CustomEvent('offline-save-completed', {
+            detail: { id: resourceId, success: true, method: 'DELETE', tableName }
+          }));
+          
+          // Evento genérico para finalizar estados de loading
+          window.dispatchEvent(new CustomEvent('form-save-completed'));
+        }, 100);
+        
         return { success: true } as unknown as T;
       }
 
