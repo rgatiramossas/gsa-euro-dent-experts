@@ -89,6 +89,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
+  // Adicionar hooks para controle de estado offline
+  const { isSubmitting: isStatusSubmitting, startSubmitting: startStatusSubmitting, resetSubmitting: resetStatusSubmitting } = useOfflineSubmit();
+  const { isSubmitting: isServiceSubmitting, startSubmitting: startServiceSubmitting, resetSubmitting: resetServiceSubmitting } = useOfflineSubmit();
+  const { isSubmitting: isDeleteSubmitting, startSubmitting: startDeleteSubmitting, resetSubmitting: resetDeleteSubmitting } = useOfflineSubmit();
   
   // Variáveis auxiliares para melhorar a legibilidade e evitar erros de tipagem
   const isGestor = currentUser?.role === 'gestor' || currentUser?.role === 'manager'; // Incluir ambas as variações
@@ -326,6 +330,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const handleStatusUpdate = () => {
     if (!newStatus) return;
     
+    // Iniciar estado de submissão offline
+    startStatusSubmitting();
+    
     const data: { status: ServiceStatus; notes?: string } = {
       status: newStatus as ServiceStatus
     };
@@ -382,6 +389,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     editForm.handleSubmit((data) => {
       console.log("Dados do formulário:", data);
       
+      // Iniciar estado de submissão offline
+      startServiceSubmitting();
+      
       // Verificar se o serviço existe
       if (!service) {
         console.error("Serviço não encontrado");
@@ -390,6 +400,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
           description: "Serviço não encontrado",
           variant: "destructive",
         });
+        resetServiceSubmitting(); // Resetar estado de submissão em caso de erro
         return;
       }
       
