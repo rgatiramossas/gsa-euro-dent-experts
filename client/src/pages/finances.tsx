@@ -1172,16 +1172,16 @@ export default function Finances() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Mês Atual</span>
+                    <span className="text-sm font-medium">{t("finances.currentMonth")}</span>
                     <span className="font-medium">{formatCurrency(stats.totalRevenue)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Mês Anterior</span>
+                    <span className="text-sm font-medium">{t("finances.previousMonth")}</span>
                     <span className="font-medium">{formatCurrency(stats.totalRevenue * 0.85)}</span>
                   </div>
                   <div className="pt-2 border-t">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Variação</span>
+                      <span className="text-sm font-medium">{t("finances.variation")}</span>
                       <div className="flex items-center text-success">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -1212,11 +1212,11 @@ export default function Finances() {
                     <PieChart>
                       <Pie
                         data={[
-                          { name: "Pendentes", value: services?.filter(s => s.status === "pending").length || 0 },
-                          { name: "Concluídos", value: services?.filter(s => s.status === "completed").length || 0 },
-                          { name: "Aguardando Aprovação", value: services?.filter(s => s.status === "aguardando_aprovacao").length || 0 },
-                          { name: "Faturados", value: services?.filter(s => s.status === "faturado").length || 0 },
-                          { name: "Pagos", value: services?.filter(s => s.status === "pago").length || 0 },
+                          { name: t("services.status.pending"), value: services?.filter(s => s.status === "pending").length || 0 },
+                          { name: t("services.status.completed"), value: services?.filter(s => s.status === "completed").length || 0 },
+                          { name: t("services.status.awaiting_approval"), value: services?.filter(s => s.status === "aguardando_aprovacao").length || 0 },
+                          { name: t("services.status.invoiced"), value: services?.filter(s => s.status === "faturado").length || 0 },
+                          { name: t("services.status.paid"), value: services?.filter(s => s.status === "pago").length || 0 },
                         ]}
                         cx="50%"
                         cy="50%"
@@ -1270,7 +1270,7 @@ export default function Finances() {
                   ) : financiallyRelevantServices?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                        Nenhuma transação encontrada
+                        {t("finances.nenhumaTransacaoEncontrada")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -1318,7 +1318,7 @@ export default function Finances() {
                 </div>
               ) : !paymentRequests || !Array.isArray(paymentRequests) || paymentRequests.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 px-4">
-                  <p className="text-gray-500 mb-2">Nenhum pedido de pagamento encontrado</p>
+                  <p className="text-gray-500 mb-2">{t("finances.nenhumPedidoPagamentoEncontrado")}</p>
                 </div>
               ) : (
                 <div className="space-y-4 p-4">

@@ -439,6 +439,9 @@
     "monthlyComparison": "Monatlicher Vergleich",
     "monthlyExpenses": "Monatliche Ausgaben",
     "servicesByStatus": "Dienstleistungen nach Status",
+    "currentMonth": "Aktueller Monat",
+    "previousMonth": "Vorheriger Monat",
+    "variation": "Veränderung",
     "byWeek": "Nach Woche",
     "byDay": "Nach Tag",
     "byMonth": "Nach Monat",
@@ -460,6 +463,8 @@
     "servicosConcluidosNaoSolicitados": "Abgeschlossene, nicht angeforderte Dienstleistungen",
     "visaoGeralPagamentos": "Zahlungsübersicht",
     "nenhumaTransacaoEncontrada": "Keine Transaktionen gefunden",
+    "nenhumPedidoPagamentoEncontrado": "Keine Zahlungsanforderungen gefunden",
+    "nenhumaDespesaEncontrada": "Keine Ausgaben gefunden",
     "nenhumServicoDisponivel": "Keine Dienstleistungen für Zahlungsanforderung verfügbar",
     "selecioneServico": "Wählen Sie mindestens eine Dienstleistung für die Zahlungsanforderung aus",
     "expense": {

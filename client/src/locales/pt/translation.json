@@ -486,6 +486,9 @@
     "monthlyComparison": "Comparação Mensal",
     "monthlyExpenses": "Despesas Mensais",
     "servicesByStatus": "Serviços por Status",
+    "currentMonth": "Mês Atual",
+    "previousMonth": "Mês Anterior",
+    "variation": "Variação",
     "byWeek": "Por Semana",
     "byDay": "Por Dia",
     "byMonth": "Por Mês",
@@ -507,6 +510,8 @@
     "servicosConcluidosNaoSolicitados": "Serviços concluídos não solicitados",
     "visaoGeralPagamentos": "Visão Geral de Pagamentos",
     "nenhumaTransacaoEncontrada": "Nenhuma transação encontrada",
+    "nenhumPedidoPagamentoEncontrado": "Nenhum pedido de pagamento encontrado",
+    "nenhumaDespesaEncontrada": "Nenhuma despesa encontrada",
     "nenhumServicoDisponivel": "Nenhum serviço disponível para solicitação de pagamento",
     "selecioneServico": "Selecione pelo menos um serviço para solicitar pagamento",
     "expense": {
