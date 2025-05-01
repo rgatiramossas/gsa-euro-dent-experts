@@ -53,7 +53,19 @@
     "signOut": "Abmelden",
     "invalidCredentials": "Ungültige Anmeldedaten",
     "userLoggedIn": "Benutzer erfolgreich angemeldet",
-    "userLoggedOut": "Benutzer erfolgreich abgemeldet"
+    "userLoggedOut": "Benutzer erfolgreich abgemeldet",
+    "loginSuccess": "Anmeldung erfolgreich",
+    "welcomeBack": "Willkommen zurück!",
+    "username": "Benutzername",
+    "enterUsername": "Benutzernamen eingeben",
+    "enterPassword": "Passwort eingeben",
+    "rememberMe": "Angemeldet bleiben",
+    "loggingIn": "Anmeldung läuft...",
+    "requiredFields": "Pflichtfelder",
+    "fillUsernamePassword": "Bitte Benutzernamen und Passwort eingeben",
+    "authError": "Authentifizierungsfehler",
+    "passwordRecovery": "Passwort-Wiederherstellung",
+    "contactAdminForReset": "Bitte kontaktieren Sie den Administrator, um Ihr Passwort zurückzusetzen"
   },
   "menu": {
     "dashboard": "Dashboard",
