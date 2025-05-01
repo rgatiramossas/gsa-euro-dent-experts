@@ -199,7 +199,9 @@ async function createEssentialTables() {
   }
 };
 
-// Usar MemoryStore como alternativa temporária para sessões até configurar MySQL
+// Importar MySQLStore para armazenar sessões no MySQL
+import mysqlSessionModule from "express-mysql-session";
+const MySQLStore = mysqlSessionModule(session); // Correto: passa o módulo 'express-session' como argumento
 const MemoryStore = memorystore(session);
 
 export interface IStorage {
@@ -282,20 +284,50 @@ export interface IStorage {
   
   // Session store
   sessionStore: any; // Usar tipagem any para evitar erros com session.SessionStore
+  initSessionStore(pool: any): void;
 }
 
 export class DatabaseStorage implements IStorage {
   sessionStore: any; // Corrigir erro de tipagem do session.SessionStore
   
   constructor() {
-    // Usar MemoryStore como armazenamento temporário de sessão
-    // Isso é apenas para desenvolvimento, em produção vamos configurar o MySQL para sessões
+    // Inicialmente usar MemoryStore para sessões até que o pool MySQL esteja disponível
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
     });
     
     // Não inicializamos dados de exemplo no construtor
     // Isso será feito após a conexão com o banco ser estabelecida
+  }
+  
+  // Método para inicializar o sessionStore com MySQL após a conexão ser estabelecida
+  initSessionStore(pool: any) {
+    try {
+      // Opções para MySQL Session Store
+      const options = {
+        clearExpired: true,
+        checkExpirationInterval: 900000, // 15 minutos em milissegundos
+        expiration: 86400000, // 1 dia em milissegundos
+        createDatabaseTable: true, // Criar tabela de sessões se não existir
+        schema: {
+          tableName: 'sessions',
+          columnNames: {
+            session_id: 'session_id',
+            expires: 'expires',
+            data: 'data'
+          }
+        }
+      };
+      
+      // Criar store de sessões MySQL
+      console.log("Inicializando armazenamento de sessões MySQL...");
+      this.sessionStore = new MySQLStore(options, pool);
+      console.log("Armazenamento de sessões MySQL inicializado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao inicializar MySQL Session Store:", error);
+      console.log("Usando MemoryStore como fallback para sessões");
+      // Continuar usando MemoryStore como fallback
+    }
   }
   
   // Método para inicializar dados após a conexão ser estabelecida

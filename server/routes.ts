@@ -101,19 +101,25 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session middleware com configuração aprimorada
+  // Configurar uma chave de sessão forte
+  const sessionSecret = process.env.SESSION_SECRET || "s3cr3t_k3y_para_eurodent_session_" + Date.now();
+  
+  // Session middleware com configuração aprimorada e armazenamento MySQL
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "s3cr3t",
-      resave: true, // Alterado para garantir que a sessão seja salva em cada requisição
-      saveUninitialized: true, // Alterado para salvar sessões não inicializadas
+      secret: sessionSecret,
+      resave: false, // Não salvar sessão se não modificada
+      saveUninitialized: false, // Não criar sessão até que algo seja armazenado
+      store: storage.sessionStore, // Usar o armazenamento MySQL
       cookie: { 
         secure: process.env.NODE_ENV === "production",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias em milissegundos
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias em milissegundos para maior duração
         httpOnly: true, // Prevenir acesso por JavaScript no cliente
-        sameSite: 'lax' // Permitir que o cookie seja enviado em navegações de nível superior
+        sameSite: 'lax', // Permitir que o cookie seja enviado em navegações de nível superior
+        path: '/'
       },
       rolling: true, // Reset da expiração a cada requisição
+      name: 'eurodent.sid' // Nome personalizado para o cookie de sessão
     })
   );
   // A configuração de servir arquivos estáticos de uploads foi movida para index.ts

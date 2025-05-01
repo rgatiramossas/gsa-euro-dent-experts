@@ -75,8 +75,11 @@ app.use((req, res, next) => {
   // Inicializar o banco de dados MySQL
   try {
     console.log("Inicializando conexão com MySQL...");
-    await initializeDatabase();
+    const { pool } = await initializeDatabase();
     console.log("Conexão com MySQL inicializada com sucesso!");
+    
+    // Inicializar o armazenamento de sessão MySQL
+    storage.initSessionStore(pool);
     
     // Inicializar dados de exemplo após a conexão ser estabelecida
     await storage.initialize();
