@@ -10,6 +10,7 @@ import { checkNetworkStatus } from "@/lib/pwaManager";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslateServiceType } from "@/hooks/useTranslateServiceType";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { 
@@ -118,6 +119,7 @@ export default function NewService() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { translateServiceType } = useTranslateServiceType();
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [photos, setPhotos] = useState<FileList | null>(null);
   const [serviceSavedOffline, setServiceSavedOffline] = useState<boolean>(false);
@@ -623,7 +625,7 @@ export default function NewService() {
                       <SelectContent>
                         {serviceTypes?.map((type) => (
                           <SelectItem key={type.id} value={type.id.toString()}>
-                            {type.name}
+                            {translateServiceType(type.name)}
                           </SelectItem>
                         ))}
                       </SelectContent>
