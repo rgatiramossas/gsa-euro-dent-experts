@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 import { v4 as uuidv4 } from 'uuid';
 import { checkNetworkStatus, triggerSyncIfNeeded } from './pwaManager';
+import { queryClient } from "./queryClient";
 
 // Definir interface para pedidos pendentes
 interface PendingRequest {
@@ -613,9 +614,43 @@ class OfflineDatabase extends Dexie {
   }
 }
 
+// Função para armazenar requisições offline para sincronização posterior e atualizar cache
+import { queryClient } from "./queryClient";
+
 // Função para armazenar requisições offline para sincronização posterior
-export async function storeOfflineRequest(request: PendingRequest): Promise<void> {
+export async function storeOfflineRequest(request: PendingRequest): Promise<any> {
+  // Armazenar a requisição para sincronização futura
   await offlineDb.pendingRequests.add(request);
+  
+  // Adicionar imediatamente ao IndexedDB para uso offline
+  if (request.operationType === 'create' && request.tableName && request.body) {
+    const tempId = -(Date.now());
+    const offlineItem = {
+      ...request.body,
+      id: tempId,
+      _isOffline: true,
+      _offlineId: request.id
+    };
+    
+    // Salvar no banco de dados Dexie
+    const table = offlineDb.getTableByName(request.tableName);
+    if (table) {
+      await table.add(offlineItem);
+      
+      // Obter todos os itens da tabela para atualizar o cache
+      const allItems = await table.toArray();
+      
+      // Determinar a chave de consulta correspondente
+      const queryKey = `/api/${request.tableName}`;
+      
+      // Atualizar o cache do React Query para renderização imediata na UI
+      queryClient.setQueryData([queryKey], allItems);
+      
+      return { ...offlineItem, id: tempId };
+    }
+  }
+  
+  return null;
 }
 
 // Criar e exportar a instância do banco de dados
