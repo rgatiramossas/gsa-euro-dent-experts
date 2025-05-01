@@ -186,6 +186,18 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
         offlineDb.countPendingRequests().then(count => {
           offlineStatusStore.setPendingCount(count);
         });
+        
+        // Após sincronização completa, invalidar queries para atualizar dados
+        console.log('Sincronização concluída, atualizando dados da aplicação');
+        queryClient.invalidateQueries();
+      }
+      break;
+      
+    case 'data-updated':
+      // Tabela específica foi atualizada
+      if (data.tableName) {
+        console.log(`Dados atualizados para tabela: ${data.tableName}`);
+        queryClient.invalidateQueries({ queryKey: [`/api/${data.tableName}`] });
       }
       break;
       

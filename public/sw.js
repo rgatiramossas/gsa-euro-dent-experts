@@ -159,6 +159,9 @@ async function syncPendingRequests() {
     const pendingRequests = await db.getAll('pendingRequests');
     if (pendingRequests.length === 0) return;
     
+    // Agrupar requisições por tabela para notificação posterior
+    const affectedTables = new Set();
+    
     notifyClients({ 
       type: 'sync-status',
       status: 'in-progress',
@@ -168,6 +171,11 @@ async function syncPendingRequests() {
     for (const request of pendingRequests) {
       try {
         console.log(`[SW] Sincronizando: ${request.method} ${request.url}`);
+        
+        // Adicionar a tabela à lista de tabelas afetadas
+        if (request.tableName) {
+          affectedTables.add(request.tableName);
+        }
         
         const response = await fetch(request.url, {
           method: request.method,
@@ -192,12 +200,34 @@ async function syncPendingRequests() {
             serverId: result.id,
             tableName: request.tableName
           });
+        } else {
+          // Para outros métodos (PUT, DELETE), envia notificação genérica
+          notifyClients({
+            type: 'operation-synced',
+            status: 'completed',
+            tempId: request.id,
+            tableName: request.tableName
+          });
         }
       } catch (error) {
         console.error(`[SW] Falha na sincronização: ${error}`);
         // Mantém no banco para tentar novamente depois
       }
     }
+    
+    // Após todas as sincronizações, notificar que está online para atualizar dados
+    notifyClients({ 
+      type: 'connection-status',
+      online: true
+    });
+    
+    // Notificar sobre cada tabela que foi atualizada
+    affectedTables.forEach(tableName => {
+      notifyClients({
+        type: 'data-updated',
+        tableName
+      });
+    });
     
     notifyClients({ 
       type: 'sync-status',

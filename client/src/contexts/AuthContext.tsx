@@ -20,31 +20,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
 
   // Check if user is already logged in
-  const { data, isLoading, error } = useQuery<AuthUser>({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['/api/auth/me'],
     retry: false,
-    staleTime: Infinity,
-    // Configuração para permitir obter dados do cache quando offline
-    networkMode: 'always',
-    // Não mostrar erros se a autenticação falhar e estivermos offline
-    onError: (err) => {
-      // Verificar se estamos offline
-      if (!navigator.onLine) {
-        console.log('Offline detectado durante verificação de autenticação, ignorando erro');
-      } else {
-        console.error('Erro ao verificar autenticação:', err);
-      }
-    }
+    staleTime: Infinity
   });
 
   // Set user data when it loads
   useEffect(() => {
-    if (data) {
-      setUser(data);
+    if (data && typeof data === 'object' && 'id' in data && 'username' in data) {
+      const authUser = data as AuthUser;
+      setUser(authUser);
       
       // Quando os dados são carregados com sucesso, salvar no localStorage 
       // para manter autenticação offline
-      localStorage.setItem('user', JSON.stringify(data));
+      localStorage.setItem('user', JSON.stringify(authUser));
     }
   }, [data]);
 
