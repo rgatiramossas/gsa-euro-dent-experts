@@ -27,6 +27,7 @@
     "date": "Data",
     "selectDate": "Selecione uma data",
     "saving": "Salvando...",
+    "processing": "Processando...",
     "notSpecified": "Não especificado"
   },
   "auth": {
@@ -427,6 +428,47 @@
       "month": "Último mês",
       "year": "Este ano",
       "all": "Todo o período"
+    },
+    "registerNewExpense": "Registrar Nova Despesa",
+    "fillExpenseForm": "Preencha o formulário para registrar uma nova despesa.",
+    "registerPayment": "Registrar Pagamento",
+    "registerPaymentDetails": "Registre os detalhes do pagamento ao técnico {{technician}}.",
+    "amountToPay": "Valor a pagar",
+    "confirmPayment": "Confirmar Pagamento",
+    "form": {
+      "description": "Descrição",
+      "enterExpenseDescription": "Digite a descrição da despesa",
+      "amount": "Valor",
+      "date": "Data",
+      "category": "Categoria",
+      "selectCategory": "Selecione uma categoria",
+      "provider": "Fornecedor/Destinatário",
+      "enterProviderName": "Digite o nome do fornecedor ou funcionário",
+      "notes": "Observações",
+      "additionalExpenseInfo": "Informações adicionais sobre a despesa",
+      "paymentMethod": "Método de Pagamento",
+      "selectPaymentMethod": "Selecione o método de pagamento",
+      "paymentDate": "Data do Pagamento",
+      "transactionId": "ID da Transação (opcional)",
+      "transactionIdPlaceholder": "Exemplo: código PIX, número de referência",
+      "paymentNotes": "Observações (opcional)",
+      "additionalPaymentInfo": "Informações adicionais sobre o pagamento"
+    },
+    "categories": {
+      "operational": "Operacional",
+      "salary": "Salário",
+      "material": "Material",
+      "rent": "Aluguel",
+      "food": "Alimentação",
+      "transportation": "Transporte",
+      "others": "Outras"
+    },
+    "paymentMethods": {
+      "pix": "PIX",
+      "bankTransfer": "Transferência Bancária",
+      "cash": "Dinheiro",
+      "check": "Cheque",
+      "other": "Outro"
     },
     "totalRevenue": "Faturamento Total",
     "pendingPayment": "Pendente de Pagamento",

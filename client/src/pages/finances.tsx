@@ -1909,7 +1909,7 @@ export default function Finances() {
                 name="payment_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Data do Pagamento</FormLabel>
+                    <FormLabel>{t("finances.form.paymentDate")}</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -1923,9 +1923,9 @@ export default function Finances() {
                 name="transaction_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID da Transação (opcional)</FormLabel>
+                    <FormLabel>{t("finances.form.transactionId")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Exemplo: código PIX, número de referência" {...field} />
+                      <Input placeholder={t("finances.form.transactionIdPlaceholder")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
