@@ -14,31 +14,51 @@ import { apiRequest } from "@/lib/queryClient";
 import { AuthUser } from "@/types";
 import { Link } from "wouter";
 import { UserPlusIcon, Users, Settings } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Schema para validação do formulário de perfil
-const profileFormSchema = z.object({
-  name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres" }),
-  email: z.string().email({ message: "Por favor, digite um e-mail válido" }),
-});
+const createProfileFormSchema = (t: any, language: string) => {
+  return z.object({
+    name: z.string().min(2, { 
+      message: language === 'en' ? "Name must be at least 2 characters" : "O nome deve ter pelo menos 2 caracteres" 
+    }),
+    email: z.string().email({ 
+      message: language === 'en' ? "Please enter a valid email" : "Por favor, digite um e-mail válido" 
+    }),
+  });
+};
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
+type ProfileFormValues = z.infer<ReturnType<typeof createProfileFormSchema>>;
 
 // Schema para validação da mudança de senha
-const passwordFormSchema = z.object({
-  currentPassword: z.string().min(8, { message: "A senha atual deve ter pelo menos 8 caracteres" }),
-  newPassword: z.string().min(8, { message: "A nova senha deve ter pelo menos 8 caracteres" }),
-  confirmPassword: z.string().min(8, { message: "Confirme a nova senha" }),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "As senhas não coincidem",
-  path: ["confirmPassword"],
-});
+const createPasswordFormSchema = (t: any, language: string) => {
+  return z.object({
+    currentPassword: z.string().min(8, { 
+      message: language === 'en' ? "Current password must be at least 8 characters" : "A senha atual deve ter pelo menos 8 caracteres" 
+    }),
+    newPassword: z.string().min(8, { 
+      message: language === 'en' ? "New password must be at least 8 characters" : "A nova senha deve ter pelo menos 8 caracteres" 
+    }),
+    confirmPassword: z.string().min(8, { 
+      message: language === 'en' ? "Confirm the new password" : "Confirme a nova senha" 
+    }),
+  }).refine((data) => data.newPassword === data.confirmPassword, {
+    message: language === 'en' ? "Passwords do not match" : "As senhas não coincidem",
+    path: ["confirmPassword"],
+  });
+};
 
-type PasswordFormValues = z.infer<typeof passwordFormSchema>;
+type PasswordFormValues = z.infer<ReturnType<typeof createPasswordFormSchema>>;
 
 export default function ConfiguracoesPage() {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
   const isAdmin = user?.role === 'admin';
+  
+  // Criando schemas baseado no idioma atual
+  const profileFormSchema = createProfileFormSchema(t, i18n.language);
+  const passwordFormSchema = createPasswordFormSchema(t, i18n.language);
 
   // Formulário de perfil
   const profileForm = useForm<ProfileFormValues>({
@@ -73,14 +93,14 @@ export default function ConfiguracoesPage() {
       }
 
       toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso.",
+        title: i18n.language === 'en' ? "Profile updated" : "Perfil atualizado",
+        description: i18n.language === 'en' ? "Your information has been successfully updated." : "Suas informações foram atualizadas com sucesso.",
       });
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
       toast({
-        title: "Erro ao atualizar perfil",
-        description: "Ocorreu um erro ao atualizar suas informações. Tente novamente.",
+        title: i18n.language === 'en' ? "Error updating profile" : "Erro ao atualizar perfil",
+        description: i18n.language === 'en' ? "An error occurred while updating your information. Please try again." : "Ocorreu um erro ao atualizar suas informações. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -97,14 +117,14 @@ export default function ConfiguracoesPage() {
       passwordForm.reset();
 
       toast({
-        title: "Senha alterada",
-        description: "Sua senha foi alterada com sucesso.",
+        title: i18n.language === 'en' ? "Password changed" : "Senha alterada",
+        description: i18n.language === 'en' ? "Your password has been successfully changed." : "Sua senha foi alterada com sucesso.",
       });
     } catch (error) {
       console.error("Erro ao alterar senha:", error);
       toast({
-        title: "Erro ao alterar senha",
-        description: "Ocorreu um erro ao alterar sua senha. Verifique se a senha atual está correta.",
+        title: i18n.language === 'en' ? "Error changing password" : "Erro ao alterar senha",
+        description: i18n.language === 'en' ? "An error occurred while changing your password. Please check if your current password is correct." : "Ocorreu um erro ao alterar sua senha. Verifique se a senha atual está correta.",
         variant: "destructive",
       });
     }
@@ -113,28 +133,28 @@ export default function ConfiguracoesPage() {
   return (
     <div className="container mx-auto py-6">
       <PageHeader 
-        title="Configurações" 
-        description="Gerencie as configurações da sua conta."
+        title={i18n.language === 'en' ? "Settings" : "Configurações"} 
+        description={i18n.language === 'en' ? "Manage your account settings." : "Gerencie as configurações da sua conta."}
       />
 
       <Tabs defaultValue="profile" className="mt-6">
         <TabsList className="mb-6">
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="password">Segurança</TabsTrigger>
+          <TabsTrigger value="profile">{i18n.language === 'en' ? "Profile" : "Perfil"}</TabsTrigger>
+          <TabsTrigger value="password">{i18n.language === 'en' ? "Security" : "Segurança"}</TabsTrigger>
           {user?.role === "technician" && (
-            <TabsTrigger value="technician">Técnico</TabsTrigger>
+            <TabsTrigger value="technician">{i18n.language === 'en' ? "Technician" : "Técnico"}</TabsTrigger>
           )}
           {user?.role === "gestor" && (
-            <TabsTrigger value="manager">Gestor</TabsTrigger>
+            <TabsTrigger value="manager">{i18n.language === 'en' ? "Manager" : "Gestor"}</TabsTrigger>
           )}
         </TabsList>
         
         <TabsContent value="profile">
           <Card>
             <CardHeader>
-              <CardTitle>Informações do Perfil</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? "Profile Information" : "Informações do Perfil"}</CardTitle>
               <CardDescription>
-                Atualize suas informações pessoais.
+                {i18n.language === 'en' ? "Update your personal information." : "Atualize suas informações pessoais."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -145,7 +165,7 @@ export default function ConfiguracoesPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome</FormLabel>
+                        <FormLabel>{i18n.language === 'en' ? "Name" : "Nome"}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -175,7 +195,7 @@ export default function ConfiguracoesPage() {
                       type="submit" 
                       disabled={!profileForm.formState.isDirty}
                     >
-                      Salvar alterações
+                      {i18n.language === 'en' ? "Save changes" : "Salvar alterações"}
                     </Button>
                   </div>
                 </form>
@@ -187,9 +207,9 @@ export default function ConfiguracoesPage() {
         <TabsContent value="password">
           <Card>
             <CardHeader>
-              <CardTitle>Alterar Senha</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? "Change Password" : "Alterar Senha"}</CardTitle>
               <CardDescription>
-                Altere sua senha para manter sua conta segura.
+                {i18n.language === 'en' ? "Change your password to keep your account secure." : "Altere sua senha para manter sua conta segura."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -200,7 +220,7 @@ export default function ConfiguracoesPage() {
                     name="currentPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Senha atual</FormLabel>
+                        <FormLabel>{i18n.language === 'en' ? "Current password" : "Senha atual"}</FormLabel>
                         <FormControl>
                           <Input {...field} type="password" />
                         </FormControl>
@@ -214,12 +234,12 @@ export default function ConfiguracoesPage() {
                     name="newPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nova senha</FormLabel>
+                        <FormLabel>{i18n.language === 'en' ? "New password" : "Nova senha"}</FormLabel>
                         <FormControl>
                           <Input {...field} type="password" />
                         </FormControl>
                         <FormDescription>
-                          A senha deve ter pelo menos 8 caracteres.
+                          {i18n.language === 'en' ? "Password must be at least 8 characters." : "A senha deve ter pelo menos 8 caracteres."}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -231,7 +251,7 @@ export default function ConfiguracoesPage() {
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Confirme a nova senha</FormLabel>
+                        <FormLabel>{i18n.language === 'en' ? "Confirm new password" : "Confirme a nova senha"}</FormLabel>
                         <FormControl>
                           <Input {...field} type="password" />
                         </FormControl>
@@ -242,7 +262,7 @@ export default function ConfiguracoesPage() {
                   
                   <div className="flex justify-end pt-4">
                     <Button type="submit">
-                      Alterar senha
+                      {i18n.language === 'en' ? "Change password" : "Alterar senha"}
                     </Button>
                   </div>
                 </form>
@@ -255,26 +275,26 @@ export default function ConfiguracoesPage() {
         <TabsContent value="technician">
           <Card>
             <CardHeader>
-              <CardTitle>Configurações de Técnico</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? "Technician Settings" : "Configurações de Técnico"}</CardTitle>
               <CardDescription>
-                Gerencie suas configurações específicas como técnico.
+                {i18n.language === 'en' ? "Manage your specific settings as a technician." : "Gerencie suas configurações específicas como técnico."}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Serviços</h3>
+                <h3 className="text-lg font-medium">{i18n.language === 'en' ? "Services" : "Serviços"}</h3>
                 <p className="text-sm text-gray-500">
-                  Visualize seus serviços atribuídos e gerencie seu calendário.
+                  {i18n.language === 'en' ? "View your assigned services and manage your calendar." : "Visualize seus serviços atribuídos e gerencie seu calendário."}
                 </p>
                 <div className="flex gap-4">
                   <Link to="/services">
                     <Button variant="outline">
-                      Meus Serviços
+                      {i18n.language === 'en' ? "My Services" : "Meus Serviços"}
                     </Button>
                   </Link>
                   <Link to="/events">
                     <Button variant="outline">
-                      Meu Calendário
+                      {i18n.language === 'en' ? "My Calendar" : "Meu Calendário"}
                     </Button>
                   </Link>
                 </div>
@@ -287,20 +307,20 @@ export default function ConfiguracoesPage() {
         <TabsContent value="manager">
           <Card>
             <CardHeader>
-              <CardTitle>Configurações de Gestor</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? "Manager Settings" : "Configurações de Gestor"}</CardTitle>
               <CardDescription>
-                Gerencie suas configurações específicas como gestor.
+                {i18n.language === 'en' ? "Manage your specific settings as a manager." : "Gerencie suas configurações específicas como gestor."}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Clientes Atribuídos</h3>
+                <h3 className="text-lg font-medium">{i18n.language === 'en' ? "Assigned Clients" : "Clientes Atribuídos"}</h3>
                 <p className="text-sm text-gray-500">
-                  Visualize e gerencie os clientes que estão sob sua supervisão.
+                  {i18n.language === 'en' ? "View and manage clients under your supervision." : "Visualize e gerencie os clientes que estão sob sua supervisão."}
                 </p>
                 <Link to="/my-clients">
                   <Button variant="outline">
-                    Meus Clientes
+                    {i18n.language === 'en' ? "My Clients" : "Meus Clientes"}
                   </Button>
                 </Link>
               </div>
@@ -313,9 +333,9 @@ export default function ConfiguracoesPage() {
         <div className="mt-8">
           <Card>
             <CardHeader>
-              <CardTitle>Opções de Administrador</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? "Administrator Options" : "Opções de Administrador"}</CardTitle>
               <CardDescription>
-                Gerencie técnicos e gestores do sistema.
+                {i18n.language === 'en' ? "Manage technicians and managers of the system." : "Gerencie técnicos e gestores do sistema."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -323,13 +343,13 @@ export default function ConfiguracoesPage() {
                 <Link to="/technicians">
                   <Button className="w-full sm:w-auto">
                     <UserPlusIcon className="mr-2 h-4 w-4" />
-                    Gerenciar Técnicos
+                    {i18n.language === 'en' ? "Manage Technicians" : "Gerenciar Técnicos"}
                   </Button>
                 </Link>
                 <Link to="/managers">
                   <Button className="w-full sm:w-auto">
                     <Users className="mr-2 h-4 w-4" />
-                    Gerenciar Gestores
+                    {i18n.language === 'en' ? "Manage Managers" : "Gerenciar Gestores"}
                   </Button>
                 </Link>
               </div>
