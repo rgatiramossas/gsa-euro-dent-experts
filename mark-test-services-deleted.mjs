@@ -13,11 +13,11 @@ async function markServicesAsDeleted() {
       port: process.env.MYSQL_PORT
     });
 
-    // Identificar quais serviços marcar como deleted (IDs recentes > 14)
+    // Identificar quais serviços marcar como deleted (todos com status 'pending')
     const [services] = await connection.query(`
       SELECT id, client_id, status, created_at 
       FROM services 
-      WHERE id > 14 AND status != 'deleted'
+      WHERE status = 'pending'
       ORDER BY id DESC
     `);
     
