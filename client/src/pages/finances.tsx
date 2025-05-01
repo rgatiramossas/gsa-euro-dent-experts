@@ -1025,8 +1025,8 @@ export default function Finances() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title="Financeiro"
-        description="Estatísticas e relatórios financeiros"
+        title={t("finances.title")}
+        description={t("finances.description")}
       />
       
       <div className="mt-6 mb-6">
