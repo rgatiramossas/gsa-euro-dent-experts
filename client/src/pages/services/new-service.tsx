@@ -739,7 +739,7 @@ export default function NewServicePage() {
                     <FormLabel>{t("clients.vehicle")} <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => form.setValue('vehicle_id', parseInt(value))}
-                      defaultValue={field.value?.toString()}
+                      value={field.value?.toString()}
                       disabled={!selectedClientId}
                     >
                       <FormControl>
@@ -801,7 +801,7 @@ export default function NewServicePage() {
                             }
                           }
                         }}
-                        defaultValue={field.value?.toString()}
+                        value={field.value?.toString()}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -829,7 +829,7 @@ export default function NewServicePage() {
                       <FormLabel>{t("services.technician")}</FormLabel>
                       <Select
                         onValueChange={(value) => form.setValue('technician_id', parseInt(value))}
-                        defaultValue={field.value?.toString()}
+                        value={field.value?.toString()}
                       >
                         <FormControl>
                           <SelectTrigger>
