@@ -29,7 +29,8 @@
     "saving": "Salvando...",
     "processing": "Processando...",
     "sending": "Enviando...",
-    "notSpecified": "Não especificado"
+    "notSpecified": "Não especificado",
+    "noData": "Nenhum dado disponível"
   },
   "auth": {
     "login": "Entrar",
@@ -535,6 +536,8 @@
     "nenhumPedidoPagamentoEncontrado": "Nenhum pedido de pagamento encontrado",
     "nenhumaDespesaEncontrada": "Nenhuma despesa encontrada",
     "nenhumServicoDisponivel": "Nenhum serviço disponível para solicitação de pagamento",
+    "noValuesToShow": "Sem valores para exibir",
+    "noMonthlyData": "Sem dados mensais para exibir",
     "selecioneServico": "Selecione pelo menos um serviço para solicitar pagamento",
     "approvePaymentRequest": "Aprovar Pedido de Pagamento",
     "approvePaymentRequestConfirmation": "Tem certeza que deseja aprovar este pedido de pagamento? Esta ação irá marcar os serviços relacionados como \"faturado\".",
