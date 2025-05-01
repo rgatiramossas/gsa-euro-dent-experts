@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useTranslateServiceType } from "@/hooks/useTranslateServiceType";
 import { ServiceType, ServiceStatus, ServiceWithDetails } from "@/types";
 import {
   Clipboard,
@@ -90,6 +91,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
+  const { translateServiceType } = useTranslateServiceType();
   
   // Variáveis auxiliares para melhorar a legibilidade e evitar erros de tipagem
   const isGestor = currentUser?.role === 'gestor' || currentUser?.role === 'manager'; // Incluir ambas as variações
@@ -1188,7 +1190,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         <SelectContent>
                           {serviceTypes?.map((type) => (
                             <SelectItem key={type.id} value={type.id.toString()}>
-                              {type.name}
+                              {translateServiceType(type.name)}
                             </SelectItem>
                           ))}
                         </SelectContent>

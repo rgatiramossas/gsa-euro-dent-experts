@@ -334,6 +334,11 @@
     "positiveNumber": "Debe ser un número positivo",
     "selectOption": "Seleccione una opción"
   },
+  "serviceTypeNames": {
+    "Amassado de Rua": "Abolladura de Calle",
+    "Granizo": "Granizo", 
+    "Outros": "Otros"
+  },
   "notifications": {
     "newService": "Nuevo servicio creado",
     "serviceUpdated": "Servicio actualizado",

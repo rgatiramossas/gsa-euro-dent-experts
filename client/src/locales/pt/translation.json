@@ -359,6 +359,11 @@
     "positiveNumber": "Deve ser um número positivo",
     "selectOption": "Selecione uma opção"
   },
+  "serviceTypeNames": {
+    "Amassado de Rua": "Amassado de Rua",
+    "Granizo": "Granizo", 
+    "Outros": "Outros"
+  },
   "notifications": {
     "newService": "Novo serviço criado",
     "serviceUpdated": "Serviço atualizado",

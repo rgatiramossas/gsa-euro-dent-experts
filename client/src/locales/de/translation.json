@@ -331,6 +331,11 @@
     "positiveNumber": "Muss eine positive Zahl sein",
     "selectOption": "Wählen Sie eine Option"
   },
+  "serviceTypeNames": {
+    "Amassado de Rua": "Straßendelle",
+    "Granizo": "Hagel", 
+    "Outros": "Andere"
+  },
   "notifications": {
     "newService": "Neue Dienstleistung erstellt",
     "serviceUpdated": "Dienstleistung aktualisiert",
