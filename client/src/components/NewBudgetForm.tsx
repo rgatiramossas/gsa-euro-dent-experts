@@ -110,7 +110,17 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   
   // Buscar a lista de clientes do banco de dados
   const { data: clients, isLoading: isLoadingClients, error: clientsError } = useQuery<any[]>({
-    queryKey: ['/api/clients'],
+    queryKey: ['/api/clients', 'active'],
+    queryFn: async () => {
+      console.log("Buscando clientes ativos...");
+      const response = await fetch('/api/clients?filterMode=active');
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar clientes: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log("Clientes recebidos:", data);
+      return Array.isArray(data) ? data : [];
+    },
     retry: 3,
     staleTime: 60000, // 1 minuto
   });
@@ -438,14 +448,17 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                           ) : !clients || clients.length === 0 ? (
                             <SelectItem value="no-clients">{t("budget.noClientsFound")}</SelectItem>
                           ) : (
-                            clients.map((client) => {
-                              console.log("Renderizando cliente:", client);
-                              return (
-                                <SelectItem key={client.id} value={client.id.toString()}>
-                                  {client.name}
-                                </SelectItem>
-                              );
-                            })
+                            <>
+                              {console.log("Total de clientes:", clients.length)}
+                              {clients.map((client) => {
+                                console.log("Renderizando cliente:", client);
+                                return (
+                                  <SelectItem key={client.id} value={String(client.id)}>
+                                    {client.name}
+                                  </SelectItem>
+                                );
+                              })}
+                            </>
                           )}
                         </SelectContent>
                       </Select>
