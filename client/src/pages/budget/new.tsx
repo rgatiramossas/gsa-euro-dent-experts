@@ -29,6 +29,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Loader2, Save, ArrowLeft } from "lucide-react";
+import { storeOfflineRequest } from "@/lib/offlineDb";
 
 // Define schema para validação do formulário de orçamento
 const budgetSchema = z.object({
@@ -84,6 +85,7 @@ const NewBudgetPage: React.FC = () => {
     },
   });
 
+
   // Handle form submission
   const onSubmit = async (data: BudgetFormValues) => {
     setIsSubmitting(true);
@@ -98,30 +100,70 @@ const NewBudgetPage: React.FC = () => {
           : JSON.stringify(data.damaged_parts)
       };
       
-      // Enviar para a API
-      const response = await fetch("/api/budgets", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formattedData),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Falha ao criar orçamento");
+      // Verificar estado da conexão
+      if (!navigator.onLine) {
+        try {
+          
+          // Salvar localmente no IndexedDB para sincronização silenciosa posterior
+          const timestamp = new Date().getTime();
+          const pendingRequest = {
+            id: `budget_${timestamp}`,
+            timestamp,
+            url: '/api/budgets',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: formattedData,
+            tableName: 'budgets',
+            operationType: 'create' as const
+          };
+          
+          // Salvar a requisição pendente para sincronização posterior
+          await storeOfflineRequest(pendingRequest);
+          
+          // Feedback genérico sem mencionar o modo offline
+          toast({
+            title: "Orçamento criado",
+            description: "O orçamento foi criado com sucesso.",
+          });
+          
+          // Silenciosamente atualizar o cache do queryClient
+          queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
+          
+          // Redirecionar após o cadastro
+          navigate("/budgets");
+        } catch (offlineError) {
+          console.error('Erro ao processar orçamento:', offlineError);
+          toast({
+            title: "Erro",
+            description: "Ocorreu um erro ao criar o orçamento. Tente novamente.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Enviar para a API se online
+        const response = await fetch("/api/budgets", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formattedData),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Falha ao criar orçamento");
+        }
+        
+        const result = await response.json();
+        
+        toast({
+          title: "Orçamento criado",
+          description: "O orçamento foi criado com sucesso.",
+        });
+        
+        // Redirecionar para a página de orçamentos
+        queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
+        navigate("/budgets");
       }
-      
-      const result = await response.json();
-      
-      toast({
-        title: "Orçamento criado",
-        description: "O orçamento foi criado com sucesso.",
-      });
-      
-      // Redirecionar para a página de orçamentos
-      queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
-      navigate("/budgets");
-      
     } catch (error) {
       console.error("Erro ao criar orçamento:", error);
       toast({
