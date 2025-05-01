@@ -453,41 +453,41 @@ export default function Finances() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Valores Recebidos</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-500">{t("finances.valoresRecebidos")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{isLoadingFinanceStats ? "..." : formatCurrency(techFinanceStats?.receivedValue || 0)}</div>
-              <div className="text-xs text-gray-500">Pagamentos já realizados</div>
+              <div className="text-xs text-gray-500">{t("finances.pagamentosRealizados")}</div>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Valores Faturados</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-500">{t("finances.valoresFaturados")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{isLoadingFinanceStats ? "..." : formatCurrency(techFinanceStats?.invoicedValue || 0)}</div>
-              <div className="text-xs text-gray-500">Pagamentos aprovados</div>
+              <div className="text-xs text-gray-500">{t("finances.pagamentosAprovados")}</div>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Em Aprovação</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-500">{t("finances.emAprovacao")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{isLoadingFinanceStats ? "..." : formatCurrency(techFinanceStats?.pendingValue || 0)}</div>
-              <div className="text-xs text-gray-500">Pedidos pendentes</div>
+              <div className="text-xs text-gray-500">{t("finances.pedidosPendentes")}</div>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Não Solicitados</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-500">{t("finances.naoSolicitados")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{isLoadingFinanceStats ? "..." : formatCurrency(techFinanceStats?.unpaidCompletedValue || 0)}</div>
-              <div className="text-xs text-gray-500">Serviços concluídos não solicitados</div>
+              <div className="text-xs text-gray-500">{t("finances.servicosConcluidosNaoSolicitados")}</div>
             </CardContent>
           </Card>
         </div>
@@ -496,7 +496,7 @@ export default function Finances() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <Card>
             <CardHeader>
-              <CardTitle>Visão Geral de Pagamentos</CardTitle>
+              <CardTitle>{t("finances.visaoGeralPagamentos")}</CardTitle>
             </CardHeader>
             <CardContent className="h-72">
               {isLoadingFinanceStats ? (
@@ -511,7 +511,7 @@ export default function Finances() {
           
           <Card>
             <CardHeader>
-              <CardTitle>Pagamentos por Mês</CardTitle>
+              <CardTitle>{t("finances.byMonth")}</CardTitle>
             </CardHeader>
             <CardContent className="h-72">
               {isLoadingFinanceStats ? (
@@ -527,13 +527,13 @@ export default function Finances() {
         
         <Tabs defaultValue="payment_requests" className="space-y-6">
           <TabsList className="mb-4">
-            <TabsTrigger value="payment_requests">Pedidos de Pagamento</TabsTrigger>
+            <TabsTrigger value="payment_requests">{t("finances.pedidosDePagamento")}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="payment_requests">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Pedidos de Pagamento</CardTitle>
+                <CardTitle>{t("finances.pedidosDePagamento")}</CardTitle>
                 <Button 
                   size="sm" 
                   onClick={() => setPaymentRequestDialogOpen(true)}
@@ -541,7 +541,7 @@ export default function Finances() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Novo Pedido
+                  {t("finances.newPaymentRequest")}
                 </Button>
               </CardHeader>
               <CardContent className="p-0">
@@ -551,16 +551,16 @@ export default function Finances() {
                   </div>
                 ) : !paymentRequests || !Array.isArray(paymentRequests) || paymentRequests.length === 0 ? (
                   <div className="flex justify-center items-center py-8 text-gray-500">
-                    Nenhum pedido de pagamento encontrado
+                    {t("finances.nenhumPedidoPagamentoEncontrado")}
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>ID</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Valor Total</TableHead>
+                        <TableHead>{t("finances.table.date")}</TableHead>
+                        <TableHead>{t("finances.table.status")}</TableHead>
+                        <TableHead className="text-right">{t("finances.table.value")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -577,9 +577,9 @@ export default function Finances() {
                                 request.status === "rejeitado" ? "bg-red-600" :
                                 "bg-gray-600"
                               }>
-                                {request.status === "aguardando_aprovacao" ? "Aguardando Aprovação" :
-                                 request.status === "aprovado" ? "Aprovado" :
-                                 request.status === "rejeitado" ? "Rejeitado" : request.status}
+                                {request.status === "aguardando_aprovacao" ? t("services.status.awaiting_approval") :
+                                 request.status === "aprovado" ? t("services.status.approved") :
+                                 request.status === "rejeitado" ? t("services.status.rejected") : request.status}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right font-medium">
