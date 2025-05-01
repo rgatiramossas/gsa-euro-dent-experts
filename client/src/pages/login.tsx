@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -16,6 +17,7 @@ export default function Login() {
   const { login, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
+  const { t } = useTranslation();
   
   // Redirect if already authenticated
   useEffect(() => {
@@ -29,8 +31,8 @@ export default function Login() {
     
     if (!username || !password) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha o e-mail e a senha",
+        title: t("auth.requiredFields", "Campos obrigatórios"),
+        description: t("auth.fillUsernamePassword", "Por favor, preencha o e-mail e a senha"),
         variant: "destructive",
       });
       return;
@@ -40,15 +42,15 @@ export default function Login() {
       setIsSubmitting(true);
       await login(username, password, rememberMe);
       toast({
-        title: "Login bem-sucedido",
-        description: "Bem-vindo de volta!",
+        title: t("auth.loginSuccess", "Login bem-sucedido"),
+        description: t("auth.welcomeBack", "Bem-vindo de volta!"),
       });
       setLocation("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       toast({
-        title: "Erro de autenticação",
-        description: "Usuário ou senha inválidos. Tente novamente.",
+        title: t("auth.authError", "Erro de autenticação"),
+        description: t("auth.invalidCredentials", "Usuário ou senha inválidos. Tente novamente."),
         variant: "destructive",
       });
     } finally {
@@ -72,11 +74,11 @@ export default function Login() {
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="username">Usuário</Label>
+              <Label htmlFor="username">{t("auth.username", "Usuário")}</Label>
               <Input 
                 id="username"
                 type="text"
-                placeholder="Digite seu usuário"
+                placeholder={t("auth.enterUsername", "Digite seu usuário")}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="mt-1"
@@ -85,11 +87,11 @@ export default function Login() {
             </div>
             
             <div>
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">{t("auth.password", "Senha")}</Label>
               <Input 
                 id="password"
                 type="password"
-                placeholder="Digite sua senha"
+                placeholder={t("auth.enterPassword", "Digite sua senha")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1"
@@ -105,7 +107,7 @@ export default function Login() {
                   onCheckedChange={(checked) => setRememberMe(checked as boolean)}
                 />
                 <Label htmlFor="remember-me" className="text-sm cursor-pointer">
-                  Lembrar-me
+                  {t("auth.rememberMe", "Lembrar-me")}
                 </Label>
               </div>
               
@@ -115,12 +117,12 @@ export default function Login() {
                 onClick={(e) => {
                   e.preventDefault();
                   toast({
-                    title: "Recuperação de senha",
-                    description: "Contate o administrador do sistema para redefinir sua senha.",
+                    title: t("auth.passwordRecovery", "Recuperação de senha"),
+                    description: t("auth.contactAdminForReset", "Contate o administrador do sistema para redefinir sua senha."),
                   });
                 }}
               >
-                Esqueceu a senha?
+                {t("auth.forgotPassword", "Esqueceu a senha?")}
               </a>
             </div>
             
@@ -129,7 +131,7 @@ export default function Login() {
               className="w-full py-6 bg-red-600 hover:bg-red-700 text-white font-bold text-lg" 
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Entrando..." : "Entrar"}
+              {isSubmitting ? t("auth.loggingIn", "Entrando...") : t("auth.login", "Entrar")}
             </Button>
           </form>
         </CardContent>
