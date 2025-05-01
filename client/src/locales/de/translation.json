@@ -87,6 +87,7 @@
     "editService": "Dienstleistung bearbeiten",
     "deleteService": "Dienstleistung löschen",
     "backToServices": "Zurück zu Dienstleistungen",
+    "backToList": "Zurück zur Liste",
     "changeStatus": "Status ändern",
     "selectNewStatus": "Wählen Sie den neuen Status der Dienstleistung und fügen Sie bei Bedarf Notizen hinzu.",
     "newStatus": "Neuer Status",
