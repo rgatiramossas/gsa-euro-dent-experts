@@ -1,5 +1,7 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import i18next from 'i18next';
+import type { TFunction } from 'i18next';
 
 // Interface para dados do orçamento
 interface Budget {
@@ -39,23 +41,10 @@ const vehicleParts = [
   "lateral_esquerda", "porta_malas_inferior", "lateral_direita"
 ];
 
-// Nomes de exibição das peças
-const partDisplayNames: Record<string, string> = {
-  para_lama_esquerdo: "Para-lama Esquerdo",
-  capo: "Capô",
-  para_lama_direito: "Para-lama Direito",
-  coluna_esquerda: "Coluna Esquerda",
-  teto: "Teto",
-  coluna_direita: "Coluna Direita",
-  porta_dianteira_esquerda: "Porta Dianteira Esquerda",
-  imagem_central: "", // Espaço vazio para a imagem
-  porta_dianteira_direita: "Porta Dianteira Direita",
-  porta_traseira_esquerda: "Porta Traseira Esquerda",
-  porta_malas_superior: "Porta Malas Superior",
-  porta_traseira_direita: "Porta Traseira Direita",
-  lateral_esquerda: "Lateral Esquerda",
-  porta_malas_inferior: "Porta Malas Inferior",
-  lateral_direita: "Lateral Direita"
+// Função para obter o nome traduzido da peça
+const getPartDisplayName = (part: string, t: TFunction): string => {
+  if (part === "imagem_central") return ""; // Espaço vazio para a imagem
+  return t(`budget.damageMap.${part}`);
 };
 
 /**
@@ -64,6 +53,10 @@ const partDisplayNames: Record<string, string> = {
  */
 export const generateSimplePdf = async (budget: Budget, isGestor = false): Promise<void> => {
   try {
+    // Obter a função de tradução atual
+    const t = i18next.t.bind(i18next);
+    console.log("Gerando PDF no idioma:", i18next.language);
+    
     // Criar o elemento temporário para renderizar o conteúdo
     const tempElement = document.createElement('div');
     tempElement.style.position = 'fixed';
@@ -126,7 +119,7 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
             </div>`;
           } else {
             return `<div style="border: 1px solid #ddd; border-radius: 5px; padding: 6px; height: 100px; display: flex; align-items: center; justify-content: center;">
-              <div style="color: #888; font-size: 10px;">Sem imagem</div>
+              <div style="color: #888; font-size: 10px;">${t('budget.noImage')}</div>
             </div>`;
           }
         }
@@ -135,7 +128,7 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
         
         return `
           <div style="border: 1px solid #ddd; border-radius: 5px; padding: 6px;">
-            <h4 style="font-size: 11px; font-weight: bold; margin-bottom: 4px; text-align: center;">${partDisplayNames[part]}</h4>
+            <h4 style="font-size: 11px; font-weight: bold; margin-bottom: 4px; text-align: center;">${getPartDisplayName(part, t)}</h4>
             <div>
               <!-- Tamanho 20mm -->
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -164,15 +157,15 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
               <!-- Checkboxes -->
               <div style="display: flex; justify-content: space-between; margin-top: 8px;">
                 <div style="display: flex; flex-direction: column; align-items: center; width: 20px;">
-                  <div style="width: 10px; height: 10px; border: 1px solid #ddd; border-radius: 2px; ${damage.isAluminum ? 'background-color: #2563EB;' : ''}" title="Alumínio"></div>
+                  <div style="width: 10px; height: 10px; border: 1px solid #ddd; border-radius: 2px; ${damage.isAluminum ? 'background-color: #2563EB;' : ''}" title="${t('budget.aluminum')}"></div>
                   <label style="font-size: 9px; font-weight: bold; color: #DC2626; margin-top: 2px;">A</label>
                 </div>
                 <div style="display: flex; flex-direction: column; align-items: center; width: 20px;">
-                  <div style="width: 10px; height: 10px; border: 1px solid #ddd; border-radius: 2px; ${damage.isGlue ? 'background-color: #2563EB;' : ''}" title="Cola"></div>
+                  <div style="width: 10px; height: 10px; border: 1px solid #ddd; border-radius: 2px; ${damage.isGlue ? 'background-color: #2563EB;' : ''}" title="${t('budget.glue')}"></div>
                   <label style="font-size: 9px; font-weight: bold; color: #2563EB; margin-top: 2px;">K</label>
                 </div>
                 <div style="display: flex; flex-direction: column; align-items: center; width: 20px;">
-                  <div style="width: 10px; height: 10px; border: 1px solid #ddd; border-radius: 2px; ${damage.isPaint ? 'background-color: #2563EB;' : ''}" title="Pintura"></div>
+                  <div style="width: 10px; height: 10px; border: 1px solid #ddd; border-radius: 2px; ${damage.isPaint ? 'background-color: #2563EB;' : ''}" title="${t('budget.paint')}"></div>
                   <label style="font-size: 9px; font-weight: bold; color: #16A34A; margin-top: 2px;">P</label>
                 </div>
               </div>
@@ -231,7 +224,7 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
         <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
           <!-- Barra azul com título ORÇAMENTO e número -->
           <div style="background-color: #2563EB; color: white; padding: 6px 10px; display: flex; justify-content: space-between; border-radius: 6px;">
-            <div style="font-size: 15px; font-weight: bold;">ORÇAMENTO</div>
+            <div style="font-size: 15px; font-weight: bold;">${t('budget.budgetTitle').toUpperCase()}</div>
             <div style="font-size: 15px; font-weight: bold;">#${budget.id}</div>
           </div>
           
@@ -239,17 +232,17 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
           <div style="display: flex; gap: 10px;">
             <!-- Bloco de informações do cliente -->
             <div style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
-              <div style="font-weight: bold; margin-bottom: 12px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO CLIENTE</div>
-              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Nome:</span> ${budget.client_name}</div>
-              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Data:</span> ${formatDate(budget.date)}</div>
+              <div style="font-weight: bold; margin-bottom: 12px; color: #2563EB; font-size: 14px;">${t('budget.clientInfoTitle').toUpperCase()}</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">${t('budget.clientName')}:</span> ${budget.client_name}</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">${t('budget.date')}:</span> ${formatDate(budget.date)}</div>
             </div>
             
             <!-- Bloco de informações do veículo -->
             <div style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9fafb;">
-              <div style="font-weight: bold; margin-bottom: 12px; color: #2563EB; font-size: 14px;">INFORMAÇÕES DO VEÍCULO</div>
-              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Veículo:</span> ${budget.vehicle_info}</div>
-              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Placa:</span> ${budget.plate || '---'}</div>
-              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">Chassi:</span> ${budget.chassis_number || '---'}</div>
+              <div style="font-weight: bold; margin-bottom: 12px; color: #2563EB; font-size: 14px;">${t('budget.vehicleInfoTitle').toUpperCase()}</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">${t('budget.vehicle')}:</span> ${budget.vehicle_info}</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">${t('budget.licensePlate')}:</span> ${budget.plate || '---'}</div>
+              <div style="margin-bottom: 6px; font-size: 13px;"><span style="font-weight: bold;">${t('budget.chassisNumber')}:</span> ${budget.chassis_number || '---'}</div>
             </div>
           </div>
         </div>
@@ -257,18 +250,18 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
         <!-- Seção de Danos do Veículo -->
         <div style="margin-top: 5px; margin-bottom: 15px;">
           <div style="background-color: #2563EB; color: white; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px;">
-            <div style="font-size: 15px; font-weight: bold;">DANOS DO VEÍCULO</div>
+            <div style="font-size: 15px; font-weight: bold;">${t('budget.vehicleDamages').toUpperCase()}</div>
           </div>
           
           ${renderDamageGrid()}
           
           <!-- Seção de Materiais Especiais -->
           <div style="margin-top: 15px; border: 2px solid #2563EB; padding: 10px; border-radius: 6px; background-color: #f0f7ff;">
-            <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #2563EB; text-align: center; text-transform: uppercase;">Materiais Especiais</h3>
+            <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #2563EB; text-align: center; text-transform: uppercase;">${t('budget.specialMaterials')}</h3>
             <div style="font-size: 12px; text-align: center; font-weight: bold;">
-              <span style="color: #DC2626;">(A) = Alumínio (+25%)</span> | 
-              <span style="color: #2563EB;">(K) = Cola (+30%)</span> | 
-              <span style="color: #16A34A;">(P) = Pintura</span>
+              <span style="color: #DC2626;">(A) = ${t('budget.aluminum')} (+25%)</span> | 
+              <span style="color: #2563EB;">(K) = ${t('budget.glue')} (+30%)</span> | 
+              <span style="color: #16A34A;">(P) = ${t('budget.paint')}</span>
             </div>
           </div>
 
@@ -319,7 +312,7 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
       }
 
       // Fazer o download do PDF
-      const fileName = `Orcamento_${budget.id}_${budget.client_name.replace(/[^\w\s]/gi, '')}.pdf`;
+      const fileName = `${t('budget.budgetTitle')}_${budget.id}_${budget.client_name.replace(/[^\w\s]/gi, '')}.pdf`;
       pdf.save(fileName);
 
       // Limpar o elemento temporário
