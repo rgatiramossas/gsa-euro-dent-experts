@@ -20,6 +20,8 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
 
 /**
  * Componente que adiciona uma marcação visual para itens criados/modificados offline
+ * O cliente pediu para remover todos os indicadores de sincronização, então este
+ * componente agora não mostra nada, independente do estado offline/online
  */
 export function OfflineItemIndicator({ 
   className,
@@ -30,24 +32,6 @@ export function OfflineItemIndicator({
   createdOffline?: boolean,
   modifiedOffline?: boolean
 }) {
-  if (!createdOffline && !modifiedOffline) return null;
-  
-  return (
-    <span 
-      className={cn(
-        "inline-flex items-center gap-1 text-xs rounded px-1.5 py-0.5",
-        createdOffline 
-          ? "bg-orange-100 text-orange-800 border border-orange-300" 
-          : "bg-yellow-100 text-yellow-800 border border-yellow-300",
-        className
-      )}
-      title={createdOffline 
-        ? "Criado offline, será sincronizado quando conectado" 
-        : "Modificado offline, será sincronizado quando conectado"
-      }
-    >
-      <WifiOff className="h-3 w-3" />
-      {createdOffline ? "Novo" : "Modificado"}
-    </span>
-  );
+  // Não mostra nenhum indicador, conforme solicitado pelo cliente
+  return null;
 }
