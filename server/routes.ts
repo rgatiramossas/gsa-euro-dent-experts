@@ -30,6 +30,8 @@ declare module 'express-session' {
   interface SessionData {
     userId?: number;
     userRole?: string;
+    loginTime?: string;
+    created?: string;
   }
 }
 
@@ -108,18 +110,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(
     session({
       secret: sessionSecret,
-      resave: false, // Não salvar sessão se não modificada
-      saveUninitialized: false, // Não criar sessão até que algo seja armazenado
+      resave: true, // Forçar resalvar da sessão, mesmo se não modificada
+      saveUninitialized: true, // Forçar salvar sessões não inicializadas
       store: storage.sessionStore, // Usar o armazenamento MySQL
       cookie: { 
-        secure: process.env.NODE_ENV === "production",
+        secure: false, // Não requer HTTPS em desenvolvimento
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias em milissegundos para maior duração
         httpOnly: true, // Prevenir acesso por JavaScript no cliente
         sameSite: 'lax', // Permitir que o cookie seja enviado em navegações de nível superior
         path: '/'
       },
       rolling: true, // Reset da expiração a cada requisição
-      name: 'eurodent.sid' // Nome personalizado para o cookie de sessão
+      name: 'eurodent.sid', // Nome personalizado para o cookie de sessão
+      proxy: true // Confia nos headers X-Forwarded-* quando atrás de um proxy
     })
   );
   // A configuração de servir arquivos estáticos de uploads foi movida para index.ts
@@ -228,23 +231,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Cookies enviados pelo cliente:", req.headers.cookie);
       console.log("Conteúdo da sessão:", JSON.stringify(req.session, null, 2));
       console.log("Usuário na sessão:", req.session.userId);
-      console.log("Header de autenticação:", req.headers.authorization);
-      console.log("=== Fim da verificação de sessão ===");
       
+      // Se não houver usuário na sessão
       if (!req.session.userId) {
         console.log("Sessão inválida: userId não encontrado na sessão");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
+      // Verificar se o usuário existe no banco de dados
       const user = await storage.getUser(req.session.userId);
       
       if (!user) {
         console.log(`Usuário com ID ${req.session.userId} não encontrado no banco de dados`);
-        // Se o usuário não existir, destruir a sessão
-        req.session.destroy((err) => {
-          if (err) {
-            console.error("Erro ao destruir sessão:", err);
-          }
+        // Limpar a sessão e retornar erro de autenticação
+        req.session.userId = undefined;
+        req.session.userRole = undefined;
+        req.session.save((err) => {
+          if (err) console.error("Erro ao limpar sessão:", err);
           return res.status(401).json({ message: "User not found" });
         });
         return;
@@ -252,30 +255,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Usuário ${user.username} autenticado com sucesso através da sessão`);
       
-      // Renovar a sessão a cada verificação bem-sucedida
-      req.session.touch();
+      // Renovar e garantir valores da sessão
+      req.session.userId = user.id; // Reafirmar valores
+      req.session.userRole = user.role;
       
-      // Salvar explicitamente para garantir que a data de expiração é atualizada
+      // Renovar o cookie da sessão
+      if (req.session.cookie) {
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 dias
+      }
+      
+      // Responder imediatamente
+      res.json({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      });
+      
+      // Salvar a sessão após responder (não bloqueia)
       req.session.save((err) => {
         if (err) {
-          console.error("Erro ao atualizar sessão:", err);
+          console.error("Erro ao atualizar sessão após resposta:", err);
+        } else {
+          console.log("Sessão atualizada com sucesso após resposta:", req.sessionID);
         }
-        
-        // Verificar cabeçalhos da resposta
-        res.on('finish', () => {
-          console.log("Resposta /api/auth/me enviada com cabeçalhos:", res.getHeaders());
-          console.log("Cookie definido na resposta:", res.getHeader('set-cookie'));
-        });
-        
-        res.json({
-          id: user.id,
-          username: user.username,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        });
       });
-      return; // Importante: evitar código adicional após a chamada assíncrona
     } catch (error) {
       console.error("Auth check error:", error);
       res.status(500).json({ message: "Internal server error" });

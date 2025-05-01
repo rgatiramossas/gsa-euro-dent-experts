@@ -307,8 +307,9 @@ export class DatabaseStorage implements IStorage {
       const options = {
         clearExpired: true,
         checkExpirationInterval: 900000, // 15 minutos em milissegundos
-        expiration: 86400000, // 1 dia em milissegundos
+        expiration: 30 * 24 * 60 * 60 * 1000, // 30 dias em milissegundos
         createDatabaseTable: true, // Criar tabela de sessões se não existir
+        disableTouch: false, // Garantir que as sessões são "touched" para renovação
         schema: {
           tableName: 'sessions',
           columnNames: {
@@ -316,7 +317,9 @@ export class DatabaseStorage implements IStorage {
             expires: 'expires',
             data: 'data'
           }
-        }
+        },
+        // Usar o nome de cookie consistente
+        cookieName: 'eurodent.sid'
       };
       
       // Criar store de sessões MySQL
