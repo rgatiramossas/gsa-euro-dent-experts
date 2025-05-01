@@ -1039,10 +1039,10 @@ export default function Finances() {
               <SelectValue placeholder="Selecione o período" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="week">Últimos 7 dias</SelectItem>
-              <SelectItem value="month">Último mês</SelectItem>
-              <SelectItem value="year">Este ano</SelectItem>
-              <SelectItem value="all">Todo o período</SelectItem>
+              <SelectItem value="week">{t("finances.period.week")}</SelectItem>
+              <SelectItem value="month">{t("finances.period.month")}</SelectItem>
+              <SelectItem value="year">{t("finances.period.year")}</SelectItem>
+              <SelectItem value="all">{t("finances.period.all")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1088,17 +1088,17 @@ export default function Finances() {
       
       <Tabs defaultValue="revenue" className="space-y-6">
         <TabsList className="mb-4">
-          <TabsTrigger value="revenue">Faturamento</TabsTrigger>
-          <TabsTrigger value="services">Serviços</TabsTrigger>
-          <TabsTrigger value="transactions">Transações</TabsTrigger>
-          <TabsTrigger value="payment_requests">Pedidos de Pagamento</TabsTrigger>
-          <TabsTrigger value="expenses">Despesas</TabsTrigger>
+          <TabsTrigger value="revenue">{t("finances.faturamento")}</TabsTrigger>
+          <TabsTrigger value="services">{t("finances.servicos")}</TabsTrigger>
+          <TabsTrigger value="transactions">{t("finances.transacoes")}</TabsTrigger>
+          <TabsTrigger value="payment_requests">{t("finances.pedidosDePagamento")}</TabsTrigger>
+          <TabsTrigger value="expenses">{t("finances.despesas")}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="revenue" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Faturamento por {period === "week" ? "Dia" : period === "month" ? "Semana" : "Mês"}</CardTitle>
+              <CardTitle>{t("finances.byWeek", { defaultValue: "Faturamento por" })} {period === "week" ? t("finances.byDay", { defaultValue: "Dia" }) : period === "month" ? t("finances.byWeek", { defaultValue: "Semana" }) : t("finances.byMonth", { defaultValue: "Mês" })}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-80">
@@ -1131,7 +1131,7 @@ export default function Finances() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Distribuição por Tipo de Serviço</CardTitle>
+                <CardTitle>{t("finances.distributionByServiceType")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-80">
@@ -1167,7 +1167,7 @@ export default function Finances() {
             
             <Card>
               <CardHeader>
-                <CardTitle>Comparação Mensal</CardTitle>
+                <CardTitle>{t("finances.monthlyComparison")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -1199,7 +1199,7 @@ export default function Finances() {
         <TabsContent value="services">
           <Card>
             <CardHeader>
-              <CardTitle>Serviços por Status</CardTitle>
+              <CardTitle>{t("finances.servicesByStatus")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-80">
@@ -1245,17 +1245,17 @@ export default function Finances() {
         <TabsContent value="transactions">
           <Card>
             <CardHeader>
-              <CardTitle>Últimas Transações</CardTitle>
+              <CardTitle>{t("finances.latestTransactions")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Serviço</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead>{t("finances.table.date")}</TableHead>
+                    <TableHead>{t("finances.table.client")}</TableHead>
+                    <TableHead>{t("finances.table.service")}</TableHead>
+                    <TableHead>{t("finances.table.status")}</TableHead>
+                    <TableHead className="text-right">{t("finances.table.value")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1300,7 +1300,7 @@ export default function Finances() {
         <TabsContent value="payment_requests">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Pedidos de Pagamento</CardTitle>
+              <CardTitle>{t("finances.paymentRequests")}</CardTitle>
               <Button 
                 size="sm" 
                 onClick={() => setPaymentRequestDialogOpen(true)}
@@ -1308,7 +1308,7 @@ export default function Finances() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Novo Pedido
+                {t("finances.newRequest")}
               </Button>
             </CardHeader>
             <CardContent className="p-0">
