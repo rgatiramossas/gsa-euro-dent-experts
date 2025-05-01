@@ -122,7 +122,7 @@ export default function NewServicePage() {
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [serviceSavedOffline, setServiceSavedOffline] = useState(false);
-  const translateServiceType = useTranslateServiceType();
+  const { translateServiceType } = useTranslateServiceType();
   
   // Carregar dados do cliente
   const { data: clients } = useQuery<Client[]>({
