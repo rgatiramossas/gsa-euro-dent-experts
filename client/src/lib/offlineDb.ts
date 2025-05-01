@@ -614,9 +614,6 @@ class OfflineDatabase extends Dexie {
   }
 }
 
-// Função para armazenar requisições offline para sincronização posterior e atualizar cache
-import { queryClient } from "./queryClient";
-
 // Função para armazenar requisições offline para sincronização posterior
 export async function storeOfflineRequest(request: PendingRequest): Promise<any> {
   // Armazenar a requisição para sincronização futura

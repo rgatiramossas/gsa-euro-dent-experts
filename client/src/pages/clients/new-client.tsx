@@ -235,8 +235,19 @@ export default function NewClient() {
         setIsSaving(false);
         setLocation('/clients');
         
-        // Silenciosamente atualizar o cache do queryClient
-        queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+        // Criar um item temporário para atualizar o cache
+        const tempItem = {
+          id: -(new Date().getTime()),
+          ...cleanData,
+          _isOffline: true,
+          created_at: new Date().toISOString()
+        };
+          
+        // Obter dados atuais e adicionar novo item
+        const currentItems = queryClient.getQueryData(['/api/clients']) || [];
+        // Garante que currentItems seja tratado como array
+        const itemsArray = Array.isArray(currentItems) ? currentItems : [];
+        queryClient.setQueryData(['/api/clients'], [...itemsArray, tempItem]);
       } catch (error) {
         console.error('Erro ao processar cliente:', error);
         toast({

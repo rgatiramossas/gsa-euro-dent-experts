@@ -126,8 +126,20 @@ const NewBudgetPage: React.FC = () => {
             description: "O orçamento foi criado com sucesso.",
           });
           
-          // Silenciosamente atualizar o cache do queryClient
-          queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
+          // Criar um item temporário para atualizar o cache
+          const tempItem = {
+            id: -(new Date().getTime()),
+            ...formattedData,
+            _isOffline: true,
+            created_at: new Date().toISOString(),
+            status: 'pending'
+          };
+          
+          // Obter dados atuais e adicionar novo item
+          const currentItems = queryClient.getQueryData(["/api/budgets"]) || [];
+          // Garante que currentItems seja tratado como array
+          const itemsArray = Array.isArray(currentItems) ? currentItems : [];
+          queryClient.setQueryData(["/api/budgets"], [...itemsArray, tempItem]);
           
           // Redirecionar após o cadastro
           navigate("/budgets");
