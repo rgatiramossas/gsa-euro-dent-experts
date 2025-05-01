@@ -2,9 +2,13 @@
  * Script para corrigir a forma como as sessões são armazenadas no MySQL
  * Modifica a implementação do express-mysql-session para armazenar as datas corretamente em milissegundos
  */
-const fs = require('fs');
-const { promisify } = require('util');
-const path = require('path');
+import fs from 'fs';
+import { promisify } from 'util';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
