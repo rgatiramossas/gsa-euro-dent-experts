@@ -35,6 +35,21 @@ class OfflineStatusStore {
       pendingCount: this.pendingCount
     };
   }
+  
+  // Método público para verificar se está online
+  isOnline(): boolean {
+    return this.isOnline;
+  }
+  
+  // Método público para verificar se está sincronizando
+  isSyncing(): boolean {
+    return this.isSyncing;
+  }
+  
+  // Método público para obter a contagem de requisições pendentes
+  getPendingCount(): number {
+    return this.pendingCount;
+  }
 
   // Atualizar status online
   setOnline(status: boolean): void {

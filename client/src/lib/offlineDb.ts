@@ -613,6 +613,11 @@ class OfflineDatabase extends Dexie {
   }
 }
 
+// Função para armazenar requisições offline para sincronização posterior
+export async function storeOfflineRequest(request: PendingRequest): Promise<void> {
+  await offlineDb.pendingRequests.add(request);
+}
+
 // Criar e exportar a instância do banco de dados
 const offlineDb = new OfflineDatabase();
 

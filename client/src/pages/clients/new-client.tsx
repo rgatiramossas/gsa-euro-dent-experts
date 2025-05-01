@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +27,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { insertClientSchema } from "@shared/schema.mysql";
+import { offlineStatusStore } from "@/lib/stores";
+import { storeOfflineRequest } from "@/lib/offlineDb";
+import { useSubscribe } from "@/hooks/useSubscribe";
 
 // Esquema simplificado para o formulário
 const formSchema = z.object({
@@ -45,6 +48,29 @@ export default function NewClient() {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const { t } = useTranslation();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveTimeout, setSaveTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Subscrever ao estado online
+  useSubscribe(offlineStatusStore, () => {
+    setIsOnline(offlineStatusStore.isOnline());
+  });
+  
+  // Efeito para verificar estado da conexão
+  useEffect(() => {
+    const handleOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+    };
+    
+    window.addEventListener('online', handleOnlineStatus);
+    window.addEventListener('offline', handleOnlineStatus);
+    
+    return () => {
+      window.removeEventListener('online', handleOnlineStatus);
+      window.removeEventListener('offline', handleOnlineStatus);
+    };
+  }, []);
   
   // Form definition
   const form = useForm<FormData>({
