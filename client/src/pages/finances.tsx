@@ -653,7 +653,7 @@ export default function Finances() {
             </div>
             <div className="flex justify-between items-center border-t pt-4 mt-4">
               <div>
-                <span className="font-medium">Total selecionado: </span>
+                <span className="font-medium">{t("finances.payment.totalSelected")}: </span>
                 {formatCurrency(
                   completedTechnicianServices
                     ?.filter(service => selectedServices.includes(service.id))
@@ -1691,7 +1691,7 @@ export default function Finances() {
             </div>
             <div className="flex justify-between items-center border-t pt-4 mt-4">
               <div>
-                <span className="font-medium">Total selecionado: </span>
+                <span className="font-medium">{t("finances.payment.totalSelected")}: </span>
                 {formatCurrency(
                   completableServices
                     ?.filter(service => selectedServices.includes(service.id))
@@ -1708,7 +1708,7 @@ export default function Finances() {
                   variant="outline" 
                   onClick={() => setPaymentRequestDialogOpen(false)}
                 >
-                  Cancelar
+                  {t("common.cancel")}
                 </Button>
                 <Button 
                   onClick={handleCreatePaymentRequest}
@@ -1717,9 +1717,9 @@ export default function Finances() {
                   {createPaymentRequestMutation.isPending ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                      Enviando...
+                      {t("common.sending")}
                     </div>
-                  ) : "Criar Pedido"}
+                  ) : t("finances.payment.createRequest")}
                 </Button>
               </div>
             </div>

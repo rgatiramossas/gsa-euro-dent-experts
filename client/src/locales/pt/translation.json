@@ -538,6 +538,7 @@
       "noCompletedServices": "Você não tem serviços concluídos para solicitar pagamento.",
       "serviceDescription": "Descrição do Serviço",
       "sendRequest": "Enviar Pedido",
+      "createRequest": "Criar Pedido",
       "totalSelected": "Total selecionado",
       "paymentMethod": "Forma de Pagamento",
       "paymentDetails": "Detalhes do Pagamento",
