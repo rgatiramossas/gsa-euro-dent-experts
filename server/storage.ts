@@ -303,11 +303,18 @@ export class DatabaseStorage implements IStorage {
   // Método para inicializar o sessionStore com MySQL após a conexão ser estabelecida
   initSessionStore(pool: any) {
     try {
+      // Primeiro, vamos verificar e garantir que a tabela de sessão esteja configurada corretamente
+      this.ensureSessionTable(pool).then(() => {
+        console.log("Tabela de sessões verificada e configurada corretamente.");
+      }).catch(err => {
+        console.error("Erro ao verificar tabela de sessões:", err);
+      });
+      
       // Opções para MySQL Session Store
       const options = {
         clearExpired: true,
         checkExpirationInterval: 900000, // 15 minutos em milissegundos
-        expiration: 30 * 24 * 60 * 60 * 1000, // 30 dias em milissegundos
+        expiration: 365 * 24 * 60 * 60 * 1000, // 1 ano em milissegundos
         createDatabaseTable: true, // Criar tabela de sessões se não existir
         disableTouch: false, // Garantir que as sessões são "touched" para renovação
         schema: {
