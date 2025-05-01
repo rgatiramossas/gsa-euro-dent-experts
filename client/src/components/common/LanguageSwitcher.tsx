@@ -46,7 +46,7 @@ const LanguageSwitcher: React.FC = () => {
   return (
     <div className="flex items-center space-x-2">
       <Select
-        defaultValue={i18n.language}
+        value={i18n.language}
         onValueChange={changeLanguage}
       >
         <SelectTrigger className="md:w-[110px] w-[48px] h-[34px] text-white bg-primary border-white hover:bg-primary-dark px-1 md:px-2">
