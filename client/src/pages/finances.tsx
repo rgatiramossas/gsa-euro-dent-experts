@@ -1098,7 +1098,15 @@ export default function Finances() {
         <TabsContent value="revenue" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t("finances.byWeek", { defaultValue: "Faturamento por" })} {period === "week" ? t("finances.byDay", { defaultValue: "Dia" }) : period === "month" ? t("finances.byWeek", { defaultValue: "Semana" }) : t("finances.byMonth", { defaultValue: "Mês" })}</CardTitle>
+              <CardTitle>
+                {t("finances.revenueBy", { defaultValue: "Faturamento por" })} 
+                {period === "week" 
+                  ? t("finances.byDay", { defaultValue: "Dia" }) 
+                  : period === "month" 
+                    ? t("finances.byWeek", { defaultValue: "Semana" }) 
+                    : t("finances.byMonth", { defaultValue: "Mês" })
+                }
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-80">
