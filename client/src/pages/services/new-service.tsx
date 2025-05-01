@@ -7,6 +7,7 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { getApi, postApi } from "@/lib/apiWrapper";
 import { checkNetworkStatus } from "@/lib/pwaManager";
+import offlineDb from "@/lib/offlineDb";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -567,11 +568,69 @@ export default function NewServicePage() {
       console.log("Detectada operação offline durante envio do formulário.");
       
       try {
-        // Tentar usar a API wrapper que suporta operações offline
-        await postApi('/api/services', data, {
+        // Formatar a data para ser consistente com a API
+        let formattedData = { ...data };
+        
+        // Tratamento para a data agendada
+        if (formattedData.scheduled_date) {
+          try {
+            const dateToUse = formattedData.scheduled_date instanceof Date 
+              ? formattedData.scheduled_date 
+              : new Date(formattedData.scheduled_date as string);
+            
+            // Define meio-dia como horário padrão ou usa o horário específico
+            if (data.scheduled_time) {
+              const [hours, minutes] = data.scheduled_time.split(':');
+              dateToUse.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            } else {
+              dateToUse.setHours(12, 0, 0, 0);
+            }
+            
+            formattedData.scheduled_date = dateToUse.toISOString();
+          } catch (error) {
+            console.error("Erro ao processar data:", error);
+            formattedData.scheduled_date = new Date().toISOString();
+          }
+        } else {
+          formattedData.scheduled_date = new Date().toISOString();
+        }
+        
+        // Calcular total
+        const price = formattedData.price !== undefined && formattedData.price !== null 
+          ? formattedData.price : 0;
+        const administrativeFee = formattedData.administrative_fee !== undefined && formattedData.administrative_fee !== null 
+          ? formattedData.administrative_fee : 0;
+        formattedData.total = price + administrativeFee;
+        
+        // Remover parâmetros desnecessários
+        const { scheduled_time, ...serviceData } = formattedData;
+        
+        // 1. Salvar no IndexedDB usando o apiWrapper
+        const createdService = await postApi('/api/services', serviceData, {
           enableOffline: true,
           offlineTableName: 'services'
         });
+        
+        // 2. Atualizar diretamente o cache do React Query
+        const currentServices = queryClient.getQueryData<any[]>(['/api/services', { enableOffline: true, offlineTableName: 'services' }]) || [];
+        
+        // Adicionar o serviço recém-criado à lista
+        queryClient.setQueryData(['/api/services', { enableOffline: true, offlineTableName: 'services' }], [
+          ...currentServices,
+          {
+            ...createdService,
+            _isOffline: true,
+            _pendingSync: true,
+            // Adicionar dados relacionados para UI
+            client: clients?.find(c => c.id === data.client_id),
+            vehicle: vehicles?.find(v => v.id === data.vehicle_id),
+            service_type: serviceTypes?.find(t => t.id === data.service_type_id),
+            technician: technicians?.find(t => t.id === data.technician_id)
+          }
+        ]);
+        
+        // Atualizar também a query simplificada
+        queryClient.invalidateQueries({ queryKey: ['/api/services'] });
         
         // Mostrar notificação e marcar como salvo offline
         toast({

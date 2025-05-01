@@ -189,11 +189,22 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
       // Atualizar status de conectividade e invalidar caches quando voltamos a ficar online
       console.log(`Status de conexão atualizado: ${data.online ? 'Online' : 'Offline'}`);
       if (data.online === true) {
-        // Se estamos voltando a ficar online, invalidar todos os caches principais
-        console.log('Voltamos a ficar online, invalidando caches para atualização');
-        queryClient.invalidateQueries({ queryKey: ['/api/services'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+        // Se estamos voltando a ficar online:
+        // 1. Iniciar sincronização primeiro
+        triggerSyncIfNeeded();
+        
+        // 2. Aguardar um intervalo curto para dar tempo da sincronização começar
+        setTimeout(() => {
+          // 3. Invalidar todos os caches principais
+          console.log('Voltamos a ficar online, invalidando caches para atualização');
+          queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/services', { enableOffline: true, offlineTableName: 'services' }] });
+          queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+          
+          // 4. Forçar refetch explícito para garantir dados atualizados
+          queryClient.refetchQueries({ queryKey: ['/api/services'] });
+        }, 500); // Meio segundo para iniciar a sincronização
       }
       offlineStatusStore.setOnline(data.online);
       break;
