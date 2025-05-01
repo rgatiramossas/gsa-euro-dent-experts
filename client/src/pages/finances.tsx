@@ -619,7 +619,7 @@ export default function Finances() {
                 </div>
               ) : completedTechnicianServices?.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  Você não tem serviços concluídos para solicitar pagamento.
+                  {t("finances.payment.noCompletedServices")}
                 </div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
