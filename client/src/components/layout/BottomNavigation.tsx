@@ -13,10 +13,30 @@ import {
 export function BottomNavigation() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isAdmin = user?.role === "admin";
   const isGestor = user?.role === "gestor" || user?.role === "manager";
   const isTechnician = user?.role === "technician";
+  
+  // Força recarregar tradução quando o componente for montado
+  React.useEffect(() => {
+    const currentLang = i18n.language;
+    i18n.reloadResources(currentLang);
+  }, []);
+  
+  // Re-renderiza o componente quando o idioma mudar
+  React.useEffect(() => {
+    const handleLanguageChanged = () => {
+      // Força re-renderização
+      console.log("Idioma alterado para:", i18n.language);
+    };
+    
+    i18n.on('languageChanged', handleLanguageChanged);
+    
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, [i18n]);
 
   // Menu fixo padrão para todos os usuários: INÍCIO - CLIENTES - SERVIÇOS - ORÇAMENTOS
   const mobileNavItems = [
@@ -36,7 +56,7 @@ export function BottomNavigation() {
       icon: <Briefcase className="h-6 w-6" />,
     },
     {
-      name: t("budget.title"), // Corrigido: usando "budget" para "Orçamentos"
+      name: t("budget.title"), // Orçamentos
       path: "/budgets",
       icon: <FileText className="h-6 w-6" />,
     }
@@ -68,7 +88,7 @@ export function BottomNavigation() {
                   "text-[10px] mt-1", 
                   isActive ? "font-medium" : "font-normal"
                 )}>
-                  {item.name}
+                  {item.path === '/budgets' ? t("budget.title") : item.name}
                 </span>
               </button>
             );
