@@ -48,14 +48,14 @@ export function Header() {
   
   return (
     <header className="bg-primary text-white shadow-md">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="container mx-auto px-2 md:px-4 py-2 md:py-3 flex items-center justify-between">
         <div className="flex items-center">
           <div className="flex items-center">
             <div className="flex items-center justify-center mr-2">
               <img 
                 src="/images/logo.png" 
                 alt="Euro Dent Experts" 
-                className="h-10 w-auto"
+                className="h-8 w-auto md:h-10"
               />
             </div>
             <span className="font-semibold text-lg hidden sm:block">Euro Dent Experts</span>
@@ -63,7 +63,7 @@ export function Header() {
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 md:space-x-2">
           {/* Seletor de idioma - reduzido espaço */}
           <LanguageSwitcher />
           
@@ -72,23 +72,23 @@ export function Header() {
             <Button 
               variant="outline" 
               size="sm" 
-              className="bg-white text-primary"
+              className="bg-white text-primary h-[34px] text-xs md:text-sm px-2 md:px-3"
               onClick={() => setLocation("/login")}
             >
-              <LogIn className="h-4 w-4 mr-1" />
+              <LogIn className="h-[16px] w-[16px] md:h-4 md:w-4 mr-1" />
               {t("auth.login")}
             </Button>
           )}
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 md:space-x-2">
             {/* Ícone Financeiro - não disponível para gestores */}
             {user && !isGestor && (
               <button 
                 onClick={() => setLocation("/finances")}
-                className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
+                className="p-[4px] md:p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-offset-primary focus:ring-white"
                 title={t("finances.title")}
               >
-                <DollarSign className="h-5 w-5" />
+                <DollarSign className="h-[18px] w-[18px] md:h-5 md:w-5" />
               </button>
             )}
             
@@ -96,15 +96,15 @@ export function Header() {
             {user && (
               <button 
                 onClick={() => setLocation("/eventos")}
-                className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
+                className="p-[4px] md:p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-offset-primary focus:ring-white"
                 title={t("events.title")}
               >
-                <Calendar className="h-5 w-5" />
+                <Calendar className="h-[18px] w-[18px] md:h-5 md:w-5" />
               </button>
             )}
             
             {/* Botão de instalação do PWA - aparece apenas quando disponível */}
-            {user && <InstallPWAButton className="bg-white text-primary hover:bg-gray-100 h-8 w-auto text-xs" />}
+            {user && <InstallPWAButton className="bg-white text-primary hover:bg-gray-100 text-xs" />}
           </div>
           
           {/* Recurso de notificações a ser implementado no futuro */}
@@ -113,11 +113,11 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center focus:outline-none">
                 <div className="flex items-center">
-                  <Avatar className="h-8 w-8 bg-red-200 text-red-800">
+                  <Avatar className="h-7 w-7 md:h-8 md:w-8 bg-red-200 text-red-800">
                     {user.profile_image ? (
                       <AvatarImage src={user.profile_image} alt={user.name} />
                     ) : (
-                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                      <AvatarFallback className="text-xs md:text-sm">{getInitials(user.name)}</AvatarFallback>
                     )}
                   </Avatar>
                   <span className="ml-2 hidden md:block text-sm font-medium">
