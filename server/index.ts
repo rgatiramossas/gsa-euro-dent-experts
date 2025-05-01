@@ -81,6 +81,14 @@ app.use((req, res, next) => {
     // Inicializar o armazenamento de sessão MySQL
     storage.initSessionStore(pool);
     
+    // Verificar a configuração das sessões
+    console.log("\n==== DIAGNÓSTICO DE SESSÕES ====");
+    console.log("Tipo de armazenamento de sessão:", storage.sessionStore.constructor.name);
+    console.log("Session Secret:", process.env.SESSION_SECRET ? "Definido" : "Usando padrão gerado automaticamente");
+    console.log("Cookie SameSite:", process.env.COOKIE_SAME_SITE || "lax (padrão)");
+    console.log("Duração da sessão:", process.env.SESSION_DURATION || "30 dias (padrão)");
+    console.log("================================\n");
+    
     // Inicializar dados de exemplo após a conexão ser estabelecida
     await storage.initialize();
   } catch (error) {

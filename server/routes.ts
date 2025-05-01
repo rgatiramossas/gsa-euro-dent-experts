@@ -125,6 +125,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       proxy: true // Confia nos headers X-Forwarded-* quando atrás de um proxy
     })
   );
+  
+  // Middleware para monitorar sessões
+  app.use((req, res, next) => {
+    // Verifica se é uma requisição da API
+    if (req.path.startsWith('/api/') && req.path !== '/api/auth/login') {
+      console.log(`\n=== Requisição: ${req.method} ${req.path} ===`);
+      console.log(`SessionID: ${req.sessionID}`);
+      console.log(`Cookies: ${JSON.stringify(req.headers.cookie)}`);
+      console.log(`Session válida: ${req.session && req.session.userId ? 'Sim' : 'Não'}`);
+      
+      // Obter o IP do cliente
+      const clientIP = (req.headers['x-forwarded-for'] || req.socket.remoteAddress) as string;
+      console.log(`IP do cliente: ${clientIP}`);
+      
+      // Verifica se a sessão será enviada de volta como cookie
+      res.on('finish', () => {
+        console.log(`=== Resposta para ${req.path} ===`);
+        console.log(`Status: ${res.statusCode}`);
+        console.log(`Headers: ${JSON.stringify(res.getHeaders())}`);
+        console.log(`Set-Cookie: ${res.getHeader('set-cookie')}`);
+      });
+    }
+    next();
+  });
   // A configuração de servir arquivos estáticos de uploads foi movida para index.ts
 
   // Auth middleware
