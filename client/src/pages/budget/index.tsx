@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { getApi, deleteApi } from "@/lib/apiWrapper";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +64,7 @@ interface BudgetPageProps {
 const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isGestor = user?.role === "gestor" || user?.role === "manager";
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
@@ -253,9 +255,9 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
       <Card className="mb-6">
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div>
-            <CardTitle className="text-2xl">Gerenciamento de Orçamentos</CardTitle>
+            <CardTitle className="text-2xl">{t("budget.budgetManagement")}</CardTitle>
             <CardDescription>
-              {isGestor ? "Visualize todos os orçamentos" : "Visualize e gerencie todos os orçamentos"}
+              {isGestor ? t("budget.viewAllBudgets") : t("budget.manageBudgets")}
             </CardDescription>
           </div>
           {!isGestor && (
@@ -264,7 +266,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
               onClick={() => setShowNewBudgetDialog(true)}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Novo Orçamento
+              {t("budget.newBudget")}
             </Button>
           )}
         </CardHeader>
@@ -272,7 +274,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
           <div className="mb-6 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <Input
-              placeholder="Buscar por cliente, veículo ou placa..."
+              placeholder={t("budget.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -282,11 +284,11 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
           {isLoadingBudgets ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Carregando orçamentos...</span>
+              <span className="ml-2">{t("common.loading")}</span>
             </div>
           ) : filteredBudgets.length === 0 ? (
             <p className="text-center py-8 text-gray-500">
-              Nenhum orçamento encontrado.
+              {t("common.noResults")}
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -294,11 +296,11 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Veículo</TableHead>
-                    <TableHead>Data</TableHead>
-                    {!isGestor && <TableHead>Valor</TableHead>}
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>{t("common.client")}</TableHead>
+                    <TableHead>{t("common.vehicle")}</TableHead>
+                    <TableHead>{t("common.date")}</TableHead>
+                    {!isGestor && <TableHead>{t("common.value")}</TableHead>}
+                    <TableHead className="text-right">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
