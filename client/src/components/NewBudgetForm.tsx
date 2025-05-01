@@ -340,7 +340,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
             <>
               <Upload className="h-5 w-5 text-gray-400 mb-1" />
               <div className="text-center text-gray-400 text-xs">
-                {readOnly ? "Sem imagem" : "Clique para inserir foto"}
+                {readOnly ? t("budget.noImage") : t("budget.clickToInsertPhoto")}
               </div>
             </>
           )}
@@ -379,7 +379,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
               name="date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>DATA</FormLabel>
+                  <FormLabel>{t("budget.date").toUpperCase()}</FormLabel>
                   {readOnly ? (
                     <div className="p-2 border rounded-md">
                       {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : ""}
@@ -395,7 +395,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                             {field.value ? (
                               format(field.value, "dd/MM/yyyy", { locale: ptBR })
                             ) : (
-                              <span>Selecione uma data</span>
+                              <span>{t("budget.selectDate")}</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -420,7 +420,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
               name="client_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CLIENTE</FormLabel>
+                  <FormLabel>{t("budget.client").toUpperCase()}</FormLabel>
                   {readOnly ? (
                     <div className="p-2 border rounded-md">
                       {clients?.find(c => c.id.toString() === field.value)?.name || ""}
@@ -434,12 +434,12 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione um cliente" />
+                            <SelectValue placeholder={t("budget.selectClient")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {isLoadingClients ? (
-                            <SelectItem value="loading">Carregando clientes...</SelectItem>
+                            <SelectItem value="loading">{t("budget.loadingClients")}</SelectItem>
                           ) : !clients || clients.length === 0 ? (
                             <SelectItem value="no-clients">Nenhum cliente encontrado</SelectItem>
                           ) : (
@@ -466,10 +466,10 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
               name="vehicle_info"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>VEÍCULO</FormLabel>
+                  <FormLabel>{t("budget.vehicle").toUpperCase()}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Marca/Modelo" 
+                      placeholder={t("budget.vehiclePlaceholder")} 
                       {...field} 
                       readOnly={readOnly}
                       className={readOnly ? "bg-gray-50" : ""}
@@ -484,10 +484,10 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
               name="plate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>PLACA</FormLabel>
+                  <FormLabel>{t("budget.licensePlate").toUpperCase()}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="ABC1234" 
+                      placeholder={t("budget.platePlaceholder")} 
                       {...field} 
                       readOnly={readOnly}
                       className={readOnly ? "bg-gray-50" : ""}
@@ -502,10 +502,10 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
               name="chassis_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CHASSI</FormLabel>
+                  <FormLabel>{t("budget.chassisNumber").toUpperCase()}</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Número do chassi" 
+                      placeholder={t("budget.chassisPlaceholder")} 
                       {...field} 
                       readOnly={readOnly}
                       className={readOnly ? "bg-gray-50" : ""}
@@ -522,11 +522,11 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
 
           {/* Título da seção de danos */}
           <div>
-            <h3 className="text-lg font-semibold mb-2">Danos do Veículo</h3>
+            <h3 className="text-lg font-semibold mb-2">{t("budget.vehicleDamages")}</h3>
             <p className="text-sm text-gray-500 mb-4">
               {readOnly 
-                ? "Visualização dos danos registrados no veículo" 
-                : "Indique a posição, quantidade e tamanho dos danos em cada parte do veículo"
+                ? t("budget.damageViewMode") 
+                : t("budget.damageEditMode")
               }
             </p>
           </div>
@@ -550,13 +550,13 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
             <div className="bg-gray-50 p-4 rounded-md mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium mb-2">Total AW</h4>
+                  <h4 className="font-medium mb-2">{t("budget.totalAW")}</h4>
                   <p className="text-xl font-bold">
                     {calculateTotalValues(damages).totalAw.toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">Total €</h4>
+                  <h4 className="font-medium mb-2">{t("budget.totalValue")}</h4>
                   <p className="text-xl font-bold">
                     {calculateTotalValues(damages).totalValue.toFixed(2)} €
                   </p>
@@ -588,10 +588,10 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                   }
                 }}
               >
-                Cancelar
+                {t("budget.cancel")}
               </Button>
               <Button type="submit">
-                {initialData ? "Atualizar Orçamento" : "Salvar Orçamento"}
+                {initialData ? t("budget.updateBudget") : t("budget.saveBudget")}
               </Button>
             </div>
           )}
