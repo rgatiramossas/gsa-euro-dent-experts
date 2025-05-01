@@ -801,40 +801,40 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
               <DialogTrigger asChild>
                 <Button>
                   <Tag className="h-4 w-4 mr-2" />
-                  {t("services.changeStatus", "Alterar Status")}
+                  {t("services.changeStatus")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{t("services.changeServiceStatus", "Alterar Status do Serviço")}</DialogTitle>
+                  <DialogTitle>{t("services.changeStatus")}</DialogTitle>
                   <DialogDescription>
-                    {t("services.selectNewStatus", "Selecione o novo status do serviço e adicione notas se necessário.")}
+                    {t("services.selectNewStatus")}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="status">{t("services.newStatus", "Novo Status")}</Label>
+                    <Label htmlFor="status">{t("services.newStatus")}</Label>
                     <Select
                       value={newStatus}
                       onValueChange={(value) => setNewStatus(value as ServiceStatus)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={t("services.selectStatus", "Selecione um status")} />
+                        <SelectValue placeholder={t("services.selectStatus")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">{t("services.status.pending", "Pendente")}</SelectItem>
-                        <SelectItem value="in_progress">{t("services.status.in_progress", "Em andamento")}</SelectItem>
-                        <SelectItem value="completed">{t("services.status.completed", "Concluído")}</SelectItem>
-                        <SelectItem value="canceled">{t("services.status.canceled", "Cancelado")}</SelectItem>
-                        <SelectItem value="pago">{t("services.status.pago", "Pago")}</SelectItem>
+                        <SelectItem value="pending">{t("services.status.pending")}</SelectItem>
+                        <SelectItem value="in_progress">{t("services.status.in_progress")}</SelectItem>
+                        <SelectItem value="completed">{t("services.status.completed")}</SelectItem>
+                        <SelectItem value="canceled">{t("services.status.canceled")}</SelectItem>
+                        <SelectItem value="pago">{t("services.status.pago")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="notes">{t("services.optionalNotes", "Notas (opcional)")}</Label>
+                    <Label htmlFor="notes">{t("services.notesOptional")}</Label>
                     <Textarea
                       id="notes"
-                      placeholder={t("services.statusNotesPlaceholder", "Adicione informações sobre a mudança de status")}
+                      placeholder={t("services.addStatusNotes")}
                       value={statusNotes}
                       onChange={(e) => setStatusNotes(e.target.value)}
                     />
@@ -842,13 +842,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setShowStatusDialog(false)}>
-                    {t("common.cancel", "Cancelar")}
+                    {t("common.cancel")}
                   </Button>
                   <Button 
                     onClick={handleStatusUpdate}
                     disabled={!newStatus || updateStatusMutation.isPending}
                   >
-                    {updateStatusMutation.isPending ? t("common.saving", "Salvando...") : t("common.save", "Salvar")}
+                    {updateStatusMutation.isPending ? t("common.saving") : t("common.save")}
                   </Button>
                 </DialogFooter>
               </DialogContent>

@@ -108,8 +108,8 @@ export function PhotoUpload({
       // Alertar sobre arquivos inválidos, se houver
       if (invalidFiles.length > 0) {
         toast({
-          title: t("photos.errors.invalidFiles", "Alguns arquivos não foram aceitos"),
-          description: `${t("photos.errors.invalidFilesList", "Arquivos inválidos")}: ${invalidFiles.join(', ')}. ${t("photos.errors.onlyImagesAllowed", "Apenas imagens até 5MB são permitidas")}.`,
+          title: t("photos.errors.invalidFiles"),
+          description: `${t("photos.errors.invalidFilesList")}: ${invalidFiles.join(', ')}. ${t("photos.errors.onlyImagesAllowed")}.`,
           variant: "destructive",
         });
         
@@ -125,8 +125,8 @@ export function PhotoUpload({
       // Verificar se o número total de arquivos excede o limite
       if (multiple && totalCount > maxFiles) {
         toast({
-          title: t("photos.errors.fileLimit", "Limite de arquivos excedido"),
-          description: t("photos.errors.fileLimitDescription", "Você pode selecionar no máximo {{maxFiles}} fotos no total. Você já selecionou {{existingCount}} foto(s).", {
+          title: t("photos.errors.fileLimit"),
+          description: t("photos.errors.fileLimitDescription", {
             maxFiles,
             existingCount
           }),
@@ -182,8 +182,8 @@ export function PhotoUpload({
     } catch (error) {
       console.error("Erro ao processar arquivos:", error);
       toast({
-        title: t("photos.errors.processingError", "Erro ao processar arquivos"),
-        description: t("photos.errors.processingErrorDescription", "Ocorreu um erro ao processar os arquivos selecionados. Tente novamente."),
+        title: t("photos.errors.processingError"),
+        description: t("photos.errors.processingErrorDescription"),
         variant: "destructive",
       });
     }
@@ -240,7 +240,7 @@ export function PhotoUpload({
                         onChange(newFileList);
                       }
                     }}
-                    title={t("photos.remove", "Remover foto")}
+                    title={t("photos.remove")}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -251,7 +251,7 @@ export function PhotoUpload({
               {/* Mostrar slots vazios para completar até o maxFiles */}
               {[...Array(Math.max(0, maxFiles - previewUrls.length))].map((_, index) => (
                 <div key={`empty-${index}`} className="h-24 border border-dashed border-gray-300 rounded flex items-center justify-center">
-                  <span className="text-gray-400 text-xs">{t("photos.empty", "Vazio")}</span>
+                  <span className="text-gray-400 text-xs">{t("photos.empty")}</span>
                 </div>
               ))}
             </div>
@@ -263,7 +263,7 @@ export function PhotoUpload({
           <div className="flex text-sm text-gray-600 justify-center">
             <label htmlFor={`file-upload-${label}`} className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none">
               <span className="px-2 py-1 border border-primary rounded">
-                {t("photos.upload", "Carregar")} {multiple ? t("photos.plural", "fotos") : t("photos.singular", "foto")}
+                {t("photos.upload")} {multiple ? t("photos.plural") : t("photos.singular")}
               </span>
               <input
                 id={`file-upload-${label}`}
@@ -275,11 +275,11 @@ export function PhotoUpload({
                 onChange={handleChange}
               />
             </label>
-            <p className="pl-1 self-center">{t("photos.dragAndDrop", "ou arraste e solte")}</p>
+            <p className="pl-1 self-center">{t("photos.dragAndDrop")}</p>
           </div>
           <p className="text-xs text-gray-500">
-            {t("photos.fileTypes", "PNG, JPG, JPEG até 5MB")}
-            {multiple ? ` (${t("photos.maxFiles", "máximo")} ${maxFiles} ${t("photos.filesCount", "arquivos")})` : ""}
+            {t("photos.fileTypes")}
+            {multiple ? ` (${t("photos.maxFiles")} ${maxFiles} ${t("photos.filesCount")})` : ""}
           </p>
         </div>
       </div>
