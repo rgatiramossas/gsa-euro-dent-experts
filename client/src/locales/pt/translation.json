@@ -422,6 +422,7 @@
   },
   "finances": {
     "title": "Financeiro",
+    "serviceOrder": "OS",
     "description": "Estatísticas e relatórios financeiros",
     "period": {
       "selectPeriod": "Selecione o período",

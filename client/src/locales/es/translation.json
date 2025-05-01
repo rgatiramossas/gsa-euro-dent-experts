@@ -397,6 +397,7 @@
   },
   "finances": {
     "title": "Finanzas",
+    "serviceOrder": "OS",
     "description": "Estadísticas e informes financieros",
     "period": {
       "selectPeriod": "Seleccione el período",

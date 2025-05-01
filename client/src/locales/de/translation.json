@@ -375,6 +375,7 @@
   },
   "finances": {
     "title": "Finanzen",
+    "serviceOrder": "SA",
     "description": "Finanzstatistiken und -berichte",
     "period": {
       "selectPeriod": "Zeitraum auswählen",

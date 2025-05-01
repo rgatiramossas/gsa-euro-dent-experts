@@ -1614,8 +1614,8 @@ export default function Finances() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal de Nova Despesa */}
-      {/* Modal de Novo Pedido de Pagamento para Admin */}
+      {/* New Expense Modal */}
+      {/* New Payment Request Modal for Admin */}
       {isAdmin && (
         <Dialog open={paymentRequestDialogOpen} onOpenChange={setPaymentRequestDialogOpen}>
           <DialogContent className="max-w-3xl">
@@ -1675,12 +1675,12 @@ export default function Finances() {
                               {service.client?.name} - {service.serviceType?.name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {formatDate(service.completion_date || service.created_at)} - OS #{service.id}
-                              {service.technician ? ` - Técnico: ${service.technician.name}` : ' - Sem técnico'}
+                              {formatDate(service.completion_date || service.created_at)} - {t("finances.serviceOrder")} #{service.id}
+                              {service.technician ? ` - ${t("finances.payment.technician")}: ${service.technician.name}` : ` - ${t("finances.payment.noTechnician")}`}
                             </div>
                           </div>
                           <div className="font-semibold">
-                            {formatCurrency(service.price || 0)} {/* Sempre mostrar o valor do técnico, independente do perfil */}
+                            {formatCurrency(service.price || 0)}
                           </div>
                         </div>
                       ))}
@@ -1696,8 +1696,8 @@ export default function Finances() {
                   completableServices
                     ?.filter(service => selectedServices.includes(service.id))
                     .reduce((sum, service) => {
-                      // Sempre usar o valor do técnico (price) para o cálculo do pedido de pagamento
-                      // Este é o valor que será pago ao técnico
+                      // Always use the technician's price for payment request calculation
+                      // This is the amount that will be paid to the technician
                       const valueToAdd = service.price || 0;
                       return sum + valueToAdd;
                     }, 0) || 0
@@ -1727,7 +1727,7 @@ export default function Finances() {
         </Dialog>
       )}
       
-      {/* Modal de Nova Despesa */}
+      {/* New Expense Modal */}
       <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -1868,7 +1868,7 @@ export default function Finances() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de pagamento */}
+      {/* Payment Modal */}
       <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
