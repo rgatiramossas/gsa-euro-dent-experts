@@ -1463,7 +1463,7 @@ export default function Finances() {
         <TabsContent value="expenses">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Despesas</CardTitle>
+              <CardTitle>{t("finances.expenses")}</CardTitle>
               <Button 
                 size="sm" 
                 variant="outline" 
@@ -1472,19 +1472,19 @@ export default function Finances() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Nova Despesa
+                {t("finances.newExpense")}
               </Button>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Fornecedor</TableHead>
-                    <TableHead>Método de Pagamento</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead>{t("finances.table.date")}</TableHead>
+                    <TableHead>{t("finances.table.description")}</TableHead>
+                    <TableHead>{t("finances.table.type")}</TableHead>
+                    <TableHead>{t("finances.table.provider")}</TableHead>
+                    <TableHead>{t("finances.table.paymentMethod")}</TableHead>
+                    <TableHead className="text-right">{t("finances.table.value")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1537,7 +1537,7 @@ export default function Finances() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Despesas por Categoria</CardTitle>
+                <CardTitle>{t("finances.expensesByCategory")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-80">
@@ -1577,7 +1577,7 @@ export default function Finances() {
             
             <Card>
               <CardHeader>
-                <CardTitle>Despesas Mensais</CardTitle>
+                <CardTitle>{t("finances.monthlyExpenses")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-80">
@@ -1620,9 +1620,9 @@ export default function Finances() {
         <Dialog open={paymentRequestDialogOpen} onOpenChange={setPaymentRequestDialogOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Novo Pedido de Pagamento</DialogTitle>
+              <DialogTitle>{t("finances.newPaymentRequest")}</DialogTitle>
               <DialogDescription>
-                Selecione os serviços concluídos para os quais deseja criar um pedido de pagamento.
+                {t("finances.selectCompletedServices")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -1731,9 +1731,9 @@ export default function Finances() {
       <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Registrar Nova Despesa</DialogTitle>
+            <DialogTitle>{t("finances.registerNewExpense")}</DialogTitle>
             <DialogDescription>
-              Preencha o formulário para registrar uma nova despesa.
+              {t("finances.fillExpenseForm")}
             </DialogDescription>
           </DialogHeader>
           
@@ -1872,9 +1872,9 @@ export default function Finances() {
       <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Registrar Pagamento</DialogTitle>
+            <DialogTitle>{t("finances.registerPayment")}</DialogTitle>
             <DialogDescription>
-              Registre os detalhes do pagamento ao técnico {selectedPaymentRequest?.technician?.name}.
+              {t("finances.registerPaymentDetails", { technician: selectedPaymentRequest?.technician?.name })}
             </DialogDescription>
           </DialogHeader>
           <Form {...paymentForm}>
@@ -1952,7 +1952,7 @@ export default function Finances() {
               
               <div className="pt-4 border-t">
                 <div className="mb-4 flex justify-between">
-                  <span className="font-semibold">Valor a pagar:</span>
+                  <span className="font-semibold">{t("finances.amountToPay")}:</span>
                   <span className="font-bold">
                     {formatCurrency(
                       selectedPaymentRequest?.services?.reduce((sum: number, s: any) => {
@@ -1969,7 +1969,7 @@ export default function Finances() {
                   variant="outline" 
                   onClick={() => setPaymentDialogOpen(false)}
                 >
-                  Cancelar
+                  {t("common.cancel")}
                 </Button>
                 <Button 
                   type="submit"
@@ -1978,9 +1978,9 @@ export default function Finances() {
                   {registerPaymentMutation.isPending ? (
                     <div className="flex items-center">
                       <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></div>
-                      Processando...
+                      {t("common.processing")}
                     </div>
-                  ) : "Confirmar Pagamento"}
+                  ) : t("finances.confirmPayment")}
                 </Button>
               </DialogFooter>
             </form>
