@@ -490,6 +490,12 @@
     "nenhumaDespesaEncontrada": "Ningún gasto encontrado",
     "nenhumServicoDisponivel": "Ningún servicio disponible para solicitud de pago",
     "selecioneServico": "Seleccione al menos un servicio para solicitar pago",
+    "approvePaymentRequest": "Aprobar Solicitud de Pago",
+    "approvePaymentRequestConfirmation": "¿Está seguro de que desea aprobar esta solicitud de pago? Esta acción marcará los servicios relacionados como \"facturados\".",
+    "rejectPaymentRequest": "Rechazar Solicitud de Pago",
+    "rejectPaymentRequestConfirmation": "¿Está seguro de que desea rechazar esta solicitud de pago? Esta acción marcará los servicios relacionados como \"completados\" nuevamente.",
+    "pay": "Pagar",
+    "paidOn": "Pagado el",
     "latestTransactions": "Últimas Transacciones",
     "expensesByCategory": "Gastos por Categoría",
     "table": {

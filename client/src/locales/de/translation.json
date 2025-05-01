@@ -468,6 +468,12 @@
     "nenhumaDespesaEncontrada": "Keine Ausgaben gefunden",
     "nenhumServicoDisponivel": "Keine Dienstleistungen für Zahlungsanforderung verfügbar",
     "selecioneServico": "Wählen Sie mindestens eine Dienstleistung für die Zahlungsanforderung aus",
+    "approvePaymentRequest": "Zahlungsanforderung genehmigen",
+    "approvePaymentRequestConfirmation": "Sind Sie sicher, dass Sie diese Zahlungsanforderung genehmigen möchten? Diese Aktion markiert die zugehörigen Dienstleistungen als \"fakturiert\".",
+    "rejectPaymentRequest": "Zahlungsanforderung ablehnen",
+    "rejectPaymentRequestConfirmation": "Sind Sie sicher, dass Sie diese Zahlungsanforderung ablehnen möchten? Diese Aktion markiert die zugehörigen Dienstleistungen wieder als \"abgeschlossen\".",
+    "pay": "Bezahlen",
+    "paidOn": "Bezahlt am",
     "latestTransactions": "Neueste Transaktionen",
     "expensesByCategory": "Ausgaben nach Kategorie",
     "table": {
