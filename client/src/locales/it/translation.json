@@ -193,7 +193,9 @@
     "savedLocally": "Salvato localmente",
     "willSyncWhenOnline": "Verrà sincronizzato quando sarai online",
     "savedOffline": "Salvato offline",
-    "serviceOfflineDescription": "Il servizio è stato salvato localmente e verrà sincronizzato quando sarai online"
+    "serviceOfflineDescription": "Il servizio è stato salvato localmente e verrà sincronizzato quando sarai online",
+    "saveOffline": "Salva Offline",
+    "errorSavingOffline": "Si è verificato un errore durante il salvataggio offline. Riprova più tardi."
   },
   "finances": {
     "byDay": "Per Giorno",

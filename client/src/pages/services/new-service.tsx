@@ -493,6 +493,33 @@ export default function NewServicePage() {
       }
     }
     
+    // Configurar timeout de segurança para o caso do service worker não responder
+    let timeoutId: number | null = null;
+    
+    if (createServiceMutation.isPending) {
+      console.log("Configurando timeout de segurança para a mutação");
+      timeoutId = window.setTimeout(() => {
+        console.log("Timeout atingido! O service worker não respondeu em tempo hábil");
+        if (createServiceMutation.isPending) {
+          console.log("A mutação ainda está pendente, resetando-a para evitar bloqueio da UI");
+          createServiceMutation.reset();
+          
+          // Verificar se estamos offline
+          if (!navigator.onLine) {
+            toast({
+              title: t("offline.savedOffline"),
+              description: t("offline.serviceOfflineDescription"),
+            });
+            
+            // Redirecionar para evitar que o usuário fique preso
+            setTimeout(() => {
+              setLocation('/services');
+            }, 500);
+          }
+        }
+      }, 10000); // 10 segundos de timeout
+    }
+    
     // Adicionar listener quando o componente for montado
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
       console.log("Registrando listener para mensagens do service worker");
@@ -503,6 +530,11 @@ export default function NewServicePage() {
     
     // Remover listener quando o componente for desmontado
     return () => {
+      // Limpar o timeout se existir
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+      
       if (navigator.serviceWorker && navigator.serviceWorker.controller) {
         navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
       }
