@@ -133,28 +133,28 @@ export default function ConfiguracoesPage() {
   return (
     <div className="container mx-auto py-6">
       <PageHeader 
-        title={i18n.language === 'en' ? "Settings" : "Configurações"} 
-        description={i18n.language === 'en' ? "Manage your account settings." : "Gerencie as configurações da sua conta."}
+        title={t("settings.title")} 
+        description={i18n.language === 'en' ? t("settings.description") : "Gerencie as configurações da sua conta."}
       />
 
       <Tabs defaultValue="profile" className="mt-6">
         <TabsList className="mb-6">
-          <TabsTrigger value="profile">{i18n.language === 'en' ? "Profile" : "Perfil"}</TabsTrigger>
-          <TabsTrigger value="password">{i18n.language === 'en' ? "Security" : "Segurança"}</TabsTrigger>
+          <TabsTrigger value="profile">{i18n.language === 'en' ? t("settings.profile") : "Perfil"}</TabsTrigger>
+          <TabsTrigger value="password">{i18n.language === 'en' ? t("settings.security") : "Segurança"}</TabsTrigger>
           {user?.role === "technician" && (
-            <TabsTrigger value="technician">{i18n.language === 'en' ? "Technician" : "Técnico"}</TabsTrigger>
+            <TabsTrigger value="technician">{i18n.language === 'en' ? t("settings.technician") : "Técnico"}</TabsTrigger>
           )}
           {user?.role === "gestor" && (
-            <TabsTrigger value="manager">{i18n.language === 'en' ? "Manager" : "Gestor"}</TabsTrigger>
+            <TabsTrigger value="manager">{i18n.language === 'en' ? t("settings.manager") : "Gestor"}</TabsTrigger>
           )}
         </TabsList>
         
         <TabsContent value="profile">
           <Card>
             <CardHeader>
-              <CardTitle>{i18n.language === 'en' ? "Profile Information" : "Informações do Perfil"}</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? t("settings.profileInformation") : "Informações do Perfil"}</CardTitle>
               <CardDescription>
-                {i18n.language === 'en' ? "Update your personal information." : "Atualize suas informações pessoais."}
+                {i18n.language === 'en' ? t("settings.updateProfile") : "Atualize suas informações pessoais."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -165,7 +165,7 @@ export default function ConfiguracoesPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{i18n.language === 'en' ? "Name" : "Nome"}</FormLabel>
+                        <FormLabel>{i18n.language === 'en' ? t("clients.name") : "Nome"}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -195,7 +195,7 @@ export default function ConfiguracoesPage() {
                       type="submit" 
                       disabled={!profileForm.formState.isDirty}
                     >
-                      {i18n.language === 'en' ? "Save changes" : "Salvar alterações"}
+                      {i18n.language === 'en' ? t("settings.saveChanges") : "Salvar alterações"}
                     </Button>
                   </div>
                 </form>
@@ -207,7 +207,7 @@ export default function ConfiguracoesPage() {
         <TabsContent value="password">
           <Card>
             <CardHeader>
-              <CardTitle>{i18n.language === 'en' ? "Change Password" : "Alterar Senha"}</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? t("settings.changePassword") : "Alterar Senha"}</CardTitle>
               <CardDescription>
                 {i18n.language === 'en' ? "Change your password to keep your account secure." : "Altere sua senha para manter sua conta segura."}
               </CardDescription>
@@ -220,7 +220,7 @@ export default function ConfiguracoesPage() {
                     name="currentPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{i18n.language === 'en' ? "Current password" : "Senha atual"}</FormLabel>
+                        <FormLabel>{i18n.language === 'en' ? t("settings.currentPassword") : "Senha atual"}</FormLabel>
                         <FormControl>
                           <Input {...field} type="password" />
                         </FormControl>
@@ -234,12 +234,12 @@ export default function ConfiguracoesPage() {
                     name="newPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{i18n.language === 'en' ? "New password" : "Nova senha"}</FormLabel>
+                        <FormLabel>{i18n.language === 'en' ? t("settings.newPassword") : "Nova senha"}</FormLabel>
                         <FormControl>
                           <Input {...field} type="password" />
                         </FormControl>
                         <FormDescription>
-                          {i18n.language === 'en' ? "Password must be at least 8 characters." : "A senha deve ter pelo menos 8 caracteres."}
+                          {i18n.language === 'en' ? t("settings.passwordRequirements") : "A senha deve ter pelo menos 8 caracteres."}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -251,7 +251,7 @@ export default function ConfiguracoesPage() {
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{i18n.language === 'en' ? "Confirm new password" : "Confirme a nova senha"}</FormLabel>
+                        <FormLabel>{i18n.language === 'en' ? t("settings.confirmPassword") : "Confirme a nova senha"}</FormLabel>
                         <FormControl>
                           <Input {...field} type="password" />
                         </FormControl>
@@ -262,7 +262,7 @@ export default function ConfiguracoesPage() {
                   
                   <div className="flex justify-end pt-4">
                     <Button type="submit">
-                      {i18n.language === 'en' ? "Change password" : "Alterar senha"}
+                      {i18n.language === 'en' ? t("settings.changePassword") : "Alterar senha"}
                     </Button>
                   </div>
                 </form>
@@ -275,26 +275,26 @@ export default function ConfiguracoesPage() {
         <TabsContent value="technician">
           <Card>
             <CardHeader>
-              <CardTitle>{i18n.language === 'en' ? "Technician Settings" : "Configurações de Técnico"}</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? t("settings.technicianSettings") : "Configurações de Técnico"}</CardTitle>
               <CardDescription>
-                {i18n.language === 'en' ? "Manage your specific settings as a technician." : "Gerencie suas configurações específicas como técnico."}
+                {i18n.language === 'en' ? t("settings.manageTechnicianSettings") : "Gerencie suas configurações específicas como técnico."}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">{i18n.language === 'en' ? "Services" : "Serviços"}</h3>
+                <h3 className="text-lg font-medium">{i18n.language === 'en' ? t("settings.services") : "Serviços"}</h3>
                 <p className="text-sm text-gray-500">
-                  {i18n.language === 'en' ? "View your assigned services and manage your calendar." : "Visualize seus serviços atribuídos e gerencie seu calendário."}
+                  {i18n.language === 'en' ? t("settings.viewServices") : "Visualize seus serviços atribuídos e gerencie seu calendário."}
                 </p>
                 <div className="flex gap-4">
                   <Link to="/services">
                     <Button variant="outline">
-                      {i18n.language === 'en' ? "My Services" : "Meus Serviços"}
+                      {i18n.language === 'en' ? t("settings.myServices") : "Meus Serviços"}
                     </Button>
                   </Link>
                   <Link to="/events">
                     <Button variant="outline">
-                      {i18n.language === 'en' ? "My Calendar" : "Meu Calendário"}
+                      {i18n.language === 'en' ? t("settings.myCalendar") : "Meu Calendário"}
                     </Button>
                   </Link>
                 </div>
@@ -307,20 +307,20 @@ export default function ConfiguracoesPage() {
         <TabsContent value="manager">
           <Card>
             <CardHeader>
-              <CardTitle>{i18n.language === 'en' ? "Manager Settings" : "Configurações de Gestor"}</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? t("settings.managerSettings") : "Configurações de Gestor"}</CardTitle>
               <CardDescription>
-                {i18n.language === 'en' ? "Manage your specific settings as a manager." : "Gerencie suas configurações específicas como gestor."}
+                {i18n.language === 'en' ? t("settings.manageManagerSettings") : "Gerencie suas configurações específicas como gestor."}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">{i18n.language === 'en' ? "Assigned Clients" : "Clientes Atribuídos"}</h3>
+                <h3 className="text-lg font-medium">{i18n.language === 'en' ? t("settings.assignedClients") : "Clientes Atribuídos"}</h3>
                 <p className="text-sm text-gray-500">
-                  {i18n.language === 'en' ? "View and manage clients under your supervision." : "Visualize e gerencie os clientes que estão sob sua supervisão."}
+                  {i18n.language === 'en' ? t("settings.viewClients") : "Visualize e gerencie os clientes que estão sob sua supervisão."}
                 </p>
                 <Link to="/my-clients">
                   <Button variant="outline">
-                    {i18n.language === 'en' ? "My Clients" : "Meus Clientes"}
+                    {i18n.language === 'en' ? t("settings.myClients") : "Meus Clientes"}
                   </Button>
                 </Link>
               </div>
@@ -333,9 +333,9 @@ export default function ConfiguracoesPage() {
         <div className="mt-8">
           <Card>
             <CardHeader>
-              <CardTitle>{i18n.language === 'en' ? "Administrator Options" : "Opções de Administrador"}</CardTitle>
+              <CardTitle>{i18n.language === 'en' ? t("settings.adminOptions") : "Opções de Administrador"}</CardTitle>
               <CardDescription>
-                {i18n.language === 'en' ? "Manage technicians and managers of the system." : "Gerencie técnicos e gestores do sistema."}
+                {i18n.language === 'en' ? t("settings.manageSystem") : "Gerencie técnicos e gestores do sistema."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -343,13 +343,13 @@ export default function ConfiguracoesPage() {
                 <Link to="/technicians">
                   <Button className="w-full sm:w-auto">
                     <UserPlusIcon className="mr-2 h-4 w-4" />
-                    {i18n.language === 'en' ? "Manage Technicians" : "Gerenciar Técnicos"}
+                    {i18n.language === 'en' ? t("settings.manageTechnicians") : "Gerenciar Técnicos"}
                   </Button>
                 </Link>
                 <Link to="/managers">
                   <Button className="w-full sm:w-auto">
                     <Users className="mr-2 h-4 w-4" />
-                    {i18n.language === 'en' ? "Manage Managers" : "Gerenciar Gestores"}
+                    {i18n.language === 'en' ? t("settings.manageManagers") : "Gerenciar Gestores"}
                   </Button>
                 </Link>
               </div>

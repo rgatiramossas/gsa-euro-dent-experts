@@ -134,6 +134,7 @@
   },
   "settings": {
     "title": "Settings",
+    "description": "Manage your account settings.",
     "language": "Language",
     "theme": "Theme",
     "profile": "Profile",
