@@ -564,13 +564,15 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       'in_progress': 'services.status.in_progress',
       'completed': 'services.status.completed',
       'canceled': 'services.status.canceled',
-      'pago': 'services.status.pago'
+      'pago': 'services.status.pago',
+      'aguardando_aprovacao': 'services.status.aguardando_aprovacao',
+      'faturado': 'services.status.faturado'
     };
     
     // Obter a chave de tradução ou usar o status como fallback
     const translationKey = statusKeys[status] || status;
-    // Traduzir usando a chave
-    return t(translationKey, status);
+    // Traduzir usando a chave (com fallback para o status original)
+    return t(translationKey, { defaultValue: status });
   };
   
   // Cor do status
