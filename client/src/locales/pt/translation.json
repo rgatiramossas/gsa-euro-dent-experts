@@ -62,12 +62,21 @@
     "description": "Visão geral dos serviços e produtividade da equipe",
     "pendingServices": "Serviços Pendentes",
     "completedServices": "Serviços Concluídos",
+    "inProgressServices": "Serviços em Andamento",
     "revenue": "Faturamento Total",
     "todayServices": "Serviços de Hoje",
     "servicesByStatus": "Serviços por Status",
     "techniciansPerformance": "Desempenho dos Técnicos",
     "teamPerformance": "Desempenho da Equipe",
-    "recentServices": "Serviços Recentes"
+    "recentServices": "Serviços Recentes",
+    "latestServices": "Últimos Serviços",
+    "latestServicesDescription": "Ordens de serviço recentes dos seus clientes",
+    "noServicesFound": "Nenhum serviço encontrado para seus clientes.",
+    "noServicesFoundFiltered": "Nenhum serviço encontrado para os critérios selecionados.",
+    "viewDetails": "Ver Detalhes",
+    "notScheduled": "Não agendado",
+    "filterByClient": "Filtrar por cliente",
+    "allClients": "Todos os clientes"
   },
   "services": {
     "title": "Serviços",
@@ -368,6 +377,18 @@
     "syncNow": "Sincronizar agora",
     "savedOffline": "Salvo no modo offline",
     "serviceOfflineDescription": "O serviço foi salvo localmente e será sincronizado quando houver conexão com a internet."
+  },
+  "manager": {
+    "title": "Dashboard do Gestor",
+    "welcome": "Bem-vindo, {{name}}. Aqui estão as informações dos seus clientes.",
+    "overview": "Visão Geral",
+    "serviceOrders": "Ordens de Serviço",
+    "myClients": "Meus Clientes",
+    "budgets": "Orçamentos",
+    "serviceOrdersDescription": "Todos os serviços dos clientes sob sua gestão",
+    "myClientsDescription": "Clientes atribuídos à sua gestão",
+    "noClientsAssigned": "Nenhum cliente atribuído à sua gestão.",
+    "newServiceOrder": "Nova OS"
   },
   "budget": {
     "title": "Orçamentos",

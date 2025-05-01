@@ -17,10 +17,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ServiceListItem, DashboardStats } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
   const [clientFilter, setClientFilter] = useState<string>("all");
+  const { t } = useTranslation();
   
   // Obter estatísticas do dashboard
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
@@ -56,14 +58,7 @@ export default function ManagerDashboard() {
   
   // Função para traduzir o status
   const translateStatus = (status: string) => {
-    switch(status) {
-      case "pending": return "Pendente";
-      case "completed": return "Concluído";
-      case "aguardando_aprovacao": return "Aguardando Aprovação";
-      case "faturado": return "Faturado";
-      case "pago": return "Pago";
-      default: return status;
-    }
+    return t(`services.status.${status}`) || status;
   };
   
   return (

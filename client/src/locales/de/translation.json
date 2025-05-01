@@ -64,12 +64,21 @@
     "description": "Überblick über Dienstleistungen und Teamleistung",
     "pendingServices": "Ausstehende Dienstleistungen",
     "completedServices": "Abgeschlossene Dienstleistungen",
+    "inProgressServices": "Dienstleistungen in Bearbeitung",
     "revenue": "Gesamtumsatz",
     "todayServices": "Heutige Dienstleistungen",
     "servicesByStatus": "Dienstleistungen nach Status",
     "techniciansPerformance": "Leistung der Techniker",
     "teamPerformance": "Team Leistung",
-    "recentServices": "Neueste Dienstleistungen"
+    "recentServices": "Neueste Dienstleistungen",
+    "latestServices": "Neueste Dienstleistungen",
+    "latestServicesDescription": "Aktuelle Serviceaufträge Ihrer Kunden",
+    "noServicesFound": "Keine Dienstleistungen für Ihre Kunden gefunden.",
+    "noServicesFoundFiltered": "Keine Dienstleistungen für die ausgewählten Kriterien gefunden.",
+    "viewDetails": "Details anzeigen",
+    "notScheduled": "Nicht geplant",
+    "filterByClient": "Nach Kunde filtern",
+    "allClients": "Alle Kunden"
   },
   "services": {
     "title": "Dienstleistungen",
@@ -321,6 +330,18 @@
     "syncNow": "Jetzt synchronisieren",
     "savedOffline": "Im Offline-Modus gespeichert",
     "serviceOfflineDescription": "Der Dienst wurde lokal gespeichert und wird synchronisiert, wenn eine Internetverbindung besteht."
+  },
+  "manager": {
+    "title": "Manager-Dashboard",
+    "welcome": "Willkommen, {{name}}. Hier sind die Informationen zu Ihren Kunden.",
+    "overview": "Übersicht",
+    "serviceOrders": "Serviceaufträge",
+    "myClients": "Meine Kunden",
+    "budgets": "Kostenvoranschläge",
+    "serviceOrdersDescription": "Alle Dienstleistungen der Kunden unter Ihrer Verwaltung",
+    "myClientsDescription": "Kunden, die Ihnen zugewiesen sind",
+    "noClientsAssigned": "Keine Kunden zugewiesen.",
+    "newServiceOrder": "Neuer Serviceauftrag"
   },
   "budget": {
     "title": "Kostenvoranschläge",
