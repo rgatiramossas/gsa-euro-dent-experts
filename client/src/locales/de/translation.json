@@ -249,7 +249,6 @@
   },
   "settings": {
     "title": "Einstellungen",
-    "description": "Verwalten Sie Ihre Präferenzen und Kontoinformationen",
     "general": "Allgemein",
     "users": "Benutzer",
     "serviceTypes": "Dienstleistungstypen",
@@ -260,20 +259,7 @@
     "restore": "Wiederherstellen",
     "exportData": "Daten exportieren",
     "importData": "Daten importieren",
-    "changesSaved": "Änderungen erfolgreich gespeichert",
-    "profile": "Profil",
-    "password": "Passwort",
-    "appearance": "Erscheinungsbild",
-    "technicians": "Techniker",
-    "personalInfo": "Persönliche Informationen",
-    "updatePersonalInfo": "Aktualisieren Sie Ihre persönlichen Informationen",
-    "fullName": "Vollständiger Name",
-    "phone": "Telefon",
-    "phoneExample": "(11) 98765-4321",
-    "saveChanges": "Änderungen speichern",
-    "saving": "Wird gespeichert...",
-    "photoUpdated": "Foto aktualisiert",
-    "photoUpdatedDescription": "Ihr Profilfoto wurde erfolgreich aktualisiert"
+    "changesSaved": "Änderungen erfolgreich gespeichert"
   },
   "users": {
     "title": "Benutzer",
@@ -406,11 +392,5 @@
       "processingError": "Fehler bei der Verarbeitung von Dateien",
       "processingErrorDescription": "Bei der Verarbeitung der ausgewählten Dateien ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
     }
-  }
-"pdf": {
-    "generate": "PDF generieren",
-    "downloading": "Wird heruntergeladen...",
-    "preview": "Vorschau",
-    "documentTitle": "Servicebericht"
   }
 }

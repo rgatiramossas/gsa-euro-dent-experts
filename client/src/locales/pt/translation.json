@@ -436,10 +436,4 @@
       "processingErrorDescription": "Ocorreu um erro ao processar os arquivos selecionados. Tente novamente."
     }
   }
-"pdf": {
-    "generate": "Gerar PDF",
-    "downloading": "Baixando...",
-    "preview": "Visualizar",
-    "documentTitle": "Relatório de Serviço"
-  }
 }
