@@ -74,11 +74,23 @@ export const triggerSyncIfNeeded = async () => {
   
   try {
     const registration = await navigator.serviceWorker.ready;
+    
     // Verificar se o navegador suporta Background Sync
     if (registration.sync && typeof registration.sync.register === 'function') {
-      await registration.sync.register('sync-pending-requests');
+      try {
+        await registration.sync.register('sync-pending-requests');
+        console.log('Sincronização em background registrada com sucesso');
+      } catch (syncError) {
+        console.log('Falha ao registrar sincronização em background, usando método manual', syncError);
+        // Caso falhe, cai no método manual abaixo
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'SYNC_REQUEST'
+          });
+        }
+      }
     } else {
-      console.log('Background Sync não suportado neste navegador');
+      console.log('Background Sync não suportado neste navegador, usando sincronização manual');
       // Tentar sincronizar manualmente
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
@@ -87,7 +99,13 @@ export const triggerSyncIfNeeded = async () => {
       }
     }
   } catch (error) {
-    console.error('Erro ao registrar sincronização:', error);
+    console.log('Erro ao preparar sincronização - isso é esperado em alguns navegadores');
+    // Tentar sincronização manual de qualquer forma
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SYNC_REQUEST'
+      });
+    }
   }
 };
 

@@ -38,7 +38,8 @@ const connectionConfig = {
   port: parseInt(process.env.MYSQL_PORT || '3306'),
   // Adicionar timeout maior para dar mais tempo para conectar
   connectTimeout: 20000, // Aumento do timeout para 20 segundos
-  // SSL configurada como null para desenvolvimento
+  // SSL está desativado por padrão
+  ssl: undefined
 };
 
 // Criação da pool de conexões
@@ -50,11 +51,23 @@ const createPool = async () => {
     // Teste de conexão
     const connection = await pool.getConnection();
     console.log("Conexão com MySQL estabelecida com sucesso!");
+    
+    // Testar uma consulta simples para garantir que tudo está funcionando
+    const [result] = await connection.query('SELECT 1 as test');
+    console.log("Consulta de teste executada com sucesso:", result);
+    
     connection.release();
     
     return pool;
   } catch (error) {
     console.error("Erro ao conectar com o MySQL:", error);
+    console.error("Detalhes da conexão (sem senha):", {
+      host: connectionConfig.host,
+      user: connectionConfig.user,
+      database: connectionConfig.database,
+      port: connectionConfig.port
+    });
+    console.error("Verifique se o host está acessível e se as credenciais estão corretas");
     throw error;
   }
 };

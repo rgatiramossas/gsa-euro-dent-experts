@@ -32,7 +32,7 @@ const config = {
   database: MYSQL_DATABASE,
   port: parseInt(MYSQL_PORT || '3306'),
   // Adicionar timeout maior para dar mais tempo para conectar
-  connectTimeout: 10000,
+  connectTimeout: 20000
 };
 
 async function verifyConnection() {
