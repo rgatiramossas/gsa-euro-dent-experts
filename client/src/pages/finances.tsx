@@ -1744,9 +1744,9 @@ export default function Finances() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descrição</FormLabel>
+                    <FormLabel>{t("finances.form.description")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite a descrição da despesa" {...field} />
+                      <Input placeholder={t("finances.form.enterExpenseDescription")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1758,7 +1758,7 @@ export default function Finances() {
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Valor</FormLabel>
+                    <FormLabel>{t("finances.form.amount")}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="€ 0,00"
@@ -1776,7 +1776,7 @@ export default function Finances() {
                   name="date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Data</FormLabel>
+                      <FormLabel>{t("finances.form.date")}</FormLabel>
                       <FormControl>
                         <Input
                           type="date"
@@ -1793,24 +1793,24 @@ export default function Finances() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Categoria</FormLabel>
+                      <FormLabel>{t("finances.form.category")}</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione uma categoria" />
+                            <SelectValue placeholder={t("finances.form.selectCategory")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="operacional">Operacional</SelectItem>
-                          <SelectItem value="salario">Salário</SelectItem>
-                          <SelectItem value="material">Material</SelectItem>
-                          <SelectItem value="aluguel">Aluguel</SelectItem>
-                          <SelectItem value="alimentacao">Alimentação</SelectItem>
-                          <SelectItem value="transporte">Transporte</SelectItem>
-                          <SelectItem value="outras">Outras</SelectItem>
+                          <SelectItem value="operacional">{t("finances.categories.operational")}</SelectItem>
+                          <SelectItem value="salario">{t("finances.categories.salary")}</SelectItem>
+                          <SelectItem value="material">{t("finances.categories.material")}</SelectItem>
+                          <SelectItem value="aluguel">{t("finances.categories.rent")}</SelectItem>
+                          <SelectItem value="alimentacao">{t("finances.categories.food")}</SelectItem>
+                          <SelectItem value="transporte">{t("finances.categories.transportation")}</SelectItem>
+                          <SelectItem value="outras">{t("finances.categories.others")}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -1824,9 +1824,9 @@ export default function Finances() {
                 name="provider"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fornecedor/Destinatário</FormLabel>
+                    <FormLabel>{t("finances.form.provider")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Digite o nome do fornecedor ou funcionário" {...field} />
+                      <Input placeholder={t("finances.form.enterProviderName")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1838,10 +1838,10 @@ export default function Finances() {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Observações</FormLabel>
+                    <FormLabel>{t("finances.form.notes")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Informações adicionais sobre a despesa"
+                        placeholder={t("finances.form.additionalExpenseInfo")}
                         className="min-h-[80px]"
                         {...field}
                       />
@@ -1859,9 +1859,9 @@ export default function Finances() {
                   variant="outline" 
                   onClick={() => setExpenseDialogOpen(false)}
                 >
-                  Cancelar
+                  {t("common.cancel")}
                 </Button>
-                <Button type="submit">Salvar</Button>
+                <Button type="submit">{t("common.save")}</Button>
               </DialogFooter>
             </form>
           </Form>
@@ -1884,19 +1884,19 @@ export default function Finances() {
                 name="payment_method"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Método de Pagamento</FormLabel>
+                    <FormLabel>{t("finances.form.paymentMethod")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o método de pagamento" />
+                          <SelectValue placeholder={t("finances.form.selectPaymentMethod")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="pix">PIX</SelectItem>
-                        <SelectItem value="transferencia">Transferência Bancária</SelectItem>
-                        <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                        <SelectItem value="cheque">Cheque</SelectItem>
-                        <SelectItem value="outro">Outro</SelectItem>
+                        <SelectItem value="pix">{t("finances.paymentMethods.pix")}</SelectItem>
+                        <SelectItem value="transferencia">{t("finances.paymentMethods.bankTransfer")}</SelectItem>
+                        <SelectItem value="dinheiro">{t("finances.paymentMethods.cash")}</SelectItem>
+                        <SelectItem value="cheque">{t("finances.paymentMethods.check")}</SelectItem>
+                        <SelectItem value="outro">{t("finances.paymentMethods.other")}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
