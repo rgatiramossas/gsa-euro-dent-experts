@@ -1937,10 +1937,10 @@ export default function Finances() {
                 name="payment_notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Observações (opcional)</FormLabel>
+                    <FormLabel>{t("finances.form.paymentNotes")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Informações adicionais sobre o pagamento"
+                        placeholder={t("finances.form.additionalPaymentInfo")}
                         className="min-h-[80px]"
                         {...field}
                       />
