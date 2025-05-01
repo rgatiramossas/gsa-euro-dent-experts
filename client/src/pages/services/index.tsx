@@ -101,7 +101,7 @@ export default function ServicesList() {
                   <SelectGroup>
                     <SelectLabel>{t("services.serviceStatus")}</SelectLabel>
                     <SelectItem value="all">{t("clients.all")}</SelectItem>
-                    {/* Usando valores hardcoded para alemão para evitar o erro "key returned an object" */}
+                    {/* Usando valores hardcoded para alemão e espanhol para evitar o erro "key returned an object" */}
                     {i18n.language === 'de' ? (
                       <>
                         <SelectItem value="pending">Ausstehend</SelectItem>
@@ -109,6 +109,14 @@ export default function ServicesList() {
                         <SelectItem value="aguardando_aprovacao">Genehmigung ausstehend</SelectItem>
                         <SelectItem value="faturado">In Rechnung gestellt</SelectItem>
                         <SelectItem value="pago">Bezahlt</SelectItem>
+                      </>
+                    ) : i18n.language === 'es' ? (
+                      <>
+                        <SelectItem value="pending">Pendiente</SelectItem>
+                        <SelectItem value="completed">Completado</SelectItem>
+                        <SelectItem value="aguardando_aprovacao">Esperando Aprobación</SelectItem>
+                        <SelectItem value="faturado">Facturado</SelectItem>
+                        <SelectItem value="pago">Pagado</SelectItem>
                       </>
                     ) : (
                       <>

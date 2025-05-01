@@ -14,7 +14,7 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
   
   // Função para garantir que recebemos uma string traduzida
   const getTranslatedStatus = (status: ServiceStatus): string => {
-    // Mapeamento direto de status para valores de tradução específicos para alemão
+    // Mapeamento direto de status para valores de tradução específicos para alemão e espanhol
     // para evitar o problema de "key returned an object instead of string"
     if (i18n.language === 'de') {
       const germanStatusMap: Record<ServiceStatus, string> = {
@@ -30,6 +30,24 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
       const germanTranslation = germanStatusMap[status];
       if (germanTranslation) {
         return germanTranslation;
+      }
+    }
+    
+    // Tratamento específico para espanhol
+    if (i18n.language === 'es') {
+      const spanishStatusMap: Record<ServiceStatus, string> = {
+        "pending": "Pendiente",
+        "in_progress": "En Progreso",
+        "completed": "Completado",
+        "canceled": "Cancelado",
+        "aguardando_aprovacao": "Esperando Aprobación",
+        "faturado": "Facturado",
+        "pago": "Pagado"
+      };
+      
+      const spanishTranslation = spanishStatusMap[status];
+      if (spanishTranslation) {
+        return spanishTranslation;
       }
     }
     
