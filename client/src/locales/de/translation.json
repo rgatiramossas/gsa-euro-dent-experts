@@ -468,6 +468,28 @@
     "nenhumaDespesaEncontrada": "Keine Ausgaben gefunden",
     "nenhumServicoDisponivel": "Keine Dienstleistungen für Zahlungsanforderung verfügbar",
     "selecioneServico": "Wählen Sie mindestens eine Dienstleistung für die Zahlungsanforderung aus",
+    "latestTransactions": "Neueste Transaktionen",
+    "expensesByCategory": "Ausgaben nach Kategorie",
+    "table": {
+      "date": "Datum",
+      "client": "Kunde", 
+      "service": "Dienstleistung",
+      "status": "Status",
+      "value": "Betrag",
+      "description": "Beschreibung",
+      "type": "Typ",
+      "provider": "Anbieter",
+      "paymentMethod": "Zahlungsmethode"
+    },
+    "expenseType": {
+      "salario": "Gehalt",
+      "operacional": "Betrieblich",
+      "material": "Material",
+      "aluguel": "Miete",
+      "alimentacao": "Verpflegung",
+      "transporte": "Transport"
+    },
+    "newRequest": "Neue Anfrage",
     "expense": {
       "title": "Ausgaben",
       "description": "Beschreiben Sie die Ausgabe und ihre Kategorie",

@@ -1352,9 +1352,9 @@ export default function Finances() {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Aprovar Pedido de Pagamento</AlertDialogTitle>
+                                    <AlertDialogTitle>{t("finances.approvePaymentRequest")}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Tem certeza que deseja aprovar este pedido de pagamento? Esta ação irá marcar os serviços relacionados como "faturado".
+                                      {t("finances.approvePaymentRequestConfirmation")}
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -1514,12 +1514,12 @@ export default function Finances() {
                             expense.type === "material" ? "bg-amber-600" : 
                             "bg-slate-600"
                           }>
-                            {expense.type === "salario" ? "Salário" :
-                             expense.type === "operacional" ? "Operacional" :
-                             expense.type === "material" ? "Material" :
-                             expense.type === "aluguel" ? "Aluguel" :
-                             expense.type === "alimentacao" ? "Alimentação" :
-                             expense.type === "transporte" ? "Transporte" : 
+                            {expense.type === "salario" ? t("finances.expenseType.salario") :
+                             expense.type === "operacional" ? t("finances.expenseType.operacional") :
+                             expense.type === "material" ? t("finances.expenseType.material") :
+                             expense.type === "aluguel" ? t("finances.expenseType.aluguel") :
+                             expense.type === "alimentacao" ? t("finances.expenseType.alimentacao") :
+                             expense.type === "transporte" ? t("finances.expenseType.transporte") : 
                              expense.type}
                           </Badge>
                         </TableCell>
