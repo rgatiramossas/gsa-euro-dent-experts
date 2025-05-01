@@ -65,20 +65,20 @@ export default function ManagerDashboard() {
     <div className="container mx-auto py-6">
       <div className="flex flex-col md:flex-row justify-between items-start mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard do Gestor</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('manager.title')}</h1>
           <p className="text-muted-foreground">
-            Bem-vindo, {user?.name}. Aqui estão as informações dos seus clientes.
+            {t('manager.welcome', { name: user?.name })}
           </p>
         </div>
       </div>
       
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="services">Ordens de Serviço</TabsTrigger>
-          <TabsTrigger value="clients">Meus Clientes</TabsTrigger>
+          <TabsTrigger value="overview">{t('manager.overview')}</TabsTrigger>
+          <TabsTrigger value="services">{t('manager.serviceOrders')}</TabsTrigger>
+          <TabsTrigger value="clients">{t('manager.myClients')}</TabsTrigger>
           <Link to="/budgets" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm hover:bg-gray-100">
-            Orçamentos
+            {t('manager.budgets')}
           </Link>
         </TabsList>
         
@@ -88,7 +88,7 @@ export default function ManagerDashboard() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Serviços Pendentes
+                  {t('dashboard.pendingServices')}
                 </CardTitle>
                 <ClipboardList className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
@@ -104,7 +104,7 @@ export default function ManagerDashboard() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Serviços em Andamento
+                  {t('dashboard.inProgressServices')}
                 </CardTitle>
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
@@ -120,7 +120,7 @@ export default function ManagerDashboard() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Serviços Concluídos
+                  {t('dashboard.completedServices')}
                 </CardTitle>
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
@@ -136,9 +136,9 @@ export default function ManagerDashboard() {
           
           <Card>
             <CardHeader>
-              <CardTitle>Últimos Serviços</CardTitle>
+              <CardTitle>{t('dashboard.latestServices')}</CardTitle>
               <CardDescription>
-                Ordens de serviço recentes dos seus clientes
+                {t('dashboard.latestServicesDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -163,7 +163,7 @@ export default function ManagerDashboard() {
                           {translateStatus(service.status)}
                         </Badge>
                         <Link to={`/services/${service.id}`}>
-                          <Button variant="outline" size="sm">Ver Detalhes</Button>
+                          <Button variant="outline" size="sm">{t('dashboard.viewDetails')}</Button>
                         </Link>
                       </div>
                     </div>
@@ -171,7 +171,7 @@ export default function ManagerDashboard() {
                 </div>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
-                  Nenhum serviço encontrado para seus clientes.
+                  {t('dashboard.noServicesFound')}
                 </div>
               )}
             </CardContent>
@@ -184,9 +184,9 @@ export default function ManagerDashboard() {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>Ordens de Serviço</CardTitle>
+                  <CardTitle>{t('manager.serviceOrders')}</CardTitle>
                   <CardDescription>
-                    Todos os serviços dos clientes sob sua gestão
+                    {t('manager.serviceOrdersDescription')}
                   </CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -195,10 +195,10 @@ export default function ManagerDashboard() {
                     onValueChange={setClientFilter}
                   >
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filtrar por cliente" />
+                      <SelectValue placeholder={t('dashboard.filterByClient')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos os clientes</SelectItem>
+                      <SelectItem value="all">{t('dashboard.allClients')}</SelectItem>
                       {!clientsLoading && clients && clients.map((client: any) => (
                         <SelectItem key={client.id} value={client.id.toString()}>
                           {client.name}
@@ -226,7 +226,7 @@ export default function ManagerDashboard() {
                           {service.vehicle.make} {service.vehicle.model} - {service.serviceType.name}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {service.scheduled_date ? new Date(service.scheduled_date).toLocaleDateString() : 'Não agendado'}
+                          {service.scheduled_date ? new Date(service.scheduled_date).toLocaleDateString() : t('dashboard.notScheduled')}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -234,7 +234,7 @@ export default function ManagerDashboard() {
                           {translateStatus(service.status)}
                         </Badge>
                         <Link to={`/services/${service.id}`}>
-                          <Button variant="outline" size="sm">Ver Detalhes</Button>
+                          <Button variant="outline" size="sm">{t('dashboard.viewDetails')}</Button>
                         </Link>
                       </div>
                     </div>
@@ -242,7 +242,7 @@ export default function ManagerDashboard() {
                 </div>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
-                  Nenhum serviço encontrado para os critérios selecionados.
+                  {t('dashboard.noServicesFoundFiltered')}
                 </div>
               )}
             </CardContent>
@@ -253,9 +253,9 @@ export default function ManagerDashboard() {
         <TabsContent value="clients" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Meus Clientes</CardTitle>
+              <CardTitle>{t('manager.myClients')}</CardTitle>
               <CardDescription>
-                Clientes atribuídos à sua gestão
+                {t('manager.myClientsDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -282,10 +282,10 @@ export default function ManagerDashboard() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Link to={`/clients/${client.id}`}>
-                          <Button variant="outline" size="sm">Detalhes</Button>
+                          <Button variant="outline" size="sm">{t('services.details')}</Button>
                         </Link>
                         <Link to={`/services/new?clientId=${client.id}`}>
-                          <Button size="sm">Nova OS</Button>
+                          <Button size="sm">{t('manager.newServiceOrder')}</Button>
                         </Link>
                       </div>
                     </div>
@@ -293,7 +293,7 @@ export default function ManagerDashboard() {
                 </div>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
-                  Nenhum cliente atribuído à sua gestão.
+                  {t('manager.noClientsAssigned')}
                 </div>
               )}
             </CardContent>
