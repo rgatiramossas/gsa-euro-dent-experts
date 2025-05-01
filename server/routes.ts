@@ -107,17 +107,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const sessionSecret = process.env.SESSION_SECRET || "s3cr3t_k3y_para_eurodent_session_" + Date.now();
   
   // Session middleware com configuração aprimorada e armazenamento MySQL
+  
+  // Obter as configurações das variáveis de ambiente
+  const cookieMaxAge = parseInt(process.env.COOKIE_MAX_AGE || '31536000000'); // 1 ano padrão
+  const cookieSecure = process.env.COOKIE_SECURE === 'true' ? true : false;
+  const cookieSameSite = (process.env.COOKIE_SAME_SITE || 'lax') as 'lax' | 'strict' | 'none' | false;
+  
+  console.log("\n==== CONFIGURAÇÃO DE SESSÃO ====");
+  console.log("Cookie Max Age:", cookieMaxAge, "ms", `(${cookieMaxAge / (24 * 60 * 60 * 1000)} dias)`);
+  console.log("Cookie Secure:", cookieSecure);
+  console.log("Cookie SameSite:", cookieSameSite);
+  console.log("Session Secret:", sessionSecret ? "Definido (comprimento: " + sessionSecret.length + ")" : "Não definido!");
+  console.log("Store Type:", storage.sessionStore.constructor.name);
+  console.log("================================\n");
+  
   app.use(
     session({
       secret: sessionSecret,
       resave: true, // Forçar resalvar da sessão, mesmo se não modificada
-      saveUninitialized: true, // Forçar salvar sessões não inicializadas
+      saveUninitialized: false, // Não salvar sessões não inicializadas (reduz sessões vazias)
       store: storage.sessionStore, // Usar o armazenamento MySQL
       cookie: { 
-        secure: false, // Não requer HTTPS em desenvolvimento
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 dias em milissegundos para maior duração
+        secure: cookieSecure, // Definido via variável de ambiente
+        maxAge: cookieMaxAge, // Definido via variável de ambiente
         httpOnly: true, // Prevenir acesso por JavaScript no cliente
-        sameSite: 'lax', // Permitir que o cookie seja enviado em navegações de nível superior
+        sameSite: cookieSameSite, // Definido via variável de ambiente
         path: '/'
       },
       rolling: true, // Reset da expiração a cada requisição
@@ -201,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Configurar o cookie corretamente
         if (req.session.cookie) {
-          req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 dias
+          req.session.cookie.maxAge = 365 * 24 * 60 * 60 * 1000; // 1 ano
           req.session.cookie.sameSite = 'lax';
         }
           
@@ -285,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Renovar o cookie da sessão
       if (req.session.cookie) {
-        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 dias
+        req.session.cookie.maxAge = 365 * 24 * 60 * 60 * 1000; // 1 ano
       }
       
       // Responder imediatamente
