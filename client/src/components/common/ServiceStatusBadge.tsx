@@ -10,48 +10,86 @@ interface ServiceStatusBadgeProps {
 }
 
 export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  
+  // Função para garantir que recebemos uma string traduzida
+  const getTranslatedStatus = (status: ServiceStatus): string => {
+    // Mapeamento direto de status para chaves de tradução
+    const statusKeyMap: Record<ServiceStatus, string> = {
+      "pending": "services.status.pending",
+      "in_progress": "services.status.in_progress",
+      "completed": "services.status.completed",
+      "canceled": "services.status.canceled",
+      "aguardando_aprovacao": "services.status.aguardando_aprovacao",
+      "faturado": "services.status.faturado",
+      "pago": "services.status.pago"
+    };
+    
+    // Obter a chave de tradução para o status
+    const translationKey = statusKeyMap[status] || status;
+    
+    // Forçar o retorno de uma string (mesmo que seja a chave de tradução)
+    let translatedText = "";
+    try {
+      // Verificar se temos uma tradução para este status na linguagem atual
+      translatedText = t(translationKey, {defaultValue: status});
+      
+      // Se a tradução retornar um objeto, usamos uma string de fallback
+      if (typeof translatedText !== 'string') {
+        // Fallback para tradução em inglês ou o status original
+        translatedText = status;
+      }
+    } catch (error) {
+      // Em caso de erro, apenas retornar o status original
+      console.warn(`Translation error for status '${status}':`, error);
+      translatedText = status;
+    }
+    
+    return translatedText;
+  };
   
   const getStatusConfig = (status: ServiceStatus) => {
+    const translatedLabel = getTranslatedStatus(status);
+    
     switch (status) {
       case "pending":
         return {
-          label: t("services.status.pending"),
+          label: translatedLabel,
           variant: "bg-blue-100 text-blue-800",
         };
       case "in_progress":
         return {
-          label: t("services.status.in_progress"),
+          label: translatedLabel,
           variant: "bg-orange-100 text-orange-800",
         };
       case "completed":
         return {
-          label: t("services.status.completed"),
+          label: translatedLabel,
           variant: "bg-green-100 text-green-800",
         };
       case "canceled":
         return {
-          label: t("services.status.canceled"),
+          label: translatedLabel,
           variant: "bg-red-100 text-red-800",
         };
       case "aguardando_aprovacao":
         return {
-          label: t("services.status.aguardando_aprovacao"),
+          label: translatedLabel,
           variant: "bg-yellow-100 text-yellow-800",
         };
       case "faturado":
         return {
-          label: t("services.status.faturado"),
+          label: translatedLabel,
           variant: "bg-purple-100 text-purple-800",
         };
       case "pago":
         return {
-          label: t("services.status.pago"),
+          label: translatedLabel,
           variant: "bg-teal-100 text-teal-800",
         };
       default:
         return {
-          label: status,
+          label: translatedLabel,
           variant: "bg-gray-100 text-gray-800",
         };
     }
