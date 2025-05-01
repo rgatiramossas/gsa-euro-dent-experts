@@ -130,7 +130,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string;
       rememberMe?: boolean;
     }) => {
-      return await apiRequest('/api/auth/login', 'POST', credentials);
+      // Usar a forma correta da função apiRequest com objeto de configuração
+      return await apiRequest({
+        url: '/api/auth/login',
+        method: 'POST',
+        data: credentials,
+        enableOffline: false // Autenticação não deve usar cache offline
+      });
     },
     onSuccess: (userData, variables) => {
       setUser(userData);
@@ -159,7 +165,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       // Se estiver online, enviar requisição normalmente
-      await apiRequest('/api/auth/logout', 'POST', {});
+      await apiRequest({
+        url: '/api/auth/logout',
+        method: 'POST',
+        data: {},
+        enableOffline: false // Logout não deve usar cache offline
+      });
     },
     onSuccess: () => {
       setUser(null);
