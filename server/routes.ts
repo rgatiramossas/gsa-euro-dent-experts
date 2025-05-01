@@ -165,58 +165,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isValidCredentials) {
         console.log("Credenciais válidas para usuário:", username);
         
-        // Destruir qualquer sessão existente para garantir sessão limpa
-        if (req.session.userId) {
-          console.log("Destruindo sessão anterior para o usuário:", req.session.userId);
-          await new Promise<void>((resolve) => {
-            req.session.destroy((err) => {
-              if (err) console.error("Erro ao destruir sessão anterior:", err);
-              resolve();
-            });
-          });
-        }
+        // Limpar e configurar a sessão diretamente
+        console.log("Criando nova sessão para usuário:", user.username);
+          
+        // Configurar sessão diretamente
+        req.session.userId = user.id;
+        req.session.userRole = user.role;
         
-        // Criar nova sessão
-        req.session.regenerate((err) => {
+        // Configurar o cookie corretamente
+        if (req.session.cookie) {
+          req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 dias
+          req.session.cookie.sameSite = 'lax';
+        }
+          
+        // Salvar a sessão explicitamente
+        req.session.save(err => {
           if (err) {
-            console.error("Erro ao regenerar sessão:", err);
-            return res.status(500).json({ message: "Erro ao processar sessão" });
+            console.error("Erro ao salvar sessão:", err);
+            res.status(500).json({ message: "Erro ao processar sessão" });
+            return;
           }
           
-          // Configurar sessão
-          req.session.userId = user.id;
-          req.session.userRole = user.role;
-          req.session.created = new Date().toISOString();
+          // Log detalhado da sessão
+          console.log("Sessão criada com sucesso:", { 
+            sessionID: req.sessionID,
+            userId: req.session.userId, 
+            userRole: req.session.userRole,
+            cookie: req.session.cookie
+          });
           
-          // Salvar a sessão explicitamente
-          req.session.save(err => {
-            if (err) {
-              console.error("Erro ao salvar sessão:", err);
-              res.status(500).json({ message: "Erro ao processar sessão" });
-              return;
-            }
-            
-            // Log detalhado da sessão
-            console.log("Sessão criada com sucesso:", { 
-              sessionID: req.sessionID,
-              userId: req.session.userId, 
-              userRole: req.session.userRole,
-              created: req.session.created
-            });
-            
-            // Verificar cabeçalhos da resposta
-            res.on('finish', () => {
-              console.log("Resposta /api/auth/login enviada com cabeçalhos:", res.getHeaders());
-              console.log("Cookie definido na resposta:", res.getHeader('set-cookie'));
-            });
-            
-            res.json({
-              id: user.id,
-              username: user.username,
-              name: user.name,
-              email: user.email,
-              role: user.role
-            });
+          // Verificar cabeçalhos da resposta
+          res.on('finish', () => {
+            console.log("Resposta /api/auth/login enviada com cabeçalhos:", res.getHeaders());
+            console.log("Cookie definido na resposta:", res.getHeader('set-cookie'));
+          });
+          
+          res.json({
+            id: user.id,
+            username: user.username,
+            name: user.name,
+            email: user.email,
+            role: user.role
           });
         });
         
