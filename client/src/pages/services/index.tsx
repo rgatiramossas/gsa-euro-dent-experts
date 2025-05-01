@@ -156,33 +156,14 @@ export default function ServicesList() {
         title={t("services.title")}
         description={t("services.manage")}
         actions={
-          <div className="flex items-center gap-2">
-            {pendingCount > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 text-amber-600 border-amber-200 hover:bg-amber-50"
-                onClick={handleSync}
-                disabled={!isOnline || isSyncing}
-              >
-                <RotateCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                {i18n.language === 'de' ? `${pendingCount} offline Einträge synchronisieren` : 
-                 i18n.language === 'es' ? `Sincronizar ${pendingCount} entradas offline` :
-                 i18n.language === 'fr' ? `Synchroniser ${pendingCount} entrées hors ligne` :
-                 i18n.language === 'it' ? `Sincronizza ${pendingCount} voci offline` :
-                 i18n.language === 'en' ? `Sync ${pendingCount} offline entries` :
-                 `Sincronizar ${pendingCount} registros offline`}
-              </Button>
-            )}
-            <Link href="/services/new">
-              <Button>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                {t("services.newService")}
-              </Button>
-            </Link>
-          </div>
+          <Link href="/services/new">
+            <Button>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              {t("services.newService")}
+            </Button>
+          </Link>
         }
       />
       
@@ -371,35 +352,10 @@ export default function ServicesList() {
                     filteredServices?.map((service) => (
                       <TableRow 
                         key={service.id} 
-                        className={`hover:bg-gray-50 ${service._isOffline ? 'bg-yellow-50/50' : ''}`}
+                        className="hover:bg-gray-50"
                       >
                         <TableCell className="font-medium">
                           #{service.id}
-                          {service._isOffline && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="ml-2 bg-yellow-100 text-amber-700 border-amber-300">
-                                    <CloudOff className="h-3 w-3 mr-1" />
-                                    {i18n.language === 'de' ? "Offline" : 
-                                     i18n.language === 'es' ? "Sin conexión" :
-                                     i18n.language === 'fr' ? "Hors ligne" :
-                                     i18n.language === 'it' ? "Offline" :
-                                     i18n.language === 'en' ? "Offline" :
-                                     "Offline"}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {i18n.language === 'de' ? "Diese Bestellung wurde im Offline-Modus erstellt und muss noch synchronisiert werden" : 
-                                   i18n.language === 'es' ? "Esta orden se creó en modo sin conexión y aún necesita sincronizarse" :
-                                   i18n.language === 'fr' ? "Cette commande a été créée en mode hors ligne et doit encore être synchronisée" :
-                                   i18n.language === 'it' ? "Questo ordine è stato creato in modalità offline e deve ancora essere sincronizzato" :
-                                   i18n.language === 'en' ? "This order was created in offline mode and still needs to be synchronized" :
-                                   "Esta ordem foi criada no modo offline e ainda precisa ser sincronizada"}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
                         </TableCell>
                         <TableCell>{service.client?.name || "-"}</TableCell>
                         <TableCell>
@@ -422,28 +378,7 @@ export default function ServicesList() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
-                            {service._isOffline && service._pendingSync && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="flex items-center gap-1 text-amber-600 border-amber-200 hover:bg-amber-50"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSync();
-                                }}
-                                disabled={isSyncing || !isOnline}
-                              >
-                                <RotateCw className="h-3.5 w-3.5" />
-                                <span>
-                                  {i18n.language === 'de' ? "Sync" : 
-                                   i18n.language === 'es' ? "Sincronizar" :
-                                   i18n.language === 'fr' ? "Synchroniser" :
-                                   i18n.language === 'it' ? "Sincronizza" :
-                                   i18n.language === 'en' ? "Sync" :
-                                   "Sincronizar"}
-                                </span>
-                              </Button>
-                            )}
+  
                             <Button
                               variant="outline"
                               size="sm"

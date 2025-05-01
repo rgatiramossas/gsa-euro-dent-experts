@@ -50,8 +50,7 @@ export const registerServiceWorker = async () => {
 export const checkNetworkStatus = () => {
   const isOnline = navigator.onLine;
   
-  // Atualizar o estado do aplicativo com base na conectividade
-  // Removido a pedido do cliente: não mostrar indicador visual de modo offline
+  // Sincronizar silenciosamente em segundo plano se online
   if (isOnline) {
     triggerSyncIfNeeded();
   }
@@ -139,46 +138,41 @@ import { offlineStatusStore } from './stores';
 // Importar o queryClient para invalidação de cache após sincronização
 import { queryClient } from '@/lib/queryClient';
 
-// Processar mensagens do service worker 
+// Processar mensagens do service worker de forma silenciosa
 const processServiceWorkerMessage = async (event: MessageEvent) => {
   const data = event.data;
   
   if (!data || typeof data !== 'object') return;
   
-  console.log('Mensagem recebida do service worker:', data.type);
+  // Log silencioso para debugging (apenas para desenvolvedores)
+  console.log('Mensagem do service worker:', data.type);
   
   switch (data.type) {
     case 'online':
-      // Removido a pedido do cliente: não mostrar indicador visual de modo offline
+      // Atualizar estado interno sem mostrar ao usuário
       offlineStatusStore.setOnline(true);
       break;
       
     case 'offline':
-      // Removido a pedido do cliente: não mostrar indicador visual de modo offline
+      // Atualizar estado interno sem mostrar ao usuário
       offlineStatusStore.setOnline(false);
       break;
       
     case 'offline-operation-started':
-      // Nova mensagem quando uma operação offline é iniciada
-      console.log(`Operação offline iniciada: ${data.method} para ${data.tableName} (ID: ${data.tempId})`);
-      // Aqui não fazemos nada específico - cada componente deve ouvir este evento individualmente
+      // Operação offline foi iniciada - sem feedback visual
       break;
       
     case 'operation-queued':
-      // Quando a operação é efetivamente armazenada para sincronização futura
-      console.log(`Operação enfileirada para sincronização futura: ${data.tempId}`);
+      // Operação enfileirada para sincronização futura - sem feedback visual
       break;
       
     case 'operation-synced':
-      // Quando uma operação específica é sincronizada com sucesso
-      console.log(`Operação sincronizada com sucesso: ${data.tempId}`);
-      
-      // Invalidar cache para forçar a atualização dos dados na tela
+      // Operação sincronizada com sucesso - atualiza dados silenciosamente
       if (data.tableName) {
-        console.log(`Invalidando cache para tabela: ${data.tableName}`);
+        // Atualizar dados no cache para que a interface reflita os dados do servidor
         queryClient.invalidateQueries({ queryKey: [`/api/${data.tableName}`] });
         
-        // Para serviços, também invalidar estatísticas
+        // Para serviços, atualizar estatísticas também
         if (data.tableName === 'services') {
           queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
         }
@@ -186,69 +180,60 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
       break;
       
     case 'connection-status':
-      // Atualizar status de conectividade e invalidar caches quando voltamos a ficar online
-      console.log(`Status de conexão atualizado: ${data.online ? 'Online' : 'Offline'}`);
       if (data.online === true) {
-        // Se estamos voltando a ficar online:
-        // 1. Iniciar sincronização primeiro
+        // Se voltamos a ficar online, sincronizar em background sem notificar o usuário
         triggerSyncIfNeeded();
         
-        // 2. Aguardar um intervalo curto para dar tempo da sincronização começar
+        // Atualizar dados após um pequeno delay
         setTimeout(() => {
-          // 3. Invalidar todos os caches principais
-          console.log('Voltamos a ficar online, invalidando caches para atualização');
           queryClient.invalidateQueries({ queryKey: ['/api/services'] });
           queryClient.invalidateQueries({ queryKey: ['/api/services', { enableOffline: true, offlineTableName: 'services' }] });
           queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
           queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
-          
-          // 4. Forçar refetch explícito para garantir dados atualizados
           queryClient.refetchQueries({ queryKey: ['/api/services'] });
-        }, 500); // Meio segundo para iniciar a sincronização
+        }, 500);
       }
       offlineStatusStore.setOnline(data.online);
       break;
       
     case 'sync-status':
-      // Mudança no status geral de sincronização
-      console.log(`Status de sincronização: ${data.status}`);
+      // Atualizar estado interno de sincronização sem mostrar indicadores visuais
       if (data.status === 'in-progress') {
         offlineStatusStore.setSyncing(true);
       } else if (data.status === 'completed' || data.status === 'error') {
         offlineStatusStore.setSyncing(false);
-        // Atualizar o contador de requisições pendentes
+        
+        // Atualizar contador interno de requisições pendentes
         offlineDb.countPendingRequests().then(count => {
           offlineStatusStore.setPendingCount(count);
         });
         
-        // Após sincronização completa, invalidar queries para atualizar dados
-        console.log('Sincronização concluída, atualizando dados da aplicação');
+        // Atualizar dados sem mostrar indicadores visuais
         queryClient.invalidateQueries();
       }
       break;
       
     case 'data-updated':
-      // Tabela específica foi atualizada
+      // Atualizar dados silenciosamente quando uma tabela específica for modificada
       if (data.tableName) {
-        console.log(`Dados atualizados para tabela: ${data.tableName}`);
         queryClient.invalidateQueries({ queryKey: [`/api/${data.tableName}`] });
       }
       break;
       
     case 'sync-error':
-      console.error('Erro na sincronização:', data.error);
+      // Registrar erro no console, mas não mostrar ao usuário
+      console.error('Erro de sincronização silencioso:', data.error);
       offlineStatusStore.setSyncing(false);
       break;
       
     case 'resource-id-updated':
-      // Atualizar o ID local para o ID do servidor após sincronização
+      // Atualizar mapeamento de IDs locais para IDs do servidor
       try {
         await offlineDb.updateLocalId(
           data.tableName,
           data.localId,
           data.serverId
         );
-        console.log(`ID atualizado: ${data.tableName} ${data.localId} -> ${data.serverId}`);
       } catch (error) {
         console.error('Erro ao atualizar ID local:', error);
       }
@@ -264,12 +249,25 @@ export const initPWA = () => {
   // Configurar listener para mensagens do service worker
   navigator.serviceWorker.addEventListener('message', processServiceWorkerMessage);
   
-  // Configurar monitoramento de estado da rede
-  window.addEventListener('online', checkNetworkStatus);
+  // Configurar monitoramento de estado da rede para sincronização automática
+  window.addEventListener('online', () => {
+    console.log('Conexão restabelecida, iniciando sincronização automática');
+    // Inicia sincronização silenciosa quando a conexão volta
+    checkNetworkStatus();
+  });
   window.addEventListener('offline', checkNetworkStatus);
   
   // Verificar estado inicial da rede
   checkNetworkStatus();
+  
+  // Configurar verificação periódica para sincronização
+  // Tenta sincronizar a cada 5 minutos, silenciosamente em segundo plano
+  setInterval(() => {
+    if (navigator.onLine) {
+      console.log('Tentativa periódica de sincronização em segundo plano');
+      triggerSyncIfNeeded();
+    }
+  }, 300000); // 5 minutos
 };
 
 // Estender a interface Window para incluir deferredPrompt
