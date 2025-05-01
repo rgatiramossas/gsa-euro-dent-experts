@@ -24,12 +24,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryKey: ['/api/auth/me'],
     retry: false,
     staleTime: Infinity,
+    // Configuração para permitir obter dados do cache quando offline
+    networkMode: 'always',
+    // Não mostrar erros se a autenticação falhar e estivermos offline
+    onError: (err) => {
+      // Verificar se estamos offline
+      if (!navigator.onLine) {
+        console.log('Offline detectado durante verificação de autenticação, ignorando erro');
+      } else {
+        console.error('Erro ao verificar autenticação:', err);
+      }
+    }
   });
 
   // Set user data when it loads
   useEffect(() => {
     if (data) {
       setUser(data);
+      
+      // Quando os dados são carregados com sucesso, salvar no localStorage 
+      // para manter autenticação offline
+      localStorage.setItem('user', JSON.stringify(data));
     }
   }, [data]);
 
@@ -71,6 +86,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      if (!navigator.onLine) {
+        // Se estiver offline, não enviar requisição para o servidor
+        console.log("Logout realizado em modo offline");
+        return;
+      }
+      // Se estiver online, enviar requisição normalmente
       await apiRequest('/api/auth/logout', 'POST', {});
     },
     onSuccess: () => {
@@ -80,9 +101,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Limpar localStorage ao fazer logout
       localStorage.removeItem('user');
     },
+    onError: (error) => {
+      // Se ocorrer erro durante logout, limpar dados locais de qualquer forma
+      console.error("Erro durante logout:", error);
+      setUser(null);
+      queryClient.setQueryData(['/api/auth/me'], null);
+      queryClient.clear();
+      localStorage.removeItem('user');
+    }
   });
 
   const login = async (username: string, password: string, rememberMe: boolean = false): Promise<AuthUser> => {
+    // Se estiver offline, verificar se temos dados no localStorage
+    if (!navigator.onLine) {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          // Verificar se o usuário no localStorage corresponde às credenciais
+          if (parsedUser.username === username) {
+            console.log("Login offline bem-sucedido usando dados armazenados");
+            setUser(parsedUser);
+            queryClient.setQueryData(['/api/auth/me'], parsedUser);
+            return parsedUser;
+          }
+        } catch (err) {
+          console.error("Erro ao processar dados de usuário armazenados:", err);
+        }
+      }
+      throw new Error("Não é possível fazer login no modo offline");
+    }
+    
+    // Se estiver online, usar a mutação normal
     return loginMutation.mutateAsync({ username, password, rememberMe });
   };
 

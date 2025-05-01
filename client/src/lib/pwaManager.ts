@@ -113,6 +113,9 @@ export const triggerSyncIfNeeded = async () => {
 import offlineDb from './offlineDb';
 import { offlineStatusStore } from './stores';
 
+// Importar o queryClient para invalidação de cache após sincronização
+import { queryClient } from '@/lib/queryClient';
+
 // Processar mensagens do service worker 
 const processServiceWorkerMessage = async (event: MessageEvent) => {
   const data = event.data;
@@ -146,6 +149,30 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
     case 'operation-synced':
       // Quando uma operação específica é sincronizada com sucesso
       console.log(`Operação sincronizada com sucesso: ${data.tempId}`);
+      
+      // Invalidar cache para forçar a atualização dos dados na tela
+      if (data.tableName) {
+        console.log(`Invalidando cache para tabela: ${data.tableName}`);
+        queryClient.invalidateQueries({ queryKey: [`/api/${data.tableName}`] });
+        
+        // Para serviços, também invalidar estatísticas
+        if (data.tableName === 'services') {
+          queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+        }
+      }
+      break;
+      
+    case 'connection-status':
+      // Atualizar status de conectividade e invalidar caches quando voltamos a ficar online
+      console.log(`Status de conexão atualizado: ${data.online ? 'Online' : 'Offline'}`);
+      if (data.online === true) {
+        // Se estamos voltando a ficar online, invalidar todos os caches principais
+        console.log('Voltamos a ficar online, invalidando caches para atualização');
+        queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      }
+      offlineStatusStore.setOnline(data.online);
       break;
       
     case 'sync-status':
