@@ -10,7 +10,7 @@ import { CalendarIcon, ArrowLeft, Upload, Image } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateBudgetTotals } from "@/utils/hailCalculation";
-import { useTranslation } from "react-i18next";
+import { useTranslation, TFunction } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -85,23 +85,10 @@ const vehicleParts = [
   "lateral_esquerda", "porta_malas_inferior", "lateral_direita"
 ];
 
-// Nomes de exibição das peças
-const partDisplayNames: Record<string, string> = {
-  para_lama_esquerdo: "Para-lama Esquerdo",
-  capo: "Capô",
-  para_lama_direito: "Para-lama Direito",
-  coluna_esquerda: "Coluna Esquerda",
-  teto: "Teto",
-  coluna_direita: "Coluna Direita",
-  porta_dianteira_esquerda: "Porta Dianteira Esquerda",
-  imagem_central: "", // Espaço vazio para a imagem
-  porta_dianteira_direita: "Porta Dianteira Direita",
-  porta_traseira_esquerda: "Porta Traseira Esquerda",
-  porta_malas_superior: "Porta Malas Superior",
-  porta_traseira_direita: "Porta Traseira Direita",
-  lateral_esquerda: "Lateral Esquerda",
-  porta_malas_inferior: "Porta Malas Inferior",
-  lateral_direita: "Lateral Direita"
+// Esta função será usada pelo componente DamagePart para obter o nome traduzido da peça
+const getPartDisplayName = (part: string, t: TFunction): string => {
+  if (part === "imagem_central") return ""; // Espaço vazio para a imagem
+  return t(`budget.damageMap.${part}`);
 };
 
 const NewBudgetForm: React.FC<NewBudgetFormProps> = ({ 
@@ -621,6 +608,7 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
   // Acesso ao contexto de autenticação para verificar se é gestor
   const { user } = useAuth();
   const isGestor = user?.role === "gestor" || user?.role === "manager";
+  const { t } = useTranslation();
   
   // Se for o espaço para imagem, retornar um espaço vazio
   if (part === "imagem_central") {
@@ -634,7 +622,7 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
   
   return (
     <div className="border rounded-md p-2">
-      <h4 className="font-medium text-xs mb-1 text-center">{partDisplayNames[part]}</h4>
+      <h4 className="font-medium text-xs mb-1 text-center">{getPartDisplayName(part, t)}</h4>
       <div className="space-y-1">
         {/* Tamanho 20mm - Alinhamento simétrico com padding negativo no rótulo e positivo no input */}
         <div className="flex items-center justify-between">
