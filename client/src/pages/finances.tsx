@@ -607,9 +607,9 @@ export default function Finances() {
         <Dialog open={paymentRequestDialogOpen} onOpenChange={setPaymentRequestDialogOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Novo Pedido de Pagamento</DialogTitle>
+              <DialogTitle>{t("finances.newPaymentRequest")}</DialogTitle>
               <DialogDescription>
-                Selecione os serviços concluídos para os quais deseja solicitar pagamento.
+                {t("finances.payment.selectServices")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -670,7 +670,7 @@ export default function Finances() {
                   variant="outline" 
                   onClick={() => setPaymentRequestDialogOpen(false)}
                 >
-                  Cancelar
+                  {t("common.cancel")}
                 </Button>
                 <Button 
                   onClick={handleCreatePaymentRequest}
@@ -679,9 +679,9 @@ export default function Finances() {
                   {createPaymentRequestMutation.isPending ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                      Enviando...
+                      {t("common.sending")}
                     </div>
-                  ) : "Enviar Pedido"}
+                  ) : t("finances.payment.sendRequest")}
                 </Button>
               </div>
             </div>
