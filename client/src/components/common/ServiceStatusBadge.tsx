@@ -14,7 +14,26 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
   
   // Função para garantir que recebemos uma string traduzida
   const getTranslatedStatus = (status: ServiceStatus): string => {
-    // Mapeamento direto de status para chaves de tradução
+    // Mapeamento direto de status para valores de tradução específicos para alemão
+    // para evitar o problema de "key returned an object instead of string"
+    if (i18n.language === 'de') {
+      const germanStatusMap: Record<ServiceStatus, string> = {
+        "pending": "Ausstehend",
+        "in_progress": "In Bearbeitung",
+        "completed": "Abgeschlossen",
+        "canceled": "Storniert",
+        "aguardando_aprovacao": "Genehmigung ausstehend",
+        "faturado": "In Rechnung gestellt",
+        "pago": "Bezahlt"
+      };
+      
+      const germanTranslation = germanStatusMap[status];
+      if (germanTranslation) {
+        return germanTranslation;
+      }
+    }
+    
+    // Para outros idiomas, usar o mapeamento normal
     const statusKeyMap: Record<ServiceStatus, string> = {
       "pending": "services.status.pending",
       "in_progress": "services.status.in_progress",
@@ -37,6 +56,7 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
       // Se a tradução retornar um objeto, usamos uma string de fallback
       if (typeof translatedText !== 'string') {
         // Fallback para tradução em inglês ou o status original
+        console.warn(`Translation key '${translationKey}' returned an object instead of a string`);
         translatedText = status;
       }
     } catch (error) {
