@@ -25,6 +25,14 @@ import {
 } from "@shared/schema.mysql";
 import { z } from "zod";
 
+// Estender a tipagem do Session para incluir nossas propriedades personalizadas
+declare module 'express-session' {
+  interface SessionData {
+    userId?: number;
+    userRole?: string;
+  }
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, "../uploads");
 
@@ -93,13 +101,19 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session middleware
+  // Session middleware com configuração aprimorada
   app.use(
     session({
       secret: process.env.SESSION_SECRET || "s3cr3t",
-      resave: false,
-      saveUninitialized: false,
-      cookie: { secure: process.env.NODE_ENV === "production" },
+      resave: true, // Alterado para garantir que a sessão seja salva em cada requisição
+      saveUninitialized: true, // Alterado para salvar sessões não inicializadas
+      cookie: { 
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias em milissegundos
+        httpOnly: true, // Prevenir acesso por JavaScript no cliente
+        sameSite: 'lax' // Permitir que o cookie seja enviado em navegações de nível superior
+      },
+      rolling: true, // Reset da expiração a cada requisição
     })
   );
   // A configuração de servir arquivos estáticos de uploads foi movida para index.ts
@@ -137,12 +151,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.userId = user.id;
         req.session.userRole = user.role;
         
-        return res.json({
-          id: user.id,
-          username: user.username,
-          name: user.name,
-          email: user.email,
-          role: user.role
+        // Salvar a sessão explicitamente
+        req.session.save(err => {
+          if (err) {
+            console.error("Erro ao salvar sessão:", err);
+            return res.status(500).json({ message: "Erro ao processar sessão" });
+          }
+          
+          // Log detalhado da sessão
+          console.log("Sessão criada com sucesso:", { 
+            sessionID: req.sessionID,
+            userId: req.session.userId, 
+            userRole: req.session.userRole 
+          });
+          
+          return res.json({
+            id: user.id,
+            username: user.username,
+            name: user.name,
+            email: user.email,
+            role: user.role
+          });
         });
       }
       
@@ -155,6 +184,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", async (req, res) => {
     try {
+      // Log de depuração da sessão
+      console.log("Verificando sessão em /api/auth/me:", { 
+        sessionID: req.sessionID,
+        session: req.session 
+      });
+      
       if (!req.session.userId) {
         return res.status(401).json({ message: "Not authenticated" });
       }
@@ -162,16 +197,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(req.session.userId);
       
       if (!user) {
-        req.session.destroy(() => {});
-        return res.status(401).json({ message: "User not found" });
+        // Se o usuário não existir, destruir a sessão
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Erro ao destruir sessão:", err);
+          }
+          return res.status(401).json({ message: "User not found" });
+        });
+        return;
       }
       
-      return res.json({
-        id: user.id,
-        username: user.username,
-        name: user.name,
-        email: user.email,
-        role: user.role
+      // Renovar a sessão a cada verificação bem-sucedida
+      req.session.touch();
+      
+      // Salvar explicitamente para garantir que a data de expiração é atualizada
+      req.session.save((err) => {
+        if (err) {
+          console.error("Erro ao atualizar sessão:", err);
+        }
+        
+        return res.json({
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        });
       });
     } catch (error) {
       console.error("Auth check error:", error);
