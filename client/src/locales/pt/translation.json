@@ -28,6 +28,7 @@
     "selectDate": "Selecione uma data",
     "saving": "Salvando...",
     "processing": "Processando...",
+    "sending": "Enviando...",
     "notSpecified": "Não especificado"
   },
   "auth": {
@@ -535,6 +536,7 @@
       "selectServices": "Selecione os serviços",
       "noServicesAvailable": "Não há serviços disponíveis para solicitação de pagamento",
       "serviceDescription": "Descrição do Serviço",
+      "sendRequest": "Enviar Pedido",
       "paymentMethod": "Forma de Pagamento",
       "paymentDetails": "Detalhes do Pagamento",
       "paymentDate": "Data do Pagamento",

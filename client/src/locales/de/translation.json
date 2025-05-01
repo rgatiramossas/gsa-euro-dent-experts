@@ -28,6 +28,8 @@
     "selectDate": "Datum auswählen",
     "saving": "Wird gespeichert...",
     "saveChanges": "Änderungen speichern",
+    "processing": "Verarbeitung...",
+    "sending": "Senden...",
     "notSpecified": "Nicht angegeben",
     "noDescription": "Keine Beschreibung"
   },
