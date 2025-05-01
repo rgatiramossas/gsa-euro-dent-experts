@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { getQueryFn } from "@/lib/queryClient";
@@ -20,6 +20,10 @@ import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/utils";
 import { ServiceStatusBadge } from "@/components/common/ServiceStatusBadge";
 import { ServiceListItem, ServiceStatus } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
+import { CloudOff, RotateCw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -30,18 +34,103 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
+import { checkNetworkStatus, triggerSyncIfNeeded } from "@/lib/pwaManager";
+import { offlineStatusStore } from "@/lib/stores";
 
 export default function ServicesList() {
   const [_, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<ServiceStatus | "all">("all");
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   
-  const { data: services, isLoading } = useQuery<ServiceListItem[]>({
+  // Fetch services with offline support
+  const { data: services, isLoading, refetch } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services', { enableOffline: true, offlineTableName: 'services' }],
     queryFn: getQueryFn({ on401: "throw" }),
     refetchOnMount: true, // Forçar refetch quando o componente montar
   });
+  
+  // Monitor online status and sync state
+  useEffect(() => {
+    function updateOnlineStatus() {
+      setIsOnline(navigator.onLine);
+    }
+    
+    // Subscribe to offline status store
+    function handleOfflineStoreUpdate() {
+      setIsOnline(offlineStatusStore.getOnlineStatus());
+      setIsSyncing(offlineStatusStore.getSyncingStatus());
+      setPendingCount(offlineStatusStore.getPendingCount());
+    }
+    
+    // Initial status
+    handleOfflineStoreUpdate();
+    
+    // Set up event listeners
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    // Set up custom event listener for store updates
+    const unsubscribe = offlineStatusStore.subscribe(handleOfflineStoreUpdate);
+    
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+      unsubscribe();
+    };
+  }, []);
+  
+  // Function to manually trigger sync
+  const handleSync = () => {
+    if (!isOnline) {
+      toast({
+        title: t("offline.offlineMode"),
+        description: t("offline.cannotSyncOffline"),
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (isSyncing) {
+      toast({
+        title: t("offline.syncInProgress"),
+        description: t("offline.pleaseWait")
+      });
+      return;
+    }
+    
+    setIsSyncing(true);
+    toast({
+      title: t("offline.syncStarted"),
+      description: t("offline.syncingData")
+    });
+    
+    // Trigger sync and refresh data
+    triggerSyncIfNeeded();
+    
+    // After a short delay, refresh the data
+    setTimeout(() => {
+      refetch().then(() => {
+        setIsSyncing(false);
+        toast({
+          title: t("offline.syncComplete"),
+          description: t("offline.dataUpdated")
+        });
+      }).catch(error => {
+        console.error("Erro ao atualizar dados:", error);
+        setIsSyncing(false);
+        toast({
+          title: t("offline.syncError"),
+          description: t("offline.syncErrorDesc"),
+          variant: "destructive"
+        });
+      });
+    }, 1500);
+  };
 
   // Filter services based on search term and active tab
   const filteredServices = services?.filter(service => {
@@ -67,14 +156,33 @@ export default function ServicesList() {
         title={t("services.title")}
         description={t("services.manage")}
         actions={
-          <Link href="/services/new">
-            <Button>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              {t("services.newService")}
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {pendingCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 text-amber-600 border-amber-200 hover:bg-amber-50"
+                onClick={handleSync}
+                disabled={!isOnline || isSyncing}
+              >
+                <RotateCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                {i18n.language === 'de' ? `${pendingCount} offline Einträge synchronisieren` : 
+                 i18n.language === 'es' ? `Sincronizar ${pendingCount} entradas offline` :
+                 i18n.language === 'fr' ? `Synchroniser ${pendingCount} entrées hors ligne` :
+                 i18n.language === 'it' ? `Sincronizza ${pendingCount} voci offline` :
+                 i18n.language === 'en' ? `Sync ${pendingCount} offline entries` :
+                 `Sincronizar ${pendingCount} registros offline`}
+              </Button>
+            )}
+            <Link href="/services/new">
+              <Button>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {t("services.newService")}
+              </Button>
+            </Link>
+          </div>
         }
       />
       
@@ -263,13 +371,40 @@ export default function ServicesList() {
                     filteredServices?.map((service) => (
                       <TableRow 
                         key={service.id} 
-                        className="hover:bg-gray-50"
+                        className={`hover:bg-gray-50 ${service._isOffline ? 'bg-yellow-50/50' : ''}`}
                       >
-                        <TableCell className="font-medium">#{service.id}</TableCell>
-                        <TableCell>{service.client.name}</TableCell>
+                        <TableCell className="font-medium">
+                          #{service.id}
+                          {service._isOffline && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="ml-2 bg-yellow-100 text-amber-700 border-amber-300">
+                                    <CloudOff className="h-3 w-3 mr-1" />
+                                    {i18n.language === 'de' ? "Offline" : 
+                                     i18n.language === 'es' ? "Sin conexión" :
+                                     i18n.language === 'fr' ? "Hors ligne" :
+                                     i18n.language === 'it' ? "Offline" :
+                                     i18n.language === 'en' ? "Offline" :
+                                     "Offline"}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {i18n.language === 'de' ? "Diese Bestellung wurde im Offline-Modus erstellt und muss noch synchronisiert werden" : 
+                                   i18n.language === 'es' ? "Esta orden se creó en modo sin conexión y aún necesita sincronizarse" :
+                                   i18n.language === 'fr' ? "Cette commande a été créée en mode hors ligne et doit encore être synchronisée" :
+                                   i18n.language === 'it' ? "Questo ordine è stato creato in modalità offline e deve ancora essere sincronizzato" :
+                                   i18n.language === 'en' ? "This order was created in offline mode and still needs to be synchronized" :
+                                   "Esta ordem foi criada no modo offline e ainda precisa ser sincronizada"}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </TableCell>
+                        <TableCell>{service.client?.name || "-"}</TableCell>
                         <TableCell>
-                          {service.vehicle.make} {service.vehicle.model}
-                          {service.vehicle.license_plate && ` - ${service.vehicle.license_plate}`}
+                          {service.vehicle?.make} {service.vehicle?.model}
+                          {service.vehicle?.license_plate && ` - ${service.vehicle.license_plate}`}
                         </TableCell>
                         <TableCell>{service.technician?.name || 
                           (i18n.language === 'de' ? "Nicht zugewiesen" : 
@@ -287,6 +422,28 @@ export default function ServicesList() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
+                            {service._isOffline && service._pendingSync && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="flex items-center gap-1 text-amber-600 border-amber-200 hover:bg-amber-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSync();
+                                }}
+                                disabled={isSyncing || !isOnline}
+                              >
+                                <RotateCw className="h-3.5 w-3.5" />
+                                <span>
+                                  {i18n.language === 'de' ? "Sync" : 
+                                   i18n.language === 'es' ? "Sincronizar" :
+                                   i18n.language === 'fr' ? "Synchroniser" :
+                                   i18n.language === 'it' ? "Sincronizza" :
+                                   i18n.language === 'en' ? "Sync" :
+                                   "Sincronizar"}
+                                </span>
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
