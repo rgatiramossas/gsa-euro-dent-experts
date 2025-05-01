@@ -515,6 +515,28 @@
     "nenhumaDespesaEncontrada": "Nenhuma despesa encontrada",
     "nenhumServicoDisponivel": "Nenhum serviço disponível para solicitação de pagamento",
     "selecioneServico": "Selecione pelo menos um serviço para solicitar pagamento",
+    "latestTransactions": "Últimas Transações",
+    "expensesByCategory": "Despesas por Categoria",
+    "table": {
+      "date": "Data",
+      "client": "Cliente", 
+      "service": "Serviço",
+      "status": "Status",
+      "value": "Valor",
+      "description": "Descrição",
+      "type": "Tipo",
+      "provider": "Fornecedor",
+      "paymentMethod": "Método de Pagamento"
+    },
+    "expenseType": {
+      "salario": "Salário",
+      "operacional": "Operacional",
+      "material": "Material",
+      "aluguel": "Aluguel",
+      "alimentacao": "Alimentação",
+      "transporte": "Transporte"
+    },
+    "newRequest": "Novo Pedido",
     "expense": {
       "title": "Despesas",
       "description": "Descreva a despesa e sua categoria",
