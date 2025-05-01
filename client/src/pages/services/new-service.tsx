@@ -845,7 +845,7 @@ export default function NewServicePage() {
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        {t("services.technicianHelp")}
+                        {t("services.technicianHelp", "Selecione o técnico responsável pelo serviço")}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -862,13 +862,13 @@ export default function NewServicePage() {
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder={t("services.descriptionPlaceholder")}
+                        placeholder={t("services.descriptionPlaceholder", "Descreva o serviço a ser realizado...")}
                         rows={3}
                         value={field.value || ''}
                       />
                     </FormControl>
                     <FormDescription>
-                      {t("services.descriptionHelp")}
+                      {t("services.descriptionHelp", "Forneça detalhes sobre o serviço a ser realizado")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
