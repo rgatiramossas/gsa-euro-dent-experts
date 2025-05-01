@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthUser } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { checkNetworkStatus } from "@/lib/pwaManager";
+import { setSessionRefreshFunction } from "@/lib/apiWrapper";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -11,19 +13,22 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   updateUser: (user: AuthUser) => void;
+  refreshSession: () => Promise<void>; // Nova função para renovar a sessão
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isSessionRefreshing, setIsSessionRefreshing] = useState(false);
   const queryClient = useQueryClient();
 
   // Check if user is already logged in
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/auth/me'],
     retry: false,
-    staleTime: Infinity
+    staleTime: 5 * 60 * 1000, // 5 minutos, em vez de Infinity para verificar a sessão periodicamente
+    refetchOnWindowFocus: true // Verificar a sessão quando a janela recebe foco
   });
 
   // Set user data when it loads
@@ -35,8 +40,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Quando os dados são carregados com sucesso, salvar no localStorage 
       // para manter autenticação offline
       localStorage.setItem('user', JSON.stringify(authUser));
+    } else if (!isLoading && !error && data === null) {
+      // Se a API retornou explicitamente null, o usuário não está autenticado
+      setUser(null);
+      localStorage.removeItem('user');
     }
-  }, [data]);
+  }, [data, isLoading, error]);
 
   // Verificar localStorage ao inicializar
   useEffect(() => {
@@ -46,12 +55,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
         queryClient.setQueryData(['/api/auth/me'], parsedUser);
+
+        // Se estiver online, tentar validar a sessão imediatamente
+        if (checkNetworkStatus()) {
+          refetch();
+        }
       } catch (err) {
         console.error('Erro ao recuperar usuário do localStorage:', err);
         localStorage.removeItem('user');
       }
     }
   }, []);
+
+  // Função para renovar a sessão manualmente
+  const refreshSession = async (): Promise<void> => {
+    if (isSessionRefreshing) return;
+    
+    setIsSessionRefreshing(true);
+    try {
+      // Tentar obter dados atualizados do usuário do servidor
+      const result = await refetch();
+      
+      if (result.error) {
+        throw result.error;
+      }
+      
+      if (!result.data) {
+        throw new Error("Sessão expirada");
+      }
+    } catch (error) {
+      console.error("Erro ao renovar sessão:", error);
+      
+      // Verificar se há um usuário armazenado no localStorage
+      const savedUser = localStorage.getItem('user');
+      
+      if (savedUser && !checkNetworkStatus()) {
+        // Se estiver offline e tiver dados no localStorage, continuar com o usuário atual
+        console.log("Usando usuário do localStorage para modo offline");
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+          queryClient.setQueryData(['/api/auth/me'], parsedUser);
+        } catch (err) {
+          console.error("Erro ao processar usuário do localStorage:", err);
+          // Limpar dados em caso de erro de parsing
+          setUser(null);
+          localStorage.removeItem('user');
+        }
+      } else {
+        // Se online ou sem dados no localStorage, limpar a sessão
+        setUser(null);
+        localStorage.removeItem('user');
+        queryClient.setQueryData(['/api/auth/me'], null);
+      }
+    } finally {
+      setIsSessionRefreshing(false);
+    }
+  };
+  
+  // Registrar a função refreshSession para ser usada pelo apiWrapper
+  useEffect(() => {
+    setSessionRefreshFunction(refreshSession);
+    
+    return () => {
+      // Limpar a referência na desmontagem do componente
+      setSessionRefreshFunction(() => Promise.resolve());
+    };
+  }, [refreshSession]);
 
   // Login mutation
   const loginMutation = useMutation({
@@ -66,10 +136,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
       queryClient.setQueryData(['/api/auth/me'], userData);
       
-      // Se "lembrar-me" estiver marcado, salvar no localStorage
-      if (variables.rememberMe) {
-        localStorage.setItem('user', JSON.stringify(userData));
-      }
+      // Sempre salvar no localStorage para permitir funcionamento offline
+      // mas definir uma expiração baseada no rememberMe
+      const expiry = variables.rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+      const userWithExpiry = {
+        ...userData,
+        expiry: Date.now() + expiry
+      };
+      localStorage.setItem('user', JSON.stringify(userWithExpiry));
+      
+      // Invalidar caches para recarregar dados com a nova sessão
+      queryClient.invalidateQueries();
     },
   });
 
@@ -103,17 +180,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (username: string, password: string, rememberMe: boolean = false): Promise<AuthUser> => {
     // Se estiver offline, verificar se temos dados no localStorage
-    if (!navigator.onLine) {
+    if (!checkNetworkStatus()) {
       const savedUser = localStorage.getItem('user');
       if (savedUser) {
         try {
           const parsedUser = JSON.parse(savedUser);
+          
           // Verificar se o usuário no localStorage corresponde às credenciais
           if (parsedUser.username === username) {
-            console.log("Login offline bem-sucedido usando dados armazenados");
-            setUser(parsedUser);
-            queryClient.setQueryData(['/api/auth/me'], parsedUser);
-            return parsedUser;
+            // Verificar se não está expirado
+            if (parsedUser.expiry && Date.now() < parsedUser.expiry) {
+              console.log("Login offline bem-sucedido usando dados armazenados");
+              setUser(parsedUser);
+              queryClient.setQueryData(['/api/auth/me'], parsedUser);
+              return parsedUser;
+            } else {
+              console.log("Dados armazenados expirados");
+            }
           }
         } catch (err) {
           console.error("Erro ao processar dados de usuário armazenados:", err);
@@ -123,7 +206,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     // Se estiver online, usar a mutação normal
-    return loginMutation.mutateAsync({ username, password, rememberMe });
+    const userData = await loginMutation.mutateAsync({ username, password, rememberMe });
+    
+    // Garantir que a sessão foi estabelecida verificando novamente após 1 segundo
+    // Isso ajuda a lidar com problemas de sincronização de sessão
+    setTimeout(async () => {
+      await refreshSession();
+    }, 1000);
+    
+    return userData;
   };
 
   const logout = async (): Promise<void> => {
@@ -133,17 +224,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateUser = (updatedUser: AuthUser) => {
     setUser(updatedUser);
     queryClient.setQueryData(['/api/auth/me'], updatedUser);
+    
+    // Atualizar o localStorage também
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        localStorage.setItem('user', JSON.stringify({
+          ...updatedUser,
+          expiry: parsedUser.expiry
+        }));
+      } catch (err) {
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+    }
   };
+
+  // Adicionar interceptor global para erros 401
+  useEffect(() => {
+    const handleUnauthorized = async (event: Event) => {
+      const e = event as ErrorEvent;
+      if (e.error && typeof e.error === 'object' && 'status' in e.error && e.error.status === 401) {
+        // Se ocorrer erro 401 e tivermos um usuário, tentar renovar a sessão
+        if (user && !isSessionRefreshing) {
+          try {
+            await refreshSession();
+          } catch (err) {
+            // Se a renovação falhar, o refreshSession já limpará o estado
+          }
+        }
+      }
+    };
+
+    window.addEventListener('error', handleUnauthorized);
+    
+    return () => {
+      window.removeEventListener('error', handleUnauthorized);
+    };
+  }, [user, isSessionRefreshing]);
+  
+  // Verificar periodicamente se a sessão está válida (a cada 5 minutos)
+  useEffect(() => {
+    if (!user) return; // Não verificar se não houver usuário logado
+    
+    const checkInterval = setInterval(() => {
+      if (checkNetworkStatus() && !isSessionRefreshing) {
+        console.log("Verificando sessão periodicamente...");
+        refreshSession().catch(err => {
+          console.error("Erro na verificação periódica de sessão:", err);
+        });
+      }
+    }, 5 * 60 * 1000); // 5 minutos
+    
+    return () => {
+      clearInterval(checkInterval);
+    };
+  }, [user, isSessionRefreshing]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isLoading,
+        isLoading: isLoading || isSessionRefreshing,
         error: error as Error | null,
         login,
         logout,
         updateUser,
+        refreshSession,
         isAuthenticated: !!user,
       }}
     >

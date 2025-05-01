@@ -55,6 +55,29 @@ function extractResourceId(url: string): number | null {
   return null;
 }
 
+// Armazenar uma função de atualização de sessão que será definida pelo AuthContext
+let sessionRefreshFunction: (() => Promise<void>) | null = null;
+let isRefreshingSession = false;
+
+// Função para definir a função de atualização de sessão
+export function setSessionRefreshFunction(refreshFn: () => Promise<void>) {
+  sessionRefreshFunction = refreshFn;
+}
+
+// Função para tentar renovar a sessão
+async function tryRefreshSession() {
+  if (sessionRefreshFunction && !isRefreshingSession) {
+    isRefreshingSession = true;
+    try {
+      await sessionRefreshFunction();
+    } catch (error) {
+      console.error("Falha ao renovar sessão:", error);
+    } finally {
+      isRefreshingSession = false;
+    }
+  }
+}
+
 // Função principal para fazer requisições API com suporte offline
 export async function apiRequest<T>({
   url,
@@ -140,6 +163,37 @@ export async function apiRequest<T>({
       body: method !== 'GET' && data ? JSON.stringify(data) : undefined,
       credentials: 'include'
     });
+    
+    // Verificar se é erro de autenticação
+    if (response.status === 401 && !isAuthOperation) {
+      // Tentar renovar a sessão e tentar novamente
+      await tryRefreshSession();
+      
+      // Tentar novamente a requisição após renovar a sessão
+      const retryResponse = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        body: method !== 'GET' && data ? JSON.stringify(data) : undefined,
+        credentials: 'include'
+      });
+      
+      if (!retryResponse.ok) {
+        throw new Error(`API error: ${retryResponse.status} ${retryResponse.statusText}`);
+      }
+      
+      if (method === 'DELETE' && retryResponse.status === 204) {
+        return { success: true } as unknown as T;
+      }
+      
+      try {
+        return await retryResponse.json();
+      } catch (e) {
+        return {} as T;
+      }
+    }
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
