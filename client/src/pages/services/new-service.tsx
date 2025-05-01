@@ -700,7 +700,7 @@ export default function NewServicePage() {
                     <FormLabel>{t("clients.client")} <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => handleClientChange(value)}
-                      defaultValue={field.value?.toString()}
+                      value={field.value?.toString()}
                     >
                       <FormControl>
                         <SelectTrigger>
