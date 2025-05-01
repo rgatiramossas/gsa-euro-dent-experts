@@ -12,6 +12,7 @@ import {
   CartesianGrid 
 } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface TechnicianFinancialStats {
   pendingValue: number;
@@ -34,33 +35,35 @@ type PieChartDataItem = {
 
 // Componente para o gráfico de pizza dos pagamentos de técnico
 export function TechnicianPaymentsPieChart({ financialStats }: { financialStats: TechnicianFinancialStats }) {
-  if (!financialStats) return <div>Sem dados para exibir</div>;
+  const { t } = useTranslation();
+  
+  if (!financialStats) return <div>{t("common.noData")}</div>;
 
   const data: PieChartDataItem[] = [
     { 
-      name: 'Recebidos', 
+      name: t("finances.valoresRecebidos"), 
       value: financialStats.receivedValue,
       color: '#10B981' // verde
     },
     { 
-      name: 'Faturados', 
+      name: t("finances.valoresFaturados"), 
       value: financialStats.invoicedValue,
       color: '#3B82F6' // azul
     },
     { 
-      name: 'Em Aprovação', 
+      name: t("finances.emAprovacao"), 
       value: financialStats.pendingValue,
       color: '#F59E0B' // amarelo
     },
     { 
-      name: 'Não Solicitados', 
+      name: t("finances.naoSolicitados"), 
       value: financialStats.unpaidCompletedValue,
       color: '#6B7280' // cinza
     }
   ].filter(item => item.value > 0); // Filtrar valores zerados
 
   if (data.length === 0) {
-    return <div className="flex items-center justify-center h-full text-gray-500">Sem valores para exibir</div>;
+    return <div className="flex items-center justify-center h-full text-gray-500">{t("finances.noValuesToShow")}</div>;
   }
 
   return (
@@ -92,8 +95,10 @@ export function TechnicianPaymentsPieChart({ financialStats }: { financialStats:
 
 // Componente para o gráfico de barras dos pagamentos mensais
 export function MonthlyPaymentsChart({ monthlyData }: { monthlyData: TechnicianFinancialStats['monthlyData'] }) {
+  const { t } = useTranslation();
+
   if (!monthlyData || monthlyData.length === 0) {
-    return <div className="flex items-center justify-center h-full text-gray-500">Sem dados mensais para exibir</div>;
+    return <div className="flex items-center justify-center h-full text-gray-500">{t("finances.noMonthlyData")}</div>;
   }
 
   return (
@@ -114,7 +119,7 @@ export function MonthlyPaymentsChart({ monthlyData }: { monthlyData: TechnicianF
           formatter={(value: number) => formatCurrency(value)}
           labelFormatter={(label) => label}
         />
-        <Bar dataKey="value" fill="#3B82F6" name="Valor Recebido" />
+        <Bar dataKey="value" fill="#3B82F6" name={t("finances.valoresRecebidos")} />
       </BarChart>
     </ResponsiveContainer>
   );
