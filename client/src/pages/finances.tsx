@@ -1547,7 +1547,7 @@ export default function Finances() {
                     </div>
                   ) : expensesByCategoryData.length === 0 ? (
                     <div className="h-80 flex items-center justify-center">
-                      <p className="text-gray-500">{t("common.noDataAvailable")}</p>
+                      <p className="text-gray-500">{t("reports.noData")}</p>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
@@ -1587,7 +1587,7 @@ export default function Finances() {
                     </div>
                   ) : monthlyExpensesData.every(item => item.value === 0) ? (
                     <div className="h-80 flex items-center justify-center">
-                      <p className="text-gray-500">{t("common.noDataAvailable")}</p>
+                      <p className="text-gray-500">{t("reports.noData")}</p>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
@@ -1633,16 +1633,16 @@ export default function Finances() {
               ) : (
                 <>
                   <div className="flex items-center space-x-2 mb-4">
-                    <Label>Técnico:</Label>
+                    <Label>{t("finances.payment.technician")}:</Label>
                     <Select
                       value={selectedTechnician?.toString() || ""}
                       onValueChange={(value) => setSelectedTechnician(value ? parseInt(value) : undefined)}
                     >
                       <SelectTrigger className="w-60">
-                        <SelectValue placeholder="Selecione um técnico (opcional)" />
+                        <SelectValue placeholder={t("finances.payment.selectTechnicianOptional")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Sem técnico</SelectItem>
+                        <SelectItem value="">{t("finances.payment.noTechnician")}</SelectItem>
                         {technicians?.map(tech => (
                           <SelectItem key={tech.id} value={tech.id.toString()}>
                             {tech.name}
