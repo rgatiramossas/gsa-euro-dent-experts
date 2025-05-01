@@ -35,7 +35,7 @@ export default function ServicesList() {
   const [_, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<ServiceStatus | "all">("all");
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   const { data: services, isLoading } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services', { enableOffline: true, offlineTableName: 'services' }],
@@ -101,11 +101,24 @@ export default function ServicesList() {
                   <SelectGroup>
                     <SelectLabel>{t("services.serviceStatus")}</SelectLabel>
                     <SelectItem value="all">{t("clients.all")}</SelectItem>
-                    <SelectItem value="pending">{t("services.status.pending")}</SelectItem>
-                    <SelectItem value="completed">{t("services.status.completed")}</SelectItem>
-                    <SelectItem value="aguardando_aprovacao">{t("services.status.aguardando_aprovacao")}</SelectItem>
-                    <SelectItem value="faturado">{t("services.status.faturado")}</SelectItem>
-                    <SelectItem value="pago">{t("services.status.pago")}</SelectItem>
+                    {/* Usando valores hardcoded para alemão para evitar o erro "key returned an object" */}
+                    {i18n.language === 'de' ? (
+                      <>
+                        <SelectItem value="pending">Ausstehend</SelectItem>
+                        <SelectItem value="completed">Abgeschlossen</SelectItem>
+                        <SelectItem value="aguardando_aprovacao">Genehmigung ausstehend</SelectItem>
+                        <SelectItem value="faturado">In Rechnung gestellt</SelectItem>
+                        <SelectItem value="pago">Bezahlt</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="pending">{t("services.status.pending")}</SelectItem>
+                        <SelectItem value="completed">{t("services.status.completed")}</SelectItem>
+                        <SelectItem value="aguardando_aprovacao">{t("services.status.aguardando_aprovacao")}</SelectItem>
+                        <SelectItem value="faturado">{t("services.status.faturado")}</SelectItem>
+                        <SelectItem value="pago">{t("services.status.pago")}</SelectItem>
+                      </>
+                    )}
                   </SelectGroup>
                 </SelectContent>
               </Select>
