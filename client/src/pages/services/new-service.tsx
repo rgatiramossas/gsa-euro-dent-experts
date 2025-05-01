@@ -821,17 +821,17 @@ export default function NewServicePage() {
                   )}
                 />
                 
-                {form.watch('location_type') === 'client_location' && (
-                  <div>
-                    <LocationSelector 
-                      onLocationChange={(address, lat, lng) => {
-                        form.setValue('address', address);
-                        form.setValue('latitude', lat);
-                        form.setValue('longitude', lng);
-                      }}
-                    />
-                  </div>
-                )}
+                <div>
+                  <LocationSelector 
+                    onLocationChange={(address) => {
+                      form.setValue('address', address);
+                      // Coordenadas não são mais usadas
+                      form.setValue('latitude', null);
+                      form.setValue('longitude', null);
+                    }}
+                    initialAddress={form.watch('address') || ''}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
