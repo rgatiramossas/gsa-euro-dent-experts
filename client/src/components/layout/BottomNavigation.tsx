@@ -36,7 +36,7 @@ export function BottomNavigation() {
       icon: <Briefcase className="h-6 w-6" />,
     },
     {
-      name: t("reports.title"), // Usando "reports" como tradução para "Orçamentos"
+      name: t("budget.title"), // Corrigido: usando "budget" para "Orçamentos"
       path: "/budgets",
       icon: <FileText className="h-6 w-6" />,
     }
