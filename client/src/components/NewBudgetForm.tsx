@@ -441,7 +441,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                           {isLoadingClients ? (
                             <SelectItem value="loading">{t("budget.loadingClients")}</SelectItem>
                           ) : !clients || clients.length === 0 ? (
-                            <SelectItem value="no-clients">Nenhum cliente encontrado</SelectItem>
+                            <SelectItem value="no-clients">{t("budget.noClientsFound")}</SelectItem>
                           ) : (
                             clients.map((client) => (
                               <SelectItem key={client.id} value={client.id.toString()}>
@@ -536,12 +536,12 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
 
           {/* Legenda dos materiais especiais */}
           <div className="bg-gray-50 p-4 rounded-md mt-4">
-            <h4 className="font-medium mb-2">Materiais Especiais</h4>
+            <h4 className="font-medium mb-2">{t("budget.specialMaterials")}</h4>
             <p className="text-sm">
-              (A) = Alumínio (+25%)  |  (K) = Cola (+30%)  |  (P) = Pintura
+              (A) = {t("budget.aluminum")} (+25%)  |  (K) = {t("budget.glue")} (+30%)  |  (P) = {t("budget.paint")}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              *Valores calculados automaticamente de acordo com a tabela de referência
+              {t("budget.valuesAutocalculated")}
             </p>
           </div>
 
@@ -567,7 +567,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
           {isGestor && (
             <div className="bg-gray-50 p-4 rounded-md mt-4">
               <p className="text-center text-sm text-gray-500">
-                Informações financeiras disponíveis apenas para administradores
+                {t("budget.financialInfoAdminsOnly")}
               </p>
             </div>
           )}
