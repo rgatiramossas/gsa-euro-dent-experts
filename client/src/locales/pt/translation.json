@@ -432,6 +432,15 @@
     "clickToInsertPhoto": "Clique para inserir foto",
     "cancel": "Cancelar",
     "delete": "Excluir",
+    "noClientsFound": "Nenhum cliente encontrado",
+    "damageViewMode": "Visualização dos danos registrados no veículo",
+    "damageEditMode": "Indique a posição, quantidade e tamanho dos danos em cada parte do veículo",
+    "specialMaterials": "Materiais Especiais",
+    "aluminum": "Alumínio",
+    "glue": "Cola",
+    "paint": "Pintura",
+    "valuesAutocalculated": "Valores calculados automaticamente de acordo com a tabela de referência",
+    "financialInfoAdminsOnly": "Informações financeiras disponíveis apenas para administradores",
     "features": {
       "inDevelopment": "Esta funcionalidade está sendo implementada",
       "goBack": "Voltar para Orçamentos"
