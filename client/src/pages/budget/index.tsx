@@ -94,16 +94,16 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
     },
     onSuccess: () => {
       toast({
-        title: "Orçamento excluído",
-        description: "O orçamento foi excluído com sucesso.",
+        title: t("budget.deleted"),
+        description: t("budget.deleteSuccess"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
       setShowDeleteDialog(false);
     },
     onError: (error) => {
       toast({
-        title: "Erro",
-        description: `Erro ao excluir orçamento: ${error.message}`,
+        title: t("common.error"),
+        description: t("budget.deleteError", { error: error.message }),
         variant: "destructive",
       });
     },
@@ -152,14 +152,14 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
       // Passamos o flag isGestor para controlar a exibição de informações financeiras
       await generateSimplePdf(budget, isGestor);
       toast({
-        title: "PDF gerado",
-        description: "O PDF do orçamento foi gerado com sucesso.",
+        title: t("budget.pdfGenerated"),
+        description: t("budget.pdfSuccess"),
       });
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       toast({
-        title: "Erro",
-        description: "Não foi possível gerar o PDF. Por favor, tente novamente.",
+        title: t("common.error"),
+        description: t("budget.pdfError"),
         variant: "destructive",
       });
     }
@@ -168,8 +168,8 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
   // Manipulador para quando um novo orçamento é criado com sucesso
   const handleNewBudgetSuccess = (data: any) => {
     toast({
-      title: "Orçamento criado",
-      description: "O orçamento foi criado com sucesso.",
+      title: t("budget.created"),
+      description: t("budget.createSuccess"),
     });
     queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
     setShowNewBudgetDialog(false);
@@ -197,11 +197,11 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
       <div className="container mx-auto p-6">
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-2xl">Erro</CardTitle>
+            <CardTitle className="text-2xl">{t("common.error")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-red-500">
-              Erro ao carregar orçamentos. Por favor, tente novamente mais tarde.
+              {t("budget.loadError")}
             </p>
           </CardContent>
         </Card>
@@ -233,16 +233,16 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <CardTitle className="text-2xl">Editar Orçamento #{id}</CardTitle>
+              <CardTitle className="text-2xl">{t("budget.editBudget", { id })}</CardTitle>
             </div>
             <CardDescription>
-              Funcionalidade em desenvolvimento
+              {t("common.inDevelopment")}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center py-8">
-            <p className="mb-4">Esta funcionalidade está sendo implementada.</p>
+            <p className="mb-4">{t("common.featureImplementing")}</p>
             <Button onClick={() => window.location.href = "/budgets"}>
-              Voltar para Orçamentos
+              {t("budget.returnToBudgets")}
             </Button>
           </CardContent>
         </Card>
@@ -317,7 +317,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                             variant="outline"
                             size="icon"
                             onClick={() => handleOpenDetails(budget)}
-                            title="Ver detalhes"
+                            title={t("budget.viewDetails")}
                           >
                             <FileText className="h-4 w-4" />
                           </Button>
@@ -326,7 +326,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                             variant="outline"
                             size="icon"
                             onClick={() => handlePrintBudget(budget)}
-                            title="Imprimir orçamento"
+                            title={t("budget.printBudget")}
                           >
                             <Printer className="h-4 w-4" />
                           </Button>
@@ -338,7 +338,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                               size="icon"
                               className="text-red-500 hover:text-red-700"
                               onClick={() => handleDeleteConfirm(budget)}
-                              title="Excluir orçamento"
+                              title={t("common.delete")}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -363,9 +363,9 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
         }}>
         <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6">
-            <DialogTitle>Detalhes do Orçamento #{selectedBudget?.id}</DialogTitle>
+            <DialogTitle>{t("budget.budgetDetails", { id: selectedBudget?.id })}</DialogTitle>
             <DialogDescription>
-              Informações completas do orçamento
+              {t("budget.completeInfo")}
             </DialogDescription>
           </DialogHeader>
 
@@ -377,8 +377,8 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                 readOnly={!isEditing}
                 onSuccess={(data) => {
                   toast({
-                    title: "Orçamento atualizado",
-                    description: "O orçamento foi atualizado com sucesso.",
+                    title: t("budget.updated"),
+                    description: t("budget.updateSuccess"),
                   });
                   queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
                   setIsEditing(false);
@@ -393,14 +393,14 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                     onClick={() => selectedBudget && handlePrintBudget(selectedBudget)}
                   >
                     <Printer className="h-4 w-4 mr-2" />
-                    Imprimir
+                    {t("budget.print")}
                   </Button>
                   {isEditing ? (
                     <Button 
                       variant="secondary" 
                       onClick={() => setIsEditing(false)}
                     >
-                      Cancelar Edição
+                      {t("common.cancelEdit")}
                     </Button>
                   ) : (
                     // Mostrar botão de editar apenas para admin e técnicos
@@ -410,7 +410,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                         onClick={() => setIsEditing(true)}
                       >
                         <Edit className="h-4 w-4 mr-2" />
-                        Editar
+                        {t("common.edit")}
                       </Button>
                     )
                   )}
@@ -422,7 +422,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                     setIsEditing(false);
                   }}
                 >
-                  Fechar
+                  {t("common.close")}
                 </Button>
               </div>
             </div>
@@ -434,9 +434,9 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogTitle>{t("common.confirmDelete")}</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir este orçamento? Esta ação não pode ser desfeita.
+              {t("budget.deleteConfirmation")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -444,7 +444,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
             >
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -454,10 +454,10 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
               {deleteMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Excluindo...
+                  {t("common.deleting")}
                 </>
               ) : (
-                "Excluir"
+                t("common.delete")
               )}
             </Button>
           </DialogFooter>
@@ -471,9 +471,9 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
       >
         <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6">
-            <DialogTitle>Novo Orçamento</DialogTitle>
+            <DialogTitle>{t("budget.newBudget")}</DialogTitle>
             <DialogDescription>
-              Crie um novo orçamento para o cliente
+              {t("budget.createNew")}
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 pb-6 max-h-[80vh] overflow-y-auto">
