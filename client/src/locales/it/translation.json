@@ -5,6 +5,7 @@
     "loading": "Caricamento...",
     "error": "Si è verificato un errore",
     "save": "Salva",
+    "saving": "Salvando...",
     "cancel": "Annulla",
     "edit": "Modifica",
     "delete": "Elimina",
@@ -66,27 +67,57 @@
   "services": {
     "title": "Servizi",
     "newService": "Nuovo Servizio",
+    "newServiceDesc": "Registra un nuovo servizio di riparazione senza verniciatura",
     "serviceDetails": "Dettagli del Servizio",
     "editService": "Modifica Servizio",
     "deleteService": "Elimina Servizio",
     "client": "Cliente",
     "vehicle": "Veicolo",
     "technician": "Tecnico",
+    "selectTechnician": "Seleziona il tecnico (opzionale)",
+    "technicianHelp": "Assegna un tecnico a questo servizio",
     "status": "Stato",
     "description": "Descrizione",
+    "descriptionPlaceholder": "Descrivi i danni e i dettagli del servizio...",
+    "descriptionHelp": "Include informazioni sui danni e altri dettagli rilevanti",
     "scheduledDate": "Data Programmata",
+    "scheduledTime": "Orario Programmato",
+    "selectDate": "Seleziona una data",
     "startDate": "Data di Inizio",
     "completionDate": "Data di Completamento",
     "price": "Prezzo",
     "total": "Totale",
+    "totalValue": "Valore Totale",
     "notes": "Note",
+    "additionalNotes": "Note Aggiuntive",
+    "additionalNotesHelp": "Includi qualsiasi informazione aggiuntiva rilevante per il servizio",
+    "notesPlaceholder": "Informazioni aggiuntive sul servizio...",
+    "photoHelp": "Carica fino a 5 foto del veicolo e dei danni",
     "photos": "Foto",
     "serviceType": "Tipo di Servizio",
+    "selectServiceType": "Seleziona il tipo di servizio",
+    "financialInfo": "Informazioni Finanziarie",
+    "administrativeFee": "Tassa Amministrativa",
+    "locationType": "Tipo di Localizzazione",
+    "locationDetails": "Dettagli della Localizzazione",
+    "clientLocation": "Localizzazione del Cliente",
+    "workshop": "Officina",
+    "address": "Indirizzo",
     "unassigned": "Non assegnato",
     "manage": "Gestisci tutti i servizi di riparazione ammaccature",
     "details": "Dettagli",
     "searchPlaceholder": "Cerca per cliente, veicolo o targa...",
     "serviceStatus": "Stato del Servizio",
+    "selectClient": "Seleziona il cliente",
+    "selectVehicle": "Seleziona il veicolo",
+    "selectClientFirst": "Seleziona prima un cliente",
+    "serviceCreated": "Servizio creato",
+    "serviceCreatedSuccess": "Il servizio è stato creato con successo",
+    "errors": {
+      "selectClient": "Seleziona un cliente",
+      "selectVehicle": "Seleziona un veicolo",
+      "selectServiceType": "Seleziona il tipo di servizio"
+    },
     "status": {
       "pending": "In attesa",
       "in_progress": "In corso",
@@ -101,6 +132,8 @@
     "title": "Clienti",
     "newClient": "Nuovo Cliente",
     "clientDetails": "Dettagli del Cliente",
+    "clientInformation": "Informazioni del Cliente",
+    "registerClient": "Registra Nuovo Cliente",
     "editClient": "Modifica Cliente",
     "deleteClient": "Elimina Cliente",
     "name": "Nome",
@@ -112,7 +145,9 @@
     "all": "Tutti",
     "active": "Attivi",
     "deleted": "Eliminati",
-    "search": "Cerca"
+    "search": "Cerca",
+    "client": "Cliente",
+    "vehicle": "Veicolo"
   },
   "vehicles": {
     "title": "Veicoli",
@@ -122,7 +157,8 @@
     "model": "Modello",
     "year": "Anno",
     "color": "Colore",
-    "licensePlate": "Targa"
+    "licensePlate": "Targa",
+    "registerVehicle": "Registra Nuovo Veicolo"
   },
   "technicians": {
     "title": "Tecnici",
@@ -155,12 +191,37 @@
   "offline": {
     "offlineMode": "Modalità Offline",
     "savedLocally": "Salvato localmente",
-    "willSyncWhenOnline": "Verrà sincronizzato quando sarai online"
+    "willSyncWhenOnline": "Verrà sincronizzato quando sarai online",
+    "savedOffline": "Salvato offline",
+    "serviceOfflineDescription": "Il servizio è stato salvato localmente e verrà sincronizzato quando sarai online"
   },
   "finances": {
     "byDay": "Per Giorno",
     "byWeek": "Per Settimana",
     "byMonth": "Per Mese",
     "byYear": "Per Anno"
+  },
+  "serviceTypeNames": {
+    "Amassado de Rua": "Ammaccatura Stradale",
+    "Granizo": "Grandine",
+    "Outros": "Altri"
+  },
+  "location": {
+    "address": "Indirizzo",
+    "addressPlaceholder": "Inserisci l'indirizzo completo",
+    "coordinatesDetected": "Coordinate rilevate",
+    "browserNotSupported": "La geolocalizzazione non è supportata dal tuo browser",
+    "permissionDenied": "Autorizzazione alla geolocalizzazione negata dall'utente",
+    "unavailable": "Informazioni sulla posizione non disponibili",
+    "timeout": "Tempo scaduto per ottenere la posizione",
+    "unknownError": "Errore sconosciuto durante l'ottenimento della posizione",
+    "processingError": "Errore durante l'elaborazione dei dati di posizione",
+    "coordinates": "Coordinate"
+  },
+  "errors": {
+    "createService": "Errore durante la creazione del servizio",
+    "createServiceDescription": "Si è verificato un errore durante la creazione del servizio. Riprova.",
+    "validation": "Errore di convalida",
+    "invalidServiceType": "Tipo di servizio non valido"
   }
 }
