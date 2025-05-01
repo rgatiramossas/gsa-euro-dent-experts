@@ -54,7 +54,7 @@ export default function NewClient() {
   
   // Subscrever ao estado online
   useSubscribe(offlineStatusStore, () => {
-    setIsOnline(offlineStatusStore.isOnline());
+    setIsOnline(offlineStatusStore.getOnlineStatus());
   });
   
   // Efeito para verificar estado da conexão
@@ -69,8 +69,13 @@ export default function NewClient() {
     return () => {
       window.removeEventListener('online', handleOnlineStatus);
       window.removeEventListener('offline', handleOnlineStatus);
+      
+      // Limpar timeout ao desmontar
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
     };
-  }, []);
+  }, [saveTimeout]);
   
   // Form definition
   const form = useForm<FormData>({
@@ -193,7 +198,15 @@ export default function NewClient() {
     );
   };
   
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
+    setIsSaving(true);
+    
+    // Limpar timeout anterior se existir
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+      setSaveTimeout(null);
+    }
+    
     // Limpar dados vazios para evitar problemas com MySQL
     const cleanData = Object.entries(data).reduce((acc, [key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -205,11 +218,59 @@ export default function NewClient() {
     // Garantir que o nome esteja presente
     if (!cleanData.name || cleanData.name.trim() === '') {
       form.setError('name', { message: 'O nome é obrigatório' });
+      setIsSaving(false);
       return;
     }
     
     console.log("Enviando dados limpos:", cleanData);
-    createClientMutation.mutate(cleanData as FormData);
+    
+    // Verificar o estado da conexão
+    if (!isOnline) {
+      try {
+        // Salvar localmente no IndexedDB
+        const timestamp = new Date().getTime();
+        const pendingRequest = {
+          id: `client_${timestamp}`,
+          timestamp,
+          url: '/api/clients',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: cleanData,
+          tableName: 'clients',
+          operationType: 'create' as const
+        };
+        
+        // Salvar a requisição pendente para sincronização posterior
+        await storeOfflineRequest(pendingRequest);
+        
+        toast({
+          title: "Cliente salvo offline",
+          description: "O cliente foi salvo localmente e será sincronizado quando a conexão for restaurada",
+        });
+        
+        // Redirecionar após o cadastro offline
+        setIsSaving(false);
+        setLocation('/clients');
+      } catch (error) {
+        console.error('Erro ao salvar cliente offline:', error);
+        toast({
+          title: "Erro ao salvar offline",
+          description: "Não foi possível salvar o cliente localmente. Tente novamente.",
+          variant: "destructive",
+        });
+        setIsSaving(false);
+      }
+    } else {
+      // Processamento online normal
+      createClientMutation.mutate(cleanData as FormData);
+      
+      // Configurar timeout para resetar o estado de salvamento (caso ocorra um erro não tratado)
+      const timeout = setTimeout(() => {
+        setIsSaving(false);
+      }, 10000); // 10 segundos
+      
+      setSaveTimeout(timeout);
+    }
   };
   
   return (
@@ -332,9 +393,13 @@ export default function NewClient() {
             <Button 
               type="submit" 
               className="flex-1"
-              disabled={createClientMutation.isPending}
+              disabled={createClientMutation.isPending || isSaving}
             >
-              {createClientMutation.isPending ? t("common.saving", "Salvando...") : t("clients.registerClient", "Cadastrar Cliente")}
+              {createClientMutation.isPending || isSaving 
+                ? t("common.saving", "Salvando...") 
+                : isOnline 
+                  ? t("clients.registerClient", "Cadastrar Cliente")
+                  : t("clients.saveOffline", "Salvar Offline")}
             </Button>
           </div>
         </form>
