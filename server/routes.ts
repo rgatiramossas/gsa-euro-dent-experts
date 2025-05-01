@@ -155,7 +155,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.save(err => {
           if (err) {
             console.error("Erro ao salvar sessão:", err);
-            return res.status(500).json({ message: "Erro ao processar sessão" });
+            res.status(500).json({ message: "Erro ao processar sessão" });
+            return;
           }
           
           // Log detalhado da sessão
@@ -165,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userRole: req.session.userRole 
           });
           
-          return res.json({
+          res.json({
             id: user.id,
             username: user.username,
             name: user.name,
@@ -173,6 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             role: user.role
           });
         });
+        return; // Importante: retornar aqui para evitar a execução do código abaixo
       }
       
       return res.status(401).json({ message: "Invalid credentials" });
@@ -216,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Erro ao atualizar sessão:", err);
         }
         
-        return res.json({
+        res.json({
           id: user.id,
           username: user.username,
           name: user.name,
@@ -224,6 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           role: user.role
         });
       });
+      return; // Importante: evitar código adicional após a chamada assíncrona
     } catch (error) {
       console.error("Auth check error:", error);
       res.status(500).json({ message: "Internal server error" });
