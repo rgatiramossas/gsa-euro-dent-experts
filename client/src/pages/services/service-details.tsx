@@ -559,6 +559,25 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const formatStatus = (status: string | null | undefined) => {
     if (!status) return t("common.notSpecified", "Não especificado");
     
+    // Tratamento especial para italiano para evitar o erro "returned an object instead of string"
+    const { i18n } = useTranslation();
+    
+    if (i18n.language === 'it') {
+      // Mapeamento direto para italiano
+      const italianStatusMap: Record<string, string> = {
+        'pending': 'In attesa',
+        'in_progress': 'In corso',
+        'completed': 'Completato',
+        'canceled': 'Annullato',
+        'pago': 'Pagato',
+        'aguardando_aprovacao': 'In attesa di approvazione',
+        'faturado': 'Fatturato'
+      };
+      
+      return italianStatusMap[status] || status;
+    }
+    
+    // Para outros idiomas, usar o mapeamento normal
     const statusKeys: Record<string, string> = {
       'pending': 'services.status.pending',
       'in_progress': 'services.status.in_progress',
@@ -827,11 +846,11 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                         <SelectValue placeholder={t("services.selectStatus")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">{t("services.status.pending")}</SelectItem>
-                        <SelectItem value="in_progress">{t("services.status.in_progress")}</SelectItem>
-                        <SelectItem value="completed">{t("services.status.completed")}</SelectItem>
-                        <SelectItem value="canceled">{t("services.status.canceled")}</SelectItem>
-                        <SelectItem value="pago">{t("services.status.pago")}</SelectItem>
+                        <SelectItem value="pending">{formatStatus("pending")}</SelectItem>
+                        <SelectItem value="in_progress">{formatStatus("in_progress")}</SelectItem>
+                        <SelectItem value="completed">{formatStatus("completed")}</SelectItem>
+                        <SelectItem value="canceled">{formatStatus("canceled")}</SelectItem>
+                        <SelectItem value="pago">{formatStatus("pago")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
