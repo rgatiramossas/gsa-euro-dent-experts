@@ -10,6 +10,7 @@ import { CalendarIcon, ArrowLeft, Upload, Image } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateBudgetTotals } from "@/utils/hailCalculation";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -117,6 +118,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [vehicleImage, setVehicleImage] = useState<string | null>(initialData?.vehicle_image || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
   
   // Buscar a lista de clientes do banco de dados
   const { data: clients, isLoading: isLoadingClients } = useQuery<any[]>({
@@ -196,21 +198,21 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
       // Log para depuração
       console.log("Enviando orçamento para o servidor:", {
         ...budget,
-        vehicle_image: vehicleImage ? `Imagem com ${vehicleImage.length} caracteres` : "Sem imagem"
+        vehicle_image: vehicleImage ? `Imagem com ${vehicleImage.length} caracteres` : t("budget.noImage")
       });
 
       if (initialData) {
         // Atualizar orçamento existente
         await updateBudget(budget, initialData.id);
         toast({
-          title: "Orçamento atualizado com sucesso",
+          title: t("budget.budgetUpdated"),
           description: "As alterações foram salvas com sucesso.",
         });
       } else {
         // Criar novo orçamento
         await saveNewBudget(budget);
         toast({
-          title: "Orçamento criado com sucesso",
+          title: t("budget.budgetCreated"),
           description: "O orçamento foi salvo e está pronto para ser utilizado.",
         });
       }
