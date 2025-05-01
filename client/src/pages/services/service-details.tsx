@@ -529,7 +529,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const getServiceTypeName = (serviceTypeId: number | null | undefined) => {
     if (!serviceTypeId || !serviceTypes) return t("common.notSpecified", "Não especificado");
     const serviceType = serviceTypes.find(type => type.id === serviceTypeId);
-    return serviceType ? serviceType.name : t("common.notSpecified", "Não especificado");
+    // Usar o hook translateServiceType para traduzir o nome com base no idioma atual
+    return serviceType ? translateServiceType(serviceType.name) : t("common.notSpecified", "Não especificado");
   };
   
   // Buscar a instância do i18n uma única vez no componente
