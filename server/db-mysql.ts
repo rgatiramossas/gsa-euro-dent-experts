@@ -2,19 +2,27 @@ import mysql from 'mysql2/promise';
 import { drizzle } from 'drizzle-orm/mysql2';
 import * as schema from "@shared/schema.mysql";
 
-// Verificar se todas as variáveis de ambiente necessárias estão definidas
-if (!process.env.MYSQL_HOST || 
-    !process.env.MYSQL_USER || 
-    !process.env.MYSQL_PASSWORD || 
-    !process.env.MYSQL_DATABASE || 
-    !process.env.MYSQL_PORT) {
+// Array para armazenar qualquer variável de ambiente ausente
+const missingEnvVars = [];
+
+// Verificar variáveis de ambiente uma a uma para logging mais detalhado
+if (!process.env.MYSQL_HOST) missingEnvVars.push('MYSQL_HOST');
+if (!process.env.MYSQL_USER) missingEnvVars.push('MYSQL_USER');
+if (!process.env.MYSQL_PASSWORD) missingEnvVars.push('MYSQL_PASSWORD');
+if (!process.env.MYSQL_DATABASE) missingEnvVars.push('MYSQL_DATABASE');
+if (!process.env.MYSQL_PORT) missingEnvVars.push('MYSQL_PORT');
+
+// Se alguma variável de ambiente estiver faltando, registrar e lançar erro
+if (missingEnvVars.length > 0) {
+  console.error(`⚠️ Erro de configuração: Faltam as seguintes variáveis de ambiente: ${missingEnvVars.join(', ')}`);
+  console.error('⚠️ Verifique se os secrets foram configurados corretamente no ambiente.');
   throw new Error(
-    "MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE e MYSQL_PORT devem estar configurados."
+    `As seguintes variáveis de ambiente são necessárias: ${missingEnvVars.join(', ')}`
   );
 }
 
 // Log das informações de conexão para debugging (sem mostrar a senha)
-console.log(`Tentando conectar ao MySQL:
+console.log(`🔌 Tentando conectar ao MySQL:
   Host: ${process.env.MYSQL_HOST}
   User: ${process.env.MYSQL_USER}
   Database: ${process.env.MYSQL_DATABASE}
@@ -29,7 +37,7 @@ const connectionConfig = {
   database: process.env.MYSQL_DATABASE,
   port: parseInt(process.env.MYSQL_PORT || '3306'),
   // Adicionar timeout maior para dar mais tempo para conectar
-  connectTimeout: 10000,
+  connectTimeout: 20000, // Aumento do timeout para 20 segundos
   // SSL configurada como null para desenvolvimento
 };
 

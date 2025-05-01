@@ -1,6 +1,15 @@
 import * as dotenv from 'dotenv';
 // Carregar variáveis de ambiente do arquivo .env
+// As variáveis do ambiente (secrets) terão prioridade sobre as definidas no arquivo .env
 dotenv.config();
+
+// Log para confirmar que as variáveis de ambiente para MySQL estão definidas
+console.log('MySQL environment variables:');
+console.log(`MYSQL_HOST: ${process.env.MYSQL_HOST ? 'Defined' : 'Not defined'}`);
+console.log(`MYSQL_USER: ${process.env.MYSQL_USER ? 'Defined' : 'Not defined'}`);
+console.log(`MYSQL_PASSWORD: ${process.env.MYSQL_PASSWORD ? 'Defined' : 'Not defined'}`);
+console.log(`MYSQL_DATABASE: ${process.env.MYSQL_DATABASE ? 'Defined' : 'Not defined'}`);
+console.log(`MYSQL_PORT: ${process.env.MYSQL_PORT ? 'Defined' : 'Not defined'}`);
 
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
