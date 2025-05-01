@@ -89,18 +89,34 @@ export default function ServicesList() {
             />
             
             <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-              <div className="text-sm font-medium">{t("services.status")}:</div>
+              <div className="text-sm font-medium">
+                {i18n.language === 'de' ? "Status:" : 
+                 i18n.language === 'es' ? "Estado:" :
+                 "Status:"}
+              </div>
               <Select 
                 value={activeTab} 
                 onValueChange={(value) => setActiveTab(value as ServiceStatus | "all")}
               >
                 <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder={t("validation.selectOption")} />
+                  <SelectValue placeholder={
+                    i18n.language === 'de' ? "Option wählen" : 
+                    i18n.language === 'es' ? "Seleccionar opción" :
+                    t("validation.selectOption")
+                  } />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>{t("services.serviceStatus")}</SelectLabel>
-                    <SelectItem value="all">{t("clients.all")}</SelectItem>
+                    <SelectLabel>
+                      {i18n.language === 'de' ? "Servicestatus" : 
+                       i18n.language === 'es' ? "Estado del servicio" :
+                       "Status do serviço"}
+                    </SelectLabel>
+                    <SelectItem value="all">
+                      {i18n.language === 'de' ? "Alle" : 
+                       i18n.language === 'es' ? "Todos" :
+                       "Todos"}
+                    </SelectItem>
                     {/* Usando valores hardcoded para alemão e espanhol para evitar o erro "key returned an object" */}
                     {i18n.language === 'de' ? (
                       <>
@@ -145,19 +161,45 @@ export default function ServicesList() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
-                    <TableHead>{t("services.client")}</TableHead>
-                    <TableHead>{t("services.vehicle")}</TableHead>
-                    <TableHead>{t("services.technician")}</TableHead>
-                    <TableHead>{t("services.status")}</TableHead>
-                    <TableHead>{t("services.scheduledDate")}</TableHead>
-                    <TableHead className="text-right">{t("common.actions")}</TableHead>
+                    <TableHead>
+                      {i18n.language === 'de' ? "Kunde" : 
+                       i18n.language === 'es' ? "Cliente" :
+                       "Cliente"}
+                    </TableHead>
+                    <TableHead>
+                      {i18n.language === 'de' ? "Fahrzeug" : 
+                       i18n.language === 'es' ? "Vehículo" :
+                       "Veículo"}
+                    </TableHead>
+                    <TableHead>
+                      {i18n.language === 'de' ? "Techniker" : 
+                       i18n.language === 'es' ? "Técnico" :
+                       "Técnico"}
+                    </TableHead>
+                    <TableHead>
+                      {i18n.language === 'de' ? "Status" : 
+                       i18n.language === 'es' ? "Estado" :
+                       "Status"}
+                    </TableHead>
+                    <TableHead>
+                      {i18n.language === 'de' ? "Geplantes Datum" : 
+                       i18n.language === 'es' ? "Fecha Programada" :
+                       "Data Agendada"}
+                    </TableHead>
+                    <TableHead className="text-right">
+                      {i18n.language === 'de' ? "Aktionen" : 
+                       i18n.language === 'es' ? "Acciones" :
+                       "Ações"}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredServices?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        {t("common.noResults")}
+                        {i18n.language === 'de' ? "Keine Ergebnisse gefunden" : 
+                         i18n.language === 'es' ? "No se encontraron resultados" :
+                         "Nenhum resultado encontrado"}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -172,7 +214,11 @@ export default function ServicesList() {
                           {service.vehicle.make} {service.vehicle.model}
                           {service.vehicle.license_plate && ` - ${service.vehicle.license_plate}`}
                         </TableCell>
-                        <TableCell>{service.technician?.name || t("services.unassigned")}</TableCell>
+                        <TableCell>{service.technician?.name || 
+                          (i18n.language === 'de' ? "Nicht zugewiesen" : 
+                           i18n.language === 'es' ? "No asignado" :
+                           "Não atribuído")
+                        }</TableCell>
                         <TableCell>
                           <ServiceStatusBadge status={service.status} />
                         </TableCell>
@@ -191,7 +237,11 @@ export default function ServicesList() {
                                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
                                 <circle cx="12" cy="12" r="3"/>
                               </svg>
-                              <span>{t("services.details")}</span>
+                              <span>
+                                {i18n.language === 'de' ? "Details" : 
+                                 i18n.language === 'es' ? "Detalles" :
+                                 "Detalhes"}
+                              </span>
                             </Button>
                           </div>
                         </TableCell>
