@@ -20,7 +20,7 @@ const LanguageSwitcher: React.FC = () => {
   // Função para obter emoji da bandeira com base no idioma
   const getFlagEmoji = (language: string) => {
     switch(language) {
-      case 'pt': return '🇵🇹';
+      case 'pt': return '🇧🇷'; // Alterado para bandeira brasileira
       case 'en': return '🇬🇧';
       case 'de': return '🇩🇪';
       case 'es': return '🇪🇸';
@@ -49,49 +49,49 @@ const LanguageSwitcher: React.FC = () => {
         defaultValue={i18n.language}
         onValueChange={changeLanguage}
       >
-        <SelectTrigger className="w-[110px] text-white bg-primary border-white hover:bg-primary-dark">
+        <SelectTrigger className="md:w-[110px] w-[40px] text-white bg-primary border-white hover:bg-primary-dark">
           <SelectValue>
             <div className="flex items-center">
               <span className="mr-2">{getFlagEmoji(i18n.language)}</span>
-              {getLanguageName(i18n.language)}
+              <span className="hidden md:inline">{getLanguageName(i18n.language)}</span>
             </div>
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="pt">
             <div className="flex items-center">
-              <span className="mr-2">🇵🇹</span>
-              Português
+              <span className="mr-2">🇧🇷</span>
+              <span className="hidden md:inline">Português</span>
             </div>
           </SelectItem>
           <SelectItem value="en">
             <div className="flex items-center">
               <span className="mr-2">🇬🇧</span>
-              English
+              <span className="hidden md:inline">English</span>
             </div>
           </SelectItem>
           <SelectItem value="de">
             <div className="flex items-center">
               <span className="mr-2">🇩🇪</span>
-              Deutsch
+              <span className="hidden md:inline">Deutsch</span>
             </div>
           </SelectItem>
           <SelectItem value="es">
             <div className="flex items-center">
               <span className="mr-2">🇪🇸</span>
-              Español
+              <span className="hidden md:inline">Español</span>
             </div>
           </SelectItem>
           <SelectItem value="fr">
             <div className="flex items-center">
               <span className="mr-2">🇫🇷</span>
-              Français
+              <span className="hidden md:inline">Français</span>
             </div>
           </SelectItem>
           <SelectItem value="it">
             <div className="flex items-center">
               <span className="mr-2">🇮🇹</span>
-              Italiano
+              <span className="hidden md:inline">Italiano</span>
             </div>
           </SelectItem>
         </SelectContent>
