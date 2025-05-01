@@ -180,20 +180,20 @@ export default function ClientDetail({ id }: ClientDetailProps) {
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
         title={client.name}
-        description="Detalhes do cliente"
+        description={t("clients.details")}
         actions={
           <div className="flex gap-2">
             <Button 
               variant="outline" 
               onClick={handleBack}
             >
-              Voltar
+              {t("common.back")}
             </Button>
             <Button 
               variant="default"
               onClick={() => setLocation(`/clients/${client.id}/edit`)}
             >
-              Editar Cliente
+              {t("clients.editClient")}
             </Button>
             {/* Botão de excluir - apenas para admin */}
             {user?.role === "admin" && (
@@ -201,7 +201,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                 variant="destructive"
                 onClick={() => setDeleteDialogOpen(true)}
               >
-                Excluir Cliente
+                {t("clients.deleteClient")}
               </Button>
             )}
           </div>
@@ -243,24 +243,24 @@ export default function ClientDetail({ id }: ClientDetailProps) {
         {/* Card de Informações */}
         <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle>Informações do Cliente</CardTitle>
+            <CardTitle>{t("clients.clientInformation")}</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">Nome</dt>
+                <dt className="text-sm font-medium text-muted-foreground">{t("common.name")}</dt>
                 <dd className="mt-1 text-base">{client.name}</dd>
               </div>
 
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">Email</dt>
+                <dt className="text-sm font-medium text-muted-foreground">{t("common.email")}</dt>
                 <dd className="mt-1 text-base">
                   {client.email ? (
                     <a href={`mailto:${client.email}`} className="text-blue-600 hover:underline">
                       {client.email}
                     </a>
                   ) : (
-                    <span className="text-muted-foreground italic">Não informado</span>
+                    <span className="text-muted-foreground italic">{t("common.notProvided")}</span>
                   )}
                 </dd>
               </div>
