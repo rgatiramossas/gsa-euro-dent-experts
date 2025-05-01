@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthUser } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { postApi, getApi } from "@/lib/apiWrapper";
 import { checkNetworkStatus } from "@/lib/pwaManager";
 import { setSessionRefreshFunction } from "@/lib/apiWrapper";
 
@@ -130,15 +130,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string;
       rememberMe?: boolean;
     }) => {
-      // Usar a forma correta da função apiRequest com objeto de configuração
-      return await apiRequest({
-        url: '/api/auth/login',
-        method: 'POST',
-        data: credentials,
-        enableOffline: false // Autenticação não deve usar cache offline
-      });
+      // Usar postApi que é a versão correta para requisições POST com suporte offline
+      const result = await postApi<AuthUser>('/api/auth/login', credentials, { enableOffline: false });
+      return result;
     },
-    onSuccess: (userData, variables) => {
+    onSuccess: (userData: AuthUser, variables) => {
       setUser(userData);
       queryClient.setQueryData(['/api/auth/me'], userData);
       
@@ -165,12 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       // Se estiver online, enviar requisição normalmente
-      await apiRequest({
-        url: '/api/auth/logout',
-        method: 'POST',
-        data: {},
-        enableOffline: false // Logout não deve usar cache offline
-      });
+      await postApi('/api/auth/logout', {}, { enableOffline: false });
     },
     onSuccess: () => {
       setUser(null);
@@ -217,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     // Se estiver online, usar a mutação normal
-    const userData = await loginMutation.mutateAsync({ username, password, rememberMe });
+    const userData = await loginMutation.mutateAsync({ username, password, rememberMe }) as AuthUser;
     
     // Garantir que a sessão foi estabelecida verificando novamente após 1 segundo
     // Isso ajuda a lidar com problemas de sincronização de sessão
