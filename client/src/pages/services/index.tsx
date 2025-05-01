@@ -92,6 +92,8 @@ export default function ServicesList() {
               <div className="text-sm font-medium">
                 {i18n.language === 'de' ? "Status:" : 
                  i18n.language === 'es' ? "Estado:" :
+                 i18n.language === 'fr' ? "Statut:" :
+                 i18n.language === 'it' ? "Stato:" :
                  "Status:"}
               </div>
               <Select 
