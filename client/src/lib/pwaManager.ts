@@ -59,6 +59,29 @@ export const checkNetworkStatus = () => {
   return isOnline;
 };
 
+// Funções para gerenciar o modo de manutenção de sessão
+export const enableAuthSessionMaintenance = () => {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    console.log("Ativando modo de manutenção de sessão no Service Worker");
+    navigator.serviceWorker.controller.postMessage({
+      type: 'ENABLE_AUTH_SESSION_MAINTENANCE'
+    });
+    return true;
+  }
+  return false;
+};
+
+export const disableAuthSessionMaintenance = () => {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    console.log("Desativando modo de manutenção de sessão no Service Worker");
+    navigator.serviceWorker.controller.postMessage({
+      type: 'DISABLE_AUTH_SESSION_MAINTENANCE'
+    });
+    return true;
+  }
+  return false;
+};
+
 // Estender a interface ServiceWorkerRegistration para incluir sync
 declare global {
   interface ServiceWorkerRegistration {

@@ -39,12 +39,32 @@ export default function Login() {
     }
     
     try {
+      // Ativar modo de manutenção de sessão para evitar interferências do Service Worker
+      import('@/lib/pwaManager').then(pwaManager => {
+        pwaManager.enableAuthSessionMaintenance();
+        console.log("Modo de manutenção de sessão ativado para login");
+      }).catch(err => {
+        console.warn("Não foi possível ativar modo de manutenção de sessão:", err);
+      });
+      
       setIsSubmitting(true);
       await login(username, password, rememberMe);
+      
       toast({
         title: t("auth.loginSuccess", "Login bem-sucedido"),
         description: t("auth.welcomeBack", "Bem-vindo de volta!"),
       });
+      
+      // Desativar modo de manutenção de sessão após login bem-sucedido
+      setTimeout(() => {
+        import('@/lib/pwaManager').then(pwaManager => {
+          pwaManager.disableAuthSessionMaintenance();
+          console.log("Modo de manutenção de sessão desativado após login");
+        }).catch(err => {
+          console.warn("Não foi possível desativar modo de manutenção de sessão:", err);
+        });
+      }, 1000); // Pequeno delay para garantir que todas as requisições relacionadas ao login sejam processadas
+      
       setLocation("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
@@ -52,6 +72,14 @@ export default function Login() {
         title: t("auth.authError", "Erro de autenticação"),
         description: t("auth.invalidCredentials", "Usuário ou senha inválidos. Tente novamente."),
         variant: "destructive",
+      });
+      
+      // Desativar modo de manutenção de sessão em caso de erro
+      import('@/lib/pwaManager').then(pwaManager => {
+        pwaManager.disableAuthSessionMaintenance();
+        console.log("Modo de manutenção de sessão desativado após erro de login");
+      }).catch(err => {
+        console.warn("Não foi possível desativar modo de manutenção de sessão:", err);
       });
     } finally {
       setIsSubmitting(false);

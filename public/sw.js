@@ -137,8 +137,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Requisições relacionadas à autenticação devem sempre ir para a rede
-  if (request.url.includes('/api/auth/')) {
+  // Verificar se está no modo de manutenção da sessão (usando flag no localStorage)
+  // Necessário verificar isso aqui usando mensagens já que o SW não tem acesso ao localStorage
+  const isCriticalAuth = self._authSessionMaintenanceMode === true;
+  
+  // Durante modo de manutenção de sessão ou requisições de autenticação, sempre usar a rede diretamente
+  if (isCriticalAuth || request.url.includes('/api/auth/')) {
+    console.log('[SW] Passando requisição diretamente para a rede (autenticação):', request.url);
+    event.respondWith(fetch(request));
+    return;
+  }
+  
+  // Sempre deixar passar requisições POST com cookies para evitar problemas de sessão
+  if (request.method === 'POST' && request.headers.has('cookie')) {
+    console.log('[SW] Passando requisição POST com cookies diretamente:', request.url);
     event.respondWith(fetch(request));
     return;
   }
@@ -340,6 +352,9 @@ self.addEventListener('offline', () => {
   notifyClients({ type: 'connection-status', online: false });
 });
 
+// Inicializar estado global para o modo de manutenção de sessão
+self._authSessionMaintenanceMode = false;
+
 // Responder a mensagens do cliente
 self.addEventListener('message', (event) => {
   if (!event.data) return;
@@ -360,6 +375,26 @@ self.addEventListener('message', (event) => {
       notifyClients({ 
         type: 'sync-status',
         online: navigator.onLine
+      });
+      break;
+      
+    case 'ENABLE_AUTH_SESSION_MAINTENANCE':
+      // Ativar modo de manutenção de sessão para evitar interferências em operações de autenticação
+      console.log('[SW] Ativando modo de manutenção de sessão');
+      self._authSessionMaintenanceMode = true;
+      notifyClients({ 
+        type: 'auth-session-maintenance',
+        enabled: true
+      });
+      break;
+      
+    case 'DISABLE_AUTH_SESSION_MAINTENANCE':
+      // Desativar modo de manutenção de sessão
+      console.log('[SW] Desativando modo de manutenção de sessão');
+      self._authSessionMaintenanceMode = false;
+      notifyClients({ 
+        type: 'auth-session-maintenance',
+        enabled: false
       });
       break;
   }
