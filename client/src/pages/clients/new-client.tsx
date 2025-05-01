@@ -27,9 +27,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { insertClientSchema } from "@shared/schema.mysql";
-import { offlineStatusStore } from "@/lib/stores";
 import { storeOfflineRequest } from "@/lib/offlineDb";
-import { useSubscribe } from "@/hooks/useSubscribe";
 
 // Esquema simplificado para o formulário
 const formSchema = z.object({
@@ -48,28 +46,12 @@ export default function NewClient() {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const { t } = useTranslation();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSaving, setIsSaving] = useState(false);
   const [saveTimeout, setSaveTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   
-  // Subscrever ao estado online
-  useSubscribe(offlineStatusStore, () => {
-    setIsOnline(offlineStatusStore.getOnlineStatus());
-  });
-  
-  // Efeito para verificar estado da conexão
+  // Efeito para limpar timeout quando componente for desmontado
   useEffect(() => {
-    const handleOnlineStatus = () => {
-      setIsOnline(navigator.onLine);
-    };
-    
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOnlineStatus);
-    
     return () => {
-      window.removeEventListener('online', handleOnlineStatus);
-      window.removeEventListener('offline', handleOnlineStatus);
-      
       // Limpar timeout ao desmontar
       if (saveTimeout) {
         clearTimeout(saveTimeout);
@@ -225,9 +207,9 @@ export default function NewClient() {
     console.log("Enviando dados limpos:", cleanData);
     
     // Verificar o estado da conexão
-    if (!isOnline) {
+    if (!navigator.onLine) {
       try {
-        // Salvar localmente no IndexedDB
+        // Salvar localmente no IndexedDB para sincronização silenciosa posterior
         const timestamp = new Date().getTime();
         const pendingRequest = {
           id: `client_${timestamp}`,
@@ -243,19 +225,23 @@ export default function NewClient() {
         // Salvar a requisição pendente para sincronização posterior
         await storeOfflineRequest(pendingRequest);
         
+        // Feedback genérico sem mencionar o modo offline
         toast({
-          title: "Cliente salvo offline",
-          description: "O cliente foi salvo localmente e será sincronizado quando a conexão for restaurada",
+          title: "Cliente cadastrado",
+          description: "O cliente foi cadastrado com sucesso",
         });
         
-        // Redirecionar após o cadastro offline
+        // Redirecionar após o cadastro
         setIsSaving(false);
         setLocation('/clients');
+        
+        // Silenciosamente atualizar o cache do queryClient
+        queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
       } catch (error) {
-        console.error('Erro ao salvar cliente offline:', error);
+        console.error('Erro ao processar cliente:', error);
         toast({
-          title: "Erro ao salvar offline",
-          description: "Não foi possível salvar o cliente localmente. Tente novamente.",
+          title: "Erro ao cadastrar cliente",
+          description: "Ocorreu um erro ao cadastrar o cliente. Verifique os dados e tente novamente.",
           variant: "destructive",
         });
         setIsSaving(false);
@@ -397,9 +383,7 @@ export default function NewClient() {
             >
               {createClientMutation.isPending || isSaving 
                 ? t("common.saving", "Salvando...") 
-                : isOnline 
-                  ? t("clients.registerClient", "Cadastrar Cliente")
-                  : t("clients.saveOffline", "Salvar Offline")}
+                : t("clients.registerClient", "Cadastrar Cliente")}
             </Button>
           </div>
         </form>
