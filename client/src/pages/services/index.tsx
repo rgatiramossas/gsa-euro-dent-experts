@@ -104,6 +104,8 @@ export default function ServicesList() {
                   <SelectValue placeholder={
                     i18n.language === 'de' ? "Option wählen" : 
                     i18n.language === 'es' ? "Seleccionar opción" :
+                    i18n.language === 'fr' ? "Sélectionner une option" :
+                    i18n.language === 'it' ? "Seleziona un'opzione" :
                     t("validation.selectOption")
                   } />
                 </SelectTrigger>
@@ -112,14 +114,18 @@ export default function ServicesList() {
                     <SelectLabel>
                       {i18n.language === 'de' ? "Servicestatus" : 
                        i18n.language === 'es' ? "Estado del servicio" :
+                       i18n.language === 'fr' ? "État du service" :
+                       i18n.language === 'it' ? "Stato del servizio" :
                        "Status do serviço"}
                     </SelectLabel>
                     <SelectItem value="all">
                       {i18n.language === 'de' ? "Alle" : 
                        i18n.language === 'es' ? "Todos" :
+                       i18n.language === 'fr' ? "Tous" :
+                       i18n.language === 'it' ? "Tutti" :
                        "Todos"}
                     </SelectItem>
-                    {/* Usando valores hardcoded para alemão e espanhol para evitar o erro "key returned an object" */}
+                    {/* Usando valores hardcoded para todos os idiomas para evitar o erro "key returned an object" */}
                     {i18n.language === 'de' ? (
                       <>
                         <SelectItem value="pending">Ausstehend</SelectItem>
@@ -135,6 +141,22 @@ export default function ServicesList() {
                         <SelectItem value="aguardando_aprovacao">Esperando Aprobación</SelectItem>
                         <SelectItem value="faturado">Facturado</SelectItem>
                         <SelectItem value="pago">Pagado</SelectItem>
+                      </>
+                    ) : i18n.language === 'fr' ? (
+                      <>
+                        <SelectItem value="pending">En attente</SelectItem>
+                        <SelectItem value="completed">Terminé</SelectItem>
+                        <SelectItem value="aguardando_aprovacao">En attente d'approbation</SelectItem>
+                        <SelectItem value="faturado">Facturé</SelectItem>
+                        <SelectItem value="pago">Payé</SelectItem>
+                      </>
+                    ) : i18n.language === 'it' ? (
+                      <>
+                        <SelectItem value="pending">In attesa</SelectItem>
+                        <SelectItem value="completed">Completato</SelectItem>
+                        <SelectItem value="aguardando_aprovacao">In attesa di approvazione</SelectItem>
+                        <SelectItem value="faturado">Fatturato</SelectItem>
+                        <SelectItem value="pago">Pagato</SelectItem>
                       </>
                     ) : (
                       <>
@@ -166,31 +188,43 @@ export default function ServicesList() {
                     <TableHead>
                       {i18n.language === 'de' ? "Kunde" : 
                        i18n.language === 'es' ? "Cliente" :
+                       i18n.language === 'fr' ? "Client" :
+                       i18n.language === 'it' ? "Cliente" :
                        "Cliente"}
                     </TableHead>
                     <TableHead>
                       {i18n.language === 'de' ? "Fahrzeug" : 
                        i18n.language === 'es' ? "Vehículo" :
+                       i18n.language === 'fr' ? "Véhicule" :
+                       i18n.language === 'it' ? "Veicolo" :
                        "Veículo"}
                     </TableHead>
                     <TableHead>
                       {i18n.language === 'de' ? "Techniker" : 
                        i18n.language === 'es' ? "Técnico" :
+                       i18n.language === 'fr' ? "Technicien" :
+                       i18n.language === 'it' ? "Tecnico" :
                        "Técnico"}
                     </TableHead>
                     <TableHead>
                       {i18n.language === 'de' ? "Status" : 
                        i18n.language === 'es' ? "Estado" :
+                       i18n.language === 'fr' ? "Statut" :
+                       i18n.language === 'it' ? "Stato" :
                        "Status"}
                     </TableHead>
                     <TableHead>
                       {i18n.language === 'de' ? "Geplantes Datum" : 
                        i18n.language === 'es' ? "Fecha Programada" :
+                       i18n.language === 'fr' ? "Date Programmée" :
+                       i18n.language === 'it' ? "Data Programmata" :
                        "Data Agendada"}
                     </TableHead>
                     <TableHead className="text-right">
                       {i18n.language === 'de' ? "Aktionen" : 
                        i18n.language === 'es' ? "Acciones" :
+                       i18n.language === 'fr' ? "Actions" :
+                       i18n.language === 'it' ? "Azioni" :
                        "Ações"}
                     </TableHead>
                   </TableRow>
@@ -201,6 +235,8 @@ export default function ServicesList() {
                       <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                         {i18n.language === 'de' ? "Keine Ergebnisse gefunden" : 
                          i18n.language === 'es' ? "No se encontraron resultados" :
+                         i18n.language === 'fr' ? "Aucun résultat trouvé" :
+                         i18n.language === 'it' ? "Nessun risultato trovato" :
                          "Nenhum resultado encontrado"}
                       </TableCell>
                     </TableRow>
@@ -219,6 +255,8 @@ export default function ServicesList() {
                         <TableCell>{service.technician?.name || 
                           (i18n.language === 'de' ? "Nicht zugewiesen" : 
                            i18n.language === 'es' ? "No asignado" :
+                           i18n.language === 'fr' ? "Non assigné" :
+                           i18n.language === 'it' ? "Non assegnato" :
                            "Não atribuído")
                         }</TableCell>
                         <TableCell>
@@ -242,6 +280,8 @@ export default function ServicesList() {
                               <span>
                                 {i18n.language === 'de' ? "Details" : 
                                  i18n.language === 'es' ? "Detalles" :
+                                 i18n.language === 'fr' ? "Détails" :
+                                 i18n.language === 'it' ? "Dettagli" :
                                  "Detalhes"}
                               </span>
                             </Button>
