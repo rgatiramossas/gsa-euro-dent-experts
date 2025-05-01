@@ -137,7 +137,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Trata requisições de API separadamente
+  // Requisições relacionadas à autenticação devem sempre ir para a rede
+  if (request.url.includes('/api/auth/')) {
+    event.respondWith(fetch(request));
+    return;
+  }
+  
+  // Trata outras requisições de API separadamente
   if (request.url.includes('/api/')) {
     event.respondWith(handleApiRequest(event));
     return;
