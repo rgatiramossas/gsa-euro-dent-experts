@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/common/PageHeader";
 import { 
   Card, 
@@ -126,6 +127,7 @@ type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
 export default function Finances() {
+  const { t } = useTranslation();
   const [period, setPeriod] = useState("month");
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [paymentRequestDialogOpen, setPaymentRequestDialogOpen] = useState(false);
@@ -405,8 +407,8 @@ export default function Finances() {
     return (
       <div className="py-6 px-4 sm:px-6 lg:px-8">
         <PageHeader
-          title="Financeiro"
-          description="Estatísticas e relatórios financeiros"
+          title={t("finances.title")}
+          description={t("finances.description")}
         />
         
         <Tabs defaultValue="payment_requests" className="space-y-6">
@@ -443,8 +445,8 @@ export default function Finances() {
     return (
       <div className="py-6 px-4 sm:px-6 lg:px-8">
         <PageHeader
-          title="Financeiro"
-          description="Estatísticas financeiras e solicitação de pagamentos"
+          title={t("finances.title")}
+          description={t("finances.description")}
         />
         
         {/* Cards de resumo para técnicos */}
@@ -1049,7 +1051,7 @@ export default function Finances() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Faturamento Total</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">{t("finances.totalRevenue")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
@@ -1058,7 +1060,7 @@ export default function Finances() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Despesas Totais</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">{t("finances.totalExpenses")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats.totalExpenses || 0)}</div>
@@ -1067,7 +1069,7 @@ export default function Finances() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Lucro Líquido</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">{t("finances.netProfit")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-success">{formatCurrency(stats.profit || 0)}</div>
@@ -1076,7 +1078,7 @@ export default function Finances() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Serviços Concluídos</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">{t("finances.completedServices")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.servicesCount}</div>
