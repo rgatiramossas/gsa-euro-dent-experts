@@ -33,7 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ptBR } from "date-fns/locale";
+import { ptBR, de, es } from "date-fns/locale";
 import { format, isSameDay, parseISO, addHours } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +42,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from 'react-i18next';
 
 // Interface para os tipos de evento
 interface EventType {
@@ -78,19 +79,32 @@ interface Event {
 }
 
 // Schema para validação do formulário
-const eventFormSchema = z.object({
-  title: z.string().min(3, 'O título deve ter no mínimo 3 caracteres'),
+const createEventFormSchema = (t: any) => z.object({
+  title: z.string().min(3, t('validation.titleMinLength', { defaultValue: 'O título deve ter no mínimo 3 caracteres' })),
   description: z.string().optional(),
   date: z.date(),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido'),
-  duration: z.number().min(15, 'A duração mínima é de 15 minutos').max(480, 'A duração máxima é de 8 horas'),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, t('validation.invalidTimeFormat', { defaultValue: 'Formato de hora inválido' })),
+  duration: z.number()
+    .min(15, t('validation.durationMin', { defaultValue: 'A duração mínima é de 15 minutos' }))
+    .max(480, t('validation.durationMax', { defaultValue: 'A duração máxima é de 8 horas' })),
   event_type_id: z.number(),
   technician_id: z.number()
 });
 
-type EventFormValues = z.infer<typeof eventFormSchema>;
+// Definir o tipo com base no schema gerado pela função 
+// Precisamos definir manualmente para evitar problemas de inferência
+interface EventFormValues {
+  title: string;
+  description?: string;
+  date: Date;
+  time: string;
+  duration: number;
+  event_type_id: number;
+  technician_id: number;
+}
 
 export default function Eventos() {
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -99,6 +113,21 @@ export default function Eventos() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === "admin";
+  
+  // Criar schema com traduções atualizadas
+  const eventFormSchema = createEventFormSchema(t);
+  
+  // Obter o locale apropriado para date-fns
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case 'de':
+        return de;
+      case 'es':
+        return es;
+      default:
+        return ptBR;
+    }
+  };
   
   // Configuração do formulário com react-hook-form
   const form = useForm<EventFormValues>({
@@ -169,14 +198,14 @@ export default function Eventos() {
       setDialogOpen(false);
       form.reset();
       toast({
-        title: "Evento criado",
-        description: "O evento foi criado com sucesso.",
+        title: t('events.eventCreated'),
+        description: t('events.eventCreated'),
       });
     },
     onError: (error) => {
       toast({
-        title: "Erro ao criar evento",
-        description: "Ocorreu um erro ao criar o evento. Tente novamente.",
+        title: t('errors.createEvent'),
+        description: t('errors.createEventDescription', { defaultValue: "Ocorreu um erro ao criar o evento. Tente novamente." }),
         variant: "destructive",
       });
     }
@@ -199,14 +228,14 @@ export default function Eventos() {
       setEditingEvent(null);
       form.reset();
       toast({
-        title: "Evento atualizado",
-        description: "O evento foi atualizado com sucesso.",
+        title: t('events.eventUpdated'),
+        description: t('events.eventUpdated'),
       });
     },
     onError: (error) => {
       toast({
-        title: "Erro ao atualizar evento",
-        description: "Ocorreu um erro ao atualizar o evento. Tente novamente.",
+        title: t('errors.updateEvent', { defaultValue: "Erro ao atualizar evento" }),
+        description: t('errors.updateEventDescription', { defaultValue: "Ocorreu um erro ao atualizar o evento. Tente novamente." }),
         variant: "destructive",
       });
     }
@@ -220,14 +249,14 @@ export default function Eventos() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       toast({
-        title: "Evento excluído",
-        description: "O evento foi excluído com sucesso.",
+        title: t('events.eventDeleted'),
+        description: t('events.eventDeleted'),
       });
     },
     onError: (error) => {
       toast({
-        title: "Erro ao excluir evento",
-        description: "Ocorreu um erro ao excluir o evento. Tente novamente.",
+        title: t('errors.deleteEvent', { defaultValue: "Erro ao excluir evento" }),
+        description: t('errors.deleteEventDescription', { defaultValue: "Ocorreu um erro ao excluir o evento. Tente novamente." }),
         variant: "destructive",
       });
     }
@@ -274,7 +303,7 @@ export default function Eventos() {
 
   // Função para confirmar a exclusão de um evento
   const handleDeleteEvent = (id: number) => {
-    if (window.confirm("Tem certeza que deseja excluir este evento?")) {
+    if (window.confirm(t('events.confirmDelete'))) {
       deleteEventMutation.mutate(id);
     }
   };
@@ -282,14 +311,14 @@ export default function Eventos() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title="Eventos"
-        description="Gerencie os eventos e compromissos"
+        title={t('events.title')}
+        description={t('events.description')}
         actions={
           <Button onClick={handleNewEvent}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Novo Evento
+            {t('events.newEvent')}
           </Button>
         }
       />
@@ -300,16 +329,16 @@ export default function Eventos() {
             <CardContent className="pt-6">
               {isAdmin && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Técnico</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('events.eventInfo.technician')}</label>
                   <Select
                     value={selectedTechnician}
                     onValueChange={setSelectedTechnician}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um técnico" />
+                      <SelectValue placeholder={t('events.selectTechnician')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos os técnicos</SelectItem>
+                      <SelectItem value="all">{t('events.allTechnicians')}</SelectItem>
                       {technicians?.map((tech) => (
                         <SelectItem key={tech.id} value={tech.id.toString()}>
                           {tech.name}
@@ -324,7 +353,7 @@ export default function Eventos() {
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                locale={ptBR}
+                locale={getDateLocale()}
                 className="border rounded-md p-3"
                 modifiers={{
                   hasEvent: datesWithEvents || [],
@@ -341,7 +370,9 @@ export default function Eventos() {
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-medium mb-4">
-                Eventos para {selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Nenhuma data selecionada"}
+                {t('events.eventsFor')} {selectedDate 
+                  ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: getDateLocale() }) 
+                  : t('events.noDateSelected')}
               </h3>
               
               {eventsLoading ? (
@@ -350,9 +381,9 @@ export default function Eventos() {
                 </div>
               ) : filteredEvents?.length === 0 ? (
                 <div className="bg-gray-50 rounded-lg p-8 text-center">
-                  <p className="text-gray-500">Nenhum evento para esta data</p>
+                  <p className="text-gray-500">{t('events.noEventsForDate')}</p>
                   <Button className="mt-4" variant="outline" onClick={handleNewEvent}>
-                    Criar Novo Evento
+                    {t('events.createNewEvent')}
                   </Button>
                 </div>
               ) : (
@@ -406,7 +437,9 @@ export default function Eventos() {
                           </span>
                         </div>
                         <div className="text-sm font-medium text-gray-900">
-                          {event.technician ? event.technician.name : "Técnico não atribuído"}
+                          {event.technician 
+                            ? event.technician.name 
+                            : t('services.unassigned', { defaultValue: "Técnico não atribuído" })}
                         </div>
                       </div>
                     </div>
@@ -422,9 +455,9 @@ export default function Eventos() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{editingEvent ? "Editar Evento" : "Novo Evento"}</DialogTitle>
+            <DialogTitle>{editingEvent ? t('events.editEvent') : t('events.newEvent')}</DialogTitle>
             <DialogDescription>
-              Preencha os detalhes do evento abaixo.
+              {t('events.eventDetails')}
             </DialogDescription>
           </DialogHeader>
           
@@ -435,9 +468,9 @@ export default function Eventos() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Título</FormLabel>
+                    <FormLabel>{t('events.eventInfo.title')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Título do evento" {...field} />
+                      <Input placeholder={t('events.eventInfo.title')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -449,9 +482,9 @@ export default function Eventos() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Descrição</FormLabel>
+                    <FormLabel>{t('events.eventInfo.description')}</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Descrição do evento" {...field} />
+                      <Textarea placeholder={t('events.eventInfo.description')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -464,7 +497,7 @@ export default function Eventos() {
                   name="date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Data</FormLabel>
+                      <FormLabel>{t('events.eventInfo.date')}</FormLabel>
                       <FormControl>
                         <Input 
                           type="date" 
@@ -482,7 +515,7 @@ export default function Eventos() {
                   name="time"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Hora</FormLabel>
+                      <FormLabel>{t('events.eventInfo.time')}</FormLabel>
                       <FormControl>
                         <Input type="time" {...field} />
                       </FormControl>
@@ -497,7 +530,7 @@ export default function Eventos() {
                 name="duration"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Duração (minutos)</FormLabel>
+                    <FormLabel>{t('events.eventInfo.duration')}</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -518,14 +551,14 @@ export default function Eventos() {
                 name="event_type_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo de Evento</FormLabel>
+                    <FormLabel>{t('events.eventInfo.eventType')}</FormLabel>
                     <Select 
                       value={field.value?.toString()} 
                       onValueChange={(value) => field.onChange(parseInt(value))}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
+                          <SelectValue placeholder={t('events.eventInfo.selectType')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -553,14 +586,14 @@ export default function Eventos() {
                   name="technician_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Técnico</FormLabel>
+                      <FormLabel>{t('events.eventInfo.technician')}</FormLabel>
                       <Select 
                         value={field.value?.toString()} 
                         onValueChange={(value) => field.onChange(parseInt(value))}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione o técnico" />
+                            <SelectValue placeholder={t('events.eventInfo.selectTechnician')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -583,10 +616,10 @@ export default function Eventos() {
                   variant="outline"
                   onClick={() => setDialogOpen(false)}
                 >
-                  Cancelar
+                  {t('common.cancel', { defaultValue: "Cancelar" })}
                 </Button>
                 <Button type="submit">
-                  {editingEvent ? "Atualizar" : "Criar"}
+                  {editingEvent ? t('common.update', { defaultValue: "Atualizar" }) : t('common.create', { defaultValue: "Criar" })}
                 </Button>
               </DialogFooter>
             </form>
