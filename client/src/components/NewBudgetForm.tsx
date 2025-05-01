@@ -10,7 +10,8 @@ import { CalendarIcon, ArrowLeft, Upload, Image } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateBudgetTotals } from "@/utils/hailCalculation";
-import { useTranslation, TFunction } from "react-i18next";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -108,10 +109,17 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   const { t } = useTranslation();
   
   // Buscar a lista de clientes do banco de dados
-  const { data: clients, isLoading: isLoadingClients } = useQuery<any[]>({
+  const { data: clients, isLoading: isLoadingClients, error: clientsError } = useQuery<any[]>({
     queryKey: ['/api/clients'],
-    retry: 1,
+    retry: 3,
+    staleTime: 60000, // 1 minuto
   });
+  
+  // Log para depuração da lista de clientes
+  useEffect(() => {
+    console.log("Clientes carregados:", clients);
+    console.log("Erro ao carregar clientes:", clientsError);
+  }, [clients, clientsError]);
 
   // Inicialize os danos com todas as peças ou use os danos iniciais
   useEffect(() => {
@@ -430,11 +438,14 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                           ) : !clients || clients.length === 0 ? (
                             <SelectItem value="no-clients">{t("budget.noClientsFound")}</SelectItem>
                           ) : (
-                            clients.map((client) => (
-                              <SelectItem key={client.id} value={client.id.toString()}>
-                                {client.name}
-                              </SelectItem>
-                            ))
+                            clients.map((client) => {
+                              console.log("Renderizando cliente:", client);
+                              return (
+                                <SelectItem key={client.id} value={client.id.toString()}>
+                                  {client.name}
+                                </SelectItem>
+                              );
+                            })
                           )}
                         </SelectContent>
                       </Select>
