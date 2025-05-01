@@ -1499,7 +1499,7 @@ export default function Finances() {
                   ) : !expenses || expenses.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                        Nenhuma despesa encontrada
+                        {t("finances.nenhumaDespesaEncontrada")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -1547,7 +1547,7 @@ export default function Finances() {
                     </div>
                   ) : expensesByCategoryData.length === 0 ? (
                     <div className="h-80 flex items-center justify-center">
-                      <p className="text-gray-500">Nenhum dado disponível</p>
+                      <p className="text-gray-500">{t("common.noDataAvailable")}</p>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
@@ -1587,7 +1587,7 @@ export default function Finances() {
                     </div>
                   ) : monthlyExpensesData.every(item => item.value === 0) ? (
                     <div className="h-80 flex items-center justify-center">
-                      <p className="text-gray-500">Nenhum dado disponível</p>
+                      <p className="text-gray-500">{t("common.noDataAvailable")}</p>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
@@ -1654,7 +1654,7 @@ export default function Finances() {
                   
                   {completableServices?.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      Nenhum serviço disponível para solicitar pagamento.
+                      {t("finances.nenhumServicoDisponivel")}
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-96 overflow-y-auto">
