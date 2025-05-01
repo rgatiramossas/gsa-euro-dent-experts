@@ -20,10 +20,10 @@ import { useTranslation } from "react-i18next";
 const createProfileFormSchema = (t: any, language: string) => {
   return z.object({
     name: z.string().min(2, { 
-      message: language === 'en' ? "Name must be at least 2 characters" : "O nome deve ter pelo menos 2 caracteres" 
+      message: language === 'en' ? t("validation.minName") : "O nome deve ter pelo menos 2 caracteres" 
     }),
     email: z.string().email({ 
-      message: language === 'en' ? "Please enter a valid email" : "Por favor, digite um e-mail válido" 
+      message: language === 'en' ? t("validation.email") : "Por favor, digite um e-mail válido" 
     }),
   });
 };
@@ -34,16 +34,16 @@ type ProfileFormValues = z.infer<ReturnType<typeof createProfileFormSchema>>;
 const createPasswordFormSchema = (t: any, language: string) => {
   return z.object({
     currentPassword: z.string().min(8, { 
-      message: language === 'en' ? "Current password must be at least 8 characters" : "A senha atual deve ter pelo menos 8 caracteres" 
+      message: language === 'en' ? t("validation.currentPassword") : "A senha atual deve ter pelo menos 8 caracteres" 
     }),
     newPassword: z.string().min(8, { 
-      message: language === 'en' ? "New password must be at least 8 characters" : "A nova senha deve ter pelo menos 8 caracteres" 
+      message: language === 'en' ? t("validation.newPassword") : "A nova senha deve ter pelo menos 8 caracteres" 
     }),
     confirmPassword: z.string().min(8, { 
-      message: language === 'en' ? "Confirm the new password" : "Confirme a nova senha" 
+      message: language === 'en' ? t("validation.confirmPassword") : "Confirme a nova senha" 
     }),
   }).refine((data) => data.newPassword === data.confirmPassword, {
-    message: language === 'en' ? "Passwords do not match" : "As senhas não coincidem",
+    message: language === 'en' ? t("validation.passwordsDoNotMatch") : "As senhas não coincidem",
     path: ["confirmPassword"],
   });
 };
@@ -93,14 +93,14 @@ export default function ConfiguracoesPage() {
       }
 
       toast({
-        title: i18n.language === 'en' ? "Profile updated" : "Perfil atualizado",
-        description: i18n.language === 'en' ? "Your information has been successfully updated." : "Suas informações foram atualizadas com sucesso.",
+        title: i18n.language === 'en' ? t("notifications.profileUpdated") : "Perfil atualizado",
+        description: i18n.language === 'en' ? t("notifications.profileUpdateSuccess") : "Suas informações foram atualizadas com sucesso.",
       });
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
       toast({
-        title: i18n.language === 'en' ? "Error updating profile" : "Erro ao atualizar perfil",
-        description: i18n.language === 'en' ? "An error occurred while updating your information. Please try again." : "Ocorreu um erro ao atualizar suas informações. Tente novamente.",
+        title: i18n.language === 'en' ? t("notifications.profileUpdateError") : "Erro ao atualizar perfil",
+        description: i18n.language === 'en' ? t("notifications.profileUpdateFailure") : "Ocorreu um erro ao atualizar suas informações. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -117,14 +117,14 @@ export default function ConfiguracoesPage() {
       passwordForm.reset();
 
       toast({
-        title: i18n.language === 'en' ? "Password changed" : "Senha alterada",
-        description: i18n.language === 'en' ? "Your password has been successfully changed." : "Sua senha foi alterada com sucesso.",
+        title: i18n.language === 'en' ? t("notifications.passwordChanged") : "Senha alterada",
+        description: i18n.language === 'en' ? t("notifications.passwordChangeSuccess") : "Sua senha foi alterada com sucesso.",
       });
     } catch (error) {
       console.error("Erro ao alterar senha:", error);
       toast({
-        title: i18n.language === 'en' ? "Error changing password" : "Erro ao alterar senha",
-        description: i18n.language === 'en' ? "An error occurred while changing your password. Please check if your current password is correct." : "Ocorreu um erro ao alterar sua senha. Verifique se a senha atual está correta.",
+        title: i18n.language === 'en' ? t("notifications.passwordChangeError") : "Erro ao alterar senha",
+        description: i18n.language === 'en' ? t("notifications.passwordChangeFailure") : "Ocorreu um erro ao alterar sua senha. Verifique se a senha atual está correta.",
         variant: "destructive",
       });
     }
