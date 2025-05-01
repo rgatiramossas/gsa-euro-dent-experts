@@ -53,37 +53,70 @@ async function checkSessions() {
         const [sessions] = await pool.query('SELECT * FROM sessions');
         
         if (sessions.length === 0) {
-          console.log('Nenhuma sessão encontrada no banco de dados.');
+          console.log('Nenhuma sessão encontrada na tabela.');
         } else {
           console.log(`Encontradas ${sessions.length} sessões:`);
           
-          sessions.forEach((session, index) => {
+          // Obter a data atual em timestamp Unix (em milissegundos)
+          const now = Date.now();
+          
+          // Mostrar informações sobre cada sessão
+          for (const session of sessions) {
+            console.log('\n------------------------------------------');
+            console.log(`ID: ${session.session_id}`);
+            
+            // Verificar formato do campo expires
+            console.log(`Expira em: ${session.expires}`);
+            
+            // Se expires for um timestamp Unix em milissegundos, converter para data legível
+            const expiryDate = new Date(Number(session.expires));
+            
+            // Verificar status de expiração
+            const isExpired = now > Number(session.expires);
+            console.log(`Data de expiração: ${expiryDate.toISOString()} (${isExpired ? 'EXPIRADA' : 'VÁLIDA'})`);
+            
+            // Desserializar dados da sessão em JSON para exibir informações de usuário e outras propriedades
             try {
-              // Tentar extrair dados da sessão
-              let sessionData = {};
-              try {
-                // A sessão é armazenada como JSON em uma string
-                if (session.data) {
-                  sessionData = JSON.parse(session.data);
-                }
-              } catch (e) {
-                sessionData = { error: 'Erro ao decodificar dados da sessão' };
+              const sessionData = JSON.parse(session.data);
+              console.log('\nDados da sessão:');
+              console.log(JSON.stringify(sessionData, null, 2));
+              
+              // Verificar se há um usuário na sessão
+              if (sessionData.passport && sessionData.passport.user) {
+                console.log(`\nSessão contém ID de usuário: ${sessionData.passport.user}`);
+              } else {
+                console.log('\nSessão não tem usuário autenticado');
               }
               
-              // Calcular quando a sessão expira
-              const expires = new Date(session.expires);
-              const now = new Date();
-              const isExpired = expires < now;
-              
-              console.log(`\nSessão #${index + 1}:`);
-              console.log(`- ID: ${session.session_id}`);
-              console.log(`- Expira em: ${expires.toLocaleString()} (${isExpired ? 'EXPIRADA' : 'válida'})`);
-              console.log(`- Dados: ${JSON.stringify(sessionData, null, 2)}`);
+              // Verificar timestamps internos da cookie, se existirem
+              if (sessionData.cookie) {
+                const cookieExpires = new Date(sessionData.cookie.expires);
+                console.log(`\nCookie expira em: ${cookieExpires.toISOString()}`);
+                
+                // Verificar discrepância entre o timestamp no campo expires e o timestamp no cookie
+                const discrepancyMs = Math.abs(Number(session.expires) - cookieExpires.getTime());
+                const discrepancyDays = discrepancyMs / (1000 * 60 * 60 * 24);
+                
+                console.log(`Discrepância entre expires e cookie: ${discrepancyMs} ms (${discrepancyDays.toFixed(2)} dias)`);
+                
+                if (discrepancyMs > 1000 * 60 * 5) { // Se discrepância maior que 5 minutos
+                  console.log('⚠️ AVISO: Discrepância significativa entre o timestamp da tabela e do cookie!');
+                }
+              }
             } catch (parseError) {
-              console.error(`Erro ao processar sessão #${index + 1}:`, parseError);
-              console.log('Sessão bruta:', session);
+              console.error('Erro ao desserializar dados da sessão:', parseError);
+              console.log('Dados da sessão (brutos):', session.data);
             }
-          });
+          }
+        }
+        
+        // Verificar estrutura da tabela
+        const [columns] = await pool.query('SHOW COLUMNS FROM sessions');
+        console.log('\n------------------------------------------');
+        console.log('Estrutura da tabela de sessões:');
+        
+        for (const column of columns) {
+          console.log(`- ${column.Field}: ${column.Type} ${column.Null === 'NO' ? 'NOT NULL' : 'NULL'}`);
         }
       }
     } catch (error) {
@@ -92,13 +125,11 @@ async function checkSessions() {
     
     // Fechar o pool de conexões
     await pool.end();
-    console.log('Verificação de sessões concluída.');
-    
   } catch (error) {
     console.error('Erro ao verificar sessões:', error);
     process.exit(1);
   }
 }
 
-// Executar a função
+// Executar a função principal
 checkSessions();

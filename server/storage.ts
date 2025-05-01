@@ -300,13 +300,64 @@ export class DatabaseStorage implements IStorage {
     // Isso será feito após a conexão com o banco ser estabelecida
   }
   
+  // Método para verificar e corrigir a tabela de sessões
+  private async ensureSessionTable(pool: any): Promise<void> {
+    try {
+      console.log("Verificando estrutura da tabela de sessões...");
+      
+      // Verificar se a tabela de sessões existe
+      const [tables] = await pool.query('SHOW TABLES LIKE ?', ['sessions']);
+      
+      if (tables.length > 0) {
+        console.log('Tabela de sessões encontrada. Verificando estrutura...');
+        
+        // Verificar a estrutura da tabela
+        const [columns] = await pool.query('SHOW COLUMNS FROM sessions');
+        
+        // Verificar se a coluna 'expires' é do tipo correto (BIGINT)
+        const expiresColumn = columns.find((col: any) => col.Field === 'expires');
+        
+        if (expiresColumn && expiresColumn.Type.toLowerCase().includes('bigint')) {
+          console.log('Tabela de sessões já possui a estrutura correta.');
+          return;
+        }
+        
+        console.log('Estrutura da tabela de sessões precisa ser corrigida. Recriando tabela...');
+        
+        // Fazer backup das sessões atuais
+        const [sessions] = await pool.query('SELECT * FROM sessions');
+        console.log(`Backup de ${sessions.length} sessões realizado.`);
+        
+        // Remover tabela atual
+        await pool.query('DROP TABLE sessions');
+        console.log('Tabela de sessões removida.');
+      }
+      
+      // Criar tabela de sessões com a estrutura correta
+      console.log('Criando nova tabela de sessões...');
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS sessions (
+          session_id VARCHAR(128) COLLATE utf8mb4_bin NOT NULL,
+          expires BIGINT UNSIGNED NOT NULL,
+          data MEDIUMTEXT COLLATE utf8mb4_bin,
+          PRIMARY KEY (session_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
+      `);
+      
+      console.log('Tabela de sessões criada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao verificar ou criar tabela de sessões:', error);
+      throw error;
+    }
+  }
+  
   // Método para inicializar o sessionStore com MySQL após a conexão ser estabelecida
   initSessionStore(pool: any) {
     try {
       // Primeiro, vamos verificar e garantir que a tabela de sessão esteja configurada corretamente
       this.ensureSessionTable(pool).then(() => {
         console.log("Tabela de sessões verificada e configurada corretamente.");
-      }).catch(err => {
+      }).catch((err: any) => {
         console.error("Erro ao verificar tabela de sessões:", err);
       });
       
