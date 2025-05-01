@@ -491,6 +491,7 @@
       "noCompletedServices": "Sie haben keine abgeschlossenen Dienstleistungen, für die Sie eine Zahlung anfordern können.",
       "serviceDescription": "Dienstleistungsbeschreibung",
       "sendRequest": "Anfrage senden",
+      "createRequest": "Anfrage erstellen",
       "totalSelected": "Ausgewählte Summe",
       "paymentMethod": "Zahlungsmethode",
       "paymentDetails": "Zahlungsdetails",
