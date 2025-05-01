@@ -191,10 +191,20 @@ export default function NewServicePage() {
     }
   });
 
+  // Estado para verificar se houve uma tentativa offline que falhou
+  const [offlineAttemptFailed, setOfflineAttemptFailed] = useState(false);
+  
   // Create service mutation - declaração da mutação de criação de serviço
   const createServiceMutation = useMutation({
     mutationFn: async (data: FormData) => {
       try {
+        // Verificar se estamos offline antes de tentar a requisição
+        if (!navigator.onLine || !checkNetworkStatus()) {
+          console.log("Detectada operação offline. Iniciando processamento offline...");
+          setOfflineAttemptFailed(true);
+          throw new Error("OFFLINE_MODE");
+        }
+        
         // Format the datetime properly
         let formattedData = { ...data };
         
@@ -420,6 +430,31 @@ export default function NewServicePage() {
       }
     }
   }, [user, technicians, form]);
+  
+  // Verificar regularmente o status da rede para atualizar o texto do botão
+  useEffect(() => {
+    // Verificar se estamos offline e resetar o estado da mutação se necessário
+    const checkNetworkAndReset = () => {
+      if (!navigator.onLine && offlineAttemptFailed) {
+        console.log("Detectado offline e tentativa anterior falhou, resetando mutação");
+        createServiceMutation.reset();
+        setOfflineAttemptFailed(false);
+      }
+    };
+    
+    // Verificar status da rede inicial
+    checkNetworkAndReset();
+    
+    // Adicionar listeners para eventos de online/offline
+    window.addEventListener('online', checkNetworkAndReset);
+    window.addEventListener('offline', checkNetworkAndReset);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('online', checkNetworkAndReset);
+      window.removeEventListener('offline', checkNetworkAndReset);
+    };
+  }, [offlineAttemptFailed, createServiceMutation]);
 
   // Adicionar um listener para mensagens do service worker
   useEffect(() => {
@@ -475,7 +510,7 @@ export default function NewServicePage() {
   }, [toast, setLocation, createServiceMutation, t]);
   
   // Função que é chamada quando o formulário é enviado
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     console.log("Formulário enviado com os dados:", data);
     
     // Garantir que o service_type_id seja um dos valores válidos
@@ -494,8 +529,48 @@ export default function NewServicePage() {
       vehicle: vehicles?.find(v => v.id === data.vehicle_id)?.make,
       serviceType: serviceTypes?.find(t => t.id === data.service_type_id)?.name,
     });
+
+    // Verificar se estamos offline antes de tentar a requisição
+    if (!navigator.onLine) {
+      console.log("Detectada operação offline durante envio do formulário.");
+      
+      try {
+        // Tentar usar a API wrapper que suporta operações offline
+        await postApi('/api/services', data, {
+          enableOffline: true,
+          offlineTableName: 'services'
+        });
+        
+        // Mostrar notificação e marcar como salvo offline
+        toast({
+          title: t("offline.savedOffline"),
+          description: t("offline.serviceOfflineDescription"),
+        });
+        
+        // Resetar estado para permitir mais envios
+        setOfflineAttemptFailed(false);
+        
+        // Redirecionar para a lista
+        setTimeout(() => {
+          setLocation('/services');
+        }, 500);
+        
+        return;
+      } catch (error) {
+        console.error("Erro ao salvar offline:", error);
+        setOfflineAttemptFailed(false);
+        
+        toast({
+          title: t("errors.createService"),
+          description: t("offline.errorSavingOffline"),
+          variant: "destructive",
+        });
+        
+        return;
+      }
+    }
     
-    // Iniciar a operação de criação do serviço
+    // Se online, iniciar a operação de criação do serviço normalmente
     createServiceMutation.mutate(data);
   };
   
@@ -955,7 +1030,12 @@ export default function NewServicePage() {
               type="submit" 
               disabled={createServiceMutation.isPending || serviceSavedOffline}
             >
-              {createServiceMutation.isPending ? t("common.saving", "Salvando...") : t("common.save", "Salvar")}
+              {createServiceMutation.isPending || serviceSavedOffline 
+                ? t("common.saving", "Salvando...") 
+                : !navigator.onLine 
+                  ? t("offline.saveOffline", "Salvar Offline") 
+                  : t("common.save", "Salvar")
+              }
             </Button>
           </div>
           
