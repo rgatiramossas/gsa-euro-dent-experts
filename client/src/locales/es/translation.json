@@ -52,7 +52,10 @@
     "settings": "Configuración",
     "users": "Usuarios",
     "reports": "Informes",
-    "calendar": "Calendario"
+    "calendar": "Calendario",
+    "events": "Eventos",
+    "budget": "Presupuesto",
+    "finances": "Finanzas"
   },
   "dashboard": {
     "title": "Panel de Control",
