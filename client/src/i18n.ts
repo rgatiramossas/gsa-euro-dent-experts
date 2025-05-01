@@ -8,6 +8,7 @@ import translationDE from './locales/de/translation.json';
 import translationES from './locales/es/translation.json';
 import translationFR from './locales/fr/translation.json';
 import translationIT from './locales/it/translation.json';
+import translationEN from './locales/en/translation.json';
 
 // Os recursos de idioma
 const resources = {
@@ -25,6 +26,9 @@ const resources = {
   },
   it: {
     translation: translationIT
+  },
+  en: {
+    translation: translationEN
   }
 };
 

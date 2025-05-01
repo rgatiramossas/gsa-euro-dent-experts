@@ -33,6 +33,12 @@ const LanguageSwitcher: React.FC = () => {
               Português
             </div>
           </SelectItem>
+          <SelectItem value="en">
+            <div className="flex items-center">
+              <span className="mr-2">🇬🇧</span>
+              English
+            </div>
+          </SelectItem>
           <SelectItem value="de">
             <div className="flex items-center">
               <span className="mr-2">🇩🇪</span>

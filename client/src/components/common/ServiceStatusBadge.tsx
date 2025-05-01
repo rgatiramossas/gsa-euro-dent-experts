@@ -87,6 +87,24 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
       }
     }
     
+    // Tratamento específico para inglês
+    if (i18n.language === 'en') {
+      const englishStatusMap: Record<ServiceStatus, string> = {
+        "pending": "Pending",
+        "in_progress": "In Progress",
+        "completed": "Completed",
+        "canceled": "Canceled",
+        "aguardando_aprovacao": "Waiting for Approval",
+        "faturado": "Invoiced",
+        "pago": "Paid"
+      };
+      
+      const englishTranslation = englishStatusMap[status];
+      if (englishTranslation) {
+        return englishTranslation;
+      }
+    }
+    
     // Para outros idiomas, usar o mapeamento normal
     const statusKeyMap: Record<ServiceStatus, string> = {
       "pending": "services.status.pending",

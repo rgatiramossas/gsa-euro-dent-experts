@@ -94,6 +94,7 @@ export default function ServicesList() {
                  i18n.language === 'es' ? "Estado:" :
                  i18n.language === 'fr' ? "Statut:" :
                  i18n.language === 'it' ? "Stato:" :
+                 i18n.language === 'en' ? "Status:" :
                  "Status:"}
               </div>
               <Select 
@@ -106,6 +107,7 @@ export default function ServicesList() {
                     i18n.language === 'es' ? "Seleccionar opción" :
                     i18n.language === 'fr' ? "Sélectionner une option" :
                     i18n.language === 'it' ? "Seleziona un'opzione" :
+                    i18n.language === 'en' ? "Select option" :
                     t("validation.selectOption")
                   } />
                 </SelectTrigger>
@@ -116,6 +118,7 @@ export default function ServicesList() {
                        i18n.language === 'es' ? "Estado del servicio" :
                        i18n.language === 'fr' ? "État du service" :
                        i18n.language === 'it' ? "Stato del servizio" :
+                       i18n.language === 'en' ? "Service status" :
                        "Status do serviço"}
                     </SelectLabel>
                     <SelectItem value="all">
@@ -123,6 +126,7 @@ export default function ServicesList() {
                        i18n.language === 'es' ? "Todos" :
                        i18n.language === 'fr' ? "Tous" :
                        i18n.language === 'it' ? "Tutti" :
+                       i18n.language === 'en' ? "All" :
                        "Todos"}
                     </SelectItem>
                     {/* Usando valores hardcoded para todos os idiomas para evitar o erro "key returned an object" */}
