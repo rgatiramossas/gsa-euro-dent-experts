@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { canInstallPWA, promptInstall } from '@/lib/pwaManager';
+import { useTranslation } from 'react-i18next';
 
 interface InstallPWAButtonProps {
   className?: string;
@@ -13,6 +14,7 @@ interface InstallPWAButtonProps {
  */
 export function InstallPWAButton({ className }: InstallPWAButtonProps) {
   const [isInstallable, setIsInstallable] = useState(false);
+  const { t, i18n } = useTranslation();
 
   // Verificar se o aplicativo pode ser instalado como PWA
   useEffect(() => {
@@ -42,7 +44,7 @@ export function InstallPWAButton({ className }: InstallPWAButtonProps) {
         setIsInstallable(false);
       }
     } catch (error) {
-      console.error('Erro ao instalar o PWA:', error);
+      console.error(i18n.language === 'en' ? 'Error installing PWA:' : 'Erro ao instalar o PWA:', error);
     }
   };
 
@@ -57,10 +59,15 @@ export function InstallPWAButton({ className }: InstallPWAButtonProps) {
       variant="outline"
       size="sm"
       className={className}
+      title={i18n.language === 'en' ? "Install app" : "Instalar aplicativo"}
     >
       <Download className="w-4 h-4 md:mr-2" />
-      <span className="hidden md:inline">Instalar aplicativo</span>
-      <span className="inline md:hidden ml-1">APP</span>
+      <span className="hidden md:inline">
+        {i18n.language === 'en' ? "Install app" : "Instalar aplicativo"}
+      </span>
+      <span className="inline md:hidden ml-1">
+        {i18n.language === 'en' ? "APP" : "APP"}
+      </span>
     </Button>
   );
 }

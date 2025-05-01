@@ -17,14 +17,45 @@ const LanguageSwitcher: React.FC = () => {
     localStorage.setItem('i18nextLng', language);
   };
 
+  // Função para obter emoji da bandeira com base no idioma
+  const getFlagEmoji = (language: string) => {
+    switch(language) {
+      case 'pt': return '🇵🇹';
+      case 'en': return '🇬🇧';
+      case 'de': return '🇩🇪';
+      case 'es': return '🇪🇸';
+      case 'fr': return '🇫🇷';
+      case 'it': return '🇮🇹';
+      default: return '🌐';
+    }
+  };
+
+  // Função para obter nome do idioma
+  const getLanguageName = (language: string) => {
+    switch(language) {
+      case 'pt': return 'Português';
+      case 'en': return 'English';
+      case 'de': return 'Deutsch';
+      case 'es': return 'Español';
+      case 'fr': return 'Français';
+      case 'it': return 'Italiano';
+      default: return 'Language';
+    }
+  };
+
   return (
     <div className="flex items-center space-x-2">
       <Select
         defaultValue={i18n.language}
         onValueChange={changeLanguage}
       >
-        <SelectTrigger className="w-[120px]">
-          <SelectValue placeholder="Idioma" />
+        <SelectTrigger className="w-[110px] text-white bg-primary border-white hover:bg-primary-dark">
+          <SelectValue>
+            <div className="flex items-center">
+              <span className="mr-2">{getFlagEmoji(i18n.language)}</span>
+              {getLanguageName(i18n.language)}
+            </div>
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="pt">

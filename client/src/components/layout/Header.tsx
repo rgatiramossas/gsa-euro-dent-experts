@@ -63,9 +63,10 @@ export function Header() {
           </div>
         </div>
         
-        <div className="flex items-center space-x-3">
-          {/* Seletor de idioma */}
+        <div className="flex items-center space-x-2">
+          {/* Seletor de idioma - reduzido espaço */}
           <LanguageSwitcher />
+          
           {/* Botão de login/logout */}
           {!user && (
             <Button 
@@ -79,30 +80,32 @@ export function Header() {
             </Button>
           )}
           
-          {/* Ícone Financeiro - não disponível para gestores */}
-          {!isGestor && (
-            <div>
+          <div className="flex items-center space-x-2">
+            {/* Ícone Financeiro - não disponível para gestores */}
+            {user && !isGestor && (
               <button 
                 onClick={() => setLocation("/finances")}
                 className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
+                title={t("finances.title")}
               >
-                <DollarSign className="h-6 w-6" />
+                <DollarSign className="h-5 w-5" />
               </button>
-            </div>
-          )}
-          
-          {/* Ícone Eventos - disponível para todos */}
-          <div>
-            <button 
-              onClick={() => setLocation("/eventos")}
-              className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
-            >
-              <Calendar className="h-6 w-6" />
-            </button>
+            )}
+            
+            {/* Ícone Eventos - disponível para todos */}
+            {user && (
+              <button 
+                onClick={() => setLocation("/eventos")}
+                className="p-1 rounded-full hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-white"
+                title={t("events.title")}
+              >
+                <Calendar className="h-5 w-5" />
+              </button>
+            )}
+            
+            {/* Botão de instalação do PWA - aparece apenas quando disponível */}
+            {user && <InstallPWAButton className="bg-white text-primary hover:bg-gray-100 h-8 w-auto text-xs" />}
           </div>
-          
-          {/* Botão de instalação do PWA - aparece apenas quando disponível */}
-          {user && <InstallPWAButton className="bg-white text-primary hover:bg-gray-100" />}
           
           {/* Recurso de notificações a ser implementado no futuro */}
           
