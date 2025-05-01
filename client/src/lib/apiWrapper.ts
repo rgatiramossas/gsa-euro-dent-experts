@@ -94,6 +94,39 @@ export async function apiRequest<T>({
   const isAuthOperation = url.includes('/api/auth/');
   const offlineDisabled = !enableOffline || isAuthOperation;
   
+  // Para operações de autenticação, sempre use a rede direta (bypass do mecanismo offline)
+  if (isAuthOperation && isOnline) {
+    console.log(`Tratando requisição de autenticação diretamente: ${method} ${url}`);
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        body: method !== 'GET' && data ? JSON.stringify(data) : undefined,
+        credentials: 'include', // Importante para cookies de sessão
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+      
+      if (method === 'DELETE' && response.status === 204) {
+        return { success: true } as unknown as T;
+      }
+      
+      try {
+        return await response.json();
+      } catch (e) {
+        return {} as T;
+      }
+    } catch (error) {
+      console.error("Erro em operação de autenticação:", error);
+      throw error;
+    }
+  }
+  
   // Identificar a tabela local correspondente para operações offline
   const tableName = offlineTableName || mapApiUrlToTable(url);
   const resourceId = extractResourceId(url);
