@@ -26,6 +26,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check if user is already logged in
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/auth/me'],
+    queryFn: async () => {
+      try {
+        const result = await getApi('/api/auth/me');
+        return result;
+      } catch (error: any) {
+        if (error.status === 401) {
+          return null;
+        }
+        throw error;
+      }
+    },
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutos, em vez de Infinity para verificar a sessão periodicamente
     refetchOnWindowFocus: true // Verificar a sessão quando a janela recebe foco
