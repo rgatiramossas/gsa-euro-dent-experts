@@ -135,54 +135,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
+      console.log("=== Iniciando processo de login ===");
+      console.log("Headers da requisição:", req.headers);
+      console.log("Cookies existentes:", req.headers.cookie);
+      console.log("Session ID no início:", req.sessionID);
+      
       const { username, password } = req.body;
+      console.log("Tentativa de login para usuário:", username);
       
       if (!username || !password) {
+        console.log("Login falhou: credenciais incompletas");
         return res.status(400).json({ message: "Username and password are required" });
       }
       
       const user = await storage.getUserByUsername(username);
       
       if (!user) {
+        console.log("Login falhou: usuário não encontrado");
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
       // Demo implementation - allow specific test account credentials for demo
-      if ((username === "admin" && password === "password123") || 
+      const isValidCredentials = (username === "admin" && password === "password123") || 
           (username === "joao" && password === "password123") || 
           (username === "pedro" && password === "password123") ||
           (username === "gestor" && password === "password123") || 
-          (await bcrypt.compare(password, user.password))) {
+          (await bcrypt.compare(password, user.password));
+      
+      if (isValidCredentials) {
+        console.log("Credenciais válidas para usuário:", username);
         
-        req.session.userId = user.id;
-        req.session.userRole = user.role;
+        // Destruir qualquer sessão existente para garantir sessão limpa
+        if (req.session.userId) {
+          console.log("Destruindo sessão anterior para o usuário:", req.session.userId);
+          await new Promise<void>((resolve) => {
+            req.session.destroy((err) => {
+              if (err) console.error("Erro ao destruir sessão anterior:", err);
+              resolve();
+            });
+          });
+        }
         
-        // Salvar a sessão explicitamente
-        req.session.save(err => {
+        // Criar nova sessão
+        req.session.regenerate((err) => {
           if (err) {
-            console.error("Erro ao salvar sessão:", err);
-            res.status(500).json({ message: "Erro ao processar sessão" });
-            return;
+            console.error("Erro ao regenerar sessão:", err);
+            return res.status(500).json({ message: "Erro ao processar sessão" });
           }
           
-          // Log detalhado da sessão
-          console.log("Sessão criada com sucesso:", { 
-            sessionID: req.sessionID,
-            userId: req.session.userId, 
-            userRole: req.session.userRole 
-          });
+          // Configurar sessão
+          req.session.userId = user.id;
+          req.session.userRole = user.role;
+          req.session.created = new Date().toISOString();
           
-          res.json({
-            id: user.id,
-            username: user.username,
-            name: user.name,
-            email: user.email,
-            role: user.role
+          // Salvar a sessão explicitamente
+          req.session.save(err => {
+            if (err) {
+              console.error("Erro ao salvar sessão:", err);
+              res.status(500).json({ message: "Erro ao processar sessão" });
+              return;
+            }
+            
+            // Log detalhado da sessão
+            console.log("Sessão criada com sucesso:", { 
+              sessionID: req.sessionID,
+              userId: req.session.userId, 
+              userRole: req.session.userRole,
+              created: req.session.created
+            });
+            
+            // Verificar cabeçalhos da resposta
+            res.on('finish', () => {
+              console.log("Resposta /api/auth/login enviada com cabeçalhos:", res.getHeaders());
+              console.log("Cookie definido na resposta:", res.getHeader('set-cookie'));
+            });
+            
+            res.json({
+              id: user.id,
+              username: user.username,
+              name: user.name,
+              email: user.email,
+              role: user.role
+            });
           });
         });
+        
         return; // Importante: retornar aqui para evitar a execução do código abaixo
       }
       
+      console.log("Login falhou: senha inválida");
       return res.status(401).json({ message: "Invalid credentials" });
     } catch (error) {
       console.error("Login error:", error);
@@ -192,19 +233,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", async (req, res) => {
     try {
-      // Log de depuração da sessão
-      console.log("Verificando sessão em /api/auth/me:", { 
-        sessionID: req.sessionID,
-        session: req.session 
-      });
+      // Log de depuração da sessão com detalhes completos
+      console.log("=== Verificando sessão em /api/auth/me ===");
+      console.log("SessionID:", req.sessionID);
+      console.log("Cookies enviados pelo cliente:", req.headers.cookie);
+      console.log("Conteúdo da sessão:", JSON.stringify(req.session, null, 2));
+      console.log("Usuário na sessão:", req.session.userId);
+      console.log("Header de autenticação:", req.headers.authorization);
+      console.log("=== Fim da verificação de sessão ===");
       
       if (!req.session.userId) {
+        console.log("Sessão inválida: userId não encontrado na sessão");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const user = await storage.getUser(req.session.userId);
       
       if (!user) {
+        console.log(`Usuário com ID ${req.session.userId} não encontrado no banco de dados`);
         // Se o usuário não existir, destruir a sessão
         req.session.destroy((err) => {
           if (err) {
@@ -215,6 +261,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
       
+      console.log(`Usuário ${user.username} autenticado com sucesso através da sessão`);
+      
       // Renovar a sessão a cada verificação bem-sucedida
       req.session.touch();
       
@@ -223,6 +271,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (err) {
           console.error("Erro ao atualizar sessão:", err);
         }
+        
+        // Verificar cabeçalhos da resposta
+        res.on('finish', () => {
+          console.log("Resposta /api/auth/me enviada com cabeçalhos:", res.getHeaders());
+          console.log("Cookie definido na resposta:", res.getHeader('set-cookie'));
+        });
         
         res.json({
           id: user.id,
