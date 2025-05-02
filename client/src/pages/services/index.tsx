@@ -133,18 +133,21 @@ export default function ServicesList() {
   };
 
   // Filter services based on search term and active tab
-  const filteredServices = services?.filter(service => {
+  const filteredServices = Array.isArray(services) ? services.filter(service => {
+    // Validações de segurança para propriedades aninhadas
+    if (!service || !service.client || !service.vehicle) return false;
+    
     const matchesSearch = 
       searchTerm === "" || 
-      service.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicle.license_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicle.model.toLowerCase().includes(searchTerm.toLowerCase());
+      (service.client.name && service.client.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (service.vehicle.license_plate && service.vehicle.license_plate.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (service.vehicle.make && service.vehicle.make.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (service.vehicle.model && service.vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesTab = activeTab === "all" || service.status === activeTab;
     
     return matchesSearch && matchesTab;
-  });
+  }) : [];
 
   const navigateToServiceDetails = (id: number) => {
     setLocation(`/services/${id}`);
