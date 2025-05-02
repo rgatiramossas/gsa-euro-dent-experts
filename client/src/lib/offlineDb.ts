@@ -131,6 +131,12 @@ class OfflineDatabase extends Dexie {
     operationType?: 'create' | 'update' | 'delete'
   } = {}): Promise<PendingRequest[]> {
     try {
+      console.log(`[offlineDb] Buscando requisições pendentes. Filtros: tableName=${tableName || 'todos'}, operationType=${operationType || 'todos'}`);
+      
+      // Primeiro, vamos verificar quantas requisições existem no total
+      const totalRequests = await this.pendingRequests.count();
+      console.log(`[offlineDb] Total de requisições pendentes no banco: ${totalRequests}`);
+      
       let collection = this.pendingRequests.toCollection();
       
       // Aplicar filtros se fornecidos
@@ -144,9 +150,21 @@ class OfflineDatabase extends Dexie {
       
       // Obter resultados
       const requests = await collection.toArray();
+      
+      console.log(`[offlineDb] ${requests.length} requisições encontradas com os filtros aplicados`);
+      requests.forEach((req, index) => {
+        console.log(`[offlineDb] Requisição #${index+1}:`, {
+          id: req.id,
+          tableName: req.tableName,
+          operationType: req.operationType,
+          url: req.url,
+          bodyPreview: req.body ? JSON.stringify(req.body).substring(0, 100) + '...' : 'sem body'
+        });
+      });
+      
       return requests;
     } catch (error) {
-      console.error('Erro ao buscar requisições pendentes:', error);
+      console.error('[offlineDb] Erro ao buscar requisições pendentes:', error);
       return [];
     }
   }
