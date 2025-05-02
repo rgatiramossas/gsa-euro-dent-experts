@@ -25,9 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Client } from "@/types";
 import { insertVehicleSchema } from "@shared/schema.mysql";
-import { offlineStatusStore } from "@/lib/stores";
 import { storeOfflineRequest } from "@/lib/offlineDb";
-import { useSubscribe } from "@/hooks/useSubscribe";
 import { useTranslation } from "react-i18next";
 
 // Use o schema original sem estender com year
@@ -44,27 +42,21 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isSaving, setIsSaving] = useState(false);
   const [saveTimeout, setSaveTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   
-  // Subscrever ao estado online
-  useSubscribe(offlineStatusStore, () => {
-    setIsOnline(offlineStatusStore.getOnlineStatus());
-  });
-  
-  // Efeito para verificar estado da conexão
+  // Efeito para detectar mudanças no estado da conexão
   useEffect(() => {
-    const handleOnlineStatus = () => {
-      setIsOnline(navigator.onLine);
-    };
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
     
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOnlineStatus);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
     
     return () => {
-      window.removeEventListener('online', handleOnlineStatus);
-      window.removeEventListener('offline', handleOnlineStatus);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       
       // Limpar timeout ao desmontar
       if (saveTimeout) {
@@ -181,8 +173,8 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
       setSaveTimeout(null);
     }
     
-    // Verificar o estado da conexão
-    if (!isOnline) {
+    // Verificar o estado da conexão usando a variável isOffline
+    if (isOffline) {
       try {
         // Salvar localmente no IndexedDB
         const timestamp = new Date().getTime();
@@ -441,7 +433,7 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
             >
               {createVehicleMutation.isPending || isSaving 
                 ? t("common.saving", "Salvando...") 
-                : isOnline 
+                : !isOffline
                   ? t("vehicles.registerVehicle", "Cadastrar Veículo")
                   : t("vehicles.saveOffline", "Salvar Offline")}
             </Button>
