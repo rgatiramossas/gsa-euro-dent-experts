@@ -50,8 +50,6 @@ import Finances from "@/pages/finances";
 import Settings from "@/pages/settings";
 import Configuracoes from "@/pages/configuracoes";
 import Eventos from "@/pages/eventos";
-// Import test page
-import TestPage from "@/pages/teste";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -328,8 +326,6 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      {/* Test page - acessível a todos */}
-      <Route path="/teste" component={TestPage} />
       
       {/* Redirect root to dashboard */}
       <Route path="/">
