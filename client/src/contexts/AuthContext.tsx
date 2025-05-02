@@ -150,8 +150,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       queryClient.setQueryData(['/api/auth/me'], userData);
       
       // Sempre salvar no localStorage para permitir funcionamento offline
-      // mas definir uma expiração baseada no rememberMe
-      const expiry = variables.rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+      // Configurar expiração para 48 horas (modo offline) conforme solicitado
+      // Se rememberMe estiver ativado, usar 30 dias
+      const expiry = variables.rememberMe ? 30 * 24 * 60 * 60 * 1000 : 48 * 60 * 60 * 1000; // 48 horas
       const userWithExpiry = {
         ...userData,
         expiry: Date.now() + expiry

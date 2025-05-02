@@ -109,7 +109,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session middleware com configuração aprimorada e armazenamento MySQL
   
   // Obter as configurações das variáveis de ambiente
-  const cookieMaxAge = parseInt(process.env.COOKIE_MAX_AGE || '31536000000'); // 1 ano padrão
+  // Por padrão, 30 minutos de inatividade para sessões online
+  // A sessão offline é controlada pelo ServiceWorker e configurada para 48 horas
+  const cookieMaxAge = parseInt(process.env.COOKIE_MAX_AGE || '1800000'); // 30 minutos (padrão)
   const cookieSecure = process.env.COOKIE_SECURE === 'true' ? true : false;
   const cookieSameSite = (process.env.COOKIE_SAME_SITE || 'lax') as 'lax' | 'strict' | 'none' | false;
   
@@ -215,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Configurar o cookie corretamente
         if (req.session.cookie) {
-          req.session.cookie.maxAge = 365 * 24 * 60 * 60 * 1000; // 1 ano
+          req.session.cookie.maxAge = 30 * 60 * 1000; // 30 minutos para sessões online
           req.session.cookie.sameSite = 'lax';
         }
           
@@ -299,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Renovar o cookie da sessão
       if (req.session.cookie) {
-        req.session.cookie.maxAge = 365 * 24 * 60 * 60 * 1000; // 1 ano
+        req.session.cookie.maxAge = 30 * 60 * 1000; // 30 minutos para sessões online
       }
       
       // Responder imediatamente

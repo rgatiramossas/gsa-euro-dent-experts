@@ -55,8 +55,23 @@ registerRoute(
 );
 
 // Estratégia para API: NetworkFirst com fallback para cache
+// Nunca interceptar rotas de autenticação ou requisições com cookies
 registerRoute(
-  ({ url }) => url.pathname.startsWith('/api/'),
+  ({ url, request }) => {
+    // Não interceptar rotas de autenticação, deixe o navegador lidar com isso
+    if (url.pathname.includes('/api/auth/')) {
+      return false;
+    }
+    
+    // Não interceptar requisições que tenham cookies de autenticação
+    if (request.headers && request.headers.has('cookie') && 
+        request.headers.get('cookie').includes('eurodent.sid')) {
+      return false;
+    }
+    
+    // Interceptar outras requisições de API
+    return url.pathname.startsWith('/api/');
+  },
   new NetworkFirst({
     cacheName: 'api-cache',
     plugins: [
@@ -69,8 +84,9 @@ registerRoute(
 );
 
 // Configuração de background sync para operações que modificam dados
+// Aumentado para 48 horas (2 dias) conforme solicitado para sessões offline
 const bgSyncPlugin = new BackgroundSyncPlugin('offline-mutations-queue', {
-  maxRetentionTime: 24 * 60, // 24 horas em minutos
+  maxRetentionTime: 48 * 60, // 48 horas em minutos
 });
 
 // Capturar e enfileirar requisições POST

@@ -365,7 +365,7 @@ export class DatabaseStorage implements IStorage {
       const options = {
         clearExpired: true,
         checkExpirationInterval: 900000, // 15 minutos em milissegundos
-        expiration: 365 * 24 * 60 * 60 * 1000, // 1 ano em milissegundos
+        expiration: 30 * 60 * 1000, // 30 minutos em milissegundos para sessões online
         createDatabaseTable: true, // Criar tabela de sessões se não existir
         disableTouch: false, // Garantir que as sessões são "touched" para renovação
         schema: {
