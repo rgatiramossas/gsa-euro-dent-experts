@@ -90,7 +90,7 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { translateServiceType } = useTranslateServiceType();
   
   // Variáveis auxiliares para melhorar a legibilidade e evitar erros de tipagem
@@ -533,9 +533,6 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
     return serviceType ? translateServiceType(serviceType.name) : t("common.notSpecified", "Não especificado");
   };
   
-  // Buscar a instância do i18n uma única vez no componente
-  const { i18n } = useTranslation();
-  
   // Formatação de data
   const formatDate = (dateString: string | Date | null | undefined) => {
     if (!dateString) return t("common.notSpecified", "Não especificada");
@@ -559,10 +556,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   const formatStatus = (status: string | null | undefined) => {
     if (!status) return t("common.notSpecified", "Não especificado");
     
-    // Tratamento especial para italiano para evitar o erro "returned an object instead of string"
-    const { i18n } = useTranslation();
+    // Obtenha o idioma atual da instância de i18n já criada no componente principal
+    const currentLanguage = i18n.language;
     
-    if (i18n.language === 'it') {
+    if (currentLanguage === 'it') {
       // Mapeamento direto para italiano
       const italianStatusMap: Record<string, string> = {
         'pending': 'In attesa',
