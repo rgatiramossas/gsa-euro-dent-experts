@@ -435,83 +435,44 @@ export default function TestPage() {
         return;
       }
       
-      addTestResult("Iniciando sincronização forçada...");
+      // Buscar requisições pendentes
+      const pending = await offlineDb.getAllPendingRequests();
+      addTestResult(`Iniciando sincronização de ${pending.length} requisições pendentes...`);
       
-      // Enviar mensagem para o service worker iniciar sincronização
-      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SYNC_REQUEST'
-        });
-        
-        addTestResult("Solicitação de sincronização enviada ao Service Worker");
-        
+      // Processar requisições pendentes
+      const results = await offlineDb.processPendingRequests();
+      
+      addTestResult(`Sincronização concluída: ${results.success} sucesso, ${results.failed} falhas`);
+      
+      if (results.success > 0) {
         toast({
-          title: "Sincronização Iniciada",
-          description: "A sincronização dos dados offline foi iniciada",
-        });
-      } else {
-        addTestResult("ERRO: Service Worker não está disponível para sincronização");
-        
-        toast({
-          variant: "destructive",
-          title: "Sincronização Falhou",
-          description: "Service Worker não está disponível para sincronização",
+          title: "Sincronização Concluída",
+          description: `${results.success} requisições sincronizadas com sucesso`,
         });
       }
       
-      // Atualizar contagem após um breve delay para dar tempo da sincronização iniciar
-      setTimeout(async () => {
-        const count = await offlineDb.countPendingRequests();
-        setPendingRequests(count);
-      }, 3000);
+      if (results.failed > 0) {
+        toast({
+          variant: "destructive",
+          title: "Alguns Itens Falharam",
+          description: `${results.failed} requisições não puderam ser sincronizadas`,
+        });
+      }
+      
+      // Atualizar contagem de requisições pendentes
+      const count = await offlineDb.countPendingRequests();
+      setPendingRequests(count);
+      
+      // Limpar os caches do React Query
+      queryClient.invalidateQueries();
     } catch (error) {
-      console.error("Erro ao iniciar sincronização:", error);
-      addTestResult(`ERRO ao iniciar sincronização: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Erro ao sincronizar requisições pendentes:", error);
+      addTestResult(`ERRO ao sincronizar: ${error instanceof Error ? error.message : String(error)}`);
       
       toast({
         variant: "destructive",
         title: "Erro na Sincronização",
-        description: "Ocorreu um erro ao tentar iniciar a sincronização",
-      });
-    }
-  };
-
-  // Função para listar requisições pendentes
-  const listPendingRequests = async () => {
-    try {
-      // Buscar todas as requisições pendentes
-      const requests = await offlineDb.getPendingRequests();
-      
-      if (requests.length === 0) {
-        addTestResult("Não há requisições pendentes no banco de dados offline");
-        
-        toast({
-          title: "Nenhuma Requisição Pendente",
-          description: "Não há operações offline pendentes de sincronização",
-        });
-        
-        return;
-      }
-      
-      // Listar todas as requisições pendentes nos resultados
-      addTestResult(`Total de ${requests.length} requisições pendentes:`);
-      
-      requests.forEach((req, index) => {
-        addTestResult(`${index + 1}. [${req.method}] ${req.url} (${new Date(req.timestamp).toLocaleString()})`);
-      });
-      
-      toast({
-        title: "Requisições Pendentes Listadas",
-        description: `Foram encontradas ${requests.length} operações pendentes`,
-      });
-    } catch (error) {
-      console.error("Erro ao listar requisições pendentes:", error);
-      addTestResult(`ERRO ao listar requisições pendentes: ${error instanceof Error ? error.message : String(error)}`);
-      
-      toast({
-        variant: "destructive",
-        title: "Erro ao Listar Requisições",
-        description: "Ocorreu um erro ao tentar listar as requisições pendentes",
+        description: "Ocorreu um erro ao tentar sincronizar requisições pendentes",
       });
     }
   };
@@ -519,33 +480,29 @@ export default function TestPage() {
   // Função para limpar todas as requisições pendentes
   const clearPendingRequests = async () => {
     try {
-      // Confirmar antes de limpar
-      if (!window.confirm("ATENÇÃO: Isso irá remover TODAS as operações offline pendentes. Continuar?")) {
-        addTestResult("Operação de limpeza cancelada pelo usuário");
+      const count = await offlineDb.countPendingRequests();
+      
+      if (count === 0) {
+        addTestResult("Não há requisições pendentes para limpar.");
+        
+        toast({
+          title: "Nenhuma Ação Necessária",
+          description: "Não há requisições pendentes para limpar",
+        });
+        
         return;
       }
       
-      // Obter todas as requisições pendentes
-      const requests = await offlineDb.getPendingRequests();
+      await offlineDb.clearPendingRequests();
+      addTestResult(`Todas as requisições pendentes foram removidas`);
       
-      // Excluir cada uma delas
-      for (const req of requests) {
-        await offlineDb.pendingRequests.delete(req.id);
-      }
-      
-      addTestResult(`${requests.length} requisições pendentes foram removidas`);
+      toast({
+        title: "Requisições Limpas",
+        description: `${count} requisições pendentes foram removidas`,
+      });
       
       // Atualizar contagem
       setPendingRequests(0);
-      
-      toast({
-        title: "Requisições Pendentes Removidas",
-        description: `${requests.length} operações offline foram removidas com sucesso`,
-      });
-      
-      // Limpar IDs temporários
-      setTestClientId(null);
-      setTestVehicleId(null);
       
       // Limpar os caches do React Query
       queryClient.invalidateQueries();
@@ -572,156 +529,151 @@ export default function TestPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            <Alert variant={isOnline ? "default" : "destructive"}>
-              <AlertTitle>
+            <div className={`border rounded-lg p-4 ${isOnline ? "bg-primary/10 border-primary/20" : "bg-destructive/10 border-destructive/20"}`}>
+              <h5 className="mb-1 font-medium leading-none tracking-tight">
                 Status da Conexão: {' '}
                 {isOnline ? (
                   <Badge className="bg-green-600">Online</Badge>
                 ) : (
                   <Badge variant="destructive">Offline</Badge>
                 )}
-              </AlertTitle>
-              <AlertDescription>
+              </h5>
+              <div className="text-sm text-muted-foreground">
                 {isOnline 
                   ? "Aplicação está operando no modo online com conexão ao servidor" 
                   : "Aplicação está operando no modo offline sem conexão ao servidor"}
-              </AlertDescription>
-            </Alert>
+              </div>
+            </div>
             
-            <Alert>
-              <AlertTitle>
+            <div className="border rounded-lg p-4 bg-background">
+              <h5 className="mb-1 font-medium leading-none tracking-tight">
                 Requisições Pendentes: {' '}
                 <Badge variant={pendingRequests > 0 ? "secondary" : "outline"}>
                   {pendingRequests}
                 </Badge>
-              </AlertTitle>
-              <AlertDescription>
+              </h5>
+              <div className="text-sm text-muted-foreground">
                 {pendingRequests > 0 
                   ? `Existem ${pendingRequests} operações offline pendentes de sincronização` 
-                  : "Não existem operações pendentes de sincronização"}
-              </AlertDescription>
-            </Alert>
-            
-            <Separator className="my-2" />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Controle de Conexão</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col space-y-2">
-                    <Button 
-                      onClick={simulateOffline} 
-                      variant="destructive"
-                      disabled={!isOnline}
-                    >
-                      Simular Modo Offline
-                    </Button>
-                    <Button 
-                      onClick={simulateOnline}
-                      variant="default"
-                      disabled={isOnline}
-                    >
-                      Simular Modo Online
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Gerenciamento de Sincronização</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col space-y-2">
-                    <Button 
-                      onClick={forceSyncronization}
-                      variant="default"
-                      disabled={!isOnline}
-                    >
-                      Forçar Sincronização
-                    </Button>
-                    <Button 
-                      onClick={listPendingRequests}
-                      variant="secondary"
-                    >
-                      Listar Requisições Pendentes
-                    </Button>
-                    <Button 
-                      onClick={clearPendingRequests}
-                      variant="outline"
-                      className="text-red-500 hover:text-red-700"
-                      disabled={pendingRequests === 0}
-                    >
-                      Limpar Todas as Requisições
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  : "Não há operações pendentes de sincronização"}
+              </div>
             </div>
             
-            <Separator className="my-2" />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Criar Entidades Offline</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col space-y-2">
-                    <Button 
-                      onClick={createTestClient}
-                      variant="secondary"
-                    >
-                      Criar Cliente de Teste
-                    </Button>
-                    <Button 
-                      onClick={createTestVehicle}
-                      variant="secondary"
-                    >
-                      Criar Veículo de Teste
-                    </Button>
-                    <Button 
-                      onClick={createTestBudget}
-                      variant="secondary"
-                    >
-                      Criar Orçamento de Teste
-                    </Button>
-                    <Button 
-                      onClick={createTestService}
-                      variant="secondary"
-                    >
-                      Criar Ordem de Serviço de Teste
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant={isOnline ? "outline" : "default"}
+                onClick={simulateOffline}
+                disabled={!isOnline}
+              >
+                Simular Offline
+              </Button>
               
-              <Card>
-                <CardHeader>
-                  <CardTitle>Resultados dos Testes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[280px] overflow-y-auto p-4 border rounded-md bg-muted text-sm">
-                    {testResults.length === 0 ? (
-                      <p className="text-muted-foreground">Os resultados dos testes aparecerão aqui...</p>
-                    ) : (
-                      testResults.map((result, index) => (
-                        <div key={index} className="mb-1">
-                          {result.includes("ERRO") ? (
-                            <p className="text-red-500">{result}</p>
-                          ) : result.includes("AVISO") ? (
-                            <p className="text-amber-500">{result}</p>
-                          ) : (
-                            <p>{result}</p>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <Button 
+                variant={!isOnline ? "outline" : "default"}
+                onClick={simulateOnline}
+                disabled={isOnline}
+              >
+                Simular Online
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={forceSyncronization}
+                disabled={!isOnline || pendingRequests === 0}
+              >
+                Sincronizar Agora
+              </Button>
+              
+              <Button 
+                variant="destructive" 
+                onClick={clearPendingRequests}
+                disabled={pendingRequests === 0}
+              >
+                Limpar Pendentes
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Criar Dados de Teste Offline</CardTitle>
+            <CardDescription>
+              Criar entidades de teste quando estiver no modo offline
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <Button onClick={createTestClient} className="w-full">
+              Criar Cliente de Teste
+            </Button>
+            
+            <Button onClick={createTestVehicle} className="w-full">
+              Criar Veículo de Teste
+            </Button>
+            
+            <Button onClick={createTestBudget} className="w-full">
+              Criar Orçamento de Teste
+            </Button>
+            
+            <Button onClick={createTestService} className="w-full">
+              Criar Ordem de Serviço de Teste
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Log de Testes</CardTitle>
+            <CardDescription>
+              Resultado das operações realizadas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="border rounded-md p-4 max-h-96 overflow-y-auto bg-muted/20">
+              {testResults.length === 0 ? (
+                <p className="text-muted-foreground text-sm italic">Nenhuma operação realizada ainda...</p>
+              ) : (
+                <ul className="space-y-2">
+                  {testResults.map((result, index) => (
+                    <li key={index} className="text-sm border-b pb-2 border-muted last:border-0">
+                      {result}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Instruções de Teste</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Como Testar Funcionalidades Offline</h3>
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>Clique em "Simular Offline" para colocar a aplicação em modo offline.</li>
+                <li>Crie um cliente, veículo, orçamento ou ordem de serviço de teste.</li>
+                <li>Verifique se o item aparece imediatamente na interface.</li>
+                <li>Clique em "Simular Online" para restaurar a conexão.</li>
+                <li>Use "Sincronizar Agora" para enviar as operações pendentes ao servidor.</li>
+              </ol>
+            </div>
+            
+            <Separator />
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-2">O que Observar</h3>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Os itens criados offline devem aparecer imediatamente nas listagens mesmo sem conexão.</li>
+                <li>Os IDs temporários (negativos) são substituídos por IDs reais após a sincronização.</li>
+                <li>Clientes criados offline devem aparecer nos seletores de outras entidades.</li>
+              </ul>
             </div>
           </div>
         </CardContent>
