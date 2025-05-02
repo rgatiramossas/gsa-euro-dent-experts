@@ -26,6 +26,7 @@ import {
 import { Client } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { getApi } from "@/lib/apiWrapper";
 
 interface ClientsListProps {
   managerMode?: boolean;
@@ -52,8 +53,8 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
   const { data: clients = [], isLoading, refetch } = useQuery<Client[]>({
     queryKey: managerMode && managerId 
       ? ['/api/managers', managerId, 'clients'] 
-      : ['/api/clients', statusFilter], // Incluir statusFilter como parte da chave
-    queryFn: async () => {
+      : ['/api/clients', statusFilter, { enableOffline: true, offlineTableName: 'clients' }], // Suporte a offline
+    queryFn: async ({ queryKey }) => {
       if (managerMode && managerId) {
         try {
           const response = await fetch(`/api/managers/${managerId}/clients`);
@@ -74,12 +75,12 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
         const endpoint = '/api/clients';
         console.log(`Carregando clientes com filtro: ${statusFilter}`);
         
-        const response = await fetch(endpoint);
-        if (!response.ok) {
-          console.error('Erro ao carregar clientes, status:', response.status);
-          return [];
-        }
-        const data = await response.json();
+        // Usar getApi com suporte offline
+        const data = await getApi<Client[]>(endpoint, { 
+          enableOffline: true, 
+          offlineTableName: 'clients' 
+        });
+        
         // Verificar se o dado retornado é um array
         if (!Array.isArray(data)) {
           console.error('Dados de clientes não é um array:', data);

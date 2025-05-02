@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ServiceStatusBadge } from "@/components/common/ServiceStatusBadge";
+import { getApi } from "@/lib/apiWrapper";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,13 +92,17 @@ export default function ClientDetail({ id }: ClientDetailProps) {
     isLoading, 
     error 
   } = useQuery({
-    queryKey: ['/api/clients', clientId],
+    queryKey: ['/api/clients', clientId, { enableOffline: true, offlineTableName: 'clients' }],
     queryFn: async () => {
-      const response = await fetch(`/api/clients/${clientId}`);
-      if (!response.ok) {
+      try {
+        return await getApi<Client>(`/api/clients/${clientId}`, {
+          enableOffline: true,
+          offlineTableName: 'clients'
+        });
+      } catch (error) {
+        console.error('Erro ao carregar detalhes do cliente:', error);
         throw new Error('Erro ao carregar detalhes do cliente');
       }
-      return response.json() as Promise<Client>;
     },
   });
   
@@ -106,13 +111,17 @@ export default function ClientDetail({ id }: ClientDetailProps) {
     data: vehicles = [], 
     isLoading: isLoadingVehicles 
   } = useQuery({
-    queryKey: ['/api/clients', clientId, 'vehicles'],
+    queryKey: ['/api/clients', clientId, 'vehicles', { enableOffline: true, offlineTableName: 'vehicles' }],
     queryFn: async () => {
-      const response = await fetch(`/api/clients/${clientId}/vehicles`);
-      if (!response.ok) {
+      try {
+        return await getApi(`/api/clients/${clientId}/vehicles`, {
+          enableOffline: true,
+          offlineTableName: 'vehicles'
+        });
+      } catch (error) {
+        console.error('Erro ao carregar veículos:', error);
         return [];
       }
-      return response.json();
     },
     enabled: !!clientId,
   });
@@ -122,13 +131,17 @@ export default function ClientDetail({ id }: ClientDetailProps) {
     data: services = [], 
     isLoading: isLoadingServices 
   } = useQuery({
-    queryKey: ['/api/clients', clientId, 'services'],
+    queryKey: ['/api/clients', clientId, 'services', { enableOffline: true, offlineTableName: 'services' }],
     queryFn: async () => {
-      const response = await fetch(`/api/services?clientId=${clientId}`);
-      if (!response.ok) {
+      try {
+        return await getApi(`/api/services?clientId=${clientId}`, {
+          enableOffline: true,
+          offlineTableName: 'services'
+        });
+      } catch (error) {
+        console.error('Erro ao carregar serviços:', error);
         return [];
       }
-      return response.json();
     },
     enabled: !!clientId,
   });
