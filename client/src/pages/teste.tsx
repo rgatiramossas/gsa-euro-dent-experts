@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { offlineStatusStore } from "@/lib/stores";
 import { useSnapshot } from "valtio";
-import offlineDb from "@/lib/offlineDb";
+import offlineDb, { storeOfflineRequest } from "@/lib/offlineDb";
 
 // Cliente de teste para criação
 const TEST_CLIENT = {
@@ -129,14 +129,15 @@ export default function TestPage() {
       };
       
       // Armazenar no banco de dados offline
-      await offlineDb.storeOfflineRequest({
+      await storeOfflineRequest({
         id: `client-${tempId}`,
         url: '/api/clients',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: TEST_CLIENT,
         tableName: 'clients',
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        operationType: 'create'
       });
       
       // Atualizar a cache do React Query para mostrar imediatamente
@@ -202,14 +203,15 @@ export default function TestPage() {
       };
       
       // Armazenar no banco de dados offline
-      await offlineDb.storeOfflineRequest({
+      await storeOfflineRequest({
         id: `vehicle-${tempId}`,
         url: '/api/vehicles',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: requestData,
         tableName: 'vehicles',
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        operationType: 'create'
       });
       
       // Atualizar a cache do React Query para mostrar imediatamente
@@ -284,14 +286,15 @@ export default function TestPage() {
       };
       
       // Armazenar no banco de dados offline
-      await offlineDb.storeOfflineRequest({
+      await storeOfflineRequest({
         id: `budget-${tempId}`,
         url: '/api/budgets',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: requestData,
         tableName: 'budgets',
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        operationType: 'create'
       });
       
       // Atualizar a cache do React Query para mostrar imediatamente
@@ -358,14 +361,15 @@ export default function TestPage() {
       };
       
       // Armazenar no banco de dados offline
-      await offlineDb.storeOfflineRequest({
+      await storeOfflineRequest({
         id: `service-${tempId}`,
         url: '/api/services',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: requestData,
         tableName: 'services',
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        operationType: 'create'
       });
       
       // Atualizar a cache do React Query para mostrar imediatamente
