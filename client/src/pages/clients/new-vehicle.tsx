@@ -96,8 +96,64 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
     mutationFn: async (data: FormData) => {
       return await apiRequest('/api/vehicles', 'POST', data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidar as queries para atualizar os dados quando estiver online
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}/vehicles`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vehicles'] });
+      
+      // Atualizar manualmente o cache para garantir que seja exibido imediatamente
+      // mesmo que a invalidação falhe por algum motivo
+      
+      // 1. Atualizar a lista de veículos do cliente específico
+      const clientVehiclesQueryKey = [`/api/clients/${clientId}/vehicles`];
+      const clientVehiclesData = queryClient.getQueryData<any>(clientVehiclesQueryKey);
+      
+      if (clientVehiclesData) {
+        // Se o formato for um array direto
+        if (Array.isArray(clientVehiclesData)) {
+          queryClient.setQueryData(
+            clientVehiclesQueryKey,
+            [...clientVehiclesData, data]
+          );
+        } 
+        // Se o formato for { data: [...], total: number }
+        else if (clientVehiclesData.data && Array.isArray(clientVehiclesData.data)) {
+          queryClient.setQueryData(
+            clientVehiclesQueryKey,
+            {
+              ...clientVehiclesData,
+              data: [...clientVehiclesData.data, data],
+              total: (clientVehiclesData.total || 0) + 1
+            }
+          );
+        }
+      }
+      
+      // 2. Atualizar a lista global de veículos (se existir no cache)
+      const allVehiclesQueryKey = ['/api/vehicles'];
+      const allVehiclesData = queryClient.getQueryData<any>(allVehiclesQueryKey);
+      
+      if (allVehiclesData) {
+        // Se o formato for um array direto
+        if (Array.isArray(allVehiclesData)) {
+          queryClient.setQueryData(
+            allVehiclesQueryKey,
+            [...allVehiclesData, data]
+          );
+        } 
+        // Se o formato for { data: [...], total: number }
+        else if (allVehiclesData.data && Array.isArray(allVehiclesData.data)) {
+          queryClient.setQueryData(
+            allVehiclesQueryKey,
+            {
+              ...allVehiclesData,
+              data: [...allVehiclesData.data, data],
+              total: (allVehiclesData.total || 0) + 1
+            }
+          );
+        }
+      }
+      
       toast({
         title: t("vehicles.vehicleRegistered", "Veículo cadastrado"),
         description: t("vehicles.vehicleRegisteredDesc", "O veículo foi cadastrado com sucesso"),
@@ -143,6 +199,66 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
         
         // Salvar a requisição pendente para sincronização posterior
         await storeOfflineRequest(pendingRequest);
+        
+        // Criar um item temporário para atualizar o cache
+        const tempVehicle = {
+          id: -(new Date().getTime()),
+          ...data,
+          _isOffline: true,
+          created_at: new Date().toISOString()
+        };
+        
+        // Atualizar o cache para mostrar o veículo imediatamente em todas as listas/views
+        
+        // 1. Atualizar a lista de veículos do cliente específico
+        const clientVehiclesQueryKey = [`/api/clients/${clientId}/vehicles`];
+        const clientVehiclesData = queryClient.getQueryData<any>(clientVehiclesQueryKey);
+        
+        if (clientVehiclesData) {
+          // Se o formato for um array direto
+          if (Array.isArray(clientVehiclesData)) {
+            queryClient.setQueryData(
+              clientVehiclesQueryKey,
+              [...clientVehiclesData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (clientVehiclesData.data && Array.isArray(clientVehiclesData.data)) {
+            queryClient.setQueryData(
+              clientVehiclesQueryKey,
+              {
+                ...clientVehiclesData,
+                data: [...clientVehiclesData.data, tempVehicle],
+                total: (clientVehiclesData.total || 0) + 1
+              }
+            );
+          }
+        }
+        
+        // 2. Atualizar a lista global de veículos (se existir no cache)
+        const allVehiclesQueryKey = ['/api/vehicles'];
+        const allVehiclesData = queryClient.getQueryData<any>(allVehiclesQueryKey);
+        
+        if (allVehiclesData) {
+          // Se o formato for um array direto
+          if (Array.isArray(allVehiclesData)) {
+            queryClient.setQueryData(
+              allVehiclesQueryKey,
+              [...allVehiclesData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (allVehiclesData.data && Array.isArray(allVehiclesData.data)) {
+            queryClient.setQueryData(
+              allVehiclesQueryKey,
+              {
+                ...allVehiclesData,
+                data: [...allVehiclesData.data, tempVehicle],
+                total: (allVehiclesData.total || 0) + 1
+              }
+            );
+          }
+        }
         
         toast({
           title: t("vehicles.savedOffline", "Veículo salvo offline"),
