@@ -51,6 +51,10 @@ export default function Login() {
       setIsSubmitting(true);
       await login(username, password, rememberMe);
       
+      // Forçar o idioma para português após o login
+      i18n.changeLanguage('pt');
+      localStorage.setItem('i18nextLng', 'pt');
+      
       toast({
         title: t("auth.loginSuccess", "Login bem-sucedido"),
         description: t("auth.welcomeBack", "Bem-vindo de volta!"),
