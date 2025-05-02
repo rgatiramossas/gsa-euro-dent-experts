@@ -328,16 +328,8 @@ function AppRoutes() {
         </RequireAuth>
       </Route>
       
-      {/* Test page - acessível apenas para administradores */}
-      <Route path="/teste">
-        <RequireAuth>
-          <RequireAdmin>
-            <MainLayout>
-              <TestPage />
-            </MainLayout>
-          </RequireAdmin>
-        </RequireAuth>
-      </Route>
+      {/* Test page - acessível a todos */}
+      <Route path="/teste" component={TestPage} />
       
       {/* Redirect root to dashboard */}
       <Route path="/">

@@ -8,7 +8,6 @@ import { queryClient } from "@/lib/queryClient";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { offlineStatusStore } from "@/lib/stores";
-import { useSnapshot } from "valtio";
 import offlineDb, { storeOfflineRequest } from "@/lib/offlineDb";
 
 // Cliente de teste para criação
@@ -61,7 +60,7 @@ export default function TestPage() {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   
   // Usar o snapshot do valtio para reagir a mudanças no estado
-  useSnapshot(offlineStatusStore);
+  const offlineStoreSnapshot = useSnapshot(offlineStatusStore);
 
   // Verificar quantidade de requisições pendentes e manter status online sincronizado
   useEffect(() => {
