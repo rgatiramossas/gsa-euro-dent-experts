@@ -8,6 +8,7 @@ import path from "path";
 import fs from "fs";
 import multer from "multer";
 import { fileURLToPath } from "url";
+import { addClearSessionsEndpoint } from "./clearSessions";
 // import { db } from "./db"; // PostgreSQL
 // MySQL connection (que será obtida mais tarde)
 let pool: any;
@@ -169,6 +170,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
   // A configuração de servir arquivos estáticos de uploads foi movida para index.ts
+  
+  // Adicionar endpoint de limpeza de sessões (temporário)
+  addClearSessionsEndpoint(app);
 
   // Auth middleware
   const requireAuth = (req: Request, res: Response, next: any) => {

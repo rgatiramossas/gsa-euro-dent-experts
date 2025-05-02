@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardStats, ServiceListItem, TechnicianPerformance as TechnicianPerformanceType } from "@/types";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -10,12 +10,54 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "wouter";
 import { getQueryFn } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const [isClearing, setIsClearing] = useState(false);
   const isAdmin = user?.role === "admin";
   const isGestor = user?.role === "manager";
+  
+  // Função para limpar todas as sessões exceto a atual
+  const clearAllSessions = async () => {
+    if (!isAdmin) {
+      toast({
+        title: "Acesso negado",
+        description: "Apenas administradores podem limpar sessões",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsClearing(true);
+      const response = await fetch('/api/debug/clear-sessions');
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao limpar sessões');
+      }
+      
+      const result = await response.json();
+      
+      toast({
+        title: "Sessões limpas com sucesso",
+        description: result.message || `Todas as sessões foram removidas exceto a sua.`,
+        variant: "success"
+      });
+    } catch (error) {
+      console.error('Erro ao limpar sessões:', error);
+      toast({
+        title: "Erro ao limpar sessões",
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: "destructive"
+      });
+    } finally {
+      setIsClearing(false);
+    }
+  };
   
   // Fetch dashboard stats
   const { 
