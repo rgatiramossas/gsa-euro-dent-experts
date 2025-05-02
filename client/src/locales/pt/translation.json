@@ -85,6 +85,8 @@
     "serviceDetails": "Detalhes do Serviço",
     "editService": "Editar Serviço",
     "deleteService": "Excluir Serviço",
+    "serviceCreated": "Serviço criado com sucesso",
+    "serviceCreatedSuccess": "Serviço criado com sucesso",
     "errors": {
       "selectClient": "Selecione um cliente",
       "selectVehicle": "Selecione um veículo",
@@ -416,6 +418,8 @@
     "viewAllBudgets": "Ver todos os orçamentos",
     "manageBudgets": "Visualize e gerencie todos os orçamentos",
     "searchPlaceholder": "Buscar por cliente, veículo ou placa...",
+    "created": "Orçamento criado com sucesso",
+    "createSuccess": "Orçamento criado com sucesso",
     "client": "Cliente",
     "vehicleInfo": "Informações do Veículo",
     "licensePlate": "Placa",
