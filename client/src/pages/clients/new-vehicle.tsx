@@ -426,16 +426,19 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
             >
               {t("common.cancel", "Cancelar")}
             </Button>
+            
+            {/* Usar botão adaptativo baseado no estado de conexão */}
             <Button 
-              type="submit" 
+              type={isOffline ? "button" : "submit"}
               className="flex-1"
               disabled={createVehicleMutation.isPending || isSaving}
+              onClick={isOffline ? () => onSubmit(form.getValues()) : undefined}
             >
               {createVehicleMutation.isPending || isSaving 
                 ? t("common.saving", "Salvando...") 
-                : !isOffline
-                  ? t("vehicles.registerVehicle", "Cadastrar Veículo")
-                  : t("vehicles.saveOffline", "Salvar Offline")}
+                : isOffline
+                  ? t("vehicles.saveOffline", "Salvar Offline")
+                  : t("vehicles.registerVehicle", "Cadastrar Veículo")}
             </Button>
           </div>
         </form>

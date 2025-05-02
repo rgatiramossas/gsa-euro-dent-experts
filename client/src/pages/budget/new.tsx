@@ -56,15 +56,27 @@ const NewBudgetPage: React.FC = () => {
   const [_, navigate] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch clients for select dropdown (apenas ativos/não excluídos)
+  // Fetch clients for select dropdown (incluindo offline)
   const { data: clients, isLoading: isLoadingClients } = useQuery<Client[]>({
-    queryKey: ["/api/clients"],
+    queryKey: ["/api/clients", { enableOffline: true, offlineTableName: 'clients' }],
     queryFn: async () => {
-      const response = await fetch('/api/clients?filterMode=active');
-      if (!response.ok) {
-        throw new Error('Erro ao carregar clientes');
+      try {
+        // Usar o endpoint com suporte a clientes offline
+        const response = await fetch('/api/clients?filterMode=active&enableOffline=true');
+        if (!response.ok) {
+          throw new Error('Erro ao carregar clientes');
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Erro ao buscar clientes:", error);
+        // Se estiver offline, buscar do cache do indexedDB
+        if (!navigator.onLine) {
+          // Usar a funcionalidade do offlineDb - que será implementada pelo service worker
+          const offlineClients = await fetch('/api/clients?filterMode=active&enableOffline=true&offlineOnly=true');
+          return offlineClients.json();
+        }
+        throw error;
       }
-      return response.json();
     },
     retry: 1,
   });
