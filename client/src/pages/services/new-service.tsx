@@ -690,7 +690,7 @@ export default function NewServicePage() {
           {/* Client and Vehicle Information */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>{t("clients.clientInformation")}</CardTitle>
+              <CardTitle>{t("clients.clientInformation", "Informações do Cliente")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -698,7 +698,7 @@ export default function NewServicePage() {
                 name="client_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("clients.client")} <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("clients.client", "Cliente")} <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => handleClientChange(value)}
                       value={field.value?.toString()}
@@ -737,7 +737,7 @@ export default function NewServicePage() {
                 name="vehicle_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("clients.vehicle")} <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("clients.vehicle", "Veículo")} <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={(value) => form.setValue('vehicle_id', parseInt(value))}
                       value={field.value?.toString()}
@@ -779,7 +779,7 @@ export default function NewServicePage() {
           {/* Service Details Card */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>{t("services.serviceDetails")}</CardTitle>
+              <CardTitle>{t("services.serviceDetails", "Detalhes do Serviço")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -788,7 +788,7 @@ export default function NewServicePage() {
                   name="service_type_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("services.serviceType")} <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>{t("services.serviceType", "Tipo de Serviço")} <span className="text-red-500">*</span></FormLabel>
                       <Select
                         onValueChange={(value) => {
                           const id = parseInt(value);
@@ -812,7 +812,7 @@ export default function NewServicePage() {
                         <SelectContent>
                           {serviceTypes?.map((type) => (
                             <SelectItem key={type.id} value={type.id.toString()}>
-                              {translateServiceType(type.name)} (R$ {type.default_price?.toFixed(2) || "0.00"})
+                              {translateServiceType(type.name)} (€ {type.default_price?.toFixed(2) || "0.00"})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -827,7 +827,7 @@ export default function NewServicePage() {
                   name="technician_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("services.technician")}</FormLabel>
+                      <FormLabel>{t("services.technician", "Técnico")}</FormLabel>
                       <Select
                         onValueChange={(value) => form.setValue('technician_id', parseInt(value))}
                         value={field.value?.toString()}
@@ -859,7 +859,7 @@ export default function NewServicePage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("services.description")}</FormLabel>
+                    <FormLabel>{t("services.description", "Descrição")}</FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
@@ -936,7 +936,7 @@ export default function NewServicePage() {
                   name="location_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("services.locationType")}</FormLabel>
+                      <FormLabel>{t("services.locationType", "Tipo de Localização")}</FormLabel>
                       <FormControl>
                         <div className="flex flex-col space-y-4">
                           <div className="flex items-center space-x-2">
@@ -949,7 +949,7 @@ export default function NewServicePage() {
                               htmlFor="client_location"
                               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
-                              {t("services.clientLocation")}
+                              {t("services.clientLocation", "Local do Cliente")}
                             </label>
                           </div>
                           <div className="flex items-center space-x-2">
