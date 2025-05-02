@@ -217,7 +217,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
                         <TableCell>{client.email}</TableCell>
                         <TableCell>{client.phone}</TableCell>
                         <TableCell>
-                          {client.city && client.state ? `${client.city}/${client.state}` : t("clients.notSpecified")}
+                          {client.address || t("clients.notSpecified")}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">

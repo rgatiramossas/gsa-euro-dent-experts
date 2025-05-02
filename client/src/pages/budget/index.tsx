@@ -114,17 +114,22 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
 
   // Apply search filter when budgets data or search term changes
   useEffect(() => {
-    if (budgets) {
+    if (Array.isArray(budgets)) {
       const filtered = budgets.filter((budget) => {
+        // Verificação de segurança para propriedades do orçamento
+        if (!budget) return false;
+        
         const searchLower = searchTerm.toLowerCase();
         return (
-          budget.client_name?.toLowerCase().includes(searchLower) ||
-          budget.vehicle_info?.toLowerCase().includes(searchLower) ||
-          String(budget.id).includes(searchTerm) ||
-          budget.plate?.toLowerCase().includes(searchLower)
+          (budget.client_name && budget.client_name.toLowerCase().includes(searchLower)) ||
+          (budget.vehicle_info && budget.vehicle_info.toLowerCase().includes(searchLower)) ||
+          (budget.id && String(budget.id).includes(searchTerm)) ||
+          (budget.plate && budget.plate.toLowerCase().includes(searchLower))
         );
       });
       setFilteredBudgets(filtered);
+    } else {
+      setFilteredBudgets([]);
     }
   }, [budgets, searchTerm]);
 
