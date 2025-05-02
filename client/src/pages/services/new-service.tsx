@@ -419,6 +419,7 @@ export default function NewServicePage() {
       latitude: null,
       longitude: null,
       notes: "",
+      scheduled_date: new Date(), // Data padrão é hoje
     },
   });
   
@@ -881,7 +882,7 @@ export default function NewServicePage() {
                   name="scheduled_date"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>{t("services.scheduledDate")}</FormLabel>
+                      <FormLabel>{t("services.date", "Data")}</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -918,23 +919,7 @@ export default function NewServicePage() {
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="scheduled_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("services.scheduledTime")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="time"
-                          {...field}
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
               </div>
             </CardContent>
           </Card>
