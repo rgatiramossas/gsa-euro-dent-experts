@@ -12,6 +12,18 @@ Euro Dent é uma plataforma completa de gerenciamento de serviços automotivos q
 - **Autenticação**: Sistema seguro baseado em sessões
 - **UI/UX**: Componentes shadcn/ui personalizados
 
+## Configuração de Sessão e Gerenciamento Offline
+
+### Configurações de Tempo de Sessão
+- **Modo Online**: As sessões expiram após 30 minutos de inatividade
+- **Modo Offline**: A autenticação é mantida por 48 horas
+- **Sincronização em Segundo Plano**: Dados modificados offline são sincronizados automaticamente quando a conexão é reestabelecida
+
+### Variáveis de Ambiente para Sessão
+- `COOKIE_MAX_AGE=1800000` - 30 minutos em milissegundos
+- `COOKIE_SECURE=false` - Defina como `true` em produção com HTTPS
+- `COOKIE_SAME_SITE=lax` - Configuração padrão para navegação normal
+
 ## Estrutura do Projeto
 
 ```

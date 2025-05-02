@@ -109,8 +109,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session middleware com configuração aprimorada e armazenamento MySQL
   
   // Obter as configurações das variáveis de ambiente
-  // Por padrão, 30 minutos de inatividade para sessões online
-  // A sessão offline é controlada pelo ServiceWorker e configurada para 48 horas
+  // -------------------------------------------------------
+  // NOVA CONFIGURAÇÃO DE SESSÃO:
+  // - Sessões online: 30 minutos de inatividade (1800000 ms)
+  // - Sessões offline: 48 horas (gerenciado pelo frontend)
+  // -------------------------------------------------------
   const cookieMaxAge = parseInt(process.env.COOKIE_MAX_AGE || '1800000'); // 30 minutos (padrão)
   const cookieSecure = process.env.COOKIE_SECURE === 'true' ? true : false;
   const cookieSameSite = (process.env.COOKIE_SAME_SITE || 'lax') as 'lax' | 'strict' | 'none' | false;
