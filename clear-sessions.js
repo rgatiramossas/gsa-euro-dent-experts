@@ -12,11 +12,13 @@ async function clearSessions() {
   console.log('Iniciando limpeza de sessões...');
   
   // Conectar ao banco de dados MySQL usando variáveis de ambiente
+  // Os nomes das variáveis de ambiente são diferentes no seu projeto
   const connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME
+    host: process.env.MYSQL_HOST || 'jtla.com.br',
+    user: process.env.MYSQL_USER || 'eurodent_arf.martelinho',
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE || 'eurodent_novobd',
+    port: process.env.MYSQL_PORT || 3306
   });
 
   try {
