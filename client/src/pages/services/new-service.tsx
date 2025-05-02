@@ -896,7 +896,7 @@ export default function NewServicePage() {
                               {field.value ? (
                                 format(field.value, "PPP", { locale: ptBR })
                               ) : (
-                                <span>{t("services.selectDate")}</span>
+                                <span>{t("services.selectDate", "Selecione a data")}</span>
                               )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
@@ -927,7 +927,7 @@ export default function NewServicePage() {
           {/* Location Card */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>{t("services.locationDetails")}</CardTitle>
+              <CardTitle>{t("services.locationDetails", "Detalhes da Localização")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -990,7 +990,7 @@ export default function NewServicePage() {
           {/* Financial Info Card */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>{t("services.financialInfo")}</CardTitle>
+              <CardTitle>{t("services.financialInfo", "Informações Financeiras")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -999,7 +999,7 @@ export default function NewServicePage() {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("services.price")} (R$)</FormLabel>
+                      <FormLabel>{t("services.price", "Preço")} (€)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -1023,7 +1023,7 @@ export default function NewServicePage() {
                   name="administrative_fee"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("services.administrativeFee")} (R$)</FormLabel>
+                      <FormLabel>{t("services.administrativeFee", "Taxa Administrativa")} (€)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -1043,7 +1043,7 @@ export default function NewServicePage() {
                 />
                 
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium mb-2">{t("services.totalValue")} (R$)</span>
+                  <span className="text-sm font-medium mb-2">{t("services.totalValue", "Valor Total")} (€)</span>
                   <div className="h-10 px-3 py-2 rounded-md border border-input bg-gray-100 text-right">
                     {((form.watch('price') || 0) + (form.watch('administrative_fee') || 0)).toFixed(2)}
                   </div>
@@ -1055,7 +1055,7 @@ export default function NewServicePage() {
           {/* Photos */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>{t("services.photos")}</CardTitle>
+              <CardTitle>{t("services.photos", "Fotos")}</CardTitle>
             </CardHeader>
             <CardContent>
               <PhotoUploader
@@ -1068,35 +1068,7 @@ export default function NewServicePage() {
             </CardContent>
           </Card>
           
-          {/* Notes */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>{t("services.notes")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("services.additionalNotes")}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder={t("services.notesPlaceholder")}
-                        rows={3}
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t("services.additionalNotesHelp")}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+
           
           <div className="flex justify-end space-x-2">
             <Button variant="outline" type="button" onClick={() => setLocation('/services')}>
