@@ -74,11 +74,46 @@ export default function NewClient() {
   const createClientMutation = useMutation({
     mutationFn: async (data: FormData) => {
       console.log("Enviando dados:", data);
-      return await apiRequest('/api/clients', 'POST', data);
+      const response = await apiRequest({
+        url: '/api/clients',
+        method: 'POST',
+        data,
+        enableOffline: true,
+        offlineTableName: 'clients'
+      });
+      return response;
     },
     onSuccess: (data) => {
       console.log("Cliente criado com sucesso:", data);
+      
+      // Invalidate queries - isso disparará um refetch se estiver online
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      
+      // Atualizar localmente o cache do React Query para mostrar o novo cliente imediatamente,
+      // mesmo quando offline
+      const previousData = queryClient.getQueryData<any>(['/api/clients', { enableOffline: true, offlineTableName: 'clients' }]);
+      
+      if (previousData) {
+        // Se o formato for um array direto
+        if (Array.isArray(previousData)) {
+          queryClient.setQueryData(
+            ['/api/clients', { enableOffline: true, offlineTableName: 'clients' }],
+            [...previousData, data]
+          );
+        } 
+        // Se o formato for { data: [...], total: number }
+        else if (previousData.data && Array.isArray(previousData.data)) {
+          queryClient.setQueryData(
+            ['/api/clients', { enableOffline: true, offlineTableName: 'clients' }],
+            {
+              ...previousData,
+              data: [...previousData.data, data],
+              total: (previousData.total || 0) + 1
+            }
+          );
+        }
+      }
+      
       toast({
         title: "Cliente cadastrado",
         description: "O cliente foi cadastrado com sucesso",
