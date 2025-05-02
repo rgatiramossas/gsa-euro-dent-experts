@@ -726,7 +726,7 @@ export default function NewServicePage() {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
-                      {t("clients.registerClient")}
+                      {t("clients.registerClient", "Cadastrar Cliente")}
                     </Button>
                   </FormItem>
                 )}
@@ -767,7 +767,7 @@ export default function NewServicePage() {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        {t("vehicles.registerVehicle")}
+                        {t("vehicles.registerVehicle", "Cadastrar Veículo")}
                       </Button>
                     )}
                   </FormItem>
@@ -962,7 +962,7 @@ export default function NewServicePage() {
                               htmlFor="workshop"
                               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
-                              {t("services.workshop")}
+                              {t("services.workshop", "Oficina")}
                             </label>
                           </div>
                         </div>
