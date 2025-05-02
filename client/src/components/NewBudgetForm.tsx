@@ -240,36 +240,99 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
 
   // Função para salvar um novo orçamento
   const saveNewBudget = async (budget: any) => {
-    const response = await fetch("/api/budgets", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(budget),
-    });
+    // Verificar conectividade
+    if (!navigator.onLine) {
+      try {
+        // Quando offline, salvar no IndexedDB para sincronização posterior
+        const timestamp = new Date().getTime();
+        const pendingRequest = {
+          id: `budget_${timestamp}`,
+          timestamp,
+          url: '/api/budgets',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: budget,
+          tableName: 'budgets',
+          operationType: 'create' as const
+        };
+        
+        // Importar a função
+        const { storeOfflineRequest } = await import('@/lib/offlineDb');
+        
+        // Armazenar requisição para sincronização futura
+        await storeOfflineRequest(pendingRequest);
+        
+        // Criar ID temporário para referência local
+        return { id: -timestamp, ...budget };
+      } catch (error) {
+        console.error("Erro ao salvar orçamento offline:", error);
+        throw new Error("Falha ao salvar orçamento no modo offline");
+      }
+    } else {
+      // Quando online, envia diretamente ao servidor
+      const response = await fetch("/api/budgets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(budget),
+      });
 
-    if (!response.ok) {
-      throw new Error("Falha ao criar orçamento");
+      if (!response.ok) {
+        throw new Error("Falha ao criar orçamento");
+      }
+
+      return response.json();
     }
-
-    return response.json();
   };
   
   // Função para atualizar um orçamento existente
   const updateBudget = async (budget: any, budgetId: number) => {
-    const response = await fetch(`/api/budgets/${budgetId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(budget),
-    });
+    // Verificar conectividade
+    if (!navigator.onLine) {
+      try {
+        // Quando offline, salvar no IndexedDB para sincronização posterior
+        const timestamp = new Date().getTime();
+        const pendingRequest = {
+          id: `budget_update_${timestamp}`,
+          timestamp,
+          url: `/api/budgets/${budgetId}`,
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: budget,
+          tableName: 'budgets',
+          resourceId: budgetId,
+          operationType: 'update' as const
+        };
+        
+        // Importar a função
+        const { storeOfflineRequest } = await import('@/lib/offlineDb');
+        
+        // Armazenar requisição para sincronização futura
+        await storeOfflineRequest(pendingRequest);
+        
+        // Retornar item atualizado com flad de offline
+        return { id: budgetId, ...budget, _isOffline: true };
+      } catch (error) {
+        console.error("Erro ao atualizar orçamento offline:", error);
+        throw new Error("Falha ao atualizar orçamento no modo offline");
+      }
+    } else {
+      // Quando online, envia diretamente ao servidor
+      const response = await fetch(`/api/budgets/${budgetId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(budget),
+      });
 
-    if (!response.ok) {
-      throw new Error("Falha ao atualizar orçamento");
+      if (!response.ok) {
+        throw new Error("Falha ao atualizar orçamento");
+      }
+
+      return response.json();
     }
-
-    return response.json();
   };
 
   // Função para atualizar os valores de danos
