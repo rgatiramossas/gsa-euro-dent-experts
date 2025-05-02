@@ -80,28 +80,38 @@ export function RecentServicesTable({ services = [], isLoading = false }: Recent
                 </TableCell>
               </TableRow>
             ) : (
-              services.map((service) => (
-                <TableRow key={service.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">
-                    <Link href={`/services/${service.id}`} className="hover:text-primary">
-                      {service.client.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    {service.vehicle.make} {service.vehicle.model} {service.vehicle.year}
-                    {service.vehicle.license_plate && ` - ${service.vehicle.license_plate}`}
-                  </TableCell>
-                  <TableCell>
-                    {service.technician?.name || "-"}
-                  </TableCell>
-                  <TableCell>
-                    <ServiceStatusBadge status={service.status} />
-                  </TableCell>
-                  <TableCell className="text-gray-500">
-                    {formatDate(service.scheduled_date || service.created_at)}
-                  </TableCell>
-                </TableRow>
-              ))
+              services.map((service) => {
+                // Verificar se o serviço e suas propriedades existem
+                if (!service || !service.id) return null;
+                
+                return (
+                  <TableRow key={service.id} className="hover:bg-gray-50">
+                    <TableCell className="font-medium">
+                      <Link href={`/services/${service.id}`} className="hover:text-primary">
+                        {service.client?.name || "Cliente desconhecido"}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      {service.vehicle?.make || ""} {service.vehicle?.model || ""} 
+                      {service.vehicle?.year ? ` ${service.vehicle.year}` : ""}
+                      {service.vehicle?.license_plate ? ` - ${service.vehicle.license_plate}` : ""}
+                    </TableCell>
+                    <TableCell>
+                      {service.technician?.name || "-"}
+                    </TableCell>
+                    <TableCell>
+                      <ServiceStatusBadge status={service.status || "pendente"} />
+                    </TableCell>
+                    <TableCell className="text-gray-500">
+                      {formatDate(
+                        (service.scheduled_date && typeof service.scheduled_date === 'string' ? service.scheduled_date : undefined) || 
+                        (service.created_at && typeof service.created_at === 'string' ? service.created_at : undefined) || 
+                        ""
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

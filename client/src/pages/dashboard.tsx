@@ -220,7 +220,7 @@ export default function Dashboard() {
         {/* Recent Services */}
         <div className={isAdmin ? "lg:col-span-2" : "lg:col-span-3"}>
           <RecentServicesTable
-            services={services || []}
+            services={Array.isArray(services) ? services : []}
             isLoading={isLoadingServices}
           />
         </div>
