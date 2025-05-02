@@ -646,7 +646,7 @@ export default function TestPage() {
                     <Button 
                       onClick={forceSyncronization}
                       variant="default"
-                      disabled={!offlineStatus.isOnline}
+                      disabled={!isOnline}
                     >
                       Forçar Sincronização
                     </Button>
