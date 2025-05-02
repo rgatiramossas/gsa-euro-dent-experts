@@ -214,105 +214,128 @@ export default function NewServicePage() {
     }
   });
   
-  // Carregar veículos para o cliente selecionado
-  const { data: vehicles } = useQuery<Vehicle[]>({
+  // Carregar veículos para o cliente selecionado - otimizado para garantir exibição dos veículos offline
+  const { data: vehicles, refetch: refetchVehicles } = useQuery<Vehicle[]>({
     queryKey: ['/api/clients', selectedClientId, 'vehicles', { enableOffline: true, offlineTableName: 'vehicles' }],
     queryFn: async () => {
+      console.log("Buscando veículos para cliente:", selectedClientId);
       if (!selectedClientId) return [];
       
       const url = `/api/clients/${selectedClientId}/vehicles`;
+      const isOfflineNow = !navigator.onLine;
       
       try {
-        // Usar o getApi com suporte a PWA em vez do fetch diretamente
-        let vehiclesData = await getApi<Vehicle[]>(url as string, {
-          enableOffline: true,
-          offlineTableName: 'vehicles'
-        });
+        console.log("Estado da rede:", isOfflineNow ? "OFFLINE" : "ONLINE");
         
-        // Se não estiver online, também busca os dados offline
-        if (!navigator.onLine) {
+        // 1. Buscar dados da API/cache
+        let vehiclesData: Vehicle[] = [];
+        try {
+          // Usar getApi com suporte a modo offline
+          vehiclesData = await getApi<Vehicle[]>(url, {
+            enableOffline: true,
+            offlineTableName: 'vehicles'
+          });
+          console.log("Veículos obtidos da API/cache:", vehiclesData?.length || 0);
+        } catch (apiError) {
+          console.error("Erro ao buscar veículos da API:", apiError);
+        }
+        
+        // Verificação de segurança para garantir que temos um array
+        if (!Array.isArray(vehiclesData)) {
+          vehiclesData = [];
+        }
+        
+        // 2. Buscar TODAS as requisições offline pendentes (veículos criados recentemente)
+        // Importante: Buscar sempre, não apenas no modo offline
+        let pendingVehicles: any[] = [];
+        try {
+          const { getPendingRequests, getAllFromTable } = await import('@/lib/offlineDb');
+          const offlineRequests = await getPendingRequests({
+            tableName: 'vehicles',
+            operationType: 'create'
+          });
+          
+          console.log("Total de requisições veículos pendentes:", offlineRequests.length);
+          
+          // Filtrar apenas os veículos do cliente selecionado
+          pendingVehicles = offlineRequests
+            .filter(item => item.body && Number(item.body.client_id) === Number(selectedClientId))
+            .map(item => {
+              try {
+                // ID temporário negativo para evitar conflitos
+                const offlineId = typeof item.body.id === 'number' 
+                  ? item.body.id 
+                  : -(new Date(item.timestamp).getTime());
+                
+                return {
+                  ...item.body,
+                  id: offlineId,
+                  _isOffline: true,
+                  _pendingSync: true
+                };
+              } catch (e) {
+                console.error("Erro ao processar veículo offline:", e);
+                return null;
+              }
+            })
+            .filter(Boolean);
+          
+          console.log("Veículos pendentes (filtrados):", pendingVehicles.length);
+          
+          // 3. Buscar registros diretamente da tabela offline
           try {
-            // Recupera veículos salvos offline no IndexedDB
-            const { getPendingRequests } = await import('@/lib/offlineDb');
-            const offlineVehiclesData = await getPendingRequests({
-              tableName: 'vehicles',
-              operationType: 'create'
-            });
+            const storedVehicles = await getAllFromTable('vehicles') || [];
+            console.log("Veículos na tabela offline:", storedVehicles.length);
             
-            // Filtrar apenas os veículos do cliente selecionado
-            const offlineVehicles = offlineVehiclesData
-              .filter(item => item.body && item.body.client_id === selectedClientId)
-              .map(item => {
-                try {
-                  // ID temporário negativo para evitar conflitos
-                  const offlineId = typeof item.body.id === 'number' 
-                    ? item.body.id 
-                    : -(new Date(item.timestamp).getTime());
-                  
-                  return {
-                    ...item.body,
-                    id: offlineId,
-                    _isOffline: true
-                  };
-                } catch (e) {
-                  console.error("Erro ao processar veículo offline:", e);
-                  return null;
-                }
-              })
-              .filter(Boolean);
+            // Filtrar apenas os deste cliente
+            const filteredStoredVehicles = storedVehicles
+              .filter(v => Number(v.client_id) === Number(selectedClientId))
+              .map(v => ({
+                ...v,
+                _isOffline: true,
+                _fromStorage: true
+              }));
             
-            // Certifica-se de que vehiclesData é um array
-            if (!Array.isArray(vehiclesData)) {
-              vehiclesData = [];
-            }
+            console.log("Veículos armazenados (filtrados):", filteredStoredVehicles.length);
             
-            // Combina os resultados do servidor com os do IndexedDB
-            const allVehicles = [...vehiclesData];
-            
-            // Adiciona apenas veículos que não estão já na lista (pelos IDs)
-            offlineVehicles.forEach(offlineVehicle => {
-              if (!allVehicles.some(v => v.id === offlineVehicle.id)) {
-                allVehicles.push(offlineVehicle);
+            // Adicionar veículos armazenados apenas se não estiverem nos pendentes
+            filteredStoredVehicles.forEach(storedVehicle => {
+              if (!pendingVehicles.some(v => v.id === storedVehicle.id)) {
+                pendingVehicles.push(storedVehicle);
               }
             });
-            
-            return allVehicles;
-          } catch (offlineError) {
-            console.error("Erro ao buscar veículos offline:", offlineError);
-            return vehiclesData || [];
+          } catch (storageError) {
+            console.error("Erro ao buscar veículos do armazenamento:", storageError);
           }
+        } catch (offlineError) {
+          console.error("Erro ao buscar veículos offline:", offlineError);
         }
         
-        return vehiclesData;
+        // 4. Combinar resultados, removendo duplicatas
+        const allVehicles: Vehicle[] = [...vehiclesData];
+        
+        // Adicionar veículos offline que não estão na lista (pelos IDs)
+        pendingVehicles.forEach(offlineVehicle => {
+          if (!allVehicles.some(v => v.id === offlineVehicle.id)) {
+            allVehicles.push(offlineVehicle);
+          }
+        });
+        
+        console.log("RESULTADO FINAL - Veículos disponíveis:", allVehicles.length);
+        allVehicles.forEach(v => {
+          const status = v._isOffline ? "OFFLINE" : "ONLINE";
+          console.log(`- Veículo ${v.id}: ${v.make} ${v.model} [${status}]`);
+        });
+        
+        return allVehicles;
       } catch (error) {
-        console.error("Erro ao carregar veículos:", error);
-        
-        // Quando falha a API, tenta buscar do IndexedDB diretamente
-        if (!navigator.onLine) {
-          try {
-            const { getPendingRequests } = await import('@/lib/offlineDb');
-            const offlineVehicleRequests = await getPendingRequests({
-              tableName: 'vehicles',
-              operationType: 'create'
-            });
-            
-            // Filtrar apenas veículos do cliente atual
-            return offlineVehicleRequests
-              .filter(item => item.body && item.body.client_id === selectedClientId)
-              .map(item => ({
-                ...item.body,
-                id: -(new Date(item.timestamp).getTime()),
-                _isOffline: true
-              }));
-          } catch (offlineError) {
-            console.error("Erro completo (online e offline):", offlineError);
-            return []; // Último recurso: array vazio
-          }
-        }
-        
-        return []; // Retornar array vazio em caso de erro para evitar quebra da UI
+        console.error("Erro crítico ao carregar veículos:", error);
+        return []; // Último recurso: array vazio
       }
-    }
+    },
+    enabled: !!selectedClientId,
+    refetchOnWindowFocus: true, // Recarregar quando a janela receber foco
+    refetchOnMount: true        // Sempre recarregar ao montar o componente
   });
   
   const { data: serviceTypes } = useQuery<ServiceType[]>({
@@ -903,8 +926,13 @@ export default function NewServicePage() {
                       </FormControl>
                       <SelectContent>
                         {vehicles?.map((vehicle) => (
-                          <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
+                          <SelectItem 
+                            key={vehicle.id} 
+                            value={vehicle.id.toString()}
+                            className={vehicle._isOffline ? "text-blue-600 font-medium" : ""}
+                          >
                             {vehicle.make} {vehicle.model}
+                            {vehicle._isOffline && " [Offline]"}
                           </SelectItem>
                         ))}
                       </SelectContent>
