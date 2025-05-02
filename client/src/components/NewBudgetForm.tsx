@@ -113,100 +113,94 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
     queryKey: ['/api/clients', 'active'],
     queryFn: async () => {
       try {
-        // Primeiro tenta carregar os clientes do servidor
-        console.log("Buscando clientes ativos...");
-        
         // Importar o que precisamos
         const { getApi } = await import('@/lib/apiWrapper');
-        const offlineDb = await import('@/lib/offlineDb');
+        const { getPendingRequests } = await import('@/lib/offlineDb');
         
-        // Buscar dados online/offline usando getApi
-        let clientsData = await getApi<any[]>('/api/clients?filterMode=active', {
-          enableOffline: true,
-          offlineTableName: 'clients'
-        });
+        console.log("[NewBudgetForm] Buscando clientes ativos...");
         
-        // Se não estiver online, também busca os dados offline para garantir que temos todos
-        if (!navigator.onLine) {
+        // Buscar dados online
+        let onlineClients: any[] = [];
+        let offlineClients: any[] = [];
+        
+        // Tentar buscar clientes online se tiver conexão
+        if (navigator.onLine) {
           try {
-            // Recupera clientes salvos no IndexedDB
-            const { getPendingRequests } = offlineDb;
-            const offlineClientsData = await getPendingRequests({
-              tableName: 'clients',
-              operationType: 'create'
+            // Buscar dados online usando getApi
+            onlineClients = await getApi<any[]>('/api/clients', {
+              enableOffline: true,
+              offlineTableName: 'clients'
             });
-            
-            // Extrair apenas os clientes do objeto body
-            const offlineClients = offlineClientsData.map(item => {
+            console.log(`[NewBudgetForm] ${onlineClients.length} clientes carregados do servidor`);
+          } catch (onlineError) {
+            console.error("[NewBudgetForm] Erro ao buscar clientes online:", onlineError);
+          }
+        }
+        
+        // Sempre buscar clientes offline para garantir que temos todos
+        try {
+          // Recupera clientes salvos no IndexedDB
+          const pendingRequests = await getPendingRequests({
+            tableName: 'clients',
+            operationType: 'create'
+          });
+          
+          console.log(`[NewBudgetForm] Encontrados ${pendingRequests.length} clientes pendentes no IndexedDB`);
+          
+          // Extrair clientes das requisições pendentes
+          offlineClients = pendingRequests
+            .map(item => {
               try {
                 // ID temporário negativo para evitar conflitos
                 const offlineId = typeof item.body.id === 'number' 
                   ? item.body.id 
                   : -(new Date(item.timestamp).getTime());
                 
-                return {
+                const clientData = {
                   ...item.body,
                   id: offlineId,
-                  _isOffline: true
+                  _isOffline: true,
+                  name: item.body.name ? `${item.body.name}${item.body._isOffline ? ' (Offline)' : ''}` : 'Cliente sem nome'
                 };
+                
+                console.log(`[NewBudgetForm] Cliente offline processado:`, clientData);
+                
+                return clientData;
               } catch (e) {
-                console.error("Erro ao processar cliente offline para orçamento:", e);
+                console.error("[NewBudgetForm] Erro ao processar cliente offline:", e);
                 return null;
               }
-            }).filter(Boolean);
-            
-            // Certifica-se de que clientsData é um array
-            if (!Array.isArray(clientsData)) {
-              clientsData = [];
-            }
-            
-            // Combina os resultados do servidor com os do IndexedDB
-            const allClients = [...clientsData];
-            
-            // Adiciona apenas clientes que não estão já na lista (pelos IDs)
-            offlineClients.forEach(offlineClient => {
-              if (!allClients.some(c => c.id === offlineClient.id)) {
-                allClients.push(offlineClient);
-              }
-            });
-            
-            console.log("Todos os clientes (online+offline):", allClients.length);
-            return allClients;
-          } catch (offlineError) {
-            console.error("Erro ao buscar clientes offline para orçamento:", offlineError);
-            return clientsData || [];
-          }
-        }
-        
-        console.log("Clientes recebidos:", clientsData?.length || 0);
-        return Array.isArray(clientsData) ? clientsData : [];
-      } catch (error) {
-        console.error("Erro ao carregar clientes para orçamento:", error);
-        
-        // Quando falha a API, tenta buscar do IndexedDB diretamente
-        try {
-          const { getPendingRequests } = await import('@/lib/offlineDb');
-          const offlineClientRequests = await getPendingRequests({
-            tableName: 'clients',
-            operationType: 'create'
-          });
-          
-          const offlineClients = offlineClientRequests.map(item => ({
-            ...item.body,
-            id: -(new Date(item.timestamp).getTime()),
-            _isOffline: true
-          }));
-          
-          console.log("Clientes offline:", offlineClients.length);
-          return offlineClients;
+            })
+            .filter(Boolean);
         } catch (offlineError) {
-          console.error("Erro completo (online e offline):", offlineError);
-          return []; // Último recurso: array vazio
+          console.error("[NewBudgetForm] Erro ao buscar clientes offline:", offlineError);
         }
+        
+        // Certifica-se de que temos arrays válidos
+        if (!Array.isArray(onlineClients)) onlineClients = [];
+        if (!Array.isArray(offlineClients)) offlineClients = [];
+        
+        // Combinar clientes online e offline
+        const combinedClients = [...onlineClients];
+        
+        // Adicionar clientes offline que não estão na lista online
+        offlineClients.forEach(offlineClient => {
+          if (!combinedClients.some(c => c.id === offlineClient.id)) {
+            combinedClients.push(offlineClient);
+          }
+        });
+        
+        console.log(`[NewBudgetForm] Total de ${combinedClients.length} clientes carregados (${onlineClients.length} online + ${offlineClients.length} offline)`);
+        
+        // Retornar a lista combinada
+        return combinedClients;
+      } catch (error) {
+        console.error("[NewBudgetForm] Erro geral ao carregar clientes:", error);
+        return []; // Último recurso: array vazio
       }
     },
-    retry: 3,
-    staleTime: 60000, // 1 minuto
+    retry: 1, // Reduzir para 1 para evitar múltiplas tentativas se falhar
+    staleTime: 30000, // 30 segundos
   });
   
   // Log para depuração da lista de clientes
