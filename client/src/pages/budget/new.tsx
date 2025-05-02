@@ -58,24 +58,121 @@ const NewBudgetPage: React.FC = () => {
 
   // Fetch clients for select dropdown (incluindo offline)
   const { data: clients, isLoading: isLoadingClients } = useQuery<Client[]>({
-    queryKey: ["/api/clients", { enableOffline: true, offlineTableName: 'clients' }],
+    queryKey: ["/api/clients", "active", { enableOffline: true, offlineTableName: 'clients' }],
     queryFn: async () => {
       try {
-        // Usar o endpoint com suporte a clientes offline
-        const response = await fetch('/api/clients?filterMode=active&enableOffline=true');
-        if (!response.ok) {
-          throw new Error('Erro ao carregar clientes');
+        // Importar utilitários
+        const { getPendingRequests } = await import('@/lib/offlineDb');
+        
+        console.log("[NewBudget] Buscando clientes ativos...");
+        
+        // Variáveis para armazenar clientes online e offline
+        let onlineClients: Client[] = [];
+        let offlineClients: Client[] = [];
+        
+        // Buscar clientes online se estiver conectado
+        if (navigator.onLine) {
+          try {
+            const response = await fetch('/api/clients?filterMode=active&enableOffline=true');
+            if (!response.ok) {
+              throw new Error('Erro ao carregar clientes do servidor');
+            }
+            onlineClients = await response.json();
+            console.log(`[NewBudget] ${onlineClients.length} clientes carregados do servidor`);
+          } catch (onlineError) {
+            console.error("[NewBudget] Erro ao buscar clientes online:", onlineError);
+          }
         }
-        return response.json();
+        
+        // Sempre buscar clientes offline
+        try {
+          // Buscar requisições pendentes de clientes
+          const pendingRequests = await getPendingRequests({
+            tableName: 'clients',
+            operationType: 'create'
+          });
+          
+          console.log(`[NewBudget] Encontrados ${pendingRequests.length} clientes pendentes no IndexedDB`);
+          
+          // Processar clientes offline
+          offlineClients = pendingRequests
+            .map(item => {
+              try {
+                if (!item || !item.body) {
+                  console.error("[NewBudget] Requisição inválida no IndexedDB:", item);
+                  return null;
+                }
+                
+                // ID temporário negativo para evitar conflitos
+                const offlineId = typeof item.body.id === 'number' 
+                  ? item.body.id 
+                  : -(new Date(item.timestamp).getTime());
+                
+                // Adicionar (Offline) ao nome para identificação visual
+                let clientName = item.body.name || 'Cliente sem nome';
+                if (!clientName.includes('(Offline)')) {
+                  clientName = `${clientName} (Offline)`;
+                }
+                
+                const clientData = {
+                  ...item.body,
+                  id: offlineId,
+                  _isOffline: true,
+                  name: clientName
+                };
+                
+                console.log(`[NewBudget] Cliente offline processado:`, clientData);
+                return clientData;
+              } catch (e) {
+                console.error("[NewBudget] Erro ao processar cliente offline:", e);
+                return null;
+              }
+            })
+            .filter(Boolean);
+            
+          console.log(`[NewBudget] Processados ${offlineClients.length} clientes offline`);
+        } catch (offlineError) {
+          console.error("[NewBudget] Erro ao buscar clientes offline:", offlineError);
+        }
+        
+        // Certificar que temos arrays válidos
+        if (!Array.isArray(onlineClients)) onlineClients = [];
+        if (!Array.isArray(offlineClients)) offlineClients = [];
+        
+        // Combinar resultados
+        const combinedClients = [...onlineClients];
+        
+        // Adicionar clientes offline que não estão na lista online
+        offlineClients.forEach(offlineClient => {
+          if (!combinedClients.some(c => c.id === offlineClient.id)) {
+            combinedClients.push(offlineClient);
+          }
+        });
+        
+        console.log(`[NewBudget] Total de ${combinedClients.length} clientes disponíveis (${onlineClients.length} online + ${offlineClients.length} offline)`);
+        return combinedClients;
       } catch (error) {
-        console.error("Erro ao buscar clientes:", error);
-        // Se estiver offline, buscar do cache do indexedDB
-        if (!navigator.onLine) {
-          // Usar a funcionalidade do offlineDb - que será implementada pelo service worker
-          const offlineClients = await fetch('/api/clients?filterMode=active&enableOffline=true&offlineOnly=true');
-          return offlineClients.json();
+        console.error("[NewBudget] Erro geral ao carregar clientes:", error);
+        
+        // Se falhar completamente, tentar buscar apenas offline como última tentativa
+        try {
+          const { getPendingRequests } = await import('@/lib/offlineDb');
+          const offlineRequests = await getPendingRequests({
+            tableName: 'clients',
+            operationType: 'create'
+          });
+          
+          return offlineRequests
+            .map(item => ({
+              ...item.body,
+              id: typeof item.body.id === 'number' ? item.body.id : -(new Date(item.timestamp).getTime()),
+              _isOffline: true,
+              name: `${item.body.name || 'Cliente'} (Offline)`
+            }));
+        } catch (offlineError) {
+          console.error("[NewBudget] Falha completa:", offlineError);
+          return []; // Último recurso: array vazio
         }
-        throw error;
       }
     },
     retry: 1,

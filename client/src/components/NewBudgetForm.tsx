@@ -125,7 +125,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   
   // Buscar a lista de clientes do banco de dados - incluindo offline
   const { data: clients, isLoading: isLoadingClients, error: clientsError } = useQuery<any[]>({
-    queryKey: ['/api/clients', 'active'],
+    queryKey: ['/api/clients', 'active', { enableOffline: true, offlineTableName: 'clients' }],
     queryFn: async () => {
       try {
         // Importar o que precisamos
@@ -142,10 +142,12 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
         if (navigator.onLine) {
           try {
             // Buscar dados online usando getApi
-            onlineClients = await getApi<any[]>('/api/clients', {
-              enableOffline: true,
-              offlineTableName: 'clients'
-            });
+            // Usar o endpoint com parâmetro enableOffline para garantir suporte a offline
+            const response = await fetch('/api/clients?filterMode=active&enableOffline=true');
+            if (!response.ok) {
+              throw new Error('Erro ao carregar clientes do servidor');
+            }
+            onlineClients = await response.json();
             console.log(`[NewBudgetForm] ${onlineClients.length} clientes carregados do servidor`);
           } catch (onlineError) {
             console.error("[NewBudgetForm] Erro ao buscar clientes online:", onlineError);
@@ -166,16 +168,28 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
           offlineClients = pendingRequests
             .map(item => {
               try {
+                // Verificar se temos dados válidos
+                if (!item || !item.body) {
+                  console.error("[NewBudgetForm] Requisição inválida no IndexedDB:", item);
+                  return null;
+                }
+                
                 // ID temporário negativo para evitar conflitos
                 const offlineId = typeof item.body.id === 'number' 
                   ? item.body.id 
                   : -(new Date(item.timestamp).getTime());
                 
+                // Adicionar (Offline) ao nome para identificação visual
+                let clientName = item.body.name || 'Cliente sem nome';
+                if (!clientName.includes('(Offline)')) {
+                  clientName = `${clientName} (Offline)`;
+                }
+                
                 const clientData = {
                   ...item.body,
                   id: offlineId,
                   _isOffline: true,
-                  name: item.body.name ? `${item.body.name}${item.body._isOffline ? ' (Offline)' : ''}` : 'Cliente sem nome'
+                  name: clientName
                 };
                 
                 console.log(`[NewBudgetForm] Cliente offline processado:`, clientData);
@@ -187,6 +201,8 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
               }
             })
             .filter(Boolean);
+            
+          console.log(`[NewBudgetForm] Processados ${offlineClients.length} clientes offline`);
         } catch (offlineError) {
           console.error("[NewBudgetForm] Erro ao buscar clientes offline:", offlineError);
         }
@@ -206,12 +222,35 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
         });
         
         console.log(`[NewBudgetForm] Total de ${combinedClients.length} clientes carregados (${onlineClients.length} online + ${offlineClients.length} offline)`);
+        console.log("[NewBudgetForm] Lista final de clientes:", combinedClients);
         
         // Retornar a lista combinada
         return combinedClients;
       } catch (error) {
         console.error("[NewBudgetForm] Erro geral ao carregar clientes:", error);
-        return []; // Último recurso: array vazio
+        
+        // Em caso de falha total, tentar buscar apenas clientes offline
+        try {
+          const { getPendingRequests } = await import('@/lib/offlineDb');
+          const offlineRequests = await getPendingRequests({
+            tableName: 'clients',
+            operationType: 'create'
+          });
+          
+          const fallbackClients = offlineRequests
+            .map(item => ({
+              ...item.body,
+              id: typeof item.body.id === 'number' ? item.body.id : -(new Date(item.timestamp).getTime()),
+              _isOffline: true,
+              name: `${item.body.name || 'Cliente'} (Offline)`
+            }));
+            
+          console.log("[NewBudgetForm] Clientes offline de fallback:", fallbackClients);
+          return fallbackClients;
+        } catch (offlineError) {
+          console.error("[NewBudgetForm] Falha no fallback offline:", offlineError);
+          return []; // Último recurso: array vazio
+        }
       }
     },
     retry: 1, // Reduzir para 1 para evitar múltiplas tentativas se falhar
