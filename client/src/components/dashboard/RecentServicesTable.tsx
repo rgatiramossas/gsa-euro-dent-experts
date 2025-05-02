@@ -17,7 +17,7 @@ interface RecentServicesTableProps {
   isLoading?: boolean;
 }
 
-export function RecentServicesTable({ services, isLoading = false }: RecentServicesTableProps) {
+export function RecentServicesTable({ services = [], isLoading = false }: RecentServicesTableProps) {
   const { t } = useTranslation();
   if (isLoading) {
     return (
