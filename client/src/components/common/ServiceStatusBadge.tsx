@@ -15,7 +15,8 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
   // Função para garantir que recebemos uma string traduzida
   const getTranslatedStatus = (status: ServiceStatus): string => {
     // Mapeamento direto de status para valores de tradução específicos para cada idioma
-    // para evitar o problema de "key returned an object instead of string"
+    // Isso evita o problema de "key returned an object instead of string"
+    // Usamos "services.status.KEY" para garantir que estamos acessando a chave correta
     if (i18n.language === 'de') {
       const germanStatusMap: Record<ServiceStatus, string> = {
         "pending": "Ausstehend",

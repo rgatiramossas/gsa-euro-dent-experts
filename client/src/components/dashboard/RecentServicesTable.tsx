@@ -32,7 +32,7 @@ export function RecentServicesTable({ services, isLoading = false }: RecentServi
                 <TableHead>{t("services.client")}</TableHead>
                 <TableHead>{t("services.vehicle")}</TableHead>
                 <TableHead>{t("services.technician")}</TableHead>
-                <TableHead>{t("services.status")}</TableHead>
+                <TableHead>{t("services.statusLabel", "Status")}</TableHead>
                 <TableHead>{t("services.scheduledDate")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -68,7 +68,7 @@ export function RecentServicesTable({ services, isLoading = false }: RecentServi
               <TableHead>{t("services.client")}</TableHead>
               <TableHead>{t("services.vehicle")}</TableHead>
               <TableHead>{t("services.technician")}</TableHead>
-              <TableHead>{t("services.status")}</TableHead>
+              <TableHead>{t("services.statusLabel", "Status")}</TableHead>
               <TableHead>{t("services.scheduledDate")}</TableHead>
             </TableRow>
           </TableHeader>

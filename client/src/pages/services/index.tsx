@@ -261,11 +261,11 @@ export default function ServicesList() {
                       </>
                     ) : (
                       <>
-                        <SelectItem value="pending">{t("services.status.pending")}</SelectItem>
-                        <SelectItem value="completed">{t("services.status.completed")}</SelectItem>
-                        <SelectItem value="aguardando_aprovacao">{t("services.status.aguardando_aprovacao")}</SelectItem>
-                        <SelectItem value="faturado">{t("services.status.faturado")}</SelectItem>
-                        <SelectItem value="pago">{t("services.status.pago")}</SelectItem>
+                        <SelectItem value="pending">{t("services.status.pending", "Pendente")}</SelectItem>
+                        <SelectItem value="completed">{t("services.status.completed", "Concluído")}</SelectItem>
+                        <SelectItem value="aguardando_aprovacao">{t("services.status.aguardando_aprovacao", "Aguardando Aprovação")}</SelectItem>
+                        <SelectItem value="faturado">{t("services.status.faturado", "Faturado")}</SelectItem>
+                        <SelectItem value="pago">{t("services.status.pago", "Pago")}</SelectItem>
                       </>
                     )}
                   </SelectGroup>
