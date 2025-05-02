@@ -140,7 +140,8 @@ export default function NewServicePage() {
         if (!navigator.onLine) {
           try {
             // Recupera clientes salvos no IndexedDB
-            const offlineClientsData = await offlineDb.getPendingRequests({
+            const { getPendingRequests } = await import('@/lib/offlineDb');
+            const offlineClientsData = await getPendingRequests({
               tableName: 'clients',
               operationType: 'create'
             });
@@ -192,7 +193,8 @@ export default function NewServicePage() {
         
         // Quando falha a API, tenta buscar do IndexedDB diretamente
         try {
-          const offlineClientRequests = await offlineDb.getPendingRequests({
+          const { getPendingRequests } = await import('@/lib/offlineDb');
+          const offlineClientRequests = await getPendingRequests({
             tableName: 'clients',
             operationType: 'create'
           });

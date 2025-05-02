@@ -130,7 +130,8 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
         if (!navigator.onLine) {
           try {
             // Recupera clientes salvos no IndexedDB
-            const offlineClientsData = await offlineDb.getPendingRequests({
+            const { getPendingRequests } = offlineDb;
+            const offlineClientsData = await getPendingRequests({
               tableName: 'clients',
               operationType: 'create'
             });
@@ -184,8 +185,8 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
         
         // Quando falha a API, tenta buscar do IndexedDB diretamente
         try {
-          const offlineDb = await import('@/lib/offlineDb');
-          const offlineClientRequests = await offlineDb.getPendingRequests({
+          const { getPendingRequests } = await import('@/lib/offlineDb');
+          const offlineClientRequests = await getPendingRequests({
             tableName: 'clients',
             operationType: 'create'
           });

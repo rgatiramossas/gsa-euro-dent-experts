@@ -687,4 +687,15 @@ offlineDb.initSyncStatus().catch(error => {
   console.error('Erro ao inicializar status de sincronização:', error);
 });
 
+// Exportar função para recuperar requisições pendentes
+export const getPendingRequests = async ({
+  tableName,
+  operationType
+}: {
+  tableName?: string,
+  operationType?: 'create' | 'update' | 'delete'
+} = {}): Promise<PendingRequest[]> => {
+  return await offlineDb.getPendingRequests({ tableName, operationType });
+};
+
 export default offlineDb;
