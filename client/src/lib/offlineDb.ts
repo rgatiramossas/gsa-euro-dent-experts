@@ -822,8 +822,8 @@ export const getPendingRequests = async ({
   return await offlineDb.getPendingRequests({ tableName, operationType });
 };
 
-// Função para buscar todos os registros de uma tabela
-export const getAllFromTable = async (tableName: string): Promise<any[]> => {
+// Função interna para buscar todos os registros de uma tabela
+async function _getAllFromTable(tableName: string): Promise<any[]> {
   try {
     const table = offlineDb.getTableByName(tableName);
     
@@ -841,6 +841,11 @@ export const getAllFromTable = async (tableName: string): Promise<any[]> => {
     console.error(`[offlineDb] Erro ao buscar registros da tabela ${tableName}:`, error);
     return [];
   }
+}
+
+// Função exportada para buscar todos os registros de uma tabela
+export const getAllFromTable = async (tableName: string): Promise<any[]> => {
+  return await _getAllFromTable(tableName);
 };
 
 export default offlineDb;

@@ -99,6 +99,10 @@ interface Vehicle {
   client_id: number;
   make: string;
   model: string;
+  // Propriedades para controle offline
+  _isOffline?: boolean;
+  _pendingSync?: boolean;
+  _fromStorage?: boolean;
 }
 
 interface ServiceType {
@@ -283,27 +287,36 @@ export default function NewServicePage() {
           console.log("Veículos pendentes (filtrados):", pendingVehicles.length);
           
           // 3. Buscar registros diretamente da tabela offline
+          // Cria uma promessa que busca os veículos com tratamento de erros
           try {
+            console.log("Buscando veículos salvos na tabela offline...");
+            // Usar a função interna _getAllFromTable que evita o loop infinito
             const storedVehicles = await getAllFromTable('vehicles') || [];
-            console.log("Veículos na tabela offline:", storedVehicles.length);
+            console.log(`Veículos na tabela offline: ${storedVehicles.length}`);
             
-            // Filtrar apenas os deste cliente
-            const filteredStoredVehicles = storedVehicles
-              .filter(v => Number(v.client_id) === Number(selectedClientId))
-              .map(v => ({
-                ...v,
-                _isOffline: true,
-                _fromStorage: true
-              }));
-            
-            console.log("Veículos armazenados (filtrados):", filteredStoredVehicles.length);
-            
-            // Adicionar veículos armazenados apenas se não estiverem nos pendentes
-            filteredStoredVehicles.forEach(storedVehicle => {
-              if (!pendingVehicles.some(v => v.id === storedVehicle.id)) {
-                pendingVehicles.push(storedVehicle);
-              }
-            });
+            if (storedVehicles && storedVehicles.length > 0) {
+              // Filtrar apenas os deste cliente
+              const filteredStoredVehicles = storedVehicles
+                .filter(v => {
+                  // Verificação segura dos tipos (aceita string e número)
+                  const vClientId = typeof v.client_id === 'string' ? parseInt(v.client_id) : v.client_id;
+                  return vClientId === Number(selectedClientId);
+                })
+                .map(v => ({
+                  ...v,
+                  _isOffline: true,
+                  _fromStorage: true
+                }));
+              
+              console.log(`Veículos armazenados (filtrados): ${filteredStoredVehicles.length}`);
+              
+              // Adicionar veículos armazenados com segurança
+              filteredStoredVehicles.forEach(storedVehicle => {
+                if (!pendingVehicles.some(v => v.id === storedVehicle.id)) {
+                  pendingVehicles.push(storedVehicle);
+                }
+              });
+            }
           } catch (storageError) {
             console.error("Erro ao buscar veículos do armazenamento:", storageError);
           }
