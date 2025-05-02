@@ -118,6 +118,35 @@ class OfflineDatabase extends Dexie {
     return requestId;
   }
   
+  // Obter requisições pendentes com filtros opcionais
+  async getPendingRequests({
+    tableName,
+    operationType
+  }: {
+    tableName?: string,
+    operationType?: 'create' | 'update' | 'delete'
+  } = {}): Promise<PendingRequest[]> {
+    try {
+      let collection = this.pendingRequests.toCollection();
+      
+      // Aplicar filtros se fornecidos
+      if (tableName) {
+        collection = collection.filter(req => req.tableName === tableName);
+      }
+      
+      if (operationType) {
+        collection = collection.filter(req => req.operationType === operationType);
+      }
+      
+      // Obter resultados
+      const requests = await collection.toArray();
+      return requests;
+    } catch (error) {
+      console.error('Erro ao buscar requisições pendentes:', error);
+      return [];
+    }
+  }
+  
   // Sincronizar dados com o servidor quando estiver online
   async syncWithServer() {
     if (!checkNetworkStatus()) {

@@ -130,13 +130,84 @@ export default function NewServicePage() {
     queryKey: ['/api/clients'],
     queryFn: async () => {
       try {
-        return await getApi<Client[]>('/api/clients', {
+        // Primeiro tenta carregar os clientes do servidor
+        let clientsData = await getApi<Client[]>('/api/clients', {
           enableOffline: true,
           offlineTableName: 'clients'
         });
+        
+        // Se não estiver online, também busca os dados offline para garantir que temos todos
+        if (!navigator.onLine) {
+          try {
+            // Recupera clientes salvos no IndexedDB
+            const offlineClientsData = await offlineDb.getPendingRequests({
+              tableName: 'clients',
+              operationType: 'create'
+            });
+            
+            // Extrair apenas os clientes do objeto body
+            const offlineClients = offlineClientsData.map(item => {
+              try {
+                // ID temporário negativo para evitar conflitos
+                const offlineId = typeof item.body.id === 'number' 
+                  ? item.body.id 
+                  : -(new Date(item.timestamp).getTime());
+                
+                return {
+                  ...item.body,
+                  id: offlineId,
+                  _isOffline: true
+                };
+              } catch (e) {
+                console.error("Erro ao processar cliente offline:", e);
+                return null;
+              }
+            }).filter(Boolean);
+            
+            // Certifica-se de que clientsData é um array
+            if (!Array.isArray(clientsData)) {
+              clientsData = [];
+            }
+            
+            // Combina os resultados do servidor com os do IndexedDB
+            const allClients = [...clientsData];
+            
+            // Adiciona apenas clientes que não estão já na lista (pelos IDs)
+            offlineClients.forEach(offlineClient => {
+              if (!allClients.some(c => c.id === offlineClient.id)) {
+                allClients.push(offlineClient);
+              }
+            });
+            
+            return allClients;
+          } catch (offlineError) {
+            console.error("Erro ao buscar clientes offline:", offlineError);
+            return clientsData || [];
+          }
+        }
+        
+        return clientsData;
       } catch (error) {
         console.error("Erro ao carregar clientes:", error);
-        return []; // Retornar array vazio em caso de erro para evitar quebra da UI
+        
+        // Quando falha a API, tenta buscar do IndexedDB diretamente
+        try {
+          const offlineClientRequests = await offlineDb.getPendingRequests({
+            tableName: 'clients',
+            operationType: 'create'
+          });
+          
+          const offlineClients = offlineClientRequests.map(item => ({
+            ...item.body,
+            id: -(new Date(item.timestamp).getTime()),
+            _isOffline: true
+          }));
+          
+          return offlineClients;
+        } catch (offlineError) {
+          console.error("Erro completo (online e offline):", offlineError);
+          return []; // Último recurso: array vazio
+        }
       }
     }
   });
