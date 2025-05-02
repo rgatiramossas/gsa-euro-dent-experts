@@ -50,6 +50,8 @@ import Finances from "@/pages/finances";
 import Settings from "@/pages/settings";
 import Configuracoes from "@/pages/configuracoes";
 import Eventos from "@/pages/eventos";
+// Import test page
+import TestPage from "@/pages/teste";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -323,6 +325,17 @@ function AppRoutes() {
           <MainLayout>
             <Configuracoes />
           </MainLayout>
+        </RequireAuth>
+      </Route>
+      
+      {/* Test page - acessível apenas para administradores */}
+      <Route path="/teste">
+        <RequireAuth>
+          <RequireAdmin>
+            <MainLayout>
+              <TestPage />
+            </MainLayout>
+          </RequireAdmin>
         </RequireAuth>
       </Route>
       
