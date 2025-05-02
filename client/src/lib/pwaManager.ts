@@ -13,8 +13,44 @@ export const registerServiceWorker = async () => {
   }
 
   try {
+    // Forçar atualização do Service Worker para garantir a versão mais recente
+    if (navigator.serviceWorker.controller) {
+      console.log('Service Worker já ativo, forçando atualização...');
+      await navigator.serviceWorker.getRegistration().then(reg => reg?.update());
+    }
+    
     const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     console.log('Service Worker registrado com sucesso');
+
+    // Forçar cache das imagens de logo para modo offline
+    const cacheImages = async () => {
+      // Esta é uma solução adicional para garantir que as imagens sejam cacheadas
+      // além do cache inicial definido no Service Worker
+      try {
+        const cache = await caches.open('eurodent-cache-v3');
+        const imagesToCache = [
+          '/eurodent-logo.png',
+          '/images/logo.png'
+        ];
+        
+        await Promise.all(
+          imagesToCache.map(url => 
+            fetch(url).then(response => {
+              if (response.ok) {
+                return cache.put(url, response);
+              }
+              throw new Error(`Falha ao buscar imagem: ${url}`);
+            })
+          )
+        );
+        console.log('Imagens de logo cacheadas com sucesso para modo offline');
+      } catch (error) {
+        console.error('Erro ao cachear imagens:', error);
+      }
+    };
+    
+    // Executar o cache de imagens quando registrar o service worker
+    cacheImages();
 
     // Configurar atualização automática quando houver nova versão
     registration.addEventListener('updatefound', () => {
@@ -241,10 +277,28 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
   }
 };
 
+// Função para solicitar o cacheamento de imagens específicas
+export const requestImageCaching = () => {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    console.log("Solicitando o precacheamento de imagens importantes");
+    navigator.serviceWorker.controller.postMessage({
+      type: 'PRECACHE_IMAGES'
+    });
+    return true;
+  }
+  return false;
+};
+
 // Inicializar PWA
 export const initPWA = () => {
   // Registrar o service worker
-  registerServiceWorker();
+  registerServiceWorker().then(() => {
+    // Quando o Service Worker estiver registrado, solicitar precacheamento de imagens
+    // Pequeno delay para garantir que o Service Worker esteja pronto
+    setTimeout(() => {
+      requestImageCaching();
+    }, 2000);
+  });
   
   // Configurar listener para mensagens do service worker
   navigator.serviceWorker.addEventListener('message', processServiceWorkerMessage);
@@ -254,6 +308,8 @@ export const initPWA = () => {
     console.log('Conexão restabelecida, iniciando sincronização automática');
     // Inicia sincronização silenciosa quando a conexão volta
     checkNetworkStatus();
+    // Quando a conexão voltar, solicitar precacheamento de imagens novamente
+    requestImageCaching();
   });
   window.addEventListener('offline', checkNetworkStatus);
   

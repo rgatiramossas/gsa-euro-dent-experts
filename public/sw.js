@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eurodent-cache-v2';
+const CACHE_NAME = 'eurodent-cache-v3';
 const SYNC_TIMEOUT = 30000; // 30 segundos para timeout de sincronização
 
 // Recursos para cache inicial
@@ -6,7 +6,9 @@ const INITIAL_CACHED_RESOURCES = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icons/icon-512x512.svg'
+  '/icons/icon-512x512.svg',
+  '/eurodent-logo.png',
+  '/images/logo.png'
 ];
 
 // Evento de instalação
@@ -355,6 +357,46 @@ self.addEventListener('offline', () => {
 // Inicializar estado global para o modo de manutenção de sessão
 self._authSessionMaintenanceMode = false;
 
+// Função para precarregar e atualizar o cache de imagens importantes
+async function precacheImportantImages() {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    
+    // Lista de imagens importantes para funcionamento offline
+    const importantImages = [
+      '/eurodent-logo.png',
+      '/images/logo.png'
+    ];
+    
+    console.log('[SW] Precarregando imagens importantes...');
+    
+    // Usando Promise.all para paralelizar os fetchs
+    await Promise.all(
+      importantImages.map(async imageUrl => {
+        try {
+          // Tentar buscar da rede primeiro
+          const response = await fetch(imageUrl, { cache: 'no-cache' });
+          if (response.ok) {
+            await cache.put(imageUrl, response.clone());
+            console.log(`[SW] Imagem cacheada com sucesso: ${imageUrl}`);
+          } else {
+            console.warn(`[SW] Falha ao buscar imagem da rede: ${imageUrl}`);
+          }
+        } catch (error) {
+          console.warn(`[SW] Erro ao cachear imagem ${imageUrl}:`, error);
+        }
+      })
+    );
+    
+    console.log('[SW] Precarregamento de imagens concluído');
+  } catch (error) {
+    console.error('[SW] Erro ao precachear imagens:', error);
+  }
+}
+
+// Executar o precache durante a instalação e também mediante solicitação
+precacheImportantImages();
+
 // Responder a mensagens do cliente
 self.addEventListener('message', (event) => {
   if (!event.data) return;
@@ -376,6 +418,12 @@ self.addEventListener('message', (event) => {
         type: 'sync-status',
         online: navigator.onLine
       });
+      break;
+      
+    case 'PRECACHE_IMAGES':
+      // Solicitação manual para precarregar imagens
+      console.log('[SW] Recebida solicitação para precarregar imagens');
+      event.waitUntil(precacheImportantImages());
       break;
       
     case 'ENABLE_AUTH_SESSION_MAINTENANCE':
