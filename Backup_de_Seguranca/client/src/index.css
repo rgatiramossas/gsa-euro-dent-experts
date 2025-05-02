@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 10%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --primary: 0 85% 35%; /* Euro Dent Experts Red */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 20%; /* Dark gray/black */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 0 85% 45%; /* Lighter red */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 85% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 0 85% 35%;
+  --radius: 0.5rem;
+  
+  /* Custom colors */
+  --success: 145 63% 40%;
+  --warning: 35 93% 52%;
+  --error: 0 85% 60%;
+  
+  /* Chart colors */
+  --chart-1: 0 85% 35%; /* Red */
+  --chart-2: 0 0% 20%; /* Black */
+  --chart-3: 0 0% 80%; /* Light gray */
+  --chart-4: 0 60% 50%; /* Medium red */
+  --chart-5: 0 0% 60%; /* Medium gray */
+  
+  /* Sidebar colors */
+  --sidebar-background: 0 0% 15%; /* Dark gray/black */
+  --sidebar-foreground: 0 0% 100%; /* White */
+  --sidebar-primary: 0 85% 35%; /* Red */
+  --sidebar-primary-foreground: 0 0% 100%; /* White */
+  --sidebar-accent: 0 85% 50%; /* Lighter red */
+  --sidebar-accent-foreground: 0 0% 100%; /* White */
+  --sidebar-border: 0 0% 20%; /* Darker gray */
+  --sidebar-ring: 0 85% 35%; /* Red */
+  
+  /* Offline mode colors */
+  --offline-indicator-bg: 35 93% 52%; /* Warning */
+  --offline-indicator-text: 0 0% 10%; /* Dark text */
+}
+
+.dark {
+  --background: 0 0% 10%;
+  --foreground: 0 0% 98%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 98%;
+  --card: 0 0% 13%;
+  --card-foreground: 0 0% 98%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --primary: 0 85% 45%; /* Brighter red for dark mode */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 25%; /* Dark gray */
+  --secondary-foreground: 0 0% 100%;
+  --accent: 0 85% 55%; /* Lighter red */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 85% 65%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 0 85% 45%;
+  --radius: 0.5rem;
+  
+  /* Custom colors - dark mode adjustments */
+  --success: 145 63% 35%;
+  --warning: 35 93% 50%;
+  --error: 0 85% 55%;
+  
+  /* Chart colors - dark mode */
+  --chart-1: 0 85% 50%; /* Brighter red */
+  --chart-2: 0 0% 80%; /* Light gray */
+  --chart-3: 0 0% 40%; /* Medium gray */
+  --chart-4: 0 60% 60%; /* Medium-bright red */
+  --chart-5: 0 0% 60%; /* Medium gray */
+  
+  /* Sidebar colors - dark mode */
+  --sidebar-background: 0 0% 5%; /* Very dark gray/black */
+  --sidebar-foreground: 0 0% 100%; /* White */
+  --sidebar-primary: 0 85% 45%; /* Red */
+  --sidebar-primary-foreground: 0 0% 100%; /* White */
+  --sidebar-accent: 0 85% 55%; /* Lighter red */
+  --sidebar-accent-foreground: 0 0% 100%; /* White */
+  --sidebar-border: 0 0% 15%; /* Very dark gray */
+  --sidebar-ring: 0 85% 45%; /* Red */
+  
+  /* Offline mode colors - dark mode */
+  --offline-indicator-bg: 35 93% 40%; /* Darker warning */
+  --offline-indicator-text: 0 0% 100%; /* Light text */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+.bg-success {
+  background-color: hsl(var(--success));
+}
+
+.text-success {
+  color: hsl(var(--success));
+}
+
+.bg-warning {
+  background-color: hsl(var(--warning));
+}
+
+.text-warning {
+  color: hsl(var(--warning));
+}
+
+.bg-error {
+  background-color: hsl(var(--error));
+}
+
+.text-error {
+  color: hsl(var(--error));
+}
+
+/* Remove spinners (setas) from number inputs */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Offline mode styles - removidos a pedido do cliente */
+
+/* Offline indicator for cards - removidos a pedido do cliente */

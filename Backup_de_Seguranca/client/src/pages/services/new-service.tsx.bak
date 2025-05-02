@@ -1,0 +1,1048 @@
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { apiRequest } from "@/lib/queryClient";
+import { getApi, postApi } from "@/lib/apiWrapper";
+import { checkNetworkStatus } from "@/lib/pwaManager";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { PageHeader } from "@/components/common/PageHeader";
+import { Button } from "@/components/ui/button";
+import { 
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { 
+  Card, 
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import { LocationSelector } from "@/components/common/LocationSelector";
+import { PhotoUpload } from "@/components/common/PhotoUpload";
+import { Client, ServiceType, User, Vehicle } from "@/types";
+import { insertServiceSchema } from "@shared/schema.mysql";
+
+// Extend the schema with more validations
+const formSchema = insertServiceSchema.extend({
+  client_id: z.number({
+    required_error: "O cliente é obrigatório"
+  }),
+  vehicle_id: z.number({
+    required_error: "O veículo é obrigatório"
+  }),
+  service_type_id: z.number({
+    required_error: "O tipo de serviço é obrigatório"
+  }),
+  location_type: z.enum(["client_location", "workshop"], {
+    required_error: "A localização é obrigatória"
+  }),
+  scheduled_date: z.date({
+    required_error: "A data é obrigatória"
+  }).or(z.string()),  // Permitir tanto Date quanto string
+  scheduled_time: z.string().optional(),
+  status: z.string().default("pending"),
+  price: z.number().optional().nullable(),
+  administrative_fee: z.number().optional().nullable().default(0),
+  // Campo para upload de fotos (apenas para o formulário, não é enviado diretamente)
+  photos: z.any().optional(), // z.any() para permitir FileList
+  // Garantir que campos opcionais não causem problemas
+  address: z.string().optional().nullable(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
+  description: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+export default function NewService() {
+  const [_, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const [photos, setPhotos] = useState<FileList | null>(null);
+  // Estado para acompanhar operações offline
+  const [pendingOperations, setPendingOperations] = useState<string[]>([]);
+  
+  // Queries
+  const { data: clients } = useQuery<Client[]>({
+    queryKey: ['/api/clients'],
+    queryFn: async () => {
+      try {
+        // Usar o getApi com suporte a PWA para carregar clientes
+        return await getApi<Client[]>('/api/clients?filterMode=active', {
+          enableOffline: true,
+          offlineTableName: 'clients'
+        });
+      } catch (error) {
+        console.error("Erro ao carregar clientes:", error);
+        throw new Error('Erro ao carregar clientes');
+      }
+    }
+  });
+  
+  const { data: vehicles } = useQuery<Vehicle[]>({
+    queryKey: [selectedClientId ? `/api/clients/${selectedClientId}/vehicles` : null],
+    enabled: !!selectedClientId,
+    queryFn: async ({ queryKey }) => {
+      const url = queryKey[0];
+      if (!url) return [];
+      
+      try {
+        // Usar o getApi com suporte a PWA em vez do fetch diretamente
+        return await getApi<Vehicle[]>(url as string, {
+          enableOffline: true,
+          offlineTableName: 'vehicles'
+        });
+      } catch (error) {
+        console.error("Erro ao carregar veículos:", error);
+        return []; // Retornar array vazio em caso de erro para evitar quebra da UI
+      }
+    }
+  });
+  
+  const { data: serviceTypes } = useQuery<ServiceType[]>({
+    queryKey: ['/api/service-types'],
+    queryFn: async () => {
+      try {
+        return await getApi<ServiceType[]>('/api/service-types', {
+          enableOffline: true,
+          offlineTableName: 'serviceTypes'
+        });
+      } catch (error) {
+        console.error("Erro ao carregar tipos de serviço:", error);
+        return [];
+      }
+    }
+  });
+  
+  const { data: technicians } = useQuery<User[]>({
+    queryKey: ['/api/users?role=technician'],
+    queryFn: async () => {
+      try {
+        return await getApi<User[]>('/api/users?role=technician', {
+          enableOffline: true,
+          offlineTableName: 'users'
+        });
+      } catch (error) {
+        console.error("Erro ao carregar técnicos:", error);
+        return [];
+      }
+    }
+  });
+
+  // Form definition
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      client_id: undefined,
+      vehicle_id: undefined,
+      service_type_id: undefined,
+      technician_id: undefined,
+      status: "pending",
+      description: "",
+      location_type: "client_location",
+      price: 0,
+      administrative_fee: 0,
+      // photos removido
+      address: "",
+      latitude: null,
+      longitude: null,
+      notes: "",
+    },
+  });
+  
+  // Auto-fill technician based on logged in user (if technician)
+  useEffect(() => {
+    if (user && technicians) {
+      if (user.role === 'technician') {
+        // Auto-assign the current user as technician
+        form.setValue('technician_id', user.id);
+      }
+    }
+  }, [user, technicians, form]);
+  
+  // Create service mutation
+  const createServiceMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      try {
+        // Format the datetime properly
+        let formattedData = { ...data };
+        
+        // Tratamento especial para a data agendada
+        if (formattedData.scheduled_date) {
+          try {
+            let dateToUse: Date;
+            
+            // Se já for string, converte para Date para manipular
+            if (typeof formattedData.scheduled_date === 'string') {
+              try {
+                dateToUse = new Date(formattedData.scheduled_date);
+              } catch (e) {
+                // Se não conseguir converter a string, usa a data atual
+                console.error("Erro ao converter string de data:", e);
+                dateToUse = new Date();
+              }
+            } 
+            // Se já for Date, usa diretamente
+            else if (formattedData.scheduled_date instanceof Date) {
+              dateToUse = formattedData.scheduled_date;
+            }
+            // Caso não seja nem string nem Date, usa a data atual
+            else {
+              dateToUse = new Date();
+            }
+            
+            // Define meio-dia como horário padrão
+            dateToUse.setHours(12, 0, 0, 0);
+            
+            // Se tiver horário específico, ajusta
+            if (data.scheduled_time) {
+              const [hours, minutes] = data.scheduled_time.split(':');
+              dateToUse.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            }
+            
+            // Converte para ISO string para enviar ao servidor
+            formattedData.scheduled_date = dateToUse.toISOString();
+            
+            console.log("Data formatada:", formattedData.scheduled_date);
+          } catch (error) {
+            console.error("Erro ao processar data:", error);
+            // Em caso de erro fatal, usa a data atual
+            formattedData.scheduled_date = new Date().toISOString();
+          }
+        } else {
+          // Se não tiver data, usa a data atual
+          formattedData.scheduled_date = new Date().toISOString();
+        }
+        
+        // Calculate total
+        const price = formattedData.price !== undefined && formattedData.price !== null 
+          ? formattedData.price 
+          : 0;
+        
+        const administrativeFee = formattedData.administrative_fee !== undefined && formattedData.administrative_fee !== null 
+          ? formattedData.administrative_fee 
+          : 0;
+        
+        formattedData.total = price + administrativeFee;
+        
+        // Remover parâmetros desnecessários dos dados
+        const { scheduled_time, photos, ...serviceData } = formattedData;
+        
+        // Log de depuração
+        console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
+        
+        // Verificar status da rede antes de iniciar
+        const isOnline = checkNetworkStatus();
+        console.log("Status da rede:", isOnline ? "Online" : "Offline");
+        
+        // 1. Criar serviço usando o apiWrapper para suporte offline
+        const createdService = await postApi<any>('/api/services', serviceData, {
+          enableOffline: true,
+          offlineTableName: 'services'
+        });
+        console.log("Resposta do servidor ou cache local:", createdService);
+        
+        // Se estiver no modo offline, retornar imediatamente para evitar o loop
+        if (!isOnline) {
+          console.log("Modo offline: serviço criado localmente, saltando o upload de fotos");
+          return { ...createdService, _offline: true };
+        }
+        
+        // Processar upload de fotos se houver fotos e APENAS se estivermos online
+        if (isOnline && photos && photos.length > 0) {
+          try {
+            const serviceId = createdService.id;
+            
+            // Criar FormData para upload das fotos
+            const formData = new FormData();
+            
+            // Foto sem classificação específica
+            formData.append('photo_type', 'service');
+            
+            // Adicionar cada foto ao FormData
+            for (let i = 0; i < photos.length; i++) {
+              formData.append('photos', photos[i]);
+            }
+            
+            console.log("Enviando fotos para o serviço:", serviceId);
+            
+            // Upload de fotos - apenas quando online
+            const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
+              method: 'POST',
+              body: formData,
+              credentials: 'include',
+            });
+            
+            if (!uploadRes.ok) {
+              console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
+              console.warn("Prosseguindo apesar do erro no upload de fotos");
+            } else {
+              const uploadData = await uploadRes.json();
+              console.log("Resposta do upload:", uploadData);
+            }
+          } catch (photoError) {
+            console.error("Erro ao processar fotos:", photoError);
+            // Não lança erro para não impedir a criação do serviço
+          }
+        } else {
+          console.log("Nenhuma foto selecionada para upload ou modo offline");
+        }
+        
+        return createdService;
+        
+      } catch (error: any) {
+        // Tentar obter os detalhes do erro
+        console.error("Detalhes do erro:", error);
+        if (error.response) {
+          try {
+            const errorData = await error.response.json();
+            console.error("Erro detalhado da API:", errorData);
+          } catch (e) {
+            console.error("Não foi possível ler o corpo da resposta de erro");
+          }
+        }
+        
+        // ⚠️ IMPORTANTE: Garantir que o erro seja sempre propagado para o handler onError
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      // Verificar se estamos offline e o serviço foi salvo localmente
+      const isOfflineData = data && data._offline === true;
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      
+      toast({
+        title: "Serviço criado",
+        description: isOfflineData 
+          ? "O serviço foi salvo localmente e será sincronizado quando houver conexão" 
+          : "O serviço foi criado com sucesso",
+      });
+      
+      // Redirecionar para a lista de serviços
+      setLocation('/services');
+    },
+    onError: (error) => {
+      console.error('Error creating service:', error);
+      toast({
+        title: "Erro ao criar serviço",
+        description: "Ocorreu um erro ao criar o serviço. Verifique os dados e tente novamente.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Listener para mensagens do Service Worker (especialmente para operações offline)
+  useEffect(() => {
+    // Função de callback para tratar mensagens do Service Worker
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+      
+      console.log('Mensagem recebida do service worker:', data.type);
+      
+      // Quando uma operação é iniciada no modo offline (pré-armazenamento)
+      if (data.type === 'offline-operation-started') {
+        console.log('Operação offline iniciada com ID temporário:', data.tempId);
+        
+        // Verificar se há alguma operação em andamento antes de intervir
+        const isMutationPending = document.querySelector('button[type="submit"]:disabled');
+        if (isMutationPending) {
+          // Mostrar notificação para o usuário
+          toast({
+            title: "Operação em modo offline",
+            description: "O formulário foi salvo localmente e será sincronizado quando houver conexão com a internet.",
+          });
+          
+          // Adicionar ID da operação à lista de operações pendentes
+          setPendingOperations(prev => [...prev, data.tempId]);
+          
+          // Redirecionar para a lista de serviços após um breve intervalo
+          setTimeout(() => {
+            setLocation('/services');
+          }, 500);
+        }
+      }
+      
+      // Quando uma operação é enfileirada (confirmação de armazenamento)
+      if (data.type === 'operation-queued') {
+        console.log('Operação offline armazenada com sucesso:', data.tempId);
+      }
+      
+      // Quando uma sincronização é concluída
+      if (data.type === 'operation-synced') {
+        console.log('Operação sincronizada com o servidor:', data);
+        
+        // Remover da lista de operações pendentes
+        setPendingOperations(prev => 
+          prev.filter(id => id !== data.tempId)
+        );
+        
+        // Invalidar caches para atualizar listas
+        queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      }
+    };
+    
+    // Registrar o listener
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    }
+    
+    // Limpeza ao desmontar o componente
+    return () => {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      }
+    };
+  }, [queryClient, toast, setLocation]);
+  
+  const onSubmit = (data: FormData) => {
+    mutationFn: async (data: FormData) => {
+      try {
+        // Format the datetime properly
+        let formattedData = { ...data };
+        
+        // Tratamento especial para a data agendada
+        if (formattedData.scheduled_date) {
+          try {
+            let dateToUse: Date;
+            
+            // Se já for string, converte para Date para manipular
+            if (typeof formattedData.scheduled_date === 'string') {
+              try {
+                dateToUse = new Date(formattedData.scheduled_date);
+              } catch (e) {
+                // Se não conseguir converter a string, usa a data atual
+                console.error("Erro ao converter string de data:", e);
+                dateToUse = new Date();
+              }
+            } 
+            // Se já for Date, usa diretamente
+            else if (formattedData.scheduled_date instanceof Date) {
+              dateToUse = formattedData.scheduled_date;
+            }
+            // Caso não seja nem string nem Date, usa a data atual
+            else {
+              dateToUse = new Date();
+            }
+            
+            // Define meio-dia como horário padrão
+            dateToUse.setHours(12, 0, 0, 0);
+            
+            // Se tiver horário específico, ajusta
+            if (data.scheduled_time) {
+              const [hours, minutes] = data.scheduled_time.split(':');
+              dateToUse.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            }
+            
+            // Converte para ISO string para enviar ao servidor
+            formattedData.scheduled_date = dateToUse.toISOString();
+            
+            console.log("Data formatada:", formattedData.scheduled_date);
+          } catch (error) {
+            console.error("Erro ao processar data:", error);
+            // Em caso de erro fatal, usa a data atual
+            formattedData.scheduled_date = new Date().toISOString();
+          }
+        } else {
+          // Se não tiver data, usa a data atual
+          formattedData.scheduled_date = new Date().toISOString();
+        }
+        
+        // Calculate total
+        const price = formattedData.price !== undefined && formattedData.price !== null 
+          ? formattedData.price 
+          : 0;
+        
+        const administrativeFee = formattedData.administrative_fee !== undefined && formattedData.administrative_fee !== null 
+          ? formattedData.administrative_fee 
+          : 0;
+        
+        formattedData.total = price + administrativeFee;
+        
+        // Remover parâmetros desnecessários dos dados
+        const { scheduled_time, photos, ...serviceData } = formattedData;
+        
+        // Log de depuração
+        console.log("Enviando dados:", JSON.stringify(serviceData, null, 2));
+        
+        // Verificar status da rede antes de iniciar
+        const isOnline = checkNetworkStatus();
+        console.log("Status da rede:", isOnline ? "Online" : "Offline");
+        
+        // 1. Criar serviço usando o apiWrapper para suporte offline
+        const createdService = await postApi<any>('/api/services', serviceData, {
+          enableOffline: true,
+          offlineTableName: 'services'
+        });
+        console.log("Resposta do servidor ou cache local:", createdService);
+        
+        // Se estiver no modo offline, retornar imediatamente para evitar o loop
+        if (!isOnline) {
+          console.log("Modo offline: serviço criado localmente, saltando o upload de fotos");
+          return { ...createdService, _offline: true };
+        }
+        
+        // Processar upload de fotos se houver fotos e APENAS se estivermos online
+        if (isOnline && photos && photos.length > 0) {
+          try {
+            const serviceId = createdService.id;
+            
+            // Criar FormData para upload das fotos
+            const formData = new FormData();
+            
+            // Foto sem classificação específica
+            formData.append('photo_type', 'service');
+            
+            // Adicionar cada foto ao FormData
+            for (let i = 0; i < photos.length; i++) {
+              formData.append('photos', photos[i]);
+            }
+            
+            console.log("Enviando fotos para o serviço:", serviceId);
+            
+            // Upload de fotos - apenas quando online
+            const uploadRes = await fetch(`/api/services/${serviceId}/photos`, {
+              method: 'POST',
+              body: formData,
+              credentials: 'include',
+            });
+            
+            if (!uploadRes.ok) {
+              console.error("Erro ao fazer upload das fotos:", await uploadRes.text());
+              console.warn("Prosseguindo apesar do erro no upload de fotos");
+            } else {
+              const uploadData = await uploadRes.json();
+              console.log("Resposta do upload:", uploadData);
+            }
+          } catch (photoError) {
+            console.error("Erro ao processar fotos:", photoError);
+            // Não lança erro para não impedir a criação do serviço
+          }
+        } else {
+          console.log("Nenhuma foto selecionada para upload ou modo offline");
+        }
+        
+        return createdService;
+        
+      } catch (error: any) {
+        // Tentar obter os detalhes do erro
+        console.error("Detalhes do erro:", error);
+        if (error.response) {
+          try {
+            const errorData = await error.response.json();
+            console.error("Erro detalhado da API:", errorData);
+          } catch (e) {
+            console.error("Não foi possível ler o corpo da resposta de erro");
+          }
+        }
+        
+        // ⚠️ IMPORTANTE: Garantir que o erro seja sempre propagado para o handler onError
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      // Verificar se estamos offline e o serviço foi salvo localmente
+      const isOfflineData = data && data._offline === true;
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      
+      toast({
+        title: "Serviço criado",
+        description: isOfflineData 
+          ? "O serviço foi salvo localmente e será sincronizado quando houver conexão" 
+          : "O serviço foi criado com sucesso",
+      });
+      
+      // Redirecionar para a lista de serviços
+      setLocation('/services');
+    },
+    onError: (error) => {
+      console.error('Error creating service:', error);
+      toast({
+        title: "Erro ao criar serviço",
+        description: "Ocorreu um erro ao criar o serviço. Verifique os dados e tente novamente.",
+        variant: "destructive",
+      });
+    },
+    // ⚠️ IMPORTANTE: Garantir que o mutation seja sempre considerado finalizado após sucesso ou erro
+    // isso garante que o botão não ficará preso no estado "Salvando..."
+    useErrorBoundary: false
+  });
+  
+  const onSubmit = (data: FormData) => {
+    console.log("Formulário enviado com os dados:", data);
+    
+    // Garantir que o service_type_id seja um dos valores válidos
+    if (serviceTypes && !serviceTypes.some(type => type.id === data.service_type_id)) {
+      toast({
+        title: "Erro de validação",
+        description: `Tipo de serviço inválido. Valores disponíveis: ${serviceTypes.map(t => t.name).join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Log detalhado para depuração
+    console.log("Enviando para criação, detalhes:", {
+      client: clients?.find(c => c.id === data.client_id)?.name,
+      vehicle: vehicles?.find(v => v.id === data.vehicle_id)?.make,
+      serviceType: serviceTypes?.find(t => t.id === data.service_type_id)?.name,
+    });
+    
+    createServiceMutation.mutate(data);
+  };
+  
+  const handleClientChange = (clientId: string) => {
+    const id = parseInt(clientId);
+    setSelectedClientId(id);
+    form.setValue("client_id", id);
+    form.setValue("vehicle_id", null as any);
+  };
+  
+  return (
+    <div className="py-6 px-4 sm:px-6 lg:px-8">
+      <PageHeader
+        title="Novo Serviço"
+        description="Cadastre um novo serviço de reparo sem pintura"
+        actions={
+          <Button variant="outline" onClick={() => setLocation('/services')}>
+            Cancelar
+          </Button>
+        }
+      />
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+          {/* Client and Vehicle Information */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Informações do Cliente</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="client_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cliente <span className="text-red-500">*</span></FormLabel>
+                    <Select
+                      onValueChange={(value) => handleClientChange(value)}
+                      defaultValue={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o cliente" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {clients?.map((client) => (
+                          <SelectItem key={client.id} value={client.id.toString()}>
+                            {client.name} - {client.phone}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="px-0 text-sm"
+                      onClick={() => setLocation('/clients/new')}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Cadastrar novo cliente
+                    </Button>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="vehicle_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Veículo <span className="text-red-500">*</span></FormLabel>
+                    <Select
+                      onValueChange={(value) => form.setValue('vehicle_id', parseInt(value))}
+                      defaultValue={field.value?.toString()}
+                      disabled={!selectedClientId}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={selectedClientId ? "Selecione o veículo" : "Selecione um cliente primeiro"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {vehicles?.map((vehicle) => (
+                          <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
+                            {vehicle.make} {vehicle.model}
+                            {vehicle.license_plate && ` - ${vehicle.license_plate}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    {selectedClientId && (
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="px-0 text-sm"
+                        onClick={() => setLocation(`/clients/${selectedClientId}/vehicle/new`)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Cadastrar novo veículo
+                      </Button>
+                    )}
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Service Information */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Informações do Serviço</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="service_type_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Serviço <span className="text-red-500">*</span></FormLabel>
+                    <Select
+                      onValueChange={(value) => form.setValue('service_type_id', parseInt(value))}
+                      defaultValue={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo de serviço" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {serviceTypes?.map((type) => (
+                          <SelectItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição do Problema</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Descreva o problema em detalhes..."
+                        rows={3}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="technician_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Técnico Responsável</FormLabel>
+                    {user?.role === 'technician' ? (
+                      <FormControl>
+                        <Input 
+                          value={user?.name || ''}
+                          disabled
+                        />
+                      </FormControl>
+                    ) : (
+                      <Select
+                        onValueChange={(value) => form.setValue('technician_id', parseInt(value))}
+                        defaultValue={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o técnico" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {technicians?.map((tech) => (
+                            <SelectItem key={tech.id} value={tech.id.toString()}>
+                              {tech.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 gap-4">
+                <FormField
+                  control={form.control}
+                  name="scheduled_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data <span className="text-red-500">*</span></FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                              ) : (
+                                <span>Selecione a data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                            locale={ptBR}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Location */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Localização</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="location_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Localização <span className="text-red-500">*</span></FormLabel>
+                    <LocationSelector
+                      value={{
+                        locationType: field.value as "client_location" | "workshop",
+                        address: form.getValues().address || '',
+                        latitude: form.getValues().latitude || undefined,
+                        longitude: form.getValues().longitude || undefined,
+                      }}
+                      onChange={(value) => {
+                        form.setValue("location_type", value.locationType);
+                        form.setValue("address", value.address || '');
+                        form.setValue("latitude", value.latitude || null);
+                        form.setValue("longitude", value.longitude || null);
+                      }}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Photos Upload */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Fotos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="photos"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fotos do serviço (até 4 fotos)</FormLabel>
+                      <FormControl>
+                        <PhotoUpload
+                          label="fotos-servico"
+                          multiple={true}
+                          maxFiles={4}
+                          onChange={(files) => {
+                            field.onChange(files);
+                            setPhotos(files);
+                            
+                            if (files.length > 0) {
+                              toast({
+                                title: "Fotos selecionadas com sucesso",
+                                description: `${files.length} ${files.length === 1 ? 'foto' : 'fotos'} ${files.length === 1 ? 'selecionada' : 'selecionadas'}.`,
+                                variant: "default",
+                              });
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Adicione até 4 fotos para documentar o serviço
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Price */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Valores</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`grid grid-cols-1 ${user?.role === 'admin' ? 'sm:grid-cols-2' : ''} gap-4`}>
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor do Serviço (Técnico) (€)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0,00"
+                          onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseFloat(e.target.value))}
+                          value={field.value !== undefined ? field.value?.toFixed(2) : '0.00'}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {user?.role === 'admin' && (
+                  <FormField
+                    control={form.control}
+                    name="administrative_fee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Taxa Administrativa (€)</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0,00"
+                            onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                            value={field.value !== undefined ? field.value?.toFixed(2) : '0.00'}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Comissão para o administrador (apenas visível para administradores)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem className="mt-4">
+                    <FormLabel>Observações Adicionais</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Observações sobre o orçamento..."
+                        rows={2}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Submit Buttons */}
+          <div className="flex space-x-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => setLocation('/services')}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              className="flex-1"
+              disabled={createServiceMutation.isPending}
+            >
+              {createServiceMutation.isPending ? "Salvando..." : "Salvar Serviço"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+}
