@@ -192,6 +192,26 @@ async function syncPendingRequests() {
       try {
         console.log(`[SW] Sincronizando: ${request.method} ${request.url}`);
         
+        // Verificar se a requisição já falhou muitas vezes
+        const retryCount = request.retryCount || 0;
+        if (retryCount >= 3) {
+          console.log(`[SW] Abandonando requisição após ${retryCount} tentativas: ${request.url}`);
+          
+          // Remover a requisição do banco para não tentar novamente
+          await db.delete('pendingRequests', request.id);
+          
+          // Notificar sobre a falha permanente
+          notifyClients({
+            type: 'operation-failed',
+            status: 'abandoned',
+            tempId: request.id,
+            tableName: request.tableName,
+            message: 'Falha permanente após múltiplas tentativas'
+          });
+          
+          continue; // Pular para a próxima requisição
+        }
+        
         // Adicionar a tabela à lista de tabelas afetadas
         if (request.tableName) {
           affectedTables.add(request.tableName);
@@ -205,7 +225,24 @@ async function syncPendingRequests() {
           signal: controller.signal
         });
         
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        // Se a requisição não foi bem-sucedida, incrementar o contador de tentativas
+        if (!response.ok) {
+          const responseBody = await response.text();
+          console.error(`[SW] Falha na sincronização: HTTP ${response.status} - ${responseBody}`);
+          
+          // Atualizar o objeto com a nova contagem de tentativas
+          const updatedRequest = {
+            ...request,
+            retryCount: retryCount + 1,
+            lastErrorMessage: `HTTP ${response.status} - ${responseBody.substring(0, 200)}`,
+            lastAttempt: Date.now()
+          };
+          
+          // Salvar a atualização no IndexedDB
+          await db.put('pendingRequests', updatedRequest);
+          
+          throw new Error(`HTTP ${response.status}`);
+        }
         
         // Remove do banco de dados offline
         await db.delete('pendingRequests', request.id);
@@ -230,8 +267,19 @@ async function syncPendingRequests() {
           });
         }
       } catch (error) {
-        console.error(`[SW] Falha na sincronização: ${error}`);
-        // Mantém no banco para tentar novamente depois
+        console.error(`[SW] Erro durante sincronização: ${error}`);
+        
+        // Incrementar contagem de tentativas
+        const retryCount = request.retryCount || 0;
+        const updatedRequest = {
+          ...request,
+          retryCount: retryCount + 1,
+          lastErrorMessage: error.message,
+          lastAttempt: Date.now()
+        };
+        
+        // Atualizar registro com a nova contagem de tentativas
+        await db.put('pendingRequests', updatedRequest);
       }
     }
     
@@ -317,6 +365,13 @@ async function openDatabase() {
       db.delete = (storeName, key) => new Promise((res, rej) => {
         const tx = db.transaction(storeName, 'readwrite');
         tx.objectStore(storeName).delete(key).onsuccess = () => res();
+        tx.onerror = () => rej(tx.error);
+      });
+      
+      db.put = (storeName, value) => new Promise((res, rej) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const request = tx.objectStore(storeName).put(value);
+        request.onsuccess = () => res();
         tx.onerror = () => rej(tx.error);
       });
       

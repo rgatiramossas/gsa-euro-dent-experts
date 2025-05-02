@@ -14,6 +14,10 @@ interface PendingRequest {
   tableName: string;
   resourceId?: number | string;
   operationType: 'create' | 'update' | 'delete';
+  // Campos para controle de tentativas de sincronização
+  retryCount?: number;
+  lastAttempt?: number;
+  lastErrorMessage?: string;
 }
 
 // Definir interface para status de sincronização de tabelas
@@ -144,6 +148,108 @@ class OfflineDatabase extends Dexie {
     } catch (error) {
       console.error('Erro ao buscar requisições pendentes:', error);
       return [];
+    }
+  }
+  
+  // Obter todas as requisições pendentes
+  async getAllPendingRequests(): Promise<PendingRequest[]> {
+    try {
+      return await this.pendingRequests.toArray();
+    } catch (error) {
+      console.error('Erro ao obter todas as requisições pendentes:', error);
+      return [];
+    }
+  }
+  
+  // Processar requisições pendentes e tentar sincronizar com o servidor
+  async processPendingRequests(): Promise<{success: number, failed: number}> {
+    if (!navigator.onLine) {
+      console.log('Offline - sincronização adiada');
+      return { success: 0, failed: 0 };
+    }
+    
+    const stats = { success: 0, failed: 0 };
+    
+    try {
+      // Obter todas as requisições pendentes
+      const pendingRequests = await this.getAllPendingRequests();
+      
+      if (pendingRequests.length === 0) {
+        return stats;
+      }
+      
+      // Processar cada requisição
+      for (const request of pendingRequests) {
+        try {
+          // Verificar se a requisição já falhou muitas vezes
+          const retryCount = request.retryCount || 0;
+          if (retryCount >= 3) {
+            console.log(`Abandonando requisição após ${retryCount} tentativas: ${request.url}`);
+            await this.pendingRequests.delete(request.id);
+            continue;
+          }
+          
+          // Tentar enviar a requisição
+          const response = await fetch(request.url, {
+            method: request.method,
+            headers: request.headers,
+            body: request.method !== 'GET' ? JSON.stringify(request.body) : undefined,
+            credentials: 'include'
+          });
+          
+          if (response.ok) {
+            // Remover a requisição da fila
+            await this.pendingRequests.delete(request.id);
+            stats.success++;
+          } else {
+            // Incrementar contador de tentativas
+            const updatedRequest = {
+              ...request,
+              retryCount: retryCount + 1,
+              lastErrorMessage: `HTTP ${response.status}`,
+              lastAttempt: Date.now()
+            };
+            
+            await this.pendingRequests.put(updatedRequest);
+            stats.failed++;
+          }
+        } catch (error) {
+          console.error('Erro ao sincronizar requisição:', error);
+          stats.failed++;
+          
+          // Incrementar contagem de tentativas
+          const retryCount = request.retryCount || 0;
+          const updatedRequest = {
+            ...request,
+            retryCount: retryCount + 1,
+            lastErrorMessage: error instanceof Error ? error.message : String(error),
+            lastAttempt: Date.now()
+          };
+          
+          await this.pendingRequests.put(updatedRequest);
+        }
+      }
+      
+      // Invalidar caches após a sincronização
+      if (stats.success > 0) {
+        queryClient.invalidateQueries();
+      }
+      
+      return stats;
+    } catch (error) {
+      console.error('Erro ao processar requisições pendentes:', error);
+      return stats;
+    }
+  }
+  
+  // Limpar todas as requisições pendentes
+  async clearPendingRequests(): Promise<void> {
+    try {
+      await this.pendingRequests.clear();
+      console.log('Todas as requisições pendentes foram removidas');
+    } catch (error) {
+      console.error('Erro ao limpar requisições pendentes:', error);
+      throw error;
     }
   }
   

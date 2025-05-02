@@ -441,28 +441,21 @@ export default function TestPage() {
       }
       
       // Buscar requisições pendentes
-      const pending = await offlineDb.getAllPendingRequests();
+      const pending = await offlineDb.getPendingRequests();
       addTestResult(`Iniciando sincronização de ${pending.length} requisições pendentes...`);
       
-      // Processar requisições pendentes
-      const results = await offlineDb.processPendingRequests();
+      // Processar requisições pendentes (usamos o método syncWithServer por compatibilidade)
+      const success = await offlineDb.syncWithServer();
       
-      addTestResult(`Sincronização concluída: ${results.success} sucesso, ${results.failed} falhas`);
+      addTestResult(`Sincronização ${success ? 'concluída com sucesso' : 'falhou'}`);
       
-      if (results.success > 0) {
-        toast({
-          title: "Sincronização Concluída",
-          description: `${results.success} requisições sincronizadas com sucesso`,
-        });
-      }
-      
-      if (results.failed > 0) {
-        toast({
-          variant: "destructive",
-          title: "Alguns Itens Falharam",
-          description: `${results.failed} requisições não puderam ser sincronizadas`,
-        });
-      }
+      toast({
+        title: "Sincronização Concluída",
+        description: success 
+          ? "Requisições processadas com sucesso" 
+          : "Algumas requisições não puderam ser sincronizadas",
+        variant: success ? "default" : "destructive"
+      });
       
       // Atualizar contagem de requisições pendentes
       const count = await offlineDb.countPendingRequests();
@@ -498,7 +491,7 @@ export default function TestPage() {
         return;
       }
       
-      await offlineDb.clearPendingRequests();
+      await offlineDb.pendingRequests.clear();
       addTestResult(`Todas as requisições pendentes foram removidas`);
       
       toast({
