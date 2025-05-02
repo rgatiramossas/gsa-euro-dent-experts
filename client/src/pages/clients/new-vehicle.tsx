@@ -186,27 +186,42 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
       try {
         // Salvar localmente no IndexedDB
         const timestamp = new Date().getTime();
+        const tempId = -timestamp; // ID temporário negativo para identificar itens offline
+        
+        // Criar veículo temporário com ID negativo para o cache
+        const tempVehicle = {
+          id: tempId,
+          client_id: Number(clientId),
+          make: data.make,
+          model: data.model,
+          color: data.color || "",
+          license_plate: data.license_plate || "",
+          vin: data.vin || "",
+          notes: data.notes || "",
+          _isOffline: true,
+          created_at: new Date().toISOString()
+        };
+        
+        // Modificar os dados para salvar o ID temporário
+        const offlineData = {
+          ...data,
+          id: tempId,
+          _isOffline: true
+        };
+        
         const pendingRequest = {
           id: `vehicle_${timestamp}`,
           timestamp,
           url: '/api/vehicles',
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: data,
+          body: offlineData,
           tableName: 'vehicles',
           operationType: 'create' as const
         };
         
         // Salvar a requisição pendente para sincronização posterior
         await storeOfflineRequest(pendingRequest);
-        
-        // Criar um item temporário para atualizar o cache
-        const tempVehicle = {
-          id: -(new Date().getTime()),
-          ...data,
-          _isOffline: true,
-          created_at: new Date().toISOString()
-        };
         
         // Atualizar o cache para mostrar o veículo imediatamente em todas as listas/views
         
