@@ -58,16 +58,33 @@ export default function TestPage() {
   const [pendingRequests, setPendingRequests] = useState<number>(0);
   const [testClientId, setTestClientId] = useState<number | null>(null);
   const [testVehicleId, setTestVehicleId] = useState<number | null>(null);
-  const offlineStatus = useSnapshot(offlineStatusStore);
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  
+  // Usar o snapshot do valtio para reagir a mudanças no estado
+  useSnapshot(offlineStatusStore);
 
-  // Verificar quantidade de requisições pendentes ao carregar
+  // Verificar quantidade de requisições pendentes e manter status online sincronizado
   useEffect(() => {
     const checkPendingRequests = async () => {
       const count = await offlineDb.countPendingRequests();
       setPendingRequests(count);
     };
     
+    // Sincronizar o estado isOnline com o offlineStatusStore
+    const updateOnlineStatus = () => {
+      const status = offlineStatusStore.getOnlineStatus();
+      setIsOnline(status);
+    };
+    
+    // Configurar listener para mudanças no estado
+    const unsubscribe = offlineStatusStore.subscribe(updateOnlineStatus);
+    
+    // Verificar status inicial
+    updateOnlineStatus();
     checkPendingRequests();
+    
+    // Limpar no unmount
+    return () => unsubscribe();
   }, []);
 
   // Função para adicionar resultado aos logs de teste
@@ -521,7 +538,7 @@ export default function TestPage() {
       
       // Excluir cada uma delas
       for (const req of requests) {
-        await offlineDb._db?.delete('pendingRequests', req.id);
+        await offlineDb.pendingRequests.delete(req.id);
       }
       
       addTestResult(`${requests.length} requisições pendentes foram removidas`);
@@ -563,17 +580,17 @@ export default function TestPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            <Alert variant={offlineStatus.online ? "default" : "destructive"}>
+            <Alert variant={isOnline ? "default" : "destructive"}>
               <AlertTitle>
                 Status da Conexão: {' '}
-                {offlineStatus.online ? (
+                {isOnline ? (
                   <Badge className="bg-green-600">Online</Badge>
                 ) : (
                   <Badge variant="destructive">Offline</Badge>
                 )}
               </AlertTitle>
               <AlertDescription>
-                {offlineStatus.online 
+                {isOnline 
                   ? "Aplicação está operando no modo online com conexão ao servidor" 
                   : "Aplicação está operando no modo offline sem conexão ao servidor"}
               </AlertDescription>
@@ -605,14 +622,14 @@ export default function TestPage() {
                     <Button 
                       onClick={simulateOffline} 
                       variant="destructive"
-                      disabled={!offlineStatus.online}
+                      disabled={!isOnline}
                     >
                       Simular Modo Offline
                     </Button>
                     <Button 
                       onClick={simulateOnline}
                       variant="default"
-                      disabled={offlineStatus.online}
+                      disabled={isOnline}
                     >
                       Simular Modo Online
                     </Button>
@@ -629,7 +646,7 @@ export default function TestPage() {
                     <Button 
                       onClick={forceSyncronization}
                       variant="default"
-                      disabled={!offlineStatus.online}
+                      disabled={!offlineStatus.isOnline}
                     >
                       Forçar Sincronização
                     </Button>
