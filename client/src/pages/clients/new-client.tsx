@@ -85,26 +85,61 @@ export default function NewClient() {
       // Invalidate queries - isso disparará um refetch se estiver online
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
       
-      // Atualizar localmente o cache do React Query para mostrar o novo cliente imediatamente,
-      // mesmo quando offline
-      const previousData = queryClient.getQueryData<any>(['/api/clients']);
+      // Atualizar manualmente todos os caches possíveis para garantir que 
+      // o cliente apareça imediatamente em todas as vistas, independente do filtro
       
-      if (previousData) {
-        // Se o formato for um array direto
-        if (Array.isArray(previousData)) {
+      // Para cada status de filtro possível, atualizar o cache correspondente
+      const filterOptions = ['active', 'all', 'deleted'];
+      
+      filterOptions.forEach(filter => {
+        const queryKey = ['/api/clients', filter, { enableOffline: true, offlineTableName: 'clients' }];
+        const previousData = queryClient.getQueryData<any>(queryKey);
+        
+        // Verificar se o cliente não deve estar neste filtro
+        const isDeleted = data.name?.includes('[EXCLUÍDO]');
+        if (filter === 'active' && isDeleted) return;
+        if (filter === 'deleted' && !isDeleted) return;
+        
+        if (previousData) {
+          // Se o formato for um array direto
+          if (Array.isArray(previousData)) {
+            queryClient.setQueryData(
+              queryKey,
+              [...previousData, data]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (previousData.data && Array.isArray(previousData.data)) {
+            queryClient.setQueryData(
+              queryKey,
+              {
+                ...previousData,
+                data: [...previousData.data, data],
+                total: (previousData.total || 0) + 1
+              }
+            );
+          }
+        }
+      });
+      
+      // Também atualizar o cache simples que pode ser usado em outros lugares
+      const simpleQueryKey = ['/api/clients'];
+      const simplePreviousData = queryClient.getQueryData<any>(simpleQueryKey);
+      
+      if (simplePreviousData) {
+        if (Array.isArray(simplePreviousData)) {
           queryClient.setQueryData(
-            ['/api/clients'],
-            [...previousData, data]
+            simpleQueryKey,
+            [...simplePreviousData, data]
           );
         } 
-        // Se o formato for { data: [...], total: number }
-        else if (previousData.data && Array.isArray(previousData.data)) {
+        else if (simplePreviousData.data && Array.isArray(simplePreviousData.data)) {
           queryClient.setQueryData(
-            ['/api/clients'],
+            simpleQueryKey,
             {
-              ...previousData,
-              data: [...previousData.data, data],
-              total: (previousData.total || 0) + 1
+              ...simplePreviousData,
+              data: [...simplePreviousData.data, data],
+              total: (simplePreviousData.total || 0) + 1
             }
           );
         }
@@ -274,11 +309,60 @@ export default function NewClient() {
           created_at: new Date().toISOString()
         };
           
-        // Obter dados atuais e adicionar novo item
-        const currentItems = queryClient.getQueryData(['/api/clients']) || [];
-        // Garante que currentItems seja tratado como array
-        const itemsArray = Array.isArray(currentItems) ? currentItems : [];
-        queryClient.setQueryData(['/api/clients'], [...itemsArray, tempItem]);
+        // Atualizar todos os caches possíveis com diferentes configurações de filtro
+        const filterOptions = ['active', 'all', 'deleted'];
+        
+        filterOptions.forEach(filter => {
+          const queryKey = ['/api/clients', filter, { enableOffline: true, offlineTableName: 'clients' }];
+          const previousData = queryClient.getQueryData<any>(queryKey);
+          
+          // Verificar se o cliente não deve estar neste filtro (novo cliente nunca está excluído)
+          if (filter === 'deleted') return;
+          
+          if (previousData) {
+            // Se o formato for um array direto
+            if (Array.isArray(previousData)) {
+              queryClient.setQueryData(
+                queryKey,
+                [...previousData, tempItem]
+              );
+            } 
+            // Se o formato for { data: [...], total: number }
+            else if (previousData.data && Array.isArray(previousData.data)) {
+              queryClient.setQueryData(
+                queryKey,
+                {
+                  ...previousData,
+                  data: [...previousData.data, tempItem],
+                  total: (previousData.total || 0) + 1
+                }
+              );
+            }
+          }
+        });
+        
+        // Também atualizar o cache simples que pode ser usado em outros lugares
+        const simpleQueryKey = ['/api/clients'];
+        const simplePreviousData = queryClient.getQueryData<any>(simpleQueryKey);
+        
+        if (simplePreviousData) {
+          if (Array.isArray(simplePreviousData)) {
+            queryClient.setQueryData(
+              simpleQueryKey,
+              [...simplePreviousData, tempItem]
+            );
+          } 
+          else if (simplePreviousData.data && Array.isArray(simplePreviousData.data)) {
+            queryClient.setQueryData(
+              simpleQueryKey,
+              {
+                ...simplePreviousData,
+                data: [...simplePreviousData.data, tempItem],
+                total: (simplePreviousData.total || 0) + 1
+              }
+            );
+          }
+        }
       } catch (error) {
         console.error('Erro ao processar cliente:', error);
         toast({
