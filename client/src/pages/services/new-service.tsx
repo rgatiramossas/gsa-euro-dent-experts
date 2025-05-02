@@ -216,7 +216,7 @@ export default function NewServicePage() {
   
   // Carregar veículos para o cliente selecionado
   const { data: vehicles } = useQuery<Vehicle[]>({
-    queryKey: ['/api/clients', selectedClientId, 'vehicles'],
+    queryKey: ['/api/clients', selectedClientId, 'vehicles', { enableOffline: true, offlineTableName: 'vehicles' }],
     queryFn: async () => {
       if (!selectedClientId) return [];
       
@@ -224,12 +224,92 @@ export default function NewServicePage() {
       
       try {
         // Usar o getApi com suporte a PWA em vez do fetch diretamente
-        return await getApi<Vehicle[]>(url as string, {
+        let vehiclesData = await getApi<Vehicle[]>(url as string, {
           enableOffline: true,
           offlineTableName: 'vehicles'
         });
+        
+        // Se não estiver online, também busca os dados offline
+        if (!navigator.onLine) {
+          try {
+            // Recupera veículos salvos offline no IndexedDB
+            const { getPendingRequests } = await import('@/lib/offlineDb');
+            const offlineVehiclesData = await getPendingRequests({
+              tableName: 'vehicles',
+              operationType: 'create'
+            });
+            
+            // Filtrar apenas os veículos do cliente selecionado
+            const offlineVehicles = offlineVehiclesData
+              .filter(item => item.body && item.body.client_id === selectedClientId)
+              .map(item => {
+                try {
+                  // ID temporário negativo para evitar conflitos
+                  const offlineId = typeof item.body.id === 'number' 
+                    ? item.body.id 
+                    : -(new Date(item.timestamp).getTime());
+                  
+                  return {
+                    ...item.body,
+                    id: offlineId,
+                    _isOffline: true
+                  };
+                } catch (e) {
+                  console.error("Erro ao processar veículo offline:", e);
+                  return null;
+                }
+              })
+              .filter(Boolean);
+            
+            // Certifica-se de que vehiclesData é um array
+            if (!Array.isArray(vehiclesData)) {
+              vehiclesData = [];
+            }
+            
+            // Combina os resultados do servidor com os do IndexedDB
+            const allVehicles = [...vehiclesData];
+            
+            // Adiciona apenas veículos que não estão já na lista (pelos IDs)
+            offlineVehicles.forEach(offlineVehicle => {
+              if (!allVehicles.some(v => v.id === offlineVehicle.id)) {
+                allVehicles.push(offlineVehicle);
+              }
+            });
+            
+            return allVehicles;
+          } catch (offlineError) {
+            console.error("Erro ao buscar veículos offline:", offlineError);
+            return vehiclesData || [];
+          }
+        }
+        
+        return vehiclesData;
       } catch (error) {
         console.error("Erro ao carregar veículos:", error);
+        
+        // Quando falha a API, tenta buscar do IndexedDB diretamente
+        if (!navigator.onLine) {
+          try {
+            const { getPendingRequests } = await import('@/lib/offlineDb');
+            const offlineVehicleRequests = await getPendingRequests({
+              tableName: 'vehicles',
+              operationType: 'create'
+            });
+            
+            // Filtrar apenas veículos do cliente atual
+            return offlineVehicleRequests
+              .filter(item => item.body && item.body.client_id === selectedClientId)
+              .map(item => ({
+                ...item.body,
+                id: -(new Date(item.timestamp).getTime()),
+                _isOffline: true
+              }));
+          } catch (offlineError) {
+            console.error("Erro completo (online e offline):", offlineError);
+            return []; // Último recurso: array vazio
+          }
+        }
+        
         return []; // Retornar array vazio em caso de erro para evitar quebra da UI
       }
     }
