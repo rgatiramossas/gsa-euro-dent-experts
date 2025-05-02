@@ -107,6 +107,21 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   const [vehicleImage, setVehicleImage] = useState<string | null>(initialData?.vehicle_image || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  
+  // Efeito para detectar mudanças no estado da conexão
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   
   // Buscar a lista de clientes do banco de dados - incluindo offline
   const { data: clients, isLoading: isLoadingClients, error: clientsError } = useQuery<any[]>({
@@ -284,8 +299,8 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
         vehicle_image: vehicleImage ? `Imagem com ${vehicleImage.length} caracteres` : t("budget.noImage")
       });
       
-      // Verificar se está offline
-      if (!navigator.onLine && !initialData) {
+      // Verificar se está offline usando a variável de estado
+      if (isOffline && !initialData) {
         // Mostrar mensagem para usar o botão "Salvar Offline"
         toast({
           title: t("budget.offlineDetected"),
@@ -368,8 +383,8 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   
   // Função para atualizar um orçamento existente
   const updateBudget = async (budget: any, budgetId: number) => {
-    // Verificar conectividade
-    if (!navigator.onLine) {
+    // Verificar conectividade usando a variável de estado
+    if (isOffline) {
       try {
         // Quando offline, salvar no IndexedDB para sincronização posterior
         const timestamp = new Date().getTime();
@@ -816,8 +831,8 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                 {t("budget.cancel")}
               </Button>
               
-              {/* Botão para salvar offline explicitamente */}
-              {!initialData && !navigator.onLine && (
+              {/* Botão para salvar offline explicitamente - visível apenas quando offline */}
+              {!initialData && isOffline && (
                 <Button 
                   type="button" 
                   variant="secondary"
