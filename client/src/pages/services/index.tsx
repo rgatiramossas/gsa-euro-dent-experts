@@ -97,16 +97,16 @@ export default function ServicesList() {
     
     if (isSyncing) {
       toast({
-        title: t("offline.syncInProgress"),
-        description: t("offline.pleaseWait")
+        title: t("offline.syncInProgress", "Sincronização em Andamento"),
+        description: t("offline.pleaseWait", "Aguarde enquanto sincronizamos os dados")
       });
       return;
     }
     
     setIsSyncing(true);
     toast({
-      title: t("offline.syncStarted"),
-      description: t("offline.syncingData")
+      title: t("offline.syncStarted", "Sincronização Iniciada"),
+      description: t("offline.syncingData", "Sincronizando dados com o servidor")
     });
     
     // Trigger sync and refresh data
@@ -117,15 +117,15 @@ export default function ServicesList() {
       refetch().then(() => {
         setIsSyncing(false);
         toast({
-          title: t("offline.syncComplete"),
-          description: t("offline.dataUpdated")
+          title: t("offline.syncComplete", "Sincronização Concluída"),
+          description: t("offline.dataUpdated", "Dados atualizados com sucesso")
         });
       }).catch(error => {
         console.error("Erro ao atualizar dados:", error);
         setIsSyncing(false);
         toast({
-          title: t("offline.syncError"),
-          description: t("offline.syncErrorDesc"),
+          title: t("offline.syncError", "Erro na Sincronização"),
+          description: t("offline.syncErrorDesc", "Houve um problema ao sincronizar os dados"),
           variant: "destructive"
         });
       });
@@ -153,15 +153,15 @@ export default function ServicesList() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title={t("services.title")}
-        description={t("services.manage")}
+        title={t("services.title", "Serviços")}
+        description={t("services.manage", "Gerencie os serviços de reparo")}
         actions={
           <Link href="/services/new">
             <Button>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              {t("services.newService")}
+              {t("services.newService", "Novo Serviço")}
             </Button>
           </Link>
         }
@@ -171,7 +171,7 @@ export default function ServicesList() {
         <div className="p-4 border-b border-gray-200">
           <div className="flex flex-col gap-4">
             <Input
-              placeholder={t("services.searchPlaceholder")}
+              placeholder={t("services.searchPlaceholder", "Pesquisar serviços por cliente, veículo...")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full"
