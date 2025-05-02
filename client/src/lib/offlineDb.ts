@@ -822,4 +822,25 @@ export const getPendingRequests = async ({
   return await offlineDb.getPendingRequests({ tableName, operationType });
 };
 
+// Função para buscar todos os registros de uma tabela
+export const getAllFromTable = async (tableName: string): Promise<any[]> => {
+  try {
+    const table = offlineDb.getTableByName(tableName);
+    
+    if (!table) {
+      console.error(`[offlineDb] Tabela não encontrada: ${tableName}`);
+      return [];
+    }
+    
+    console.log(`[offlineDb] Buscando todos os registros da tabela ${tableName}`);
+    const records = await table.toArray();
+    console.log(`[offlineDb] Encontrados ${records.length} registros em ${tableName}`);
+    
+    return records;
+  } catch (error) {
+    console.error(`[offlineDb] Erro ao buscar registros da tabela ${tableName}:`, error);
+    return [];
+  }
+};
+
 export default offlineDb;
