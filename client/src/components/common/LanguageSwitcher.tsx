@@ -39,7 +39,7 @@ const LanguageSwitcher: React.FC = () => {
       case 'es': return 'Español';
       case 'fr': return 'Français';
       case 'it': return 'Italiano';
-      default: return 'Language';
+      default: return '';
     }
   };
 
