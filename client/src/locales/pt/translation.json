@@ -119,6 +119,7 @@
     "details": "Detalhes",
     "searchPlaceholder": "Buscar por cliente, veículo ou placa...",
     "serviceStatus": "Status do Serviço",
+    "statusLabel": "Status",
     "status": {
       "pending": "Pendente",
       "in_progress": "Em andamento",
