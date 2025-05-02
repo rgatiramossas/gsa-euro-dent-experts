@@ -92,6 +92,10 @@ interface Client {
   id: number;
   name: string;
   phone: string;
+  // Propriedades para controle offline
+  _isOffline?: boolean;
+  _pendingSync?: boolean;
+  _fromStorage?: boolean;
 }
 
 interface Vehicle {
@@ -129,93 +133,107 @@ export default function NewServicePage() {
   const [serviceSavedOffline, setServiceSavedOffline] = useState(false);
   const { translateServiceType } = useTranslateServiceType();
   
-  // Carregar dados do cliente
+  // Carregar dados do cliente - estratégia completamente revisada
   const { data: clients } = useQuery<Client[]>({
-    queryKey: ['/api/clients'],
+    queryKey: ['/api/clients', { enableOffline: true, offlineTableName: 'clients' }],
     queryFn: async () => {
+      // Array para armazenar todos os clientes (online + offline)
+      let allClients: Client[] = [];
+      const isOfflineNow = !navigator.onLine;
+      
+      console.log("Estado da rede ao buscar clientes:", isOfflineNow ? "OFFLINE" : "ONLINE");
+      
+      // 1. Primeiro tentar buscar do servidor/cache
       try {
-        // Primeiro tenta carregar os clientes do servidor
-        let clientsData = await getApi<Client[]>('/api/clients', {
+        const clientsFromServer = await getApi<Client[]>('/api/clients', {
           enableOffline: true,
           offlineTableName: 'clients'
         });
         
-        // Se não estiver online, também busca os dados offline para garantir que temos todos
-        if (!navigator.onLine) {
-          try {
-            // Recupera clientes salvos no IndexedDB
-            const { getPendingRequests } = await import('@/lib/offlineDb');
-            const offlineClientsData = await getPendingRequests({
-              tableName: 'clients',
-              operationType: 'create'
-            });
-            
-            // Extrair apenas os clientes do objeto body
-            const offlineClients = offlineClientsData.map(item => {
-              try {
-                // ID temporário negativo para evitar conflitos
-                const offlineId = typeof item.body.id === 'number' 
-                  ? item.body.id 
-                  : -(new Date(item.timestamp).getTime());
-                
-                return {
-                  ...item.body,
-                  id: offlineId,
-                  _isOffline: true
-                };
-              } catch (e) {
-                console.error("Erro ao processar cliente offline:", e);
-                return null;
-              }
-            }).filter(Boolean);
-            
-            // Certifica-se de que clientsData é um array
-            if (!Array.isArray(clientsData)) {
-              clientsData = [];
-            }
-            
-            // Combina os resultados do servidor com os do IndexedDB
-            const allClients = [...clientsData];
-            
-            // Adiciona apenas clientes que não estão já na lista (pelos IDs)
-            offlineClients.forEach(offlineClient => {
-              if (!allClients.some(c => c.id === offlineClient.id)) {
-                allClients.push(offlineClient);
-              }
-            });
-            
-            return allClients;
-          } catch (offlineError) {
-            console.error("Erro ao buscar clientes offline:", offlineError);
-            return clientsData || [];
-          }
+        if (Array.isArray(clientsFromServer)) {
+          console.log(`Clientes obtidos do servidor/cache: ${clientsFromServer.length}`);
+          allClients = [...clientsFromServer];
+        } else {
+          console.warn("Resposta do servidor não é um array, usando array vazio");
         }
+      } catch (serverError) {
+        console.error("Erro ao buscar clientes do servidor:", serverError);
+      }
+      
+      // 2. Buscar clientes pendentes no armazenamento offline (independente do estado da rede)
+      try {
+        // Buscar todas as requisições pendentes
+        const { getPendingRequests, getAllFromTable } = await import('@/lib/offlineDb');
+        const pendingClientsRequests = await getPendingRequests({
+          tableName: 'clients',
+          operationType: 'create'
+        });
         
-        return clientsData;
-      } catch (error) {
-        console.error("Erro ao carregar clientes:", error);
+        console.log(`Requisições de clientes pendentes: ${pendingClientsRequests.length}`);
         
-        // Quando falha a API, tenta buscar do IndexedDB diretamente
+        // Converter requisições pendentes em objetos de cliente
+        const pendingClients = pendingClientsRequests.map(item => {
+          try {
+            // ID temporário negativo para evitar conflitos
+            const offlineId = typeof item.body.id === 'number' 
+              ? item.body.id 
+              : -(new Date(item.timestamp).getTime());
+            
+            return {
+              ...item.body,
+              id: offlineId,
+              _isOffline: true,
+              _pendingSync: true
+            };
+          } catch (e) {
+            console.error("Erro ao processar cliente pendente:", e);
+            return null;
+          }
+        }).filter(Boolean) as Client[];
+        
+        // 3. Também buscar clientes armazenados diretamente no IndexedDB
         try {
-          const { getPendingRequests } = await import('@/lib/offlineDb');
-          const offlineClientRequests = await getPendingRequests({
-            tableName: 'clients',
-            operationType: 'create'
-          });
+          const storedClients = await getAllFromTable('clients') || [];
+          console.log(`Clientes na tabela offline: ${storedClients.length}`);
           
-          const offlineClients = offlineClientRequests.map(item => ({
-            ...item.body,
-            id: -(new Date(item.timestamp).getTime()),
-            _isOffline: true
+          // Mapear para o formato de cliente com flag offline
+          const clientsFromStorage = storedClients.map(client => ({
+            ...client,
+            _isOffline: true,
+            _fromStorage: true
           }));
           
-          return offlineClients;
-        } catch (offlineError) {
-          console.error("Erro completo (online e offline):", offlineError);
-          return []; // Último recurso: array vazio
+          // Adicionar ao array de pendentes se não existirem
+          clientsFromStorage.forEach(storedClient => {
+            if (!pendingClients.some(c => c.id === storedClient.id)) {
+              pendingClients.push(storedClient);
+            }
+          });
+        } catch (storageError) {
+          console.error("Erro ao buscar clientes do armazenamento:", storageError);
         }
+        
+        // 4. Adicionar clientes pendentes à lista principal, evitando duplicatas
+        pendingClients.forEach(offlineClient => {
+          if (!allClients.some(c => c.id === offlineClient.id)) {
+            allClients.push(offlineClient);
+          }
+        });
+      } catch (offlineError) {
+        console.error("Erro ao buscar clientes offline:", offlineError);
       }
-    }
+      
+      // Log do resultado final
+      console.log(`RESULTADO FINAL - Total de clientes: ${allClients.length}`);
+      allClients.forEach((client, index) => {
+        const status = client._isOffline ? "OFFLINE" : "ONLINE";
+        console.log(`${index + 1}. Cliente ${client.id}: ${client.name} [${status}]`);
+      });
+      
+      return allClients;
+    },
+    refetchOnWindowFocus: true, // Recarregar quando a janela receber foco
+    refetchOnMount: true        // Sempre recarregar ao montar o componente
   });
   
   // Carregar veículos para o cliente selecionado - otimizado para garantir exibição dos veículos offline
@@ -899,8 +917,13 @@ export default function NewServicePage() {
                       </FormControl>
                       <SelectContent>
                         {clients?.map((client) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.name} - {client.phone}
+                          <SelectItem 
+                            key={client.id} 
+                            value={client.id.toString()}
+                            className={client._isOffline ? "text-blue-600 font-medium" : ""}
+                          >
+                            {client.name} - {client.phone} 
+                            {client._isOffline && " [Offline]"}
                           </SelectItem>
                         ))}
                       </SelectContent>
