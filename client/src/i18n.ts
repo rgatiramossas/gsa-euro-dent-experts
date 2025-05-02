@@ -43,6 +43,8 @@ i18n
     resources,
     // Idioma padrão é português
     fallbackLng: 'pt',
+    // Definir português como idioma padrão quando não houver preferência explícita
+    lng: 'pt',
     // Usar chaves de objeto mesmo para strings simples
     keySeparator: '.',
     interpolation: {
@@ -51,7 +53,7 @@ i18n
     },
     // Opções de detecção de idioma
     detection: {
-      // Ordem de detecção
+      // Ordem de detecção (primeiro localStorage, depois idioma do navegador)
       order: ['localStorage', 'navigator'],
       // Armazenar o idioma em localStorage
       caches: ['localStorage'],

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Select,
@@ -10,6 +10,19 @@ import {
 
 const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
+
+  // Garantir que o idioma seja definido no carregamento do componente
+  useEffect(() => {
+    // Se o idioma detectado não for um dos idiomas suportados, 
+    // ou se for o idioma padrão do detector (que pode ser o idioma do navegador),
+    // forçamos o idioma português como padrão
+    const currentLang = i18n.language;
+    if (!currentLang || currentLang === 'pt-BR' || currentLang === 'pt-PT' || 
+        !(currentLang === 'pt' || currentLang === 'en' || currentLang === 'de' || 
+          currentLang === 'es' || currentLang === 'fr' || currentLang === 'it')) {
+      changeLanguage('pt');
+    }
+  }, []);
 
   const changeLanguage = (language: string) => {
     i18n.changeLanguage(language);

@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 export default function Login() {
   const [username, setUsername] = useState("");
