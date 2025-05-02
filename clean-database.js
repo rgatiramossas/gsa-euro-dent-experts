@@ -36,7 +36,19 @@ async function cleanDatabase() {
       "DELETE FROM budgets WHERE 1=1;",
       "DELETE FROM vehicles WHERE 1=1;",
       "DELETE FROM manager_client_assignments WHERE 1=1;",
-      "DELETE FROM clients WHERE 1=1;"
+      "DELETE FROM clients WHERE 1=1;",
+      
+      // Reset das sequências de auto-incremento
+      "ALTER TABLE clients AUTO_INCREMENT = 1;",
+      "ALTER TABLE vehicles AUTO_INCREMENT = 1;",
+      "ALTER TABLE services AUTO_INCREMENT = 1;",
+      "ALTER TABLE budgets AUTO_INCREMENT = 1;",
+      "ALTER TABLE expenses AUTO_INCREMENT = 1;",
+      "ALTER TABLE events AUTO_INCREMENT = 1;",
+      "ALTER TABLE payment_requests AUTO_INCREMENT = 1;",
+      "ALTER TABLE payment_request_items AUTO_INCREMENT = 1;",
+      "ALTER TABLE service_photos AUTO_INCREMENT = 1;",
+      "ALTER TABLE manager_client_assignments AUTO_INCREMENT = 1;"
     ];
 
     // Executar cada consulta em sequência
