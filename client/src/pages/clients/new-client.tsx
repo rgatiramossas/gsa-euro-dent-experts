@@ -72,16 +72,12 @@ export default function NewClient() {
   
   // Create client mutation
   const createClientMutation = useMutation({
-    mutationFn: async (data: FormData) => {
+    mutationFn: async (data: any) => {
       console.log("Enviando dados:", data);
-      const response = await apiRequest({
-        url: '/api/clients',
-        method: 'POST',
-        data,
+      return await apiRequest('/api/clients', 'POST', data, {
         enableOffline: true,
         offlineTableName: 'clients'
       });
-      return response;
     },
     onSuccess: (data) => {
       console.log("Cliente criado com sucesso:", data);
@@ -91,20 +87,20 @@ export default function NewClient() {
       
       // Atualizar localmente o cache do React Query para mostrar o novo cliente imediatamente,
       // mesmo quando offline
-      const previousData = queryClient.getQueryData<any>(['/api/clients', { enableOffline: true, offlineTableName: 'clients' }]);
+      const previousData = queryClient.getQueryData<any>(['/api/clients']);
       
       if (previousData) {
         // Se o formato for um array direto
         if (Array.isArray(previousData)) {
           queryClient.setQueryData(
-            ['/api/clients', { enableOffline: true, offlineTableName: 'clients' }],
+            ['/api/clients'],
             [...previousData, data]
           );
         } 
         // Se o formato for { data: [...], total: number }
         else if (previousData.data && Array.isArray(previousData.data)) {
           queryClient.setQueryData(
-            ['/api/clients', { enableOffline: true, offlineTableName: 'clients' }],
+            ['/api/clients'],
             {
               ...previousData,
               data: [...previousData.data, data],
@@ -215,7 +211,7 @@ export default function NewClient() {
     );
   };
   
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: any) => {
     setIsSaving(true);
     
     // Limpar timeout anterior se existir
@@ -294,7 +290,7 @@ export default function NewClient() {
       }
     } else {
       // Processamento online normal
-      createClientMutation.mutate(cleanData as FormData);
+      createClientMutation.mutate(cleanData);
       
       // Configurar timeout para resetar o estado de salvamento (caso ocorra um erro não tratado)
       const timeout = setTimeout(() => {
