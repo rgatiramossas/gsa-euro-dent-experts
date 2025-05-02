@@ -80,9 +80,12 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
     isLoading: isLoadingBudgets,
     error: budgetsError,
   } = useQuery<Budget[]>({
-    queryKey: ["/api/budgets"],
-    queryFn: async () => {
-      return await getApi<Budget[]>("/api/budgets");
+    queryKey: ["/api/budgets", { enableOffline: true, offlineTableName: 'budgets' }],
+    queryFn: async ({ queryKey }) => {
+      return await getApi<Budget[]>("/api/budgets", { 
+        enableOffline: true, 
+        offlineTableName: 'budgets' 
+      });
     },
     retry: 1,
   });
