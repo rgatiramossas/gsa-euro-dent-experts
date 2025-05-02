@@ -44,6 +44,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const clientId = parseInt(id);
