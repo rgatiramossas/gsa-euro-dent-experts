@@ -218,10 +218,23 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
         // Atualizar o cache para mostrar o veículo imediatamente em todas as listas/views
         
         // 1. Atualizar a lista de veículos do cliente específico
+        // Importante: Atualizar todas as variações de queryKey que possam ser usadas em outros componentes
+        
+        // Formato básico
         const clientVehiclesQueryKey = [`/api/clients/${clientId}/vehicles`];
         const clientVehiclesData = queryClient.getQueryData<any>(clientVehiclesQueryKey);
         
+        // Formato com opções de offline (usado em componentes com suporte offline)
+        const clientVehiclesOfflineQueryKey = [
+          `/api/clients/${clientId}/vehicles`, 
+          { enableOffline: true, offlineTableName: 'vehicles' }
+        ];
+        const clientVehiclesOfflineData = queryClient.getQueryData<any>(clientVehiclesOfflineQueryKey);
+        
+        // Atualizar o cache sem opções offline
         if (clientVehiclesData) {
+          console.log("Atualizando cache veículos (formato básico):", clientVehiclesQueryKey);
+          
           // Se o formato for um array direto
           if (Array.isArray(clientVehiclesData)) {
             queryClient.setQueryData(
@@ -240,13 +253,62 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
               }
             );
           }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada no cache para veículos:", clientVehiclesQueryKey);
+          queryClient.setQueryData(clientVehiclesQueryKey, [tempVehicle]);
+        }
+        
+        // Atualizar o cache com opções offline
+        if (clientVehiclesOfflineData) {
+          console.log("Atualizando cache veículos (com offline):", clientVehiclesOfflineQueryKey);
+          
+          // Se o formato for um array direto
+          if (Array.isArray(clientVehiclesOfflineData)) {
+            queryClient.setQueryData(
+              clientVehiclesOfflineQueryKey,
+              [...clientVehiclesOfflineData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (clientVehiclesOfflineData.data && Array.isArray(clientVehiclesOfflineData.data)) {
+            queryClient.setQueryData(
+              clientVehiclesOfflineQueryKey,
+              {
+                ...clientVehiclesOfflineData,
+                data: [...clientVehiclesOfflineData.data, tempVehicle],
+                total: (clientVehiclesOfflineData.total || 0) + 1
+              }
+            );
+          }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada no cache para veículos (com offline):", clientVehiclesOfflineQueryKey);
+          queryClient.setQueryData(clientVehiclesOfflineQueryKey, [tempVehicle]);
         }
         
         // 2. Atualizar a lista global de veículos (se existir no cache)
         const allVehiclesQueryKey = ['/api/vehicles'];
         const allVehiclesData = queryClient.getQueryData<any>(allVehiclesQueryKey);
         
+        // Formato com opções de offline
+        const allVehiclesOfflineQueryKey = ['/api/vehicles', { enableOffline: true, offlineTableName: 'vehicles' }];
+        const allVehiclesOfflineData = queryClient.getQueryData<any>(allVehiclesOfflineQueryKey);
+        
+        // Chave usada em serviços - atualizar também
+        const servicesVehicleQueryKey = ['/api/clients', clientId, 'vehicles', { enableOffline: true, offlineTableName: 'vehicles' }];
+        const servicesVehicleData = queryClient.getQueryData<any>(servicesVehicleQueryKey);
+        
+        console.log("Atualizando cache para as seguintes chaves:", {
+          allVehiclesQueryKey,
+          allVehiclesOfflineQueryKey,
+          servicesVehicleQueryKey
+        });
+        
+        // Atualizar a lista global sem suporte offline
         if (allVehiclesData) {
+          console.log("Atualizando cache de todos os veículos (formato básico)");
+          
           // Se o formato for um array direto
           if (Array.isArray(allVehiclesData)) {
             queryClient.setQueryData(
@@ -265,6 +327,66 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
               }
             );
           }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada para veículos globais");
+          queryClient.setQueryData(allVehiclesQueryKey, [tempVehicle]);
+        }
+        
+        // Atualizar a lista global com suporte offline
+        if (allVehiclesOfflineData) {
+          console.log("Atualizando cache de todos os veículos (com offline)");
+          
+          // Se o formato for um array direto
+          if (Array.isArray(allVehiclesOfflineData)) {
+            queryClient.setQueryData(
+              allVehiclesOfflineQueryKey,
+              [...allVehiclesOfflineData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (allVehiclesOfflineData.data && Array.isArray(allVehiclesOfflineData.data)) {
+            queryClient.setQueryData(
+              allVehiclesOfflineQueryKey,
+              {
+                ...allVehiclesOfflineData,
+                data: [...allVehiclesOfflineData.data, tempVehicle],
+                total: (allVehiclesOfflineData.total || 0) + 1
+              }
+            );
+          }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada para veículos globais (com offline)");
+          queryClient.setQueryData(allVehiclesOfflineQueryKey, [tempVehicle]);
+        }
+        
+        // Atualizar o cache usado no componente de criação de serviços
+        if (servicesVehicleData) {
+          console.log("Atualizando cache usado em serviços");
+          
+          // Se o formato for um array direto
+          if (Array.isArray(servicesVehicleData)) {
+            queryClient.setQueryData(
+              servicesVehicleQueryKey,
+              [...servicesVehicleData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (servicesVehicleData.data && Array.isArray(servicesVehicleData.data)) {
+            queryClient.setQueryData(
+              servicesVehicleQueryKey,
+              {
+                ...servicesVehicleData,
+                data: [...servicesVehicleData.data, tempVehicle],
+                total: (servicesVehicleData.total || 0) + 1
+              }
+            );
+          }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada para veículos em serviços");
+          queryClient.setQueryData(servicesVehicleQueryKey, [tempVehicle]);
         }
         
         toast({
