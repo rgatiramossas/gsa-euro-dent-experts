@@ -34,7 +34,9 @@ const TEST_BUDGET = {
   total_value: 1500,
   description: "Orçamento criado pelo teste offline",
   service_type: "Amassado de Rua",
-  status: "pending"
+  status: "pending",
+  date: new Date().toISOString().split('T')[0],
+  vehicle_info: "Informações adicionais do veículo"
 };
 
 // Ordem de serviço de teste para criação
@@ -44,7 +46,10 @@ const TEST_SERVICE = {
   total_value: 2000,
   description: "Serviço criado pelo teste offline",
   service_type: "Amassado de Rua",
-  status: "pending"
+  service_type_id: 1, // ID do tipo de serviço "Amassado de Rua"
+  status: "pending",
+  date: new Date().toISOString().split('T')[0],
+  estimated_completion: new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] // 7 dias a partir de hoje
 };
 
 // Componente principal da página de testes
