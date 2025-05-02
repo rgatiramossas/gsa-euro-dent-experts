@@ -71,14 +71,14 @@ export default function Dashboard() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader 
-        title={t("dashboard.title")} 
-        description={t("dashboard.description")} 
+        title={t("dashboard.title", "Painel de Controle")} 
+        description={t("dashboard.description", "Visão geral do sistema")} 
       />
       
       {/* Statistics Cards - Com ações rápidas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
-          title={t("dashboard.pendingServices")}
+          title={t("dashboard.pendingServices", "Serviços Pendentes")}
           value={isLoadingStats ? "..." : stats?.totalPendingServices.toString() || "0"}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,7 +91,7 @@ export default function Dashboard() {
         />
         
         <StatCard
-          title={t("dashboard.servicesByStatus")}
+          title={t("dashboard.servicesByStatus", "Serviços em Andamento")}
           value={isLoadingStats ? "..." : stats?.totalInProgressServices.toString() || "0"}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -104,7 +104,7 @@ export default function Dashboard() {
         />
         
         <StatCard
-          title={t("dashboard.completedServices")}
+          title={t("dashboard.completedServices", "Serviços Concluídos")}
           value={isLoadingStats ? "..." : stats?.totalCompletedServices.toString() || "0"}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,7 +119,7 @@ export default function Dashboard() {
         {/* Card de Faturamento Total - não visível para gestores */}
         {!isGestor && (
           <StatCard
-            title={t("dashboard.revenue")}
+            title={t("dashboard.revenue", "Faturamento")}
             value={isLoadingStats ? "..." : formatCurrency(stats?.totalRevenue || 0)}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,7 +140,7 @@ export default function Dashboard() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            {t("services.newService")}
+            {t("services.newService", "Novo Serviço")}
           </Link>
           
           <Link href="/clients/new" className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
