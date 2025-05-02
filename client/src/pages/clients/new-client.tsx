@@ -274,115 +274,25 @@ export default function NewClient() {
     
     // Verificar o estado da conexão
     if (!navigator.onLine) {
-      try {
-        // Salvar localmente no IndexedDB para sincronização silenciosa posterior
-        const timestamp = new Date().getTime();
-        const pendingRequest = {
-          id: `client_${timestamp}`,
-          timestamp,
-          url: '/api/clients',
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: cleanData,
-          tableName: 'clients',
-          operationType: 'create' as const
-        };
-        
-        // Salvar a requisição pendente para sincronização posterior
-        await storeOfflineRequest(pendingRequest);
-        
-        // Feedback genérico sem mencionar o modo offline
-        toast({
-          title: "Cliente cadastrado",
-          description: "O cliente foi cadastrado com sucesso",
-        });
-        
-        // Redirecionar após o cadastro
-        setIsSaving(false);
-        setLocation('/clients');
-        
-        // Criar um item temporário para atualizar o cache
-        const tempItem = {
-          id: -(new Date().getTime()),
-          ...cleanData,
-          _isOffline: true,
-          created_at: new Date().toISOString()
-        };
-          
-        // Atualizar todos os caches possíveis com diferentes configurações de filtro
-        const filterOptions = ['active', 'all', 'deleted'];
-        
-        filterOptions.forEach(filter => {
-          const queryKey = ['/api/clients', filter, { enableOffline: true, offlineTableName: 'clients' }];
-          const previousData = queryClient.getQueryData<any>(queryKey);
-          
-          // Verificar se o cliente não deve estar neste filtro (novo cliente nunca está excluído)
-          if (filter === 'deleted') return;
-          
-          if (previousData) {
-            // Se o formato for um array direto
-            if (Array.isArray(previousData)) {
-              queryClient.setQueryData(
-                queryKey,
-                [...previousData, tempItem]
-              );
-            } 
-            // Se o formato for { data: [...], total: number }
-            else if (previousData.data && Array.isArray(previousData.data)) {
-              queryClient.setQueryData(
-                queryKey,
-                {
-                  ...previousData,
-                  data: [...previousData.data, tempItem],
-                  total: (previousData.total || 0) + 1
-                }
-              );
-            }
-          }
-        });
-        
-        // Também atualizar o cache simples que pode ser usado em outros lugares
-        const simpleQueryKey = ['/api/clients'];
-        const simplePreviousData = queryClient.getQueryData<any>(simpleQueryKey);
-        
-        if (simplePreviousData) {
-          if (Array.isArray(simplePreviousData)) {
-            queryClient.setQueryData(
-              simpleQueryKey,
-              [...simplePreviousData, tempItem]
-            );
-          } 
-          else if (simplePreviousData.data && Array.isArray(simplePreviousData.data)) {
-            queryClient.setQueryData(
-              simpleQueryKey,
-              {
-                ...simplePreviousData,
-                data: [...simplePreviousData.data, tempItem],
-                total: (simplePreviousData.total || 0) + 1
-              }
-            );
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao processar cliente:', error);
-        toast({
-          title: "Erro ao cadastrar cliente",
-          description: "Ocorreu um erro ao cadastrar o cliente. Verifique os dados e tente novamente.",
-          variant: "destructive",
-        });
-        setIsSaving(false);
-      }
-    } else {
-      // Processamento online normal
-      createClientMutation.mutate(cleanData);
-      
-      // Configurar timeout para resetar o estado de salvamento (caso ocorra um erro não tratado)
-      const timeout = setTimeout(() => {
-        setIsSaving(false);
-      }, 10000); // 10 segundos
-      
-      setSaveTimeout(timeout);
+      // Informar ao usuário que está offline e deve usar o botão "Salvar Offline"
+      toast({
+        title: "Sem conexão",
+        description: "Você está sem conexão. Por favor, use o botão 'Salvar Offline' para salvar o cliente.",
+        variant: "destructive",
+      });
+      setIsSaving(false);
+      return;
     }
+    
+    // Processamento online normal
+    createClientMutation.mutate(cleanData);
+    
+    // Configurar timeout para resetar o estado de salvamento (caso ocorra um erro não tratado)
+    const timeout = setTimeout(() => {
+      setIsSaving(false);
+    }, 10000); // 10 segundos
+    
+    setSaveTimeout(timeout);
   };
   
   return (
@@ -493,15 +403,143 @@ export default function NewClient() {
             </CardContent>
           </Card>
           
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap gap-2">
             <Button 
               type="button" 
               variant="outline" 
               className="flex-1"
               onClick={() => setLocation('/clients')}
             >
-              {t("common.cancel")}
+              {t("common.cancel", "Cancelar")}
             </Button>
+            
+            <Button 
+              type="button"
+              variant="secondary"
+              className="flex-1"
+              disabled={isSaving}
+              onClick={async () => {
+                // Validar o formulário manualmente
+                const valid = await form.trigger();
+                if (!valid) return;
+                
+                // Obter os dados do formulário
+                const data = form.getValues();
+                
+                // Limpar dados vazios
+                const cleanData = Object.entries(data).reduce((acc, [key, value]) => {
+                  if (value !== undefined && value !== null && value !== '') {
+                    acc[key] = value;
+                  }
+                  return acc;
+                }, {} as Record<string, any>);
+                
+                // Garantir que o nome esteja presente
+                if (!cleanData.name || cleanData.name.trim() === '') {
+                  form.setError('name', { message: 'O nome é obrigatório' });
+                  return;
+                }
+                
+                setIsSaving(true);
+                
+                try {
+                  // Salvar localmente no IndexedDB para sincronização silenciosa posterior
+                  const timestamp = new Date().getTime();
+                  const pendingRequest = {
+                    id: `client_${timestamp}`,
+                    timestamp,
+                    url: '/api/clients',
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: cleanData,
+                    tableName: 'clients',
+                    operationType: 'create' as const
+                  };
+                  
+                  // Salvar a requisição pendente para sincronização posterior
+                  await storeOfflineRequest(pendingRequest);
+                  
+                  // Criar um item temporário para atualizar o cache
+                  const tempItem = {
+                    id: -(new Date().getTime()),
+                    ...cleanData,
+                    _isOffline: true,
+                    created_at: new Date().toISOString()
+                  };
+                    
+                  // Atualizar todos os caches possíveis com diferentes configurações de filtro
+                  const filterOptions = ['active', 'all', 'deleted'];
+                  
+                  filterOptions.forEach(filter => {
+                    const queryKey = ['/api/clients', filter, { enableOffline: true, offlineTableName: 'clients' }];
+                    const previousData = queryClient.getQueryData<any>(queryKey);
+                    
+                    if (filter === 'deleted') return;
+                    
+                    if (previousData) {
+                      if (Array.isArray(previousData)) {
+                        queryClient.setQueryData(
+                          queryKey,
+                          [...previousData, tempItem]
+                        );
+                      } 
+                      else if (previousData.data && Array.isArray(previousData.data)) {
+                        queryClient.setQueryData(
+                          queryKey,
+                          {
+                            ...previousData,
+                            data: [...previousData.data, tempItem],
+                            total: (previousData.total || 0) + 1
+                          }
+                        );
+                      }
+                    }
+                  });
+                  
+                  // Também atualizar o cache simples
+                  const simpleQueryKey = ['/api/clients'];
+                  const simplePreviousData = queryClient.getQueryData<any>(simpleQueryKey);
+                  
+                  if (simplePreviousData) {
+                    if (Array.isArray(simplePreviousData)) {
+                      queryClient.setQueryData(
+                        simpleQueryKey,
+                        [...simplePreviousData, tempItem]
+                      );
+                    } 
+                    else if (simplePreviousData.data && Array.isArray(simplePreviousData.data)) {
+                      queryClient.setQueryData(
+                        simpleQueryKey,
+                        {
+                          ...simplePreviousData,
+                          data: [...simplePreviousData.data, tempItem],
+                          total: (simplePreviousData.total || 0) + 1
+                        }
+                      );
+                    }
+                  }
+                  
+                  toast({
+                    title: "Cliente salvo offline",
+                    description: "O cliente foi salvo localmente e será sincronizado quando houver conexão",
+                  });
+                  
+                  // Redirecionar após o cadastro
+                  setLocation('/clients');
+                } catch (error) {
+                  console.error('Erro ao salvar cliente offline:', error);
+                  toast({
+                    title: "Erro ao salvar offline",
+                    description: "Não foi possível salvar o cliente localmente. Tente novamente.",
+                    variant: "destructive",
+                  });
+                  setIsSaving(false);
+                }
+              }}
+            >
+              {isSaving ? "Salvando..." : "Salvar Offline"}
+            </Button>
+            
             <Button 
               type="submit" 
               className="flex-1"
