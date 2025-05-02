@@ -547,27 +547,18 @@ export default function NewClient() {
               {t("common.cancel", "Cancelar")}
             </Button>
             
-            {/* Botão Salvar Offline - visível apenas quando o usuário estiver offline */}
-            {isOffline && (
-              <Button 
-                type="button"
-                variant="secondary"
-                className="flex-1"
-                disabled={isSaving}
-                onClick={saveOffline}
-              >
-                {isSaving ? "Salvando..." : "Salvar Offline"}
-              </Button>
-            )}
-            
+            {/* Não mostramos mais dois botões - apenas um botão contextual */}
             <Button 
-              type="submit" 
+              type={isOffline ? "button" : "submit"}
               className="flex-1"
               disabled={createClientMutation.isPending || isSaving}
+              onClick={isOffline ? saveOffline : undefined}
             >
               {createClientMutation.isPending || isSaving 
                 ? t("common.saving", "Salvando...") 
-                : t("clients.registerClient", "Cadastrar Cliente")}
+                : isOffline 
+                  ? t("offline.saveOffline", "Salvar Offline")
+                  : t("clients.registerClient", "Cadastrar Cliente")}
             </Button>
           </div>
         </form>

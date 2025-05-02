@@ -235,7 +235,17 @@
     "vehicleCreated": "Veículo criado com sucesso",
     "vehicleUpdated": "Veículo atualizado com sucesso",
     "vehicleDeleted": "Veículo excluído com sucesso",
-    "confirmDelete": "Tem certeza que deseja excluir este veículo?"
+    "confirmDelete": "Tem certeza que deseja excluir este veículo?",
+    "vehicleInformation": "Informações do Veículo",
+    "makePlaceholder": "Ex: Honda, Toyota, etc.",
+    "modelPlaceholder": "Ex: Civic, Corolla, etc.",
+    "newVehicleDesc": "Cadastre um novo veículo para o cliente",
+    "registerVehicle": "Cadastrar Veículo",
+    "saveOffline": "Salvar Offline",
+    "savedOffline": "Veículo salvo offline",
+    "savedOfflineDesc": "O veículo foi salvo localmente e será sincronizado quando a conexão for restaurada",
+    "errorSavingOffline": "Erro ao salvar offline",
+    "errorSavingOfflineDesc": "Não foi possível salvar o veículo localmente. Tente novamente."
   },
   "technicians": {
     "title": "Técnicos",
