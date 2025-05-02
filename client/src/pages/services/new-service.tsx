@@ -676,7 +676,7 @@ export default function NewServicePage() {
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
-        title={t("services.newService")}
+        title={t("services.newService", "Novo Serviço")}
         description={t("services.newServiceDesc", "Cadastre um novo serviço de reparo sem pintura")}
         actions={
           <Button variant="outline" onClick={() => setLocation('/services')}>
@@ -1063,7 +1063,7 @@ export default function NewServicePage() {
                 maxPhotos={5}
               />
               <p className="text-sm text-muted-foreground mt-2">
-                {t("services.photoHelp")}
+                {t("services.photoHelp", "Adicione fotos do trabalho a ser realizado")}
               </p>
             </CardContent>
           </Card>
@@ -1072,7 +1072,7 @@ export default function NewServicePage() {
           
           <div className="flex justify-end space-x-2">
             <Button variant="outline" type="button" onClick={() => setLocation('/services')}>
-              {t("common.cancel")}
+              {t("common.cancel", "Cancelar")}
             </Button>
             <Button 
               type="submit" 
