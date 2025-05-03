@@ -126,9 +126,28 @@ declare global {
   }
 }
 
+// Controle para evitar mensagens repetitivas no console
+let syncLogShown = false;
+let lastSyncAttempt = 0;
+
 // Solicitar sincronização quando online
 export const triggerSyncIfNeeded = async () => {
   if (!navigator.onLine) return;
+  
+  // Limitar tentativas de registro para no máximo uma a cada 30 segundos
+  const now = Date.now();
+  if (now - lastSyncAttempt < 30000) {
+    // Executar sincronização silenciosa sem logging
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SYNC_REQUEST'
+      });
+    }
+    return;
+  }
+  
+  // Atualizar timestamp da última tentativa
+  lastSyncAttempt = now;
   
   try {
     const registration = await navigator.serviceWorker.ready;
@@ -137,9 +156,18 @@ export const triggerSyncIfNeeded = async () => {
     if (registration.sync && typeof registration.sync.register === 'function') {
       try {
         await registration.sync.register('sync-pending-requests');
-        console.log('Sincronização em background registrada com sucesso');
+        // Mostrar log apenas na primeira vez com sucesso
+        if (!syncLogShown) {
+          console.log('Sincronização em background registrada com sucesso');
+          syncLogShown = true;
+        }
       } catch (syncError) {
-        console.log('Falha ao registrar sincronização em background, usando método manual', syncError);
+        // Mostrar erro apenas uma vez
+        if (!syncLogShown) {
+          console.log('Falha ao registrar sincronização em background, usando método manual');
+          syncLogShown = true;
+        }
+        
         // Caso falhe, cai no método manual abaixo
         if (navigator.serviceWorker.controller) {
           navigator.serviceWorker.controller.postMessage({
@@ -148,7 +176,12 @@ export const triggerSyncIfNeeded = async () => {
         }
       }
     } else {
-      console.log('Background Sync não suportado neste navegador, usando sincronização manual');
+      // Mostrar mensagem apenas uma vez
+      if (!syncLogShown) {
+        console.log('Background Sync não suportado neste navegador, usando sincronização manual');
+        syncLogShown = true;
+      }
+      
       // Tentar sincronizar manualmente
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
@@ -157,7 +190,12 @@ export const triggerSyncIfNeeded = async () => {
       }
     }
   } catch (error) {
-    console.log('Erro ao preparar sincronização - isso é esperado em alguns navegadores');
+    // Mostrar mensagem apenas uma vez
+    if (!syncLogShown) {
+      console.log('Erro ao preparar sincronização - isso é esperado em alguns navegadores');
+      syncLogShown = true;
+    }
+    
     // Tentar sincronização manual de qualquer forma
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
@@ -316,11 +354,18 @@ export const initPWA = () => {
   // Verificar estado inicial da rede
   checkNetworkStatus();
   
+  // Variável para controlar logs
+  let syncIntervalCount = 0;
+  
   // Configurar verificação periódica para sincronização
   // Tenta sincronizar a cada 5 minutos, silenciosamente em segundo plano
   setInterval(() => {
     if (navigator.onLine) {
-      console.log('Tentativa periódica de sincronização em segundo plano');
+      // Mostrar mensagem apenas a cada 5 execuções (25 minutos)
+      if (syncIntervalCount % 5 === 0) {
+        console.log('Tentativa periódica de sincronização em segundo plano');
+      }
+      syncIntervalCount++;
       triggerSyncIfNeeded();
     }
   }, 300000); // 5 minutos

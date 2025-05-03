@@ -102,6 +102,7 @@ export async function apiRequest<T>({
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...headers,
         },
         body: method !== 'GET' && data ? JSON.stringify(data) : undefined,
@@ -191,6 +192,7 @@ export async function apiRequest<T>({
       method,
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         ...headers,
       },
       body: method !== 'GET' && data ? JSON.stringify(data) : undefined,
@@ -207,6 +209,7 @@ export async function apiRequest<T>({
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           ...headers,
         },
         body: method !== 'GET' && data ? JSON.stringify(data) : undefined,
