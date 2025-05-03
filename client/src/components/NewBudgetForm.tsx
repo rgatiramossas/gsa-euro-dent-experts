@@ -124,25 +124,55 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   }, []);
   
   // Buscar a lista de clientes do banco de dados - incluindo offline
-  const { data: clients, isLoading: isLoadingClients, error: clientsError } = useQuery<any[]>({
+  const { data: clients, isLoading: isLoadingClients, error: clientsError, refetch: refetchClients } = useQuery<any[]>({
     queryKey: ['/api/clients', 'active', { enableOffline: true, offlineTableName: 'clients' }],
     queryFn: async () => {
       try {
-        // Importar o que precisamos
+        // Importar as ferramentas necessárias
         const { getApi } = await import('@/lib/apiWrapper');
-        const { getPendingRequests } = await import('@/lib/offlineDb');
+        const { getCompleteOfflineData } = await import('@/lib/getDirectOfflineData');
+        const { syncEvents, SYNC_EVENTS } = await import('@/lib/offlineDb');
         
-        console.log("[NewBudgetForm] Buscando clientes ativos...");
+        console.log("[NewBudgetForm] Buscando clientes ativos (com suporte offline)...");
         
-        // Buscar dados online
+        // Buscar dados online e offline simultaneamente
         let onlineClients: any[] = [];
         let offlineClients: any[] = [];
+        
+        // Buscar todos os clientes do banco de dados offline
+        try {
+          offlineClients = await getCompleteOfflineData('clients');
+          console.log(`[NewBudgetForm] Recuperados ${offlineClients.length} clientes diretamente do IndexedDB`);
+          
+          // Processar os clientes offline para garantir consistência visual
+          offlineClients = offlineClients.map(client => {
+            // Se o cliente já tem um ID negativo ou flag _isOffline, considerar como offline
+            const isOfflineClient = client.id < 0 || client._isOffline === true;
+            
+            // Garantir que clientes offline tenham marcação visual
+            if (isOfflineClient) {
+              let clientName = client.name || 'Cliente sem nome';
+              if (!clientName.includes('(Offline)')) {
+                clientName = `${clientName} (Offline)`;
+              }
+              
+              return {
+                ...client,
+                _isOffline: true,
+                name: clientName
+              };
+            }
+            
+            return client;
+          });
+        } catch (offlineError) {
+          console.error("[NewBudgetForm] Erro ao buscar clientes do IndexedDB:", offlineError);
+        }
         
         // Tentar buscar clientes online se tiver conexão
         if (navigator.onLine) {
           try {
-            // Buscar dados online usando getApi
-            // Usar o endpoint com parâmetro enableOffline para garantir suporte a offline
+            // Buscar dados online
             const response = await fetch('/api/clients?filterMode=active&enableOffline=true');
             if (!response.ok) {
               throw new Error('Erro ao carregar clientes do servidor');
@@ -154,108 +184,121 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
           }
         }
         
-        // Sempre buscar clientes offline para garantir que temos todos
-        try {
-          // Recupera clientes salvos no IndexedDB
-          const pendingRequests = await getPendingRequests({
-            tableName: 'clients',
-            operationType: 'create'
-          });
-          
-          console.log(`[NewBudgetForm] Encontrados ${pendingRequests.length} clientes pendentes no IndexedDB`);
-          
-          // Extrair clientes das requisições pendentes
-          offlineClients = pendingRequests
-            .map(item => {
-              try {
-                // Verificar se temos dados válidos
-                if (!item || !item.body) {
-                  console.error("[NewBudgetForm] Requisição inválida no IndexedDB:", item);
-                  return null;
-                }
-                
-                // ID temporário negativo para evitar conflitos
-                const offlineId = typeof item.body.id === 'number' 
-                  ? item.body.id 
-                  : -(new Date(item.timestamp).getTime());
-                
-                // Adicionar (Offline) ao nome para identificação visual
-                let clientName = item.body.name || 'Cliente sem nome';
-                if (!clientName.includes('(Offline)')) {
-                  clientName = `${clientName} (Offline)`;
-                }
-                
-                const clientData = {
-                  ...item.body,
-                  id: offlineId,
-                  _isOffline: true,
-                  name: clientName
-                };
-                
-                console.log(`[NewBudgetForm] Cliente offline processado:`, clientData);
-                
-                return clientData;
-              } catch (e) {
-                console.error("[NewBudgetForm] Erro ao processar cliente offline:", e);
-                return null;
-              }
-            })
-            .filter(Boolean);
-            
-          console.log(`[NewBudgetForm] Processados ${offlineClients.length} clientes offline`);
-        } catch (offlineError) {
-          console.error("[NewBudgetForm] Erro ao buscar clientes offline:", offlineError);
-        }
-        
         // Certifica-se de que temos arrays válidos
         if (!Array.isArray(onlineClients)) onlineClients = [];
         if (!Array.isArray(offlineClients)) offlineClients = [];
         
-        // Combinar clientes online e offline
+        // Combinar clientes online e offline com estratégia de mesclagem aprimorada
         const combinedClients = [...onlineClients];
         
-        // Adicionar clientes offline que não estão na lista online
+        // Adicionar clientes offline que não estão duplicados na lista online
         offlineClients.forEach(offlineClient => {
-          if (!combinedClients.some(c => c.id === offlineClient.id)) {
+          // Se o cliente offline tem ID negativo (criado localmente), adicionar diretamente
+          if (offlineClient.id < 0) {
+            if (!combinedClients.some(c => c.id === offlineClient.id)) {
+              console.log(`[NewBudgetForm] Adicionando cliente offline com ID ${offlineClient.id} à lista combinada`);
+              combinedClients.push(offlineClient);
+            }
+          } 
+          // Para clientes com ID positivo, verificar se temos uma versão atualizada
+          else if (!combinedClients.some(c => c.id === offlineClient.id)) {
+            console.log(`[NewBudgetForm] Adicionando cliente com ID ${offlineClient.id} da base offline à lista combinada`);
             combinedClients.push(offlineClient);
           }
         });
         
         console.log(`[NewBudgetForm] Total de ${combinedClients.length} clientes carregados (${onlineClients.length} online + ${offlineClients.length} offline)`);
-        console.log("[NewBudgetForm] Lista final de clientes:", combinedClients);
+        console.log("[NewBudgetForm] Erro ao carregar clientes:", clientsError);
         
         // Retornar a lista combinada
         return combinedClients;
       } catch (error) {
         console.error("[NewBudgetForm] Erro geral ao carregar clientes:", error);
         
-        // Em caso de falha total, tentar buscar apenas clientes offline
+        // Em caso de falha total, tentar buscar apenas do IndexedDB
         try {
-          const { getPendingRequests } = await import('@/lib/offlineDb');
-          const offlineRequests = await getPendingRequests({
-            tableName: 'clients',
-            operationType: 'create'
-          });
+          const { getCompleteOfflineData } = await import('@/lib/getDirectOfflineData');
+          const offlineClients = await getCompleteOfflineData('clients');
           
-          const fallbackClients = offlineRequests
-            .map(item => ({
-              ...item.body,
-              id: typeof item.body.id === 'number' ? item.body.id : -(new Date(item.timestamp).getTime()),
-              _isOffline: true,
-              name: `${item.body.name || 'Cliente'} (Offline)`
-            }));
+          // Formatar para exibição
+          const fallbackClients = offlineClients.map(client => ({
+            ...client,
+            _isOffline: true,
+            name: client.name?.includes('(Offline)') 
+              ? client.name 
+              : `${client.name || 'Cliente'} (Offline)`
+          }));
             
-          console.log("[NewBudgetForm] Clientes offline de fallback:", fallbackClients);
+          console.log("[NewBudgetForm] Clientes de fallback do IndexedDB:", fallbackClients);
           return fallbackClients;
-        } catch (offlineError) {
-          console.error("[NewBudgetForm] Falha no fallback offline:", offlineError);
+        } catch (fallbackError) {
+          console.error("[NewBudgetForm] Falha no fallback do IndexedDB:", fallbackError);
           return []; // Último recurso: array vazio
         }
       }
     },
     retry: 1, // Reduzir para 1 para evitar múltiplas tentativas se falhar
-    staleTime: 30000, // 30 segundos
+    staleTime: 15000, // 15 segundos - reduzido para atualizar mais frequentemente
   });
+  
+  // Escutar eventos de sincronização e atualização de dados
+  useEffect(() => {
+    const setupSyncListeners = async () => {
+      try {
+        // Importar eventos de sincronização
+        const { syncEvents, SYNC_EVENTS } = await import('@/lib/offlineDb');
+        
+        // Função para atualizar a lista de clientes quando dados são modificados
+        const handleDataUpdate = (tableName: string, data: any) => {
+          console.log(`[NewBudgetForm] Evento de atualização de dados recebido para tabela ${tableName}:`, data);
+          
+          // Se for a tabela de clientes, recarregar os dados
+          if (tableName === 'clients') {
+            console.log('[NewBudgetForm] Recarregando lista de clientes após alteração...');
+            refetchClients();
+          }
+        };
+        
+        // Registrar handlers para eventos relevantes
+        console.log('[NewBudgetForm] Registrando listeners para eventos de sincronização');
+        
+        // Quando dados são adicionados (create)
+        const removeAddListener = syncEvents.on(SYNC_EVENTS.DATA_ADDED, handleDataUpdate);
+        
+        // Quando dados são atualizados (update)
+        const removeUpdateListener = syncEvents.on(SYNC_EVENTS.DATA_UPDATED, handleDataUpdate);
+        
+        // Quando a sincronização é concluída
+        const removeSyncListener = syncEvents.on(SYNC_EVENTS.SYNC_COMPLETED, 
+          (tableName: string, data: any) => {
+            console.log(`[NewBudgetForm] Sincronização concluída para ${tableName}`);
+            if (tableName === 'clients' || tableName === 'all') {
+              refetchClients();
+            }
+          }
+        );
+        
+        // Cleanup dos listeners quando o componente for desmontado
+        return () => {
+          removeAddListener();
+          removeUpdateListener();
+          removeSyncListener();
+          console.log('[NewBudgetForm] Listeners de sincronização removidos');
+        };
+      } catch (error) {
+        console.error('[NewBudgetForm] Erro ao configurar listeners de sincronização:', error);
+        return () => {}; // Cleanup vazio em caso de erro
+      }
+    };
+    
+    // Configurar listeners
+    const cleanup = setupSyncListeners();
+    
+    // Cleanup na desmontagem
+    return () => {
+      cleanup.then(cleanupFn => cleanupFn());
+    };
+  }, [refetchClients]);
   
   // Log para depuração da lista de clientes
   useEffect(() => {
