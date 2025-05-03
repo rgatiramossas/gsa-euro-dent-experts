@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Client } from "@/types";
 import { insertVehicleSchema } from "@shared/schema.mysql";
-import { storeOfflineRequest } from "@/lib/offlineDb";
+import { storeOfflineRequest, syncEvents, SYNC_EVENTS } from "@/lib/offlineDb";
 import { useTranslation } from "react-i18next";
 
 // Use o schema original sem estender com year
@@ -46,10 +46,29 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveTimeout, setSaveTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   
-  // Efeito para detectar mudanças no estado da conexão
+  // Efeito para detectar mudanças no estado da conexão e escutar eventos de sincronização
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
+    
+    // Manipulador para eventos de sincronização
+    const handleDataAdded = (tableName: string, data: any) => {
+      console.log(`[VehicleForm] Evento de dados adicionados em ${tableName}:`, data);
+      
+      // Se a adição for na tabela de veículos, atualizar a interface
+      if (tableName === 'vehicles') {
+        // Invalidar caches específicos para garantir que a UI seja atualizada
+        queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}/vehicles`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/vehicles'] });
+        // Chave usada em serviços
+        queryClient.invalidateQueries({ 
+          queryKey: ['/api/clients', clientId, 'vehicles', { enableOffline: true, offlineTableName: 'vehicles' }]
+        });
+      }
+    };
+    
+    // Registrar-se para eventos de dados adicionados
+    const unsubscribeDataAdded = syncEvents.on(SYNC_EVENTS.DATA_ADDED, handleDataAdded);
     
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -62,8 +81,11 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
       if (saveTimeout) {
         clearTimeout(saveTimeout);
       }
+      
+      // Limpar inscrição de eventos
+      unsubscribeDataAdded();
     };
-  }, [saveTimeout]);
+  }, [saveTimeout, clientId, queryClient]);
   
   // Get client details
   const { data: client, isLoading: isLoadingClient } = useQuery<Client>({
@@ -89,6 +111,9 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
       return await apiRequest('/api/vehicles', 'POST', data);
     },
     onSuccess: (data) => {
+      // Emitir evento para notificar outros componentes que escutam por mudanças
+      syncEvents.emit(SYNC_EVENTS.DATA_ADDED, 'vehicles', data);
+      
       // Invalidar as queries para atualizar os dados quando estiver online
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}/vehicles`] });
       queryClient.invalidateQueries({ queryKey: ['/api/vehicles'] });
@@ -214,6 +239,9 @@ export default function NewVehicle({ clientId }: NewVehicleProps) {
         
         // Salvar a requisição pendente para sincronização posterior
         await storeOfflineRequest(pendingRequest);
+        
+        // Emitir evento de dados adicionados para outros componentes que estejam escutando
+        syncEvents.emit(SYNC_EVENTS.DATA_ADDED, 'vehicles', tempVehicle);
         
         // Atualizar o cache para mostrar o veículo imediatamente em todas as listas/views
         
