@@ -1,0 +1,16 @@
+# Scripts Essenciais para Operação
+
+- ✅ server/index.ts (Presente)
+- ✅ server/routes.ts (Presente)
+- ✅ server/storage.ts (Presente)
+- ✅ server/vite.ts (Presente)
+- ✅ client/src/App.tsx (Presente)
+- ✅ client/src/main.tsx (Presente)
+- ✅ client/src/index.css (Presente)
+- ✅ client/src/lib/pwaManager.ts (Presente)
+- ✅ client/src/lib/apiWrapper.ts (Presente)
+- ✅ client/src/lib/queryClient.ts (Presente)
+- ✅ client/src/contexts/AuthContext.tsx (Presente)
+- ✅ vite.config.ts (Presente)
+- ✅ package.json (Presente)
+- ✅ .env.production (Presente)
