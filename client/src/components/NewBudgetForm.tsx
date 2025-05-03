@@ -220,14 +220,18 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
           const { getCompleteOfflineData } = await import('@/lib/getDirectOfflineData');
           const offlineClients = await getCompleteOfflineData('clients');
           
-          // Formatar para exibição
-          const fallbackClients = offlineClients.map(client => ({
-            ...client,
-            _isOffline: true,
-            name: client.name?.includes('(Offline)') 
-              ? client.name 
-              : `${client.name || 'Cliente'} (Offline)`
-          }));
+          // Formatar para exibição (corrigindo erros de tipagem)
+          const fallbackClients = offlineClients.map(client => {
+            // Garantir que temos um objeto com as propriedades necessárias
+            const clientObject = client as any;
+            return {
+              ...clientObject,
+              _isOffline: true,
+              name: clientObject.name?.includes('(Offline)') 
+                ? clientObject.name 
+                : `${clientObject.name || 'Cliente'} (Offline)`
+            };
+          });
             
           console.log("[NewBudgetForm] Clientes de fallback do IndexedDB:", fallbackClients);
           return fallbackClients;

@@ -4,6 +4,20 @@
 import Dexie from 'dexie';
 import offlineDb from './offlineDb';
 
+// Interface para tipificar requisições pendentes
+interface PendingRequestItem {
+  id: string;
+  timestamp: number;
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: any;
+  tableName: string;
+  resourceId?: number | string;
+  operationType: 'create' | 'update' | 'delete';
+  retryCount?: number;
+}
+
 /**
  * Busca todos os registros de uma tabela específica no IndexedDB
  * Retorna tanto registros offline (ID negativo) quanto registros sincronizados (ID positivo)
@@ -13,8 +27,9 @@ import offlineDb from './offlineDb';
  */
 export async function getDirectOfflineData<T>(tableName: string): Promise<T[]> {
   try {
-    // Obter referência à tabela
-    const table = offlineDb[tableName];
+    // Obter referência à tabela de forma segura com tipagem
+    // @ts-ignore - Acessando propriedade dinâmica da classe Dexie
+    const table = offlineDb.table(tableName);
     
     if (!table) {
       console.warn(`Tabela '${tableName}' não encontrada no IndexedDB`);
@@ -56,7 +71,7 @@ export async function getPendingRequestsData(
     );
     
     // Extrair dados do corpo das requisições
-    return pendingRequests.map(request => {
+    return pendingRequests.map((request: PendingRequestItem) => {
       // Se for criação, adicionar ID temporário
       if (operationType === 'create' && request.resourceId) {
         return {
@@ -92,13 +107,13 @@ export async function getCompleteOfflineData<T>(tableName: string): Promise<T[]>
     ]);
     
     // Combinação: inclui registros da tabela + pendingRequests não duplicados
-    const combinedData: T[] = [...tableData];
+    const combinedData = [...tableData] as T[];
     
     // Adicionar pendingData se não existir na tableData
     pendingData.forEach(pending => {
       const exists = combinedData.some(item => (item as any).id === pending.id);
       if (!exists) {
-        combinedData.push(pending as T);
+        combinedData.push(pending as unknown as T);
       }
     });
     
