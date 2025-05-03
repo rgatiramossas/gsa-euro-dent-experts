@@ -1,4 +1,4 @@
-import offlineDb from './offlineDb';
+import offlineDb, { syncEvents, SYNC_EVENTS } from './offlineDb';
 import { checkNetworkStatus } from './pwaManager';
 
 // Tipos de método HTTP
@@ -242,23 +242,59 @@ export async function apiRequest<T>({
         
         // Para GET de item único
         if (resourceId !== null) {
+          console.log(`[API] Sincronizando item único (${tableName}) ID ${resourceId} com o IndexedDB`);
+          
           // Atualizar o item no banco local
-          await offlineDb.getTableByName(tableName).put({
-            ...responseData,
-            last_sync: Date.now()
-          });
+          const table = offlineDb.getTableByName(tableName);
+          if (table) {
+            await table.put({
+              ...responseData,
+              last_sync: Date.now()
+            });
+            
+            // Notificar componentes sobre a atualização
+            syncEvents.emit(SYNC_EVENTS.DATA_UPDATED, tableName, responseData);
+          }
         } 
-        // Para GET de coleções
+        // Para GET de coleções - dados diretos em array
+        else if (Array.isArray(responseData)) {
+          console.log(`[API] Sincronizando ${responseData.length} itens de ${tableName} com o IndexedDB (formato array)`);
+          
+          const table = offlineDb.getTableByName(tableName);
+          if (table) {
+            // Batch update dos itens no banco local
+            await Promise.all(
+              responseData.map((item: any) => 
+                table.put({
+                  ...item,
+                  last_sync: Date.now()
+                })
+              )
+            );
+            
+            // Notificar componentes sobre a atualização
+            syncEvents.emit(SYNC_EVENTS.DATA_UPDATED, tableName, responseData);
+          }
+        }
+        // Para GET de coleções com metadados (formato data/total)
         else if (responseData && responseData.data && Array.isArray(responseData.data)) {
-          // Batch update dos itens no banco local
-          await Promise.all(
-            responseData.data.map((item: any) => 
-              offlineDb.getTableByName(tableName).put({
-                ...item,
-                last_sync: Date.now()
-              })
-            )
-          );
+          console.log(`[API] Sincronizando ${responseData.data.length} itens de ${tableName} com o IndexedDB (formato paginado)`);
+          
+          const table = offlineDb.getTableByName(tableName);
+          if (table) {
+            // Batch update dos itens no banco local
+            await Promise.all(
+              responseData.data.map((item: any) => 
+                table.put({
+                  ...item,
+                  last_sync: Date.now()
+                })
+              )
+            );
+            
+            // Notificar componentes sobre a atualização
+            syncEvents.emit(SYNC_EVENTS.DATA_UPDATED, tableName, responseData.data);
+          }
         }
         
         return responseData as T;

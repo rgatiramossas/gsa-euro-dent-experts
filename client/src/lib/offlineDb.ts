@@ -3,6 +3,48 @@ import { v4 as uuidv4 } from 'uuid';
 import { checkNetworkStatus, triggerSyncIfNeeded } from './pwaManager';
 import { queryClient } from "./queryClient";
 
+// Eventos de sincronização para componentes
+export const SYNC_EVENTS = {
+  DATA_ADDED: 'data_added',
+  DATA_UPDATED: 'data_updated',
+  DATA_DELETED: 'data_deleted',
+  SYNC_COMPLETED: 'sync_completed'
+};
+
+// Sistema básico de eventos para comunicação entre componentes
+class SyncEventEmitter {
+  private listeners: Record<string, Function[]> = {};
+
+  on(event: string, callback: Function) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(callback);
+    return () => this.off(event, callback);
+  }
+
+  off(event: string, callback: Function) {
+    if (this.listeners[event]) {
+      this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    }
+  }
+
+  emit(event: string, ...args: any[]) {
+    if (this.listeners[event]) {
+      this.listeners[event].forEach(callback => {
+        try {
+          callback(...args);
+        } catch (e) {
+          console.error(`Erro ao executar listener de evento ${event}:`, e);
+        }
+      });
+    }
+  }
+}
+
+// Exportar instância do emissor de eventos
+export const syncEvents = new SyncEventEmitter();
+
 // Definir interface para pedidos pendentes
 interface PendingRequest {
   id: string;
@@ -26,7 +68,7 @@ interface TableSyncStatus {
   lastSync: number; // timestamp
 }
 
-// Classe para o banco de dados offline
+// Classe para o banco de dados offline - versão aprimorada
 class OfflineDatabase extends Dexie {
   // Tabelas para os dados principais
   clients: Dexie.Table<any, number>;
@@ -34,6 +76,7 @@ class OfflineDatabase extends Dexie {
   budgets: Dexie.Table<any, number>;
   technicians: Dexie.Table<any, number>;
   service_types: Dexie.Table<any, number>;
+  vehicles: Dexie.Table<any, number>; // Adicionado tabela de veículos
   
   // Tabelas para sistema de sincronização
   pendingRequests: Dexie.Table<PendingRequest, string>;
@@ -56,14 +99,63 @@ class OfflineDatabase extends Dexie {
       syncStatus: 'tableName, lastSync'
     });
     
+    // Adicionar a tabela de veículos na versão 2
+    this.version(2).stores({
+      vehicles: '++id, client_id, make, model, year, license_plate, color, created_at, modified_at'
+    });
+    
     // Inicializar referências das tabelas
     this.clients = this.table('clients');
     this.services = this.table('services');
     this.budgets = this.table('budgets');
     this.technicians = this.table('technicians');
     this.service_types = this.table('service_types');
+    this.vehicles = this.table('vehicles');
     this.pendingRequests = this.table('pendingRequests');
     this.syncStatus = this.table('syncStatus');
+
+    // Verificar estrutura do banco ao inicializar
+    this.verifyDatabaseStructure().catch(err => {
+      console.error("Erro ao verificar estrutura do banco:", err);
+    });
+  }
+
+  // Método para verificar e corrigir a estrutura do banco de dados
+  async verifyDatabaseStructure() {
+    console.log("[offlineDb] Verificando estrutura do banco de dados IndexedDB...");
+    
+    try {
+      // Verificar se todas as tabelas principais existem
+      const tables = ['clients', 'services', 'budgets', 'technicians', 'service_types', 'vehicles'];
+      
+      for (const tableName of tables) {
+        try {
+          // Testar acesso à tabela
+          const count = await this.table(tableName).count();
+          console.log(`[offlineDb] Tabela ${tableName} existe e contém ${count} registros`);
+        } catch (tableError) {
+          console.error(`[offlineDb] Erro ao acessar tabela ${tableName}:`, tableError);
+          
+          // Se a tabela não existe, tentar recriar a estrutura do banco
+          console.log(`[offlineDb] Tentando recriar a tabela ${tableName}...`);
+          
+          // Se for a versão 1 e a tabela vehicles não existe, tente atualizar para v2
+          if (tableName === 'vehicles') {
+            console.log("[offlineDb] Atualizando para versão 2 do schema para adicionar tabela de veículos");
+            
+            // Força atualização do banco para a versão 2
+            await this.version(2).stores({
+              vehicles: '++id, client_id, make, model, year, license_plate, color, created_at, modified_at'
+            });
+          }
+        }
+      }
+      
+      console.log("[offlineDb] Verificação da estrutura do banco concluída com sucesso");
+    } catch (error) {
+      console.error("[offlineDb] Erro ao verificar estrutura do banco:", error);
+      throw error;
+    }
   }
   
   // Inicializar status de sincronização para todas as tabelas se necessário
@@ -82,17 +174,22 @@ class OfflineDatabase extends Dexie {
     }
   }
   
-  // Obter tabela com base no nome
+  // Obter tabela com base no nome - versão aprimorada com suporte a veículos
   getTableByName(tableName: string): Dexie.Table<any, any> {
     const tables: Record<string, Dexie.Table<any, any>> = {
       'clients': this.clients,
       'services': this.services,
       'budgets': this.budgets,
       'technicians': this.technicians,
-      'service_types': this.service_types
+      'service_types': this.service_types,
+      'vehicles': this.vehicles
     };
     
-    return tables[tableName];
+    const table = tables[tableName];
+    if (!table) {
+      console.error(`[offlineDb] Tabela não encontrada: ${tableName}`);
+    }
+    return table;
   }
   
   // Registrar uma requisição pendente para sincronização futura
@@ -782,21 +879,61 @@ export async function storeOfflineRequest(request: PendingRequest): Promise<any>
       _offlineId: request.id
     };
     
-    // Salvar no banco de dados Dexie
-    const table = offlineDb.getTableByName(request.tableName);
-    if (table) {
-      await table.add(offlineItem);
-      
-      // Obter todos os itens da tabela para atualizar o cache
-      const allItems = await table.toArray();
-      
-      // Determinar a chave de consulta correspondente
-      const queryKey = `/api/${request.tableName}`;
-      
-      // Atualizar o cache do React Query para renderização imediata na UI
-      queryClient.setQueryData([queryKey], allItems);
-      
-      return { ...offlineItem, id: tempId };
+    try {
+      // Salvar no banco de dados Dexie - com verificação de tabela aprimorada
+      const table = offlineDb.getTableByName(request.tableName);
+      if (table) {
+        await table.add(offlineItem);
+        console.log(`[offlineDb] Item offline adicionado à tabela ${request.tableName} com ID ${tempId}`);
+        
+        // Obter todos os itens da tabela para atualizar o cache
+        const allItems = await table.toArray();
+        
+        // Atualizar várias chaves de cache para garantir a visibilidade em diferentes componentes
+        
+        // 1. Atualizar cache básico da tabela
+        const baseQueryKey = `/api/${request.tableName}`;
+        queryClient.setQueryData([baseQueryKey], allItems);
+        console.log(`[offlineDb] Cache atualizado para ${baseQueryKey}`);
+        
+        // 2. Atualizar cache com opções de offline (usado em componentes com suporte offline)
+        const offlineQueryKey = [baseQueryKey, { enableOffline: true, offlineTableName: request.tableName }];
+        queryClient.setQueryData(offlineQueryKey, allItems);
+        console.log(`[offlineDb] Cache atualizado para ${JSON.stringify(offlineQueryKey)}`);
+        
+        // 3. Se for um veículo, atualizar também o cache de veículos do cliente
+        if (request.tableName === 'vehicles' && request.body.client_id) {
+          const clientVehiclesKey = ['/api/clients', request.body.client_id, 'vehicles'];
+          
+          // Buscar veículos existentes do cliente no cache
+          const existingVehicles = queryClient.getQueryData<any[]>(clientVehiclesKey) || [];
+          
+          // Adicionar o novo veículo à lista
+          const updatedVehicles = [...existingVehicles, offlineItem];
+          
+          // Atualizar o cache
+          queryClient.setQueryData(clientVehiclesKey, updatedVehicles);
+          console.log(`[offlineDb] Cache de veículos do cliente ${request.body.client_id} atualizado`);
+          
+          // Atualizar também a versão com suporte offline
+          const clientVehiclesOfflineKey = [
+            '/api/clients', 
+            request.body.client_id, 
+            'vehicles', 
+            { enableOffline: true, offlineTableName: 'vehicles' }
+          ];
+          queryClient.setQueryData(clientVehiclesOfflineKey, updatedVehicles);
+        }
+        
+        // Notificar componentes sobre a mudança via sistema de eventos
+        syncEvents.emit(SYNC_EVENTS.DATA_ADDED, request.tableName, offlineItem);
+        
+        return { ...offlineItem, id: tempId };
+      } else {
+        console.error(`[offlineDb] Erro: Tabela ${request.tableName} não encontrada para armazenar item offline`);
+      }
+    } catch (error) {
+      console.error(`[offlineDb] Erro ao armazenar item offline na tabela ${request.tableName}:`, error);
     }
   }
   

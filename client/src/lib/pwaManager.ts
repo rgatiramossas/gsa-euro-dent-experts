@@ -5,7 +5,7 @@ export const isPWASupported = () => {
   return 'serviceWorker' in navigator;
 };
 
-// Registra o service worker
+// Registra o service worker - versão aprimorada com melhor tratamento de erros
 export const registerServiceWorker = async () => {
   if (!isPWASupported()) {
     console.error('Service Workers não são suportados neste navegador.');
@@ -13,13 +13,65 @@ export const registerServiceWorker = async () => {
   }
 
   try {
-    // Forçar atualização do Service Worker para garantir a versão mais recente
-    if (navigator.serviceWorker.controller) {
-      console.log('Service Worker já ativo, forçando atualização...');
-      await navigator.serviceWorker.getRegistration().then(reg => reg?.update());
+    // Verificar se já existe um service worker ativo
+    const existingRegistration = await navigator.serviceWorker.getRegistration();
+    
+    // Se já existir, forçar atualização
+    if (existingRegistration) {
+      console.log('Service Worker já registrado, forçando atualização...');
+      
+      try {
+        await existingRegistration.update();
+        console.log('Service Worker atualizado com sucesso');
+      } catch (updateError) {
+        console.error('Erro ao atualizar Service Worker existente:', updateError);
+        // Continuar mesmo com erro de atualização
+      }
     }
     
-    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    // Tentar registrar ou obter o service worker
+    console.log('Registrando ou obtendo Service Worker...');
+    
+    // Verificar se o arquivo sw.js existe antes de tentar registrá-lo
+    try {
+      // Tentar buscar o arquivo do service worker para verificar se existe
+      const swResponse = await fetch('/sw.js', { cache: 'no-store' });
+      if (!swResponse.ok) {
+        throw new Error(`Service Worker não encontrado: ${swResponse.status} ${swResponse.statusText}`);
+      }
+      console.log('Arquivo sw.js encontrado, continuando com registro');
+    } catch (fetchError) {
+      console.error('Erro ao verificar arquivo do Service Worker:', fetchError);
+      // Tentar buscar em /public/sw.js como fallback
+      try {
+        const fallbackResponse = await fetch('/public/sw.js', { cache: 'no-store' });
+        if (!fallbackResponse.ok) {
+          console.error('Arquivo sw.js não encontrado no fallback também');
+          return false;
+        } else {
+          console.log('Arquivo sw.js encontrado no caminho alternativo');
+        }
+      } catch (fallbackError) {
+        console.error('Erro ao verificar arquivo do Service Worker no fallback:', fallbackError);
+        return false;
+      }
+    }
+    
+    // Tentar registrar o service worker com maior tempo de timeout
+    const registrationPromise = navigator.serviceWorker.register('/sw.js', { 
+      scope: '/',
+      // Usar updateViaCache: 'none' para forçar a verificação de novas versões
+      updateViaCache: 'none'
+    });
+    
+    // Adicionar timeout para registro para evitar bloqueio
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Tempo limite excedido ao registrar Service Worker')), 10000);
+    });
+    
+    // Usar Promise.race para limitar o tempo de espera do registro
+    const registration = await Promise.race([registrationPromise, timeoutPromise]) as ServiceWorkerRegistration;
+    
     console.log('Service Worker registrado com sucesso');
 
     // Forçar cache das imagens de logo para modo offline
