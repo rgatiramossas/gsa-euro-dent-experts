@@ -23,7 +23,7 @@ async function listServiceTypes() {
     console.log();
     console.log('Tipos de serviço:');
     serviceTypes.forEach(type => {
-      console.log();
+      console.log(`ID: ${type.id}, Nome: "${type.name}", Descrição: "${type.description}", Preço Padrão: ${type.default_price || type.base_price || 0}`);
     });
     
   } catch (error) {
