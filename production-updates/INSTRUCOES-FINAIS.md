@@ -16,7 +16,7 @@ Este pacote contém todas as atualizações necessárias para implementar melhor
 - `apply-updates.sh` - Script para facilitar a implementação
 - `components/NewBudgetForm.tsx` - Componente atualizado do formulário de orçamento
 - `pages/services/new-service.tsx` - Página atualizada de criação de serviço
-- `pages/clients/$id.tsx` - Página de detalhes do cliente otimizada
+- `pages/clients/id.tsx` - Página de detalhes do cliente otimizada (renomear para `$id.tsx` ao instalar)
 - `pages/clients/new-vehicle.tsx` - Página de cadastro de veículos melhorada
 
 ## Instruções Resumidas
