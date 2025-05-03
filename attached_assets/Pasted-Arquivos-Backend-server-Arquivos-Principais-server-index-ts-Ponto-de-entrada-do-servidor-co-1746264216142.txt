@@ -1,0 +1,108 @@
+Arquivos Backend (./server)
+Arquivos Principais
+server/index.ts - Ponto de entrada do servidor, configuração Express e inicialização
+server/routes.ts - Definição de todas as rotas da API
+server/storage.ts - Interface de armazenamento e funções de acesso a dados
+server/clearSessions.js - Utilitário para gerenciamento de sessões
+server/vite.ts - Configuração do Vite para servir o frontend
+Banco de Dados
+server/db.ts - Configuração da conexão de banco de dados
+drizzle.config.ts - Configuração do Drizzle ORM
+Arquivos Frontend (./client)
+Core
+client/src/App.tsx - Componente principal e configuração de rotas
+client/src/main.tsx - Ponto de entrada do React
+client/src/i18n.ts - Configuração de internacionalização
+client/src/index.css - Estilos globais
+client/src/vite-env.d.ts - Tipagens para Vite
+Contextos e Estado Global
+client/src/contexts/AuthContext.tsx - Gerenciamento de autenticação
+client/src/lib/stores.ts - Estado global via Valtio
+client/src/lib/queryClient.ts - Configuração do TanStack Query
+Utilitários
+client/src/lib/apiWrapper.ts - Wrapper de API com suporte offline
+client/src/lib/offlineDb.ts - Banco de dados IndexedDB para funcionalidade offline
+client/src/lib/pwaManager.ts - Gerenciamento da aplicação PWA
+client/src/lib/dateUtils.ts - Utilitários para manipulação de datas
+client/src/lib/formatters.ts - Formatadores para valores monetários, datas, etc
+Páginas
+client/src/pages/login.tsx - Página de login
+client/src/pages/dashboard.tsx - Dashboard principal
+client/src/pages/manager-dashboard.tsx - Dashboard para gestores
+client/src/pages/not-found.tsx - Página 404
+client/src/pages/services/index.tsx - Lista de serviços
+client/src/pages/services/service-details.tsx - Detalhes de serviço
+client/src/pages/services/new-service.tsx - Criação de serviço
+client/src/pages/clients/index.tsx - Lista de clientes
+client/src/pages/clients/client-details.tsx - Detalhes de cliente
+client/src/pages/clients/new-client.tsx - Criação de cliente
+client/src/pages/vehicles/index.tsx - Lista de veículos
+client/src/pages/vehicles/vehicle-details.tsx - Detalhes de veículo
+client/src/pages/budget/index.tsx - Lista de orçamentos
+client/src/pages/budget/new.tsx - Criação de orçamento
+client/src/pages/reports/index.tsx - Página de relatórios
+client/src/pages/settings/index.tsx - Configurações do sistema
+Componentes
+client/src/components/layout/Header.tsx - Cabeçalho do aplicativo
+client/src/components/layout/BottomNavigation.tsx - Navegação inferior
+client/src/components/common/PageHeader.tsx - Cabeçalho de página
+client/src/components/auth/RequireAdmin.tsx - Componente de proteção para rotas admin
+client/src/components/auth/RequireTechnician.tsx - Componente de proteção para rotas técnico
+client/src/components/auth/RequireManager.tsx - Componente de proteção para rotas gerente
+client/src/components/dashboard/DashboardSelector.tsx - Seletor de dashboard
+client/src/components/dashboard/StatisticCard.tsx - Card de estatísticas
+client/src/components/services/ServiceCard.tsx - Card de serviço
+client/src/components/services/ServiceForm.tsx - Formulário de serviço
+client/src/components/services/ServiceImageGallery.tsx - Galeria de imagens de serviço
+client/src/components/clients/ClientForm.tsx - Formulário de cliente
+client/src/components/vehicles/VehicleForm.tsx - Formulário de veículo
+client/src/components/ui/* - Todos componentes UI (buttons, forms, etc)
+client/src/components/ui/offline-indicator.tsx - Indicador de modo offline
+client/src/components/ui/splash-screen.tsx - Tela de splash
+Progressive Web App (PWA)
+public/sw.js - Service Worker principal
+client/src/sw-template.js - Template para o Service Worker
+public/manifest.json - Manifesto do PWA
+public/icons/* - Ícones do aplicativo em vários tamanhos
+Shared (Compartilhado)
+shared/schema.mysql.ts - Esquema do banco de dados MySQL usando Drizzle
+shared/schema.ts - Definições de tipos compartilhados
+Assets
+public/eurodent-logo.png - Logo principal
+public/images/logo.png - Logo alternativo
+public/icons/icon-512x512.svg - Ícone principal do aplicativo
+Todos os ícones e imagens em public/images/
+Configuração
+package.json - Dependências e scripts
+.env - Variáveis de ambiente (não para produção)
+postcss.config.js - Configuração do PostCSS
+tailwind.config.ts - Configuração do Tailwind CSS
+vite.config.ts - Configuração do Vite
+tsconfig.json - Configuração do TypeScript
+Diretórios para Upload
+uploads/ - Diretório para uploads de imagens
+uploads/before/ - Imagens de antes dos serviços
+uploads/after/ - Imagens de depois dos serviços
+Funcionalidades Essenciais
+Backend
+Sistema de autenticação (login/logout)
+Gerenciamento de sessões MySQL
+CRUD completo para clientes, veículos, serviços e orçamentos
+Upload e gerenciamento de imagens
+Relatórios e estatísticas
+API de dashboard para KPIs
+Frontend
+Sistema de autenticação com interface de login
+Funcionalidade offline com IndexedDB
+Sincronização em background
+UI responsiva com componentes Tailwind/shadcn
+Formulários com validação (react-hook-form e zod)
+Rotas protegidas por nível de acesso
+Indicador de status online/offline
+Gerenciamento de cache e requisições via TanStack Query
+Suporte a múltiplos idiomas (i18n)
+PWA
+Service Worker para cache offline
+Sincronização em background
+Manifesto Web e ícones
+Funcionalidade de instalação

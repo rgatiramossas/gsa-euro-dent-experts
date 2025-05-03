@@ -1,0 +1,1162 @@
+import React, { useState, useEffect, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+// Remover importação de useLocation e usar window.location
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { CalendarIcon, ArrowLeft, Upload, Image } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { calculateBudgetTotals } from "@/utils/hailCalculation";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
+
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+
+// Define a estrutura de uma peça danificada
+interface DamageUnit {
+  size20?: number;
+  size30?: number;
+  size40?: number;
+  isAluminum?: boolean;
+  isGlue?: boolean;
+  isPaint?: boolean;
+}
+
+// Interface para os danos completos do veículo
+interface VehicleDamage {
+  [key: string]: DamageUnit;
+}
+
+// Schema para validação do formulário
+const budgetSchema = z.object({
+  date: z.date({
+    required_error: "A data é obrigatória",
+  }),
+  client_name: z.string().min(1, "Nome do cliente é obrigatório"),
+  vehicle_info: z.string().min(1, "Informações do veículo são obrigatórias"),
+  plate: z.string().optional(),
+  chassis_number: z.string().optional(),
+});
+
+// Tipo inferido a partir do schema
+type BudgetFormValues = z.infer<typeof budgetSchema>;
+
+// Lista de todas as peças do veículo
+const vehicleParts = [
+  "para_lama_esquerdo", "capo", "para_lama_direito",
+  "coluna_esquerda", "teto", "coluna_direita",
+  "porta_dianteira_esquerda", "imagem_central", "porta_dianteira_direita",
+  "porta_traseira_esquerda", "porta_malas_superior", "porta_traseira_direita",
+  "lateral_esquerda", "porta_malas_inferior", "lateral_direita"
+];
+
+// Esta função será usada pelo componente DamagePart para obter o nome traduzido da peça
+const getPartDisplayName = (part: string, t: TFunction): string => {
+  if (part === "imagem_central") return ""; // Espaço vazio para a imagem
+  return t(`budget.damageMap.${part}`);
+};
+
+const NewBudgetForm: React.FC<NewBudgetFormProps> = ({ 
+  initialData = null, 
+  readOnly = false,
+  onSuccess = () => {},
+  isInDialog = false
+}) => {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const isGestor = user?.role === "gestor" || user?.role === "manager";
+  const queryClient = useQueryClient();
+  const [damages, setDamages] = useState<VehicleDamage>({});
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [vehicleImage, setVehicleImage] = useState<string | null>(initialData?.vehicle_image || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  
+  // Efeito para detectar mudanças no estado da conexão
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  
+  // Buscar a lista de clientes do banco de dados - incluindo offline
+  const { data: clients, isLoading: isLoadingClients, error: clientsError } = useQuery<any[]>({
+    queryKey: ['/api/clients', 'active', { enableOffline: true, offlineTableName: 'clients' }],
+    queryFn: async () => {
+      try {
+        // Importar o que precisamos
+        const { getApi } = await import('@/lib/apiWrapper');
+        const { getPendingRequests } = await import('@/lib/offlineDb');
+        
+        console.log("[NewBudgetForm] Buscando clientes ativos...");
+        
+        // Buscar dados online
+        let onlineClients: any[] = [];
+        let offlineClients: any[] = [];
+        
+        // Tentar buscar clientes online se tiver conexão
+        if (navigator.onLine) {
+          try {
+            // Buscar dados online usando getApi
+            // Usar o endpoint com parâmetro enableOffline para garantir suporte a offline
+            const response = await fetch('/api/clients?filterMode=active&enableOffline=true');
+            if (!response.ok) {
+              throw new Error('Erro ao carregar clientes do servidor');
+            }
+            onlineClients = await response.json();
+            console.log(`[NewBudgetForm] ${onlineClients.length} clientes carregados do servidor`);
+          } catch (onlineError) {
+            console.error("[NewBudgetForm] Erro ao buscar clientes online:", onlineError);
+          }
+        }
+        
+        // Sempre buscar clientes offline para garantir que temos todos
+        try {
+          // Recupera clientes salvos no IndexedDB
+          const pendingRequests = await getPendingRequests({
+            tableName: 'clients',
+            operationType: 'create'
+          });
+          
+          console.log(`[NewBudgetForm] Encontrados ${pendingRequests.length} clientes pendentes no IndexedDB`);
+          
+          // Extrair clientes das requisições pendentes
+          offlineClients = pendingRequests
+            .map(item => {
+              try {
+                // Verificar se temos dados válidos
+                if (!item || !item.body) {
+                  console.error("[NewBudgetForm] Requisição inválida no IndexedDB:", item);
+                  return null;
+                }
+                
+                // ID temporário negativo para evitar conflitos
+                const offlineId = typeof item.body.id === 'number' 
+                  ? item.body.id 
+                  : -(new Date(item.timestamp).getTime());
+                
+                // Adicionar (Offline) ao nome para identificação visual
+                let clientName = item.body.name || 'Cliente sem nome';
+                if (!clientName.includes('(Offline)')) {
+                  clientName = `${clientName} (Offline)`;
+                }
+                
+                const clientData = {
+                  ...item.body,
+                  id: offlineId,
+                  _isOffline: true,
+                  name: clientName
+                };
+                
+                console.log(`[NewBudgetForm] Cliente offline processado:`, clientData);
+                
+                return clientData;
+              } catch (e) {
+                console.error("[NewBudgetForm] Erro ao processar cliente offline:", e);
+                return null;
+              }
+            })
+            .filter(Boolean);
+            
+          console.log(`[NewBudgetForm] Processados ${offlineClients.length} clientes offline`);
+        } catch (offlineError) {
+          console.error("[NewBudgetForm] Erro ao buscar clientes offline:", offlineError);
+        }
+        
+        // Certifica-se de que temos arrays válidos
+        if (!Array.isArray(onlineClients)) onlineClients = [];
+        if (!Array.isArray(offlineClients)) offlineClients = [];
+        
+        // Combinar clientes online e offline
+        const combinedClients = [...onlineClients];
+        
+        // Adicionar clientes offline que não estão na lista online
+        offlineClients.forEach(offlineClient => {
+          if (!combinedClients.some(c => c.id === offlineClient.id)) {
+            combinedClients.push(offlineClient);
+          }
+        });
+        
+        console.log(`[NewBudgetForm] Total de ${combinedClients.length} clientes carregados (${onlineClients.length} online + ${offlineClients.length} offline)`);
+        console.log("[NewBudgetForm] Lista final de clientes:", combinedClients);
+        
+        // Retornar a lista combinada
+        return combinedClients;
+      } catch (error) {
+        console.error("[NewBudgetForm] Erro geral ao carregar clientes:", error);
+        
+        // Em caso de falha total, tentar buscar apenas clientes offline
+        try {
+          const { getPendingRequests } = await import('@/lib/offlineDb');
+          const offlineRequests = await getPendingRequests({
+            tableName: 'clients',
+            operationType: 'create'
+          });
+          
+          const fallbackClients = offlineRequests
+            .map(item => ({
+              ...item.body,
+              id: typeof item.body.id === 'number' ? item.body.id : -(new Date(item.timestamp).getTime()),
+              _isOffline: true,
+              name: `${item.body.name || 'Cliente'} (Offline)`
+            }));
+            
+          console.log("[NewBudgetForm] Clientes offline de fallback:", fallbackClients);
+          return fallbackClients;
+        } catch (offlineError) {
+          console.error("[NewBudgetForm] Falha no fallback offline:", offlineError);
+          return []; // Último recurso: array vazio
+        }
+      }
+    },
+    retry: 1, // Reduzir para 1 para evitar múltiplas tentativas se falhar
+    staleTime: 30000, // 30 segundos
+  });
+  
+  // Log para depuração da lista de clientes
+  useEffect(() => {
+    console.log("Clientes carregados:", clients);
+    console.log("Erro ao carregar clientes:", clientsError);
+  }, [clients, clientsError]);
+
+  // Inicialize os danos com todas as peças ou use os danos iniciais
+  useEffect(() => {
+    let initialDamages: VehicleDamage = {};
+    
+    // Se temos dados iniciais, tente usar eles
+    if (initialData && initialData.damaged_parts) {
+      try {
+        // Se for string, parse o JSON
+        const parsedDamages = typeof initialData.damaged_parts === 'string' 
+          ? JSON.parse(initialData.damaged_parts) 
+          : initialData.damaged_parts;
+        
+        initialDamages = parsedDamages;
+      } catch (error) {
+        console.error("Erro ao processar dados de danos:", error);
+      }
+    }
+    
+    // Preencher partes faltantes
+    vehicleParts.forEach(part => {
+      if (!initialDamages[part]) {
+        initialDamages[part] = {
+          size20: 0,
+          size30: 0,
+          size40: 0,
+          isAluminum: false,
+          isGlue: false,
+          isPaint: false
+        };
+      }
+    });
+    
+    setDamages(initialDamages);
+  }, [initialData]);
+
+  // Configuração do formulário
+  const form = useForm<BudgetFormValues>({
+    resolver: zodResolver(budgetSchema),
+    defaultValues: {
+      date: initialData?.date ? new Date(initialData.date) : new Date(),
+      client_name: initialData?.client_id ? String(initialData.client_id) : "",
+      vehicle_info: initialData?.vehicle_info || "",
+      plate: initialData?.plate || "",
+      chassis_number: initialData?.chassis_number || ""
+    },
+  });
+
+  // Submissão do formulário
+  const onSubmit = async (data: BudgetFormValues) => {
+    if (readOnly) return; // Não submeter se estiver em modo somente leitura
+    
+    try {
+      // Calcular valores com base nos danos
+      const totalValues = calculateTotalValues(damages);
+      
+      // Convertemos client_name (que é o ID do cliente como string) para client_id como número
+      // Usando destructuring para omitir client_name e adicionar client_id
+      const { client_name, ...restData } = data;
+      
+      const budget = {
+        ...restData,
+        client_id: parseInt(client_name), // Convertendo para número
+        date: format(data.date, "yyyy-MM-dd"),
+        damaged_parts: JSON.stringify(damages),
+        total_aw: totalValues.totalAw,
+        total_value: totalValues.totalValue,
+        vehicle_image: vehicleImage
+      };
+      
+      // Log para depuração
+      console.log("Enviando orçamento para o servidor:", {
+        ...budget,
+        vehicle_image: vehicleImage ? `Imagem com ${vehicleImage.length} caracteres` : t("budget.noImage")
+      });
+      
+      // Verificar se está offline usando a variável de estado
+      if (isOffline && !initialData) {
+        // Mostrar mensagem para usar o botão "Salvar Offline"
+        toast({
+          title: t("budget.offlineDetected"),
+          description: t("budget.useOfflineButton"),
+          variant: "destructive", // warning não existe como variante, usando destructive
+        });
+        return;
+      }
+
+      if (initialData) {
+        // Atualizar orçamento existente
+        await updateBudget(budget, initialData.id);
+        toast({
+          title: t("budget.budgetUpdated"),
+          description: "As alterações foram salvas com sucesso.",
+        });
+      } else {
+        // Criar novo orçamento (apenas quando online)
+        try {
+          // Enviar ao servidor
+          const response = await fetch("/api/budgets", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(budget),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          // Obter resposta da API
+          const createdBudget = await response.json();
+          
+          // Atualizar o cache do React Query
+          try {
+            const currentBudgets = queryClient.getQueryData(['/api/budgets']) || [];
+            const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];
+            const updatedBudgets = [...budgetsArray, createdBudget];
+            queryClient.setQueryData(['/api/budgets'], updatedBudgets);
+          } catch (cacheError) {
+            console.error("Erro ao atualizar cache de orçamentos:", cacheError);
+          }
+          
+          // Mensagem de sucesso
+          toast({
+            title: t("budget.budgetCreated"),
+            description: "O orçamento foi salvo e está pronto para ser utilizado.",
+          });
+          
+          // Chamar callback de sucesso ou redirecionar
+          if (onSuccess) {
+            onSuccess(createdBudget);
+          } else {
+            window.location.href = "/budgets";
+          }
+        } catch (error) {
+          console.error("Erro ao salvar orçamento no servidor:", error);
+          toast({
+            title: "Erro ao criar orçamento",
+            description: String(error) || "Ocorreu um problema ao salvar o orçamento. Por favor, tente novamente.",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao processar orçamento:", error);
+      toast({
+        title: initialData ? "Erro ao atualizar orçamento" : "Erro ao criar orçamento",
+        description: "Ocorreu um problema ao salvar o orçamento. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // A função saveNewBudget foi removida, pois sua lógica foi dividida entre:
+  // 1. O botão "Salvar Offline" para criação explícita offline
+  // 2. O onSubmit direto para criação online
+  
+  // Função para atualizar um orçamento existente
+  const updateBudget = async (budget: any, budgetId: number) => {
+    // Verificar conectividade usando a variável de estado
+    if (isOffline) {
+      try {
+        // Quando offline, salvar no IndexedDB para sincronização posterior
+        const timestamp = new Date().getTime();
+        const pendingRequest = {
+          id: `budget_update_${timestamp}`,
+          timestamp,
+          url: `/api/budgets/${budgetId}`,
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: budget,
+          tableName: 'budgets',
+          resourceId: budgetId,
+          operationType: 'update' as const
+        };
+        
+        // Importar a função
+        const { storeOfflineRequest } = await import('@/lib/offlineDb');
+        
+        // Armazenar requisição para sincronização futura
+        await storeOfflineRequest(pendingRequest);
+        
+        // Criar item atualizado com flag de offline
+        const updatedBudget = { 
+          id: budgetId, 
+          ...budget, 
+          _isOffline: true,
+          updated_at: new Date().toISOString()
+        };
+        
+        // Atualizar o cache do React Query
+        try {
+          // Obter lista atual de orçamentos do cache
+          const currentBudgets = queryClient.getQueryData(['/api/budgets']) || [];
+          
+          // Garantir que currentBudgets seja tratado como array
+          const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];
+          
+          // Substituir o orçamento existente pelo atualizado
+          const updatedBudgets = budgetsArray.map(item => 
+            item.id === budgetId ? updatedBudget : item
+          );
+          
+          // Atualizar cache
+          queryClient.setQueryData(['/api/budgets'], updatedBudgets);
+          
+          // Atualizar também o cache individual do orçamento
+          queryClient.setQueryData([`/api/budgets/${budgetId}`], updatedBudget);
+          
+          console.log("Cache atualizado para orçamento:", budgetId, "(offline)");
+        } catch (cacheError) {
+          console.error("Erro ao atualizar cache de orçamentos:", cacheError);
+          // Não interrompe o fluxo, apenas registra o erro
+        }
+        
+        return updatedBudget;
+      } catch (error) {
+        console.error("Erro ao atualizar orçamento offline:", error);
+        throw new Error("Falha ao atualizar orçamento no modo offline");
+      }
+    } else {
+      // Quando online, envia diretamente ao servidor
+      const response = await fetch(`/api/budgets/${budgetId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(budget),
+      });
+
+      if (!response.ok) {
+        throw new Error("Falha ao atualizar orçamento");
+      }
+      
+      // Obter resposta da API
+      const updatedBudget = await response.json();
+      
+      // Atualizar o cache do React Query
+      try {
+        // Obter lista atual de orçamentos do cache
+        const currentBudgets = queryClient.getQueryData(['/api/budgets']) || [];
+        
+        // Garantir que currentBudgets seja tratado como array
+        const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];
+        
+        // Substituir o orçamento existente pelo atualizado
+        const updatedBudgets = budgetsArray.map(item => 
+          item.id === budgetId ? updatedBudget : item
+        );
+        
+        // Atualizar cache
+        queryClient.setQueryData(['/api/budgets'], updatedBudgets);
+        
+        // Atualizar também o cache individual do orçamento
+        queryClient.setQueryData([`/api/budgets/${budgetId}`], updatedBudget);
+        
+        console.log("Cache atualizado para orçamento:", budgetId);
+      } catch (cacheError) {
+        console.error("Erro ao atualizar cache de orçamentos:", cacheError);
+        // Não interrompe o fluxo, apenas registra o erro
+      }
+
+      return updatedBudget;
+    }
+  };
+
+  // Função para atualizar os valores de danos
+  const handleDamageChange = (part: string, field: keyof DamageUnit, value: any) => {
+    setDamages(prev => ({
+      ...prev,
+      [part]: {
+        ...prev[part],
+        [field]: value
+      }
+    }));
+  };
+
+  // Função para calcular os valores totais usando a fórmula avançada
+  const calculateTotalValues = (damages: VehicleDamage) => {
+    // Usar a função de cálculo avançada
+    const { totalAW, totalCost } = calculateBudgetTotals(damages);
+    
+    return { 
+      totalAw: totalAW, 
+      totalValue: totalCost 
+    };
+  };
+  
+  // Funções para gerenciar o upload de imagens
+  const handleImageClick = () => {
+    if (readOnly) return;
+    fileInputRef.current?.click();
+  };
+  
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      console.log("Imagem carregada com tamanho:", base64String.length);
+      setVehicleImage(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Renderizar o grid de danos do veículo
+  const renderDamageGrid = () => {
+    return (
+      <div className="grid grid-cols-3 gap-2 mt-4 max-w-6xl mx-auto">
+        {/* Primeira linha: Para-lama Esquerdo - Capô - Para-lama Direito */}
+        <DamagePart part="para_lama_esquerdo" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="capo" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="para_lama_direito" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+
+        {/* Segunda linha: Coluna Esquerda - Teto - Coluna Direita */}
+        <DamagePart part="coluna_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="teto" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="coluna_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+
+        {/* Terceira linha: Porta Dianteira Esquerda - Espaço para Imagem - Porta Dianteira Direita */}
+        <DamagePart part="porta_dianteira_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <div 
+          className={`p-3 border rounded-md ${readOnly ? 'bg-gray-50' : 'bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors'} flex flex-col items-center justify-center`}
+          onClick={handleImageClick}
+        >
+          {vehicleImage ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <img 
+                src={vehicleImage} 
+                alt="Imagem do veículo" 
+                className="max-w-full max-h-[80px] object-contain"
+              />
+            </div>
+          ) : (
+            <>
+              <Upload className="h-5 w-5 text-gray-400 mb-1" />
+              <div className="text-center text-gray-400 text-xs">
+                {readOnly ? t("budget.noImage") : t("budget.clickToInsertPhoto")}
+              </div>
+            </>
+          )}
+          <input 
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            accept="image/*"
+            className="hidden"
+            disabled={readOnly}
+          />
+        </div>
+        <DamagePart part="porta_dianteira_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+
+        {/* Quarta linha: Porta Traseira Esquerda - Porta Malas Superior - Porta Traseira Direita */}
+        <DamagePart part="porta_traseira_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="porta_malas_superior" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="porta_traseira_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+
+        {/* Quinta linha: Lateral Esquerda - Porta Malas Inferior - Lateral Direita */}
+        <DamagePart part="lateral_esquerda" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="porta_malas_inferior" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+        <DamagePart part="lateral_direita" damages={damages} onChange={handleDamageChange} readOnly={readOnly} />
+      </div>
+    );
+  };
+
+  return (
+    <div className="container p-0">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Primeira linha: Data e Cliente (selecionável do BD) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>{t("budget.date").toUpperCase()}</FormLabel>
+                  {readOnly ? (
+                    <div className="p-2 border rounded-md">
+                      {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : ""}
+                    </div>
+                  ) : (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={`pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                          >
+                            {field.value ? (
+                              format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                            ) : (
+                              <span>{t("budget.selectDate")}</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="client_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("budget.client").toUpperCase()}</FormLabel>
+                  {readOnly ? (
+                    <div className="p-2 border rounded-md">
+                      {clients?.find(c => c.id.toString() === field.value)?.name || ""}
+                    </div>
+                  ) : (
+                    <>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={readOnly}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("budget.selectClient")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {isLoadingClients ? (
+                            <SelectItem value="loading">{t("budget.loadingClients")}</SelectItem>
+                          ) : !clients || clients.length === 0 ? (
+                            <SelectItem value="no-clients">{t("budget.noClientsFound")}</SelectItem>
+                          ) : (
+                            <>
+                              {console.log("Total de clientes para renderizar:", clients?.length || 0)}
+                              {clients && clients.map((client) => {
+                                // Determinar se o cliente está offline para mostrar no rótulo
+                                const isOffline = client._isOffline === true;
+                                const clientName = isOffline 
+                                  ? `${client.name || 'Cliente sem nome'} (Offline)` 
+                                  : client.name || 'Cliente sem nome';
+                                
+                                console.log("Renderizando cliente:", {
+                                  id: client.id,
+                                  name: clientName,
+                                  isOffline: isOffline
+                                });
+                                
+                                return (
+                                  <SelectItem key={client.id} value={String(client.id)}>
+                                    {clientName}
+                                  </SelectItem>
+                                );
+                              })}
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Segunda linha: Veículo - Placa - Chassi (digitados manualmente) */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <FormField
+              control={form.control}
+              name="vehicle_info"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("budget.vehicle").toUpperCase()}</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder={t("budget.vehiclePlaceholder")} 
+                      {...field} 
+                      readOnly={readOnly}
+                      className={readOnly ? "bg-gray-50" : ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="plate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("budget.licensePlate").toUpperCase()}</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder={t("budget.platePlaceholder")} 
+                      {...field} 
+                      readOnly={readOnly}
+                      className={readOnly ? "bg-gray-50" : ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="chassis_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("budget.chassisNumber").toUpperCase()}</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder={t("budget.chassisPlaceholder")} 
+                      {...field} 
+                      readOnly={readOnly}
+                      className={readOnly ? "bg-gray-50" : ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Separador */}
+          <Separator className="my-4" />
+
+          {/* Título da seção de danos */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">{t("budget.vehicleDamages")}</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {readOnly 
+                ? t("budget.damageViewMode") 
+                : t("budget.damageEditMode")
+              }
+            </p>
+          </div>
+
+          {/* Grid de danos do veículo */}
+          {renderDamageGrid()}
+
+          {/* Legenda dos materiais especiais */}
+          <div className="bg-gray-50 p-4 rounded-md mt-4">
+            <h4 className="font-medium mb-2">{t("budget.specialMaterials")}</h4>
+            <p className="text-sm">
+              (A) = {t("budget.aluminum")} (+25%)  |  (K) = {t("budget.glue")} (+30%)  |  (P) = {t("budget.paint")}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {t("budget.valuesAutocalculated")}
+            </p>
+          </div>
+
+          {/* Exibição dos Totais - Ocultando para gestores */}
+          {!isGestor && (
+            <div className="bg-gray-50 p-4 rounded-md mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">{t("budget.totalAW")}</h4>
+                  <p className="text-xl font-bold">
+                    {calculateTotalValues(damages).totalAw.toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">{t("budget.totalValue")}</h4>
+                  <p className="text-xl font-bold">
+                    {calculateTotalValues(damages).totalValue.toFixed(2)} €
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          {isGestor && (
+            <div className="bg-gray-50 p-4 rounded-md mt-4">
+              <p className="text-center text-sm text-gray-500">
+                {t("budget.financialInfoAdminsOnly")}
+              </p>
+            </div>
+          )}
+
+          {/* Botões de ação - só mostrar se não for modo somente leitura */}
+          {!readOnly && (
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (isInDialog) {
+                    // Se estiver em um modal, apenas limpar o formulário
+                    form.reset();
+                  } else {
+                    // Se estiver em uma página própria, voltar para a lista
+                    window.location.href = "/budgets";
+                  }
+                }}
+              >
+                {t("budget.cancel")}
+              </Button>
+              
+              {/* Botão para salvar offline explicitamente - visível apenas quando offline */}
+              {!initialData && isOffline && (
+                <Button 
+                  type="button" 
+                  variant="secondary"
+                  onClick={async () => {
+                    try {
+                      // Validar dados antes de salvar offline
+                      const valid = await form.trigger();
+                      if (!valid) {
+                        console.log("Formulário inválido para salvar offline");
+                        toast({
+                          title: t("budget.validationError"),
+                          description: t("budget.checkFields"),
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      
+                      // Obter valores do formulário
+                      const data = form.getValues();
+                      
+                      // Calcular valores com base nos danos
+                      const totalValues = calculateTotalValues(damages);
+                      
+                      // Converter client_name para client_id
+                      const budgetData = {
+                        client_id: parseInt(data.client_name),
+                        vehicle_info: data.vehicle_info,
+                        plate: data.plate,
+                        chassis_number: data.chassis_number,
+                        date: format(data.date, "yyyy-MM-dd"),
+                        damaged_parts: JSON.stringify(damages),
+                        total_aw: totalValues.totalAw,
+                        total_value: totalValues.totalValue,
+                        vehicle_image: vehicleImage,
+                        status: "pending",
+                        created_at: new Date().toISOString()
+                      };
+                      
+                      // Forçar armazenamento offline
+                      const timestamp = new Date().getTime();
+                      const pendingRequest = {
+                        id: `budget_${timestamp}`,
+                        timestamp,
+                        url: '/api/budgets',
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: budgetData,
+                        tableName: 'budgets',
+                        operationType: 'create' as const
+                      };
+                      
+                      // Importar a função de armazenamento offline
+                      const { storeOfflineRequest } = await import('@/lib/offlineDb');
+                      await storeOfflineRequest(pendingRequest);
+                      
+                      // Criar objeto com ID temporário para referência local
+                      const tempBudget = { 
+                        id: -timestamp, 
+                        ...budgetData,
+                        _isOffline: true
+                      };
+                      
+                      // Atualizar o cache para mostrar o novo orçamento
+                      try {
+                        const currentBudgets = queryClient.getQueryData(['/api/budgets']) || [];
+                        const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];
+                        const updatedBudgets = [...budgetsArray, tempBudget];
+                        queryClient.setQueryData(['/api/budgets'], updatedBudgets);
+                      } catch (cacheError) {
+                        console.error("Erro ao atualizar cache de orçamentos:", cacheError);
+                      }
+                      
+                      // Mostrar mensagem de sucesso
+                      toast({
+                        title: t("budget.savedOffline"),
+                        description: t("budget.syncWhenOnline"),
+                      });
+                      
+                      // Redirecionar ou chamar callback de sucesso
+                      if (onSuccess) {
+                        onSuccess(tempBudget);
+                      } else {
+                        window.location.href = "/budgets";
+                      }
+                    } catch (error) {
+                      console.error("Erro ao salvar orçamento offline:", error);
+                      toast({
+                        title: t("budget.errorSavingOffline"),
+                        description: String(error),
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  {t("common.saveOffline")}
+                </Button>
+              )}
+              
+              <Button type="submit">
+                {initialData ? t("budget.updateBudget") : t("budget.saveBudget")}
+              </Button>
+            </div>
+          )}
+        </form>
+      </Form>
+    </div>
+  );
+};
+
+// Props para o componente NewBudgetForm
+interface NewBudgetFormProps {
+  initialData?: any;
+  readOnly?: boolean;
+  onSuccess?: (data: any) => void;
+  isInDialog?: boolean;
+}
+
+// Componente para renderizar uma unidade de dano (uma parte do veículo)
+interface DamagePartProps {
+  part: string;
+  damages: VehicleDamage;
+  onChange: (part: string, field: keyof DamageUnit, value: any) => void;
+  readOnly?: boolean;
+}
+
+const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOnly = false }) => {
+  // Acesso ao contexto de autenticação para verificar se é gestor
+  const { user } = useAuth();
+  const isGestor = user?.role === "gestor" || user?.role === "manager";
+  const { t } = useTranslation();
+  
+  // Estados para controlar quando cada campo está em foco
+  const [size20Focus, setSize20Focus] = useState(false);
+  const [size30Focus, setSize30Focus] = useState(false);
+  const [size40Focus, setSize40Focus] = useState(false);
+  
+  // Se for o espaço para imagem, retornar um espaço vazio
+  if (part === "imagem_central") {
+    return <div className="border rounded-md p-4"></div>;
+  }
+
+  const damage = damages[part] || {};
+  
+  // Removemos a restrição para gestores, agora todos podem ver os detalhes
+  // mesmo em modo somente leitura
+  
+  return (
+    <div className="border rounded-md p-2">
+      <h4 className="font-medium text-xs mb-1 text-center">{getPartDisplayName(part, t)}</h4>
+      <div className="space-y-1">
+        {/* Tamanho 20mm - Alinhamento simétrico com padding negativo no rótulo e positivo no input */}
+        <div className="flex items-center justify-between">
+          <span className="w-8 text-xs text-right -mr-2">20mm:</span>
+          {readOnly ? (
+            <span className="w-12 h-6 text-xs text-center py-1 border border-gray-200 rounded px-2">{damage.size20 || 0}</span>
+          ) : (
+            <Input
+              type="number"
+              value={damage.size20 === 0 && size20Focus ? "" : damage.size20 || 0}
+              onChange={(e) => onChange(part, "size20", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
+              onFocus={() => {
+                setSize20Focus(true);
+                if (damage.size20 === 0) {
+                  // Quando o campo recebe foco e o valor é 0, queremos mostrar campo vazio
+                  const inputElement = document.getElementById(`${part}-size20`) as HTMLInputElement;
+                  if (inputElement) {
+                    inputElement.value = "";
+                  }
+                }
+              }}
+              onBlur={() => {
+                setSize20Focus(false);
+              }}
+              className="w-12 h-6 text-xs px-2 text-center"
+              min={0}
+              id={`${part}-size20`}
+              readOnly={readOnly}
+            />
+          )}
+        </div>
+        
+        {/* Tamanho 30mm - Alinhamento simétrico com padding negativo no rótulo e positivo no input */}
+        <div className="flex items-center justify-between">
+          <span className="w-8 text-xs text-right -mr-2">30mm:</span>
+          {readOnly ? (
+            <span className="w-12 h-6 text-xs text-center py-1 border border-gray-200 rounded px-2">{damage.size30 || 0}</span>
+          ) : (
+            <Input
+              type="number"
+              value={damage.size30 === 0 && size30Focus ? "" : damage.size30 || 0}
+              onChange={(e) => onChange(part, "size30", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
+              onFocus={() => {
+                setSize30Focus(true);
+                if (damage.size30 === 0) {
+                  // Quando o campo recebe foco e o valor é 0, queremos mostrar campo vazio
+                  const inputElement = document.getElementById(`${part}-size30`) as HTMLInputElement;
+                  if (inputElement) {
+                    inputElement.value = "";
+                  }
+                }
+              }}
+              onBlur={() => {
+                setSize30Focus(false);
+              }}
+              className="w-12 h-6 text-xs px-2 text-center"
+              min={0}
+              id={`${part}-size30`}
+              readOnly={readOnly}
+            />
+          )}
+        </div>
+        
+        {/* Tamanho 40mm - Alinhamento simétrico com padding negativo no rótulo e positivo no input */}
+        <div className="flex items-center justify-between">
+          <span className="w-8 text-xs text-right -mr-2">40mm:</span>
+          {readOnly ? (
+            <span className="w-12 h-6 text-xs text-center py-1 border border-gray-200 rounded px-2">{damage.size40 || 0}</span>
+          ) : (
+            <Input
+              type="number"
+              value={damage.size40 === 0 && size40Focus ? "" : damage.size40 || 0}
+              onChange={(e) => onChange(part, "size40", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
+              onFocus={() => {
+                setSize40Focus(true);
+                if (damage.size40 === 0) {
+                  // Quando o campo recebe foco e o valor é 0, queremos mostrar campo vazio
+                  const inputElement = document.getElementById(`${part}-size40`) as HTMLInputElement;
+                  if (inputElement) {
+                    inputElement.value = "";
+                  }
+                }
+              }}
+              onBlur={() => {
+                setSize40Focus(false);
+              }}
+              className="w-12 h-6 text-xs px-2 text-center"
+              min={0}
+              id={`${part}-size40`}
+              readOnly={readOnly}
+            />
+          )}
+        </div>
+        
+        {/* Checkboxes para materiais especiais - com melhor alinhamento */}
+        <div className="flex justify-between mt-2 -mx-2 w-full">
+          <div className="flex items-center justify-center w-6">
+            <div className="flex flex-col items-center">
+              <Checkbox 
+                id={`${part}-aluminum`}
+                checked={damage.isAluminum || false}
+                onCheckedChange={(checked) => !readOnly && onChange(part, "isAluminum", !!checked)}
+                className="h-3 w-3 mb-0.5"
+                disabled={readOnly}
+              />
+              <label htmlFor={`${part}-aluminum`} className="text-xs font-semibold text-red-600">A</label>
+            </div>
+          </div>
+          <div className="flex items-center justify-center w-6">
+            <div className="flex flex-col items-center">
+              <Checkbox 
+                id={`${part}-glue`}
+                checked={damage.isGlue || false}
+                onCheckedChange={(checked) => !readOnly && onChange(part, "isGlue", !!checked)}
+                className="h-3 w-3 mb-0.5"
+                disabled={readOnly}
+              />
+              <label htmlFor={`${part}-glue`} className="text-xs font-semibold text-blue-600">K</label>
+            </div>
+          </div>
+          <div className="flex items-center justify-center w-6">
+            <div className="flex flex-col items-center">
+              <Checkbox 
+                id={`${part}-paint`}
+                checked={damage.isPaint || false}
+                onCheckedChange={(checked) => !readOnly && onChange(part, "isPaint", !!checked)}
+                className="h-3 w-3 mb-0.5"
+                disabled={readOnly}
+              />
+              <label htmlFor={`${part}-paint`} className="text-xs font-semibold text-green-600">P</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default NewBudgetForm;
