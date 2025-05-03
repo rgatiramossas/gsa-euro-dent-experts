@@ -1029,7 +1029,8 @@ export default function NewServicePage() {
                         <SelectContent>
                           {serviceTypes?.map((type) => (
                             <SelectItem key={type.id} value={type.id.toString()}>
-                              {translateServiceType(type.name)} (€ {type.default_price?.toFixed(2) || "0.00"})
+                              {translateServiceType(type.name)} 
+                              {type.default_price ? ` (€ ${type.default_price.toFixed(2)})` : ''}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -1003,6 +1003,11 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
   const isGestor = user?.role === "gestor" || user?.role === "manager";
   const { t } = useTranslation();
   
+  // Estados para controlar quando cada campo está em foco
+  const [size20Focus, setSize20Focus] = useState(false);
+  const [size30Focus, setSize30Focus] = useState(false);
+  const [size40Focus, setSize40Focus] = useState(false);
+  
   // Se for o espaço para imagem, retornar um espaço vazio
   if (part === "imagem_central") {
     return <div className="border rounded-md p-4"></div>;
@@ -1025,17 +1030,20 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
           ) : (
             <Input
               type="number"
-              value={damage.size20 === 0 && document.activeElement === document.getElementById(`${part}-size20`) ? "" : damage.size20 || 0}
+              value={damage.size20 === 0 && size20Focus ? "" : damage.size20 || 0}
               onChange={(e) => onChange(part, "size20", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
               onFocus={() => {
+                setSize20Focus(true);
                 if (damage.size20 === 0) {
+                  // Quando o campo recebe foco e o valor é 0, queremos mostrar campo vazio
                   const inputElement = document.getElementById(`${part}-size20`) as HTMLInputElement;
                   if (inputElement) {
-                    setTimeout(() => {
-                      inputElement.select();
-                    }, 0);
+                    inputElement.value = "";
                   }
                 }
+              }}
+              onBlur={() => {
+                setSize20Focus(false);
               }}
               className="w-12 h-6 text-xs px-2 text-center"
               min={0}
@@ -1053,17 +1061,20 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
           ) : (
             <Input
               type="number"
-              value={damage.size30 === 0 && document.activeElement === document.getElementById(`${part}-size30`) ? "" : damage.size30 || 0}
+              value={damage.size30 === 0 && size30Focus ? "" : damage.size30 || 0}
               onChange={(e) => onChange(part, "size30", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
               onFocus={() => {
+                setSize30Focus(true);
                 if (damage.size30 === 0) {
+                  // Quando o campo recebe foco e o valor é 0, queremos mostrar campo vazio
                   const inputElement = document.getElementById(`${part}-size30`) as HTMLInputElement;
                   if (inputElement) {
-                    setTimeout(() => {
-                      inputElement.select();
-                    }, 0);
+                    inputElement.value = "";
                   }
                 }
+              }}
+              onBlur={() => {
+                setSize30Focus(false);
               }}
               className="w-12 h-6 text-xs px-2 text-center"
               min={0}
@@ -1081,17 +1092,20 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
           ) : (
             <Input
               type="number"
-              value={damage.size40 === 0 && document.activeElement === document.getElementById(`${part}-size40`) ? "" : damage.size40 || 0}
+              value={damage.size40 === 0 && size40Focus ? "" : damage.size40 || 0}
               onChange={(e) => onChange(part, "size40", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
               onFocus={() => {
+                setSize40Focus(true);
                 if (damage.size40 === 0) {
+                  // Quando o campo recebe foco e o valor é 0, queremos mostrar campo vazio
                   const inputElement = document.getElementById(`${part}-size40`) as HTMLInputElement;
                   if (inputElement) {
-                    setTimeout(() => {
-                      inputElement.select();
-                    }, 0);
+                    inputElement.value = "";
                   }
                 }
+              }}
+              onBlur={() => {
+                setSize40Focus(false);
               }}
               className="w-12 h-6 text-xs px-2 text-center"
               min={0}
