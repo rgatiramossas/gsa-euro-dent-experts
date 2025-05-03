@@ -1,58 +1,69 @@
 import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config';
+
+const dbConfig = {
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: process.env.MYSQL_PORT || 3306,
+};
 
 async function listServices() {
-  const connection = await mysql.createConnection({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE,
-    port: parseInt(process.env.MYSQL_PORT || '3306'),
-    connectTimeout: 10000
-  });
-
+  console.log('Conectando ao MySQL...');
+  
+  let connection;
   try {
+    connection = await mysql.createConnection(dbConfig);
     console.log('Conectado ao MySQL com sucesso!');
     
-    // Contar serviços
-    const [servicesCount] = await connection.query('SELECT COUNT(*) as count FROM services');
-    console.log(`Total de serviços: ${servicesCount[0].count}`);
-    
-    // Contar serviços por status
-    const [servicesByStatus] = await connection.query('SELECT status, COUNT(*) as count FROM services GROUP BY status');
-    console.log('\nServiços por status:');
-    servicesByStatus.forEach(status => {
-      console.log(`Status "${status.status}": ${status.count} serviço(s)`);
-    });
-    
-    // Listar serviços (com informações de cliente e veículo)
+    // Consultar ordens de serviço
     const [services] = await connection.query(`
-      SELECT s.id, s.status, s.description, s.scheduled_date, s.location_type, s.price,
-             c.name as client_name, v.make, v.model, v.license_plate
+      SELECT s.*, c.name as client_name, u.name as technician_name
       FROM services s
-      JOIN clients c ON s.client_id = c.id
-      JOIN vehicles v ON s.vehicle_id = v.id
-      ORDER BY s.id DESC
-      LIMIT 5
+      LEFT JOIN clients c ON s.client_id = c.id
+      LEFT JOIN users u ON s.technician_id = u.id
+      ORDER BY s.created_at DESC
     `);
     
-    console.log('\nÚltimos serviços cadastrados:');
-    services.forEach(service => {
-      const scheduledDate = service.scheduled_date ? new Date(service.scheduled_date).toLocaleDateString('pt-BR') : 'Não agendado';
-      console.log(`ID: ${service.id}, Cliente: ${service.client_name}`);
-      console.log(`  Veículo: ${service.make} ${service.model} (${service.license_plate || 'Sem placa'})`);
-      console.log(`  Status: ${service.status}, Data agendada: ${scheduledDate}`);
-      console.log(`  Tipo de localização: ${service.location_type}, Preço: R$ ${service.price || 0}`);
-      console.log('  -----');
-    });
+    console.log(`Total de ordens de serviço: ${services.length}\n`);
+    
+    if (services.length === 0) {
+      console.log('Não há ordens de serviço cadastradas no sistema.');
+    } else {
+      console.log('Ordens de Serviço:');
+      services.forEach(service => {
+        console.log(`ID: ${service.id}, Cliente: ${service.client_name}, Status: ${service.status}, Valor: ${service.total_value || 0}, Técnico: ${service.technician_name || 'Não atribuído'}`);
+      });
+    }
+    
+    // Consultar orçamentos
+    const [budgets] = await connection.query(`
+      SELECT b.*, c.name as client_name
+      FROM budgets b
+      LEFT JOIN clients c ON b.client_id = c.id
+      ORDER BY b.created_at DESC
+    `);
+    
+    console.log(`\nTotal de orçamentos: ${budgets.length}\n`);
+    
+    if (budgets.length === 0) {
+      console.log('Não há orçamentos cadastrados no sistema.');
+    } else {
+      console.log('Orçamentos:');
+      budgets.forEach(budget => {
+        console.log(`ID: ${budget.id}, Cliente: ${budget.client_name}, Veículo: ${budget.vehicle_info}, Valor: ${budget.total_value || 0}`);
+      });
+    }
     
   } catch (error) {
-    console.error('Erro ao listar serviços:', error.message);
+    console.error('Erro ao acessar o banco de dados:', error);
   } finally {
-    await connection.end();
-    console.log('Conexão com MySQL encerrada.');
+    if (connection) {
+      await connection.end();
+      console.log('Conexão com MySQL encerrada.');
+    }
   }
 }
 
-listServices().catch(console.error);
+listServices();
