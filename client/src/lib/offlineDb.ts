@@ -385,9 +385,17 @@ class OfflineDatabase extends Dexie {
         return true; // Nada para sincronizar
       }
       
+      console.log(`Iniciando sincronização de ${pendingRequests.length} operações pendentes`);
+      
+      // Acompanhar dados sincronizados por tabela
+      const syncedDataByTable: Record<string, any[]> = {};
+      let successCount = 0;
+      
       // Processar cada requisição pendente
       for (const request of pendingRequests) {
         try {
+          console.log(`Processando solicitação ${request.id}: ${request.method} ${request.url} [${request.operationType}]`);
+          
           // Enviar a requisição para o servidor
           const response = await fetch(request.url, {
             method: request.method,
@@ -421,12 +429,50 @@ class OfflineDatabase extends Dexie {
                 // Adicionar com o ID do servidor
                 localItem.id = serverData.id;
                 await table.add(localItem);
+                
+                // Registrar o item atualizado para notificar componentes depois
+                if (!syncedDataByTable[request.tableName]) {
+                  syncedDataByTable[request.tableName] = [];
+                }
+                syncedDataByTable[request.tableName].push(localItem);
+                
+                // Emitir evento específico para a sincronização de um item
+                console.log(`Emitindo evento de sincronização para ${request.tableName}, ID ${serverData.id}`);
+                syncEvents.emit(SYNC_EVENTS.DATA_UPDATED, request.tableName, localItem);
               }
             }
+          } else if (request.operationType === 'update') {
+            // Se for uma atualização, registrar para notificar depois
+            if (!syncedDataByTable[request.tableName]) {
+              syncedDataByTable[request.tableName] = [];
+            }
+            
+            // Obter os dados do servidor se disponíveis
+            let updatedData;
+            try {
+              updatedData = await response.json();
+              syncedDataByTable[request.tableName].push(updatedData);
+              
+              // Emitir evento específico para a sincronização de um item
+              console.log(`Emitindo evento de atualização para ${request.tableName}, ID ${updatedData.id}`);
+              syncEvents.emit(SYNC_EVENTS.DATA_UPDATED, request.tableName, updatedData);
+            } catch (e) {
+              // Se não conseguir obter dados JSON, usar o próprio corpo da requisição
+              console.log(`Sem dados JSON na resposta, usando dados da requisição para ${request.tableName}`);
+              syncedDataByTable[request.tableName].push(request.body);
+              
+              // Emitir evento específico com os dados da requisição
+              syncEvents.emit(SYNC_EVENTS.DATA_UPDATED, request.tableName, request.body);
+            }
+          } else if (request.operationType === 'delete') {
+            // Para exclusões, emitir evento de exclusão
+            console.log(`Emitindo evento de exclusão para ${request.tableName}, ID ${request.resourceId}`);
+            syncEvents.emit(SYNC_EVENTS.DATA_DELETED, request.tableName, { id: request.resourceId });
           }
           
           // Remover a requisição processada
           await this.pendingRequests.delete(request.id);
+          successCount++;
           
         } catch (error) {
           console.error(`Falha ao processar requisição pendente ${request.id}:`, error);
@@ -440,7 +486,7 @@ class OfflineDatabase extends Dexie {
       }
       
       // Atualizar o status de sincronização de todas as tabelas
-      const tables = ['clients', 'services', 'budgets', 'technicians', 'service_types'];
+      const tables = ['clients', 'services', 'budgets', 'technicians', 'service_types', 'vehicles'];
       const now = Date.now();
       
       for (const tableName of tables) {
@@ -448,6 +494,19 @@ class OfflineDatabase extends Dexie {
           tableName,
           lastSync: now
         });
+        
+        // Emitir evento de sincronização completa para cada tabela
+        // se houver dados que foram sincronizados
+        if (syncedDataByTable[tableName] && syncedDataByTable[tableName].length > 0) {
+          console.log(`Emitindo evento de sincronização completa para ${tableName}`);
+          syncEvents.emit(SYNC_EVENTS.SYNC_COMPLETED, tableName, syncedDataByTable[tableName]);
+        }
+      }
+      
+      // Emitir evento geral de sincronização completa
+      if (successCount > 0) {
+        console.log(`Sincronização bem-sucedida: ${successCount} operações processadas`);
+        syncEvents.emit(SYNC_EVENTS.SYNC_COMPLETED, 'all', syncedDataByTable);
       }
       
       return true;
@@ -485,12 +544,22 @@ class OfflineDatabase extends Dexie {
           }
           
           const serverData = await response.json();
+          
           // Salva localmente com o ID do servidor
-          return await table.add({
+          const savedId = await table.add({
             ...item,
             id: serverData.id,
             last_sync: Date.now()
           });
+          
+          // Emitir evento para notificar outros componentes que um novo item foi adicionado
+          console.log(`Emitindo evento de dados adicionados para ${tableName}, ID ${serverData.id}`);
+          syncEvents.emit(SYNC_EVENTS.DATA_ADDED, tableName, {
+            ...item,
+            id: serverData.id
+          });
+          
+          return savedId;
         } catch (error) {
           console.error('Falha ao salvar no servidor, salvando offline:', error);
           // Em caso de falha, continua para modo offline
@@ -507,6 +576,10 @@ class OfflineDatabase extends Dexie {
       
       // Salva localmente
       await table.add(offlineItem);
+      
+      // Emitir evento para notificar outros componentes que um novo item foi adicionado offline
+      console.log(`Emitindo evento de dados adicionados offline para ${tableName}, ID temporário ${tempId}`);
+      syncEvents.emit(SYNC_EVENTS.DATA_ADDED, tableName, offlineItem);
       
       // Registra para sincronização futura
       await this.addPendingRequest(
