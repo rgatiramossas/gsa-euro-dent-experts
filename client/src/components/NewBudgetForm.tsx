@@ -1025,16 +1025,21 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
           ) : (
             <Input
               type="number"
-              value={damage.size20 || 0}
-              onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
-              onFocus={(e) => {
-                if (e.target.value === "0") {
-                  onChange(part, "size20", 0);
-                  e.target.value = "";
+              value={damage.size20 === 0 && document.activeElement === document.getElementById(`${part}-size20`) ? "" : damage.size20 || 0}
+              onChange={(e) => onChange(part, "size20", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
+              onFocus={() => {
+                if (damage.size20 === 0) {
+                  const inputElement = document.getElementById(`${part}-size20`) as HTMLInputElement;
+                  if (inputElement) {
+                    setTimeout(() => {
+                      inputElement.select();
+                    }, 0);
+                  }
                 }
               }}
               className="w-12 h-6 text-xs px-2 text-center"
               min={0}
+              id={`${part}-size20`}
               readOnly={readOnly}
             />
           )}
@@ -1048,16 +1053,21 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
           ) : (
             <Input
               type="number"
-              value={damage.size30 || 0}
-              onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
-              onFocus={(e) => {
-                if (e.target.value === "0") {
-                  onChange(part, "size30", 0);
-                  e.target.value = "";
+              value={damage.size30 === 0 && document.activeElement === document.getElementById(`${part}-size30`) ? "" : damage.size30 || 0}
+              onChange={(e) => onChange(part, "size30", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
+              onFocus={() => {
+                if (damage.size30 === 0) {
+                  const inputElement = document.getElementById(`${part}-size30`) as HTMLInputElement;
+                  if (inputElement) {
+                    setTimeout(() => {
+                      inputElement.select();
+                    }, 0);
+                  }
                 }
               }}
               className="w-12 h-6 text-xs px-2 text-center"
               min={0}
+              id={`${part}-size30`}
               readOnly={readOnly}
             />
           )}
@@ -1071,16 +1081,21 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
           ) : (
             <Input
               type="number"
-              value={damage.size40 || 0}
-              onChange={(e) => onChange(part, "size40", parseInt(e.target.value) || 0)}
-              onFocus={(e) => {
-                if (e.target.value === "0") {
-                  onChange(part, "size40", 0);
-                  e.target.value = "";
+              value={damage.size40 === 0 && document.activeElement === document.getElementById(`${part}-size40`) ? "" : damage.size40 || 0}
+              onChange={(e) => onChange(part, "size40", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
+              onFocus={() => {
+                if (damage.size40 === 0) {
+                  const inputElement = document.getElementById(`${part}-size40`) as HTMLInputElement;
+                  if (inputElement) {
+                    setTimeout(() => {
+                      inputElement.select();
+                    }, 0);
+                  }
                 }
               }}
               className="w-12 h-6 text-xs px-2 text-center"
               min={0}
+              id={`${part}-size40`}
               readOnly={readOnly}
             />
           )}
