@@ -1027,6 +1027,12 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
               type="number"
               value={damage.size20 || 0}
               onChange={(e) => onChange(part, "size20", parseInt(e.target.value) || 0)}
+              onFocus={(e) => {
+                if (e.target.value === "0") {
+                  onChange(part, "size20", 0);
+                  e.target.value = "";
+                }
+              }}
               className="w-12 h-6 text-xs px-2 text-center"
               min={0}
               readOnly={readOnly}
@@ -1044,6 +1050,12 @@ const DamagePart: React.FC<DamagePartProps> = ({ part, damages, onChange, readOn
               type="number"
               value={damage.size30 || 0}
               onChange={(e) => onChange(part, "size30", parseInt(e.target.value) || 0)}
+              onFocus={(e) => {
+                if (e.target.value === "0") {
+                  onChange(part, "size30", 0);
+                  e.target.value = "";
+                }
+              }}
               className="w-12 h-6 text-xs px-2 text-center"
               min={0}
               readOnly={readOnly}
