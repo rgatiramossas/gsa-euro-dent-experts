@@ -1,0 +1,617 @@
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/common/PageHeader";
+import { Button } from "@/components/ui/button";
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { 
+  Card, 
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Client } from "@/types";
+import { insertVehicleSchema } from "@shared/schema.mysql";
+import { storeOfflineRequest } from "@/lib/offlineDb";
+import { useTranslation } from "react-i18next";
+
+// Use o schema original sem estender com year
+const formSchema = insertVehicleSchema;
+
+type FormData = z.infer<typeof formSchema>;
+
+interface NewVehicleProps {
+  clientId: string;
+}
+
+export default function NewVehicle({ clientId }: NewVehicleProps) {
+  const [_, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveTimeout, setSaveTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Efeito para detectar mudanças no estado da conexão
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      
+      // Limpar timeout ao desmontar
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+    };
+  }, [saveTimeout]);
+  
+  // Get client details
+  const { data: client, isLoading: isLoadingClient } = useQuery<Client>({
+    queryKey: [`/api/clients/${clientId}`],
+  });
+  
+  // Form definition
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      client_id: parseInt(clientId),
+      make: "",
+      model: "",
+      color: "",
+      license_plate: "",
+      vin: "",
+    },
+  });
+  
+  // Create vehicle mutation
+  const createVehicleMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      return await apiRequest('/api/vehicles', 'POST', data);
+    },
+    onSuccess: (data) => {
+      // *** MELHORADO: Estratégia de invalidação e atualização do cache ***
+      
+      // 1. Invalidar todas as consultas que podem conter veículos
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}/vehicles`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vehicles'] });
+      
+      // 2. Atualizar manualmente o cache com múltiplas variações das chaves de consulta
+      
+      // 2.1. Veículos do cliente - formato simples
+      const clientVehiclesQueryKey = [`/api/clients/${clientId}/vehicles`];
+      const clientVehiclesData = queryClient.getQueryData<any>(clientVehiclesQueryKey);
+      
+      if (clientVehiclesData) {
+        if (Array.isArray(clientVehiclesData)) {
+          queryClient.setQueryData(
+            clientVehiclesQueryKey,
+            [...clientVehiclesData, data]
+          );
+        } else if (clientVehiclesData.data && Array.isArray(clientVehiclesData.data)) {
+          queryClient.setQueryData(
+            clientVehiclesQueryKey,
+            {
+              ...clientVehiclesData,
+              data: [...clientVehiclesData.data, data],
+              total: (clientVehiclesData.total || 0) + 1
+            }
+          );
+        }
+      } else {
+        // Se não existe no cache, criar entrada
+        queryClient.setQueryData(clientVehiclesQueryKey, [data]);
+      }
+      
+      // 2.2. Veículos do cliente - formato com opções offline (usado em componentes com suporte offline)
+      const clientVehiclesOfflineQueryKey = [
+        '/api/clients', 
+        parseInt(clientId), 
+        'vehicles', 
+        { enableOffline: true, offlineTableName: 'vehicles' }
+      ];
+      const clientVehiclesOfflineData = queryClient.getQueryData<any>(clientVehiclesOfflineQueryKey);
+      
+      if (clientVehiclesOfflineData) {
+        if (Array.isArray(clientVehiclesOfflineData)) {
+          queryClient.setQueryData(
+            clientVehiclesOfflineQueryKey,
+            [...clientVehiclesOfflineData, data]
+          );
+        } else if (clientVehiclesOfflineData.data && Array.isArray(clientVehiclesOfflineData.data)) {
+          queryClient.setQueryData(
+            clientVehiclesOfflineQueryKey,
+            {
+              ...clientVehiclesOfflineData,
+              data: [...clientVehiclesOfflineData.data, data],
+              total: (clientVehiclesOfflineData.total || 0) + 1
+            }
+          );
+        }
+      } else {
+        // Se não existe no cache, criar entrada
+        queryClient.setQueryData(clientVehiclesOfflineQueryKey, [data]);
+      }
+      
+      // 2.3. Lista global de veículos (se existir no cache)
+      const allVehiclesQueryKey = ['/api/vehicles'];
+      const allVehiclesData = queryClient.getQueryData<any>(allVehiclesQueryKey);
+      
+      if (allVehiclesData) {
+        if (Array.isArray(allVehiclesData)) {
+          queryClient.setQueryData(
+            allVehiclesQueryKey,
+            [...allVehiclesData, data]
+          );
+        } else if (allVehiclesData.data && Array.isArray(allVehiclesData.data)) {
+          queryClient.setQueryData(
+            allVehiclesQueryKey,
+            {
+              ...allVehiclesData,
+              data: [...allVehiclesData.data, data],
+              total: (allVehiclesData.total || 0) + 1
+            }
+          );
+        }
+      }
+      
+      // 3. Forçar atualização dos componentes específicos (nova característica)
+      
+      // Criamos uma "sinalização" para informar que um novo veículo foi adicionado
+      // Essa abordagem ativa as consultas de veículos em todos os locais
+      const updateSignalKey = ['vehicleUpdated', new Date().getTime()];
+      queryClient.setQueryData(updateSignalKey, true);
+      
+      // Exibir notificação de sucesso
+      toast({
+        title: t("vehicles.vehicleRegistered", "Veículo cadastrado"),
+        description: t("vehicles.vehicleRegisteredDesc", "O veículo foi cadastrado com sucesso"),
+      });
+      
+      // Finalizar e redirecionar
+      setIsSaving(false);
+      
+      // Redirecionar para a página de detalhes do cliente com parâmetro para garantir atualização
+      setLocation(`/clients/${clientId}?refresh=${new Date().getTime()}`);
+    },
+    onError: (error) => {
+      console.error('Error creating vehicle:', error);
+      toast({
+        title: t("vehicles.errorRegistering", "Erro ao cadastrar veículo"),
+        description: t("vehicles.errorRegisteringDesc", "Ocorreu um erro ao cadastrar o veículo. Verifique os dados e tente novamente."),
+        variant: "destructive",
+      });
+      setIsSaving(false);
+    }
+  });
+  
+  const onSubmit = async (data: FormData) => {
+    setIsSaving(true);
+    
+    // Limpar timeout anterior se existir
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+      setSaveTimeout(null);
+    }
+    
+    // Verificar o estado da conexão usando a variável isOffline
+    if (isOffline) {
+      try {
+        // Salvar localmente no IndexedDB
+        const timestamp = new Date().getTime();
+        const tempId = -timestamp; // ID temporário negativo para identificar itens offline
+        
+        // Criar veículo temporário com ID negativo para o cache
+        const tempVehicle = {
+          id: tempId,
+          client_id: Number(clientId),
+          make: data.make,
+          model: data.model,
+          color: data.color || "",
+          license_plate: data.license_plate || "",
+          vin: data.vin || "",
+          notes: data.notes || "",
+          _isOffline: true,
+          created_at: new Date().toISOString()
+        };
+        
+        // Modificar os dados para salvar o ID temporário
+        const offlineData = {
+          ...data,
+          id: tempId,
+          _isOffline: true
+        };
+        
+        const pendingRequest = {
+          id: `vehicle_${timestamp}`,
+          timestamp,
+          url: '/api/vehicles',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: offlineData,
+          tableName: 'vehicles',
+          operationType: 'create' as const
+        };
+        
+        // Salvar a requisição pendente para sincronização posterior
+        await storeOfflineRequest(pendingRequest);
+        
+        // Atualizar o cache para mostrar o veículo imediatamente em todas as listas/views
+        
+        // 1. Atualizar a lista de veículos do cliente específico
+        // Importante: Atualizar todas as variações de queryKey que possam ser usadas em outros componentes
+        
+        // Formato básico
+        const clientVehiclesQueryKey = [`/api/clients/${clientId}/vehicles`];
+        const clientVehiclesData = queryClient.getQueryData<any>(clientVehiclesQueryKey);
+        
+        // Formato com opções de offline (usado em componentes com suporte offline)
+        const clientVehiclesOfflineQueryKey = [
+          `/api/clients/${clientId}/vehicles`, 
+          { enableOffline: true, offlineTableName: 'vehicles' }
+        ];
+        const clientVehiclesOfflineData = queryClient.getQueryData<any>(clientVehiclesOfflineQueryKey);
+        
+        // Atualizar o cache sem opções offline
+        if (clientVehiclesData) {
+          console.log("Atualizando cache veículos (formato básico):", clientVehiclesQueryKey);
+          
+          // Se o formato for um array direto
+          if (Array.isArray(clientVehiclesData)) {
+            queryClient.setQueryData(
+              clientVehiclesQueryKey,
+              [...clientVehiclesData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (clientVehiclesData.data && Array.isArray(clientVehiclesData.data)) {
+            queryClient.setQueryData(
+              clientVehiclesQueryKey,
+              {
+                ...clientVehiclesData,
+                data: [...clientVehiclesData.data, tempVehicle],
+                total: (clientVehiclesData.total || 0) + 1
+              }
+            );
+          }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada no cache para veículos:", clientVehiclesQueryKey);
+          queryClient.setQueryData(clientVehiclesQueryKey, [tempVehicle]);
+        }
+        
+        // Atualizar o cache com opções offline
+        if (clientVehiclesOfflineData) {
+          console.log("Atualizando cache veículos (com offline):", clientVehiclesOfflineQueryKey);
+          
+          // Se o formato for um array direto
+          if (Array.isArray(clientVehiclesOfflineData)) {
+            queryClient.setQueryData(
+              clientVehiclesOfflineQueryKey,
+              [...clientVehiclesOfflineData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (clientVehiclesOfflineData.data && Array.isArray(clientVehiclesOfflineData.data)) {
+            queryClient.setQueryData(
+              clientVehiclesOfflineQueryKey,
+              {
+                ...clientVehiclesOfflineData,
+                data: [...clientVehiclesOfflineData.data, tempVehicle],
+                total: (clientVehiclesOfflineData.total || 0) + 1
+              }
+            );
+          }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada no cache para veículos (com offline):", clientVehiclesOfflineQueryKey);
+          queryClient.setQueryData(clientVehiclesOfflineQueryKey, [tempVehicle]);
+        }
+        
+        // 2. Atualizar a lista global de veículos (se existir no cache)
+        const allVehiclesQueryKey = ['/api/vehicles'];
+        const allVehiclesData = queryClient.getQueryData<any>(allVehiclesQueryKey);
+        
+        // Formato com opções de offline
+        const allVehiclesOfflineQueryKey = ['/api/vehicles', { enableOffline: true, offlineTableName: 'vehicles' }];
+        const allVehiclesOfflineData = queryClient.getQueryData<any>(allVehiclesOfflineQueryKey);
+        
+        // Chave usada em serviços - atualizar também
+        const servicesVehicleQueryKey = ['/api/clients', clientId, 'vehicles', { enableOffline: true, offlineTableName: 'vehicles' }];
+        const servicesVehicleData = queryClient.getQueryData<any>(servicesVehicleQueryKey);
+        
+        console.log("Atualizando cache para as seguintes chaves:", {
+          allVehiclesQueryKey,
+          allVehiclesOfflineQueryKey,
+          servicesVehicleQueryKey
+        });
+        
+        // Atualizar a lista global sem suporte offline
+        if (allVehiclesData) {
+          console.log("Atualizando cache de todos os veículos (formato básico)");
+          
+          // Se o formato for um array direto
+          if (Array.isArray(allVehiclesData)) {
+            queryClient.setQueryData(
+              allVehiclesQueryKey,
+              [...allVehiclesData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (allVehiclesData.data && Array.isArray(allVehiclesData.data)) {
+            queryClient.setQueryData(
+              allVehiclesQueryKey,
+              {
+                ...allVehiclesData,
+                data: [...allVehiclesData.data, tempVehicle],
+                total: (allVehiclesData.total || 0) + 1
+              }
+            );
+          }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada para veículos globais");
+          queryClient.setQueryData(allVehiclesQueryKey, [tempVehicle]);
+        }
+        
+        // Atualizar a lista global com suporte offline
+        if (allVehiclesOfflineData) {
+          console.log("Atualizando cache de todos os veículos (com offline)");
+          
+          // Se o formato for um array direto
+          if (Array.isArray(allVehiclesOfflineData)) {
+            queryClient.setQueryData(
+              allVehiclesOfflineQueryKey,
+              [...allVehiclesOfflineData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (allVehiclesOfflineData.data && Array.isArray(allVehiclesOfflineData.data)) {
+            queryClient.setQueryData(
+              allVehiclesOfflineQueryKey,
+              {
+                ...allVehiclesOfflineData,
+                data: [...allVehiclesOfflineData.data, tempVehicle],
+                total: (allVehiclesOfflineData.total || 0) + 1
+              }
+            );
+          }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada para veículos globais (com offline)");
+          queryClient.setQueryData(allVehiclesOfflineQueryKey, [tempVehicle]);
+        }
+        
+        // Atualizar o cache usado no componente de criação de serviços
+        if (servicesVehicleData) {
+          console.log("Atualizando cache usado em serviços");
+          
+          // Se o formato for um array direto
+          if (Array.isArray(servicesVehicleData)) {
+            queryClient.setQueryData(
+              servicesVehicleQueryKey,
+              [...servicesVehicleData, tempVehicle]
+            );
+          } 
+          // Se o formato for { data: [...], total: number }
+          else if (servicesVehicleData.data && Array.isArray(servicesVehicleData.data)) {
+            queryClient.setQueryData(
+              servicesVehicleQueryKey,
+              {
+                ...servicesVehicleData,
+                data: [...servicesVehicleData.data, tempVehicle],
+                total: (servicesVehicleData.total || 0) + 1
+              }
+            );
+          }
+        } else {
+          // Se não existe no cache ainda, criar uma entrada
+          console.log("Criando nova entrada para veículos em serviços");
+          queryClient.setQueryData(servicesVehicleQueryKey, [tempVehicle]);
+        }
+        
+        // 3. Forçar atualização dos componentes específicos
+        const updateSignalKey = ['vehicleUpdated', new Date().getTime()];
+        queryClient.setQueryData(updateSignalKey, true);
+        
+        toast({
+          title: t("vehicles.savedOffline", "Veículo salvo offline"),
+          description: t("vehicles.savedOfflineDesc", "O veículo foi salvo localmente e será sincronizado quando a conexão for restaurada"),
+        });
+        
+        // Redirecionar após o cadastro offline
+        setIsSaving(false);
+        setLocation(`/clients/${clientId}?refresh=${new Date().getTime()}`);
+      } catch (error) {
+        console.error('Erro ao salvar veículo offline:', error);
+        toast({
+          title: t("vehicles.errorSavingOffline", "Erro ao salvar offline"),
+          description: t("vehicles.errorSavingOfflineDesc", "Não foi possível salvar o veículo localmente. Tente novamente."),
+          variant: "destructive",
+        });
+        setIsSaving(false);
+      }
+    } else {
+      // Processamento online normal
+      createVehicleMutation.mutate(data);
+      
+      // Configurar timeout para resetar o estado de salvamento (caso ocorra um erro não tratado)
+      const timeout = setTimeout(() => {
+        setIsSaving(false);
+      }, 10000); // 10 segundos
+      
+      setSaveTimeout(timeout);
+    }
+  };
+  
+  if (isLoadingClient) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="py-6 px-4 sm:px-6 lg:px-8">
+      <PageHeader
+        title={t("vehicles.registerNewVehicle", "Cadastrar Novo Veículo")}
+        description={
+          client ? 
+            t("vehicles.registerForClient", "Cadastrando veículo para {{clientName}}", { clientName: client.name }) : 
+            t("vehicles.registerVehicle", "Cadastrar veículo")
+        }
+        actions={
+          <Button variant="outline" onClick={() => setLocation(`/clients/${clientId}`)}>
+            {t("common.back", "Voltar")}
+          </Button>
+        }
+      />
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("vehicles.vehicleInformation", "Informações do Veículo")}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="make"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("vehicles.make", "Marca")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t("vehicles.make", "Marca")} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="model"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("vehicles.model", "Modelo")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t("vehicles.model", "Modelo")} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("vehicles.color", "Cor")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t("vehicles.color", "Cor")} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="license_plate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("vehicles.licensePlate", "Placa")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t("vehicles.licensePlate", "Placa")} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="vin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("vehicles.vinNumber", "Número VIN/Chassi")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t("vehicles.vinNumber", "Número VIN/Chassi")} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("vehicles.notes", "Observações")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("vehicles.notesPlaceholder", "Observações sobre o veículo (opcional)")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+
+            </CardContent>
+          </Card>
+          
+          <div className="flex space-x-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => setLocation('/clients')}
+            >
+              {t("common.cancel", "Cancelar")}
+            </Button>
+            
+            {/* Usar botão adaptativo baseado no estado de conexão */}
+            <Button 
+              type={isOffline ? "button" : "submit"}
+              className="flex-1"
+              disabled={createVehicleMutation.isPending || isSaving}
+              onClick={isOffline ? () => onSubmit(form.getValues()) : undefined}
+            >
+              {createVehicleMutation.isPending || isSaving 
+                ? t("common.saving", "Salvando...") 
+                : isOffline
+                  ? t("vehicles.saveOffline", "Salvar Offline")
+                  : t("vehicles.registerVehicle", "Cadastrar Veículo")}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+}

@@ -4,16 +4,20 @@ Este pacote contém todas as atualizações necessárias para implementar melhor
 
 1. Aprimoramento dos campos de amassados no formulário de orçamento
 2. Melhoria na exibição de preços na seleção de tipos de serviço
+3. Correção da atualização automática de veículos após cadastro
 
 ## Conteúdo do Pacote
 
 - `README.md` - Visão geral das atualizações
 - `IMPLEMENTACAO.md` - Instruções detalhadas de implementação
 - `CHECKLIST-VERIFICACAO.md` - Checklist para testar as atualizações
+- `CORRECAO-VEICULOS.md` - Documentação específica da correção de veículos
 - `deployment-changes-readme.md` - Documentação técnica das alterações
 - `apply-updates.sh` - Script para facilitar a implementação
 - `components/NewBudgetForm.tsx` - Componente atualizado do formulário de orçamento
 - `pages/services/new-service.tsx` - Página atualizada de criação de serviço
+- `pages/clients/$id.tsx` - Página de detalhes do cliente otimizada
+- `pages/clients/new-vehicle.tsx` - Página de cadastro de veículos melhorada
 
 ## Instruções Resumidas
 
