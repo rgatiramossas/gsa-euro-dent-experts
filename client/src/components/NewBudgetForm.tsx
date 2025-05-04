@@ -135,186 +135,40 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
     };
   }, []);
   
-  // Buscar a lista de clientes do banco de dados - incluindo offline
+  // Buscar a lista de clientes do banco de dados - versão apenas online
   const { data: clients, isLoading: isLoadingClients, error: clientsError, refetch: refetchClients } = useQuery<any[]>({
-    queryKey: ['/api/clients', 'active', { enableOffline: true, offlineTableName: 'clients' }],
+    queryKey: ['/api/clients', 'active'],
     queryFn: async () => {
       try {
         // Importar as ferramentas necessárias
         const { getApi } = await import('@/lib/apiWrapper');
-        const { getCompleteOfflineData } = await import('@/lib/getDirectOfflineData');
-        const { syncEvents, SYNC_EVENTS } = await import('@/lib/offlineDb');
         
-        console.log("[NewBudgetForm] Buscando clientes ativos (com suporte offline)...");
+        console.log("[NewBudgetForm] Buscando clientes ativos...");
         
-        // Buscar dados online e offline simultaneamente
-        let onlineClients: any[] = [];
-        let offlineClients: any[] = [];
-        
-        // Buscar todos os clientes do banco de dados offline
+        // Buscar dados online
         try {
-          offlineClients = await getCompleteOfflineData('clients');
-          console.log(`[NewBudgetForm] Recuperados ${offlineClients.length} clientes diretamente do IndexedDB`);
-          
-          // Processar os clientes offline para garantir consistência visual
-          offlineClients = offlineClients.map(client => {
-            // Se o cliente já tem um ID negativo ou flag _isOffline, considerar como offline
-            const isOfflineClient = client.id < 0 || client._isOffline === true;
-            
-            // Garantir que clientes offline tenham marcação visual
-            if (isOfflineClient) {
-              let clientName = client.name || 'Cliente sem nome';
-              if (!clientName.includes('(Offline)')) {
-                clientName = `${clientName} (Offline)`;
-              }
-              
-              return {
-                ...client,
-                _isOffline: true,
-                name: clientName
-              };
-            }
-            
-            return client;
-          });
-        } catch (offlineError) {
-          console.error("[NewBudgetForm] Erro ao buscar clientes do IndexedDB:", offlineError);
-        }
-        
-        // Tentar buscar clientes online se tiver conexão
-        if (navigator.onLine) {
-          try {
-            // Buscar dados online
-            const response = await fetch('/api/clients?filterMode=active&enableOffline=true');
-            if (!response.ok) {
-              throw new Error('Erro ao carregar clientes do servidor');
-            }
-            onlineClients = await response.json();
-            console.log(`[NewBudgetForm] ${onlineClients.length} clientes carregados do servidor`);
-          } catch (onlineError) {
-            console.error("[NewBudgetForm] Erro ao buscar clientes online:", onlineError);
+          const response = await fetch('/api/clients?filterMode=active');
+          if (!response.ok) {
+            throw new Error('Erro ao carregar clientes do servidor');
           }
+          const clients = await response.json();
+          console.log(`[NewBudgetForm] ${clients.length} clientes carregados do servidor`);
+          return clients;
+        } catch (error) {
+          console.error("[NewBudgetForm] Erro ao buscar clientes:", error);
+          throw error; // Propagar o erro para que o React Query possa lidar com ele
         }
-        
-        // Certifica-se de que temos arrays válidos
-        if (!Array.isArray(onlineClients)) onlineClients = [];
-        if (!Array.isArray(offlineClients)) offlineClients = [];
-        
-        // Combinar clientes online e offline com estratégia de mesclagem aprimorada
-        const combinedClients = [...onlineClients];
-        
-        // Adicionar clientes offline que não estão duplicados na lista online
-        offlineClients.forEach(offlineClient => {
-          // Se o cliente offline tem ID negativo (criado localmente), adicionar diretamente
-          if (offlineClient.id < 0) {
-            if (!combinedClients.some(c => c.id === offlineClient.id)) {
-              console.log(`[NewBudgetForm] Adicionando cliente offline com ID ${offlineClient.id} à lista combinada`);
-              combinedClients.push(offlineClient);
-            }
-          } 
-          // Para clientes com ID positivo, verificar se temos uma versão atualizada
-          else if (!combinedClients.some(c => c.id === offlineClient.id)) {
-            console.log(`[NewBudgetForm] Adicionando cliente com ID ${offlineClient.id} da base offline à lista combinada`);
-            combinedClients.push(offlineClient);
-          }
-        });
-        
-        console.log(`[NewBudgetForm] Total de ${combinedClients.length} clientes carregados (${onlineClients.length} online + ${offlineClients.length} offline)`);
-        console.log("[NewBudgetForm] Erro ao carregar clientes:", clientsError);
-        
-        // Retornar a lista combinada
-        return combinedClients;
       } catch (error) {
         console.error("[NewBudgetForm] Erro geral ao carregar clientes:", error);
-        
-        // Em caso de falha total, tentar buscar apenas do IndexedDB
-        try {
-          const { getCompleteOfflineData } = await import('@/lib/getDirectOfflineData');
-          const offlineClients = await getCompleteOfflineData('clients');
-          
-          // Formatar para exibição (corrigindo erros de tipagem)
-          const fallbackClients = offlineClients.map(client => {
-            // Garantir que temos um objeto com as propriedades necessárias
-            const clientObject = client as any;
-            return {
-              ...clientObject,
-              _isOffline: true,
-              name: clientObject.name?.includes('(Offline)') 
-                ? clientObject.name 
-                : `${clientObject.name || 'Cliente'} (Offline)`
-            };
-          });
-            
-          console.log("[NewBudgetForm] Clientes de fallback do IndexedDB:", fallbackClients);
-          return fallbackClients;
-        } catch (fallbackError) {
-          console.error("[NewBudgetForm] Falha no fallback do IndexedDB:", fallbackError);
-          return []; // Último recurso: array vazio
-        }
+        // Em caso de falha retornar array vazio
+        return [];
       }
     },
     retry: 1, // Reduzir para 1 para evitar múltiplas tentativas se falhar
     staleTime: 15000, // 15 segundos - reduzido para atualizar mais frequentemente
   });
   
-  // Escutar eventos de sincronização e atualização de dados
-  useEffect(() => {
-    const setupSyncListeners = async () => {
-      try {
-        // Importar eventos de sincronização
-        const { syncEvents, SYNC_EVENTS } = await import('@/lib/offlineDb');
-        
-        // Função para atualizar a lista de clientes quando dados são modificados
-        const handleDataUpdate = (tableName: string, data: any) => {
-          console.log(`[NewBudgetForm] Evento de atualização de dados recebido para tabela ${tableName}:`, data);
-          
-          // Se for a tabela de clientes, recarregar os dados
-          if (tableName === 'clients') {
-            console.log('[NewBudgetForm] Recarregando lista de clientes após alteração...');
-            refetchClients();
-          }
-        };
-        
-        // Registrar handlers para eventos relevantes
-        console.log('[NewBudgetForm] Registrando listeners para eventos de sincronização');
-        
-        // Quando dados são adicionados (create)
-        const removeAddListener = syncEvents.on(SYNC_EVENTS.DATA_ADDED, handleDataUpdate);
-        
-        // Quando dados são atualizados (update)
-        const removeUpdateListener = syncEvents.on(SYNC_EVENTS.DATA_UPDATED, handleDataUpdate);
-        
-        // Quando a sincronização é concluída
-        const removeSyncListener = syncEvents.on(SYNC_EVENTS.SYNC_COMPLETED, 
-          (tableName: string, data: any) => {
-            console.log(`[NewBudgetForm] Sincronização concluída para ${tableName}`);
-            if (tableName === 'clients' || tableName === 'all') {
-              refetchClients();
-            }
-          }
-        );
-        
-        // Cleanup dos listeners quando o componente for desmontado
-        return () => {
-          removeAddListener();
-          removeUpdateListener();
-          removeSyncListener();
-          console.log('[NewBudgetForm] Listeners de sincronização removidos');
-        };
-      } catch (error) {
-        console.error('[NewBudgetForm] Erro ao configurar listeners de sincronização:', error);
-        return () => {}; // Cleanup vazio em caso de erro
-      }
-    };
-    
-    // Configurar listeners
-    const cleanup = setupSyncListeners();
-    
-    // Cleanup na desmontagem
-    return () => {
-      cleanup.then(cleanupFn => cleanupFn());
-    };
-  }, [refetchClients]);
+  // Removido o código que escutava eventos de sincronização e atualização offline
   
   // Log para depuração da lista de clientes
   useEffect(() => {
@@ -398,12 +252,12 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
       });
       
       // Verificar se está offline usando a variável de estado
-      if (isOffline && !initialData) {
-        // Mostrar mensagem para usar o botão "Salvar Offline"
+      if (isOffline) {
+        // Mostrar mensagem de erro quando offline
         toast({
-          title: t("budget.offlineDetected"),
-          description: t("budget.useOfflineButton"),
-          variant: "destructive", // warning não existe como variante, usando destructive
+          title: "Sem conexão com internet",
+          description: "Esta operação requer conexão com a internet. Verifique sua conexão e tente novamente.",
+          variant: "destructive",
         });
         return;
       }
@@ -479,113 +333,56 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   // 1. O botão "Salvar Offline" para criação explícita offline
   // 2. O onSubmit direto para criação online
   
-  // Função para atualizar um orçamento existente
+  // Função para atualizar um orçamento existente - apenas online
   const updateBudget = async (budget: any, budgetId: number) => {
     // Verificar conectividade usando a variável de estado
     if (isOffline) {
-      try {
-        // Quando offline, salvar no IndexedDB para sincronização posterior
-        const timestamp = new Date().getTime();
-        const pendingRequest = {
-          id: `budget_update_${timestamp}`,
-          timestamp,
-          url: `/api/budgets/${budgetId}`,
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: budget,
-          tableName: 'budgets',
-          resourceId: budgetId,
-          operationType: 'update' as const
-        };
-        
-        // Importar a função
-        const { storeOfflineRequest } = await import('@/lib/offlineDb');
-        
-        // Armazenar requisição para sincronização futura
-        await storeOfflineRequest(pendingRequest);
-        
-        // Criar item atualizado com flag de offline
-        const updatedBudget = { 
-          id: budgetId, 
-          ...budget, 
-          _isOffline: true,
-          updated_at: new Date().toISOString()
-        };
-        
-        // Atualizar o cache do React Query
-        try {
-          // Obter lista atual de orçamentos do cache
-          const currentBudgets = queryClient.getQueryData(['/api/budgets']) || [];
-          
-          // Garantir que currentBudgets seja tratado como array
-          const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];
-          
-          // Substituir o orçamento existente pelo atualizado
-          const updatedBudgets = budgetsArray.map(item => 
-            item.id === budgetId ? updatedBudget : item
-          );
-          
-          // Atualizar cache
-          queryClient.setQueryData(['/api/budgets'], updatedBudgets);
-          
-          // Atualizar também o cache individual do orçamento
-          queryClient.setQueryData([`/api/budgets/${budgetId}`], updatedBudget);
-          
-          console.log("Cache atualizado para orçamento:", budgetId, "(offline)");
-        } catch (cacheError) {
-          console.error("Erro ao atualizar cache de orçamentos:", cacheError);
-          // Não interrompe o fluxo, apenas registra o erro
-        }
-        
-        return updatedBudget;
-      } catch (error) {
-        console.error("Erro ao atualizar orçamento offline:", error);
-        throw new Error("Falha ao atualizar orçamento no modo offline");
-      }
-    } else {
-      // Quando online, envia diretamente ao servidor
-      const response = await fetch(`/api/budgets/${budgetId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(budget),
-      });
-
-      if (!response.ok) {
-        throw new Error("Falha ao atualizar orçamento");
-      }
-      
-      // Obter resposta da API
-      const updatedBudget = await response.json();
-      
-      // Atualizar o cache do React Query
-      try {
-        // Obter lista atual de orçamentos do cache
-        const currentBudgets = queryClient.getQueryData(['/api/budgets']) || [];
-        
-        // Garantir que currentBudgets seja tratado como array
-        const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];
-        
-        // Substituir o orçamento existente pelo atualizado
-        const updatedBudgets = budgetsArray.map(item => 
-          item.id === budgetId ? updatedBudget : item
-        );
-        
-        // Atualizar cache
-        queryClient.setQueryData(['/api/budgets'], updatedBudgets);
-        
-        // Atualizar também o cache individual do orçamento
-        queryClient.setQueryData([`/api/budgets/${budgetId}`], updatedBudget);
-        
-        console.log("Cache atualizado para orçamento:", budgetId);
-      } catch (cacheError) {
-        console.error("Erro ao atualizar cache de orçamentos:", cacheError);
-        // Não interrompe o fluxo, apenas registra o erro
-      }
-
-      return updatedBudget;
+      // Se estiver offline, mostrar mensagem de erro
+      throw new Error("Esta operação requer conexão com a internet");
     }
+    
+    // Quando online, envia diretamente ao servidor
+    const response = await fetch(`/api/budgets/${budgetId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(budget),
+    });
+
+    if (!response.ok) {
+      throw new Error("Falha ao atualizar orçamento");
+    }
+    
+    // Obter resposta da API
+    const updatedBudget = await response.json();
+    
+    // Atualizar o cache do React Query
+    try {
+      // Obter lista atual de orçamentos do cache
+      const currentBudgets = queryClient.getQueryData(['/api/budgets']) || [];
+      
+      // Garantir que currentBudgets seja tratado como array
+      const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];
+      
+      // Substituir o orçamento existente pelo atualizado
+      const updatedBudgets = budgetsArray.map(item => 
+        item.id === budgetId ? updatedBudget : item
+      );
+      
+      // Atualizar cache
+      queryClient.setQueryData(['/api/budgets'], updatedBudgets);
+      
+      // Atualizar também o cache individual do orçamento
+      queryClient.setQueryData([`/api/budgets/${budgetId}`], updatedBudget);
+      
+      console.log("Cache atualizado para orçamento:", budgetId);
+    } catch (cacheError) {
+      console.error("Erro ao atualizar cache de orçamentos:", cacheError);
+      // Não interrompe o fluxo, apenas registra o erro
+    }
+
+    return updatedBudget;
   };
 
   // Função para atualizar os valores de danos
@@ -991,114 +788,7 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                 {t("budget.cancel")}
               </Button>
               
-              {/* Botão para salvar offline explicitamente - visível apenas quando offline */}
-              {!initialData && isOffline && (
-                <Button 
-                  type="button" 
-                  variant="secondary"
-                  onClick={async () => {
-                    try {
-                      // Validar dados antes de salvar offline
-                      const valid = await form.trigger();
-                      if (!valid) {
-                        console.log("Formulário inválido para salvar offline");
-                        toast({
-                          title: t("budget.validationError"),
-                          description: t("budget.checkFields"),
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-                      
-                      // Obter valores do formulário
-                      const data = form.getValues();
-                      
-                      // Calcular valores com base nos danos
-                      const totalValues = calculateTotalValues(damages);
-                      
-                      // Converter client_name para client_id
-                      const budgetData = {
-                        client_id: parseInt(data.client_name),
-                        vehicle_info: data.vehicle_info,
-                        plate: data.plate,
-                        chassis_number: data.chassis_number,
-                        date: format(data.date, "yyyy-MM-dd"),
-                        damaged_parts: JSON.stringify(damages),
-                        total_aw: totalValues.totalAw,
-                        total_value: totalValues.totalValue,
-                        vehicle_image: vehicleImage,
-                        status: "pending",
-                        created_at: new Date().toISOString()
-                      };
-                      
-                      // Forçar armazenamento offline
-                      const timestamp = new Date().getTime();
-                      const pendingRequest = {
-                        id: `budget_${timestamp}`,
-                        timestamp,
-                        url: '/api/budgets',
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: budgetData,
-                        tableName: 'budgets',
-                        operationType: 'create' as const
-                      };
-                      
-                      // Importar as funções de armazenamento offline
-                      const { storeOfflineRequest, addToOfflineTable } = await import('@/lib/offlineDb');
-                      
-                      // 1. Armazenar o request para sincronização futura
-                      console.log("Armazenando orçamento para sincronização futura:", pendingRequest);
-                      await storeOfflineRequest(pendingRequest);
-                      
-                      // 2. Criar objeto com ID temporário para referência local
-                      const tempBudget = { 
-                        id: -timestamp, 
-                        ...budgetData,
-                        _isOffline: true,
-                        _pendingSync: true,
-                        created_at: new Date().toISOString()
-                      };
-                      
-                      // 3. Armazenar diretamente na tabela offline de orçamentos
-                      console.log("Adicionando orçamento à tabela offline:", tempBudget);
-                      await addToOfflineTable('budgets', tempBudget);
-                      
-                      // 4. Atualizar o cache para mostrar o novo orçamento
-                      try {
-                        const currentBudgets = queryClient.getQueryData(['/api/budgets']) || [];
-                        const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];
-                        const updatedBudgets = [...budgetsArray, tempBudget];
-                        queryClient.setQueryData(['/api/budgets'], updatedBudgets);
-                      } catch (cacheError) {
-                        console.error("Erro ao atualizar cache de orçamentos:", cacheError);
-                      }
-                      
-                      // Mostrar mensagem de sucesso
-                      toast({
-                        title: t("budget.savedOffline"),
-                        description: t("budget.syncWhenOnline"),
-                      });
-                      
-                      // Redirecionar ou chamar callback de sucesso
-                      if (onSuccess) {
-                        onSuccess(tempBudget);
-                      } else {
-                        window.location.href = "/budgets";
-                      }
-                    } catch (error) {
-                      console.error("Erro ao salvar orçamento offline:", error);
-                      toast({
-                        title: t("budget.errorSavingOffline"),
-                        description: String(error),
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  {t("common.saveOffline")}
-                </Button>
-              )}
+              {/* Botão de salvar offline foi removido */}
               
               <Button type="submit">
                 {initialData ? t("budget.updateBudget") : t("budget.saveBudget")}
