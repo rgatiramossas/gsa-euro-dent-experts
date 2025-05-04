@@ -194,7 +194,7 @@ export default function ManagerDashboard() {
                       <div className="flex flex-col">
                         <div className="font-medium">{service.client.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {service.vehicle.make} {service.vehicle.model} - {service.serviceType.name}
+                          {service.vehicle.make} {service.vehicle.model} - {service.service_type?.name}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -262,7 +262,7 @@ export default function ManagerDashboard() {
                       <div className="flex flex-col">
                         <div className="font-medium">{service.client.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {service.vehicle.make} {service.vehicle.model} - {service.serviceType.name}
+                          {service.vehicle.make} {service.vehicle.model} - {service.service_type?.name}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {service.scheduled_date ? new Date(service.scheduled_date).toLocaleDateString() : t('dashboard.notScheduled')}
