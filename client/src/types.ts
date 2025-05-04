@@ -93,7 +93,11 @@ export interface User {
   username: string;
   name: string;
   email?: string;
+  phone?: string;
   role: 'admin' | 'technician' | 'manager';
+  active?: boolean;
+  profile_image?: string;
+  created_at?: string;
 }
 
 // Tipos para estatísticas do dashboard

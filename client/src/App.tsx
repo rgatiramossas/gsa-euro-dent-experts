@@ -38,6 +38,7 @@ import ManagerClientsList from "@/pages/managers/manager-clients-list";
 // Import technician related pages
 import TechniciansList from "@/pages/technicians/index";
 import NewTechnician from "@/pages/technicians/new-technician";
+import EditTechnician from "@/pages/technicians/edit/$id";
 
 // Import manager related pages
 import ManagersList from "@/pages/managers/index";
@@ -232,6 +233,18 @@ function AppRoutes() {
             </MainLayout>
           </RequireAdmin>
         </RequireAuth>
+      </Route>
+
+      <Route path="/technicians/edit/:id">
+        {(params) => (
+          <RequireAuth>
+            <RequireAdmin>
+              <MainLayout>
+                <EditTechnician />
+              </MainLayout>
+            </RequireAdmin>
+          </RequireAuth>
+        )}
       </Route>
       
       {/* Managers (Gestores) routes - apenas administradores podem gerenciar gestores */}
