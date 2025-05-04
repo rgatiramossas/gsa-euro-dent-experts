@@ -145,15 +145,36 @@ export default function Finances() {
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
-    queryFn: () => {
+    queryFn: async () => {
       // Garantir que temos um ID válido
       if (!currentUser?.id) {
         throw new Error('ID do técnico não disponível');
       }
-      return fetch(`/api/technician/financial-stats?technician_id=${currentUser.id}`).then(res => {
-        if (!res.ok) throw new Error('Erro ao obter dados financeiros');
-        return res.json();
-      });
+      
+      try {
+        console.log("Fazendo requisição GET para estatísticas financeiras do técnico:", currentUser.id);
+        const response = await fetch(`/api/technician/financial-stats?technician_id=${currentUser.id}`);
+        
+        console.log("Status da resposta de estatísticas:", response.status, response.statusText);
+        
+        if (response.status === 401) {
+          console.log("Usuário não autenticado. Redirecionando para login...");
+          window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+          return null;
+        }
+        
+        if (!response.ok) {
+          console.error("Erro ao obter dados financeiros:", response.statusText);
+          throw new Error('Erro ao obter dados financeiros');
+        }
+        
+        const data = await response.json();
+        console.log("Dados de estatísticas financeiras recebidos:", data);
+        return data;
+      } catch (error) {
+        console.error("Erro ao carregar estatísticas financeiras:", error);
+        return null;
+      }
     }
   });
   
@@ -192,16 +213,30 @@ export default function Finances() {
     refetchOnWindowFocus: true,
     queryFn: async () => {
       console.log("Fazendo requisição GET para /api/services");
-      const response = await fetch('/api/services');
-      
-      if (!response.ok) {
-        console.error("Erro ao obter serviços:", response.statusText);
-        throw new Error('Erro ao obter lista de serviços');
+      try {
+        const response = await fetch('/api/services');
+        
+        console.log("Status da resposta de serviços:", response.status, response.statusText);
+        
+        if (response.status === 401) {
+          console.log("Usuário não autenticado. Redirecionando para login...");
+          // Redirecionar para login mantendo a página atual como retorno
+          window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+          return [];
+        }
+        
+        if (!response.ok) {
+          console.error("Erro ao obter serviços:", response.statusText);
+          throw new Error('Erro ao obter lista de serviços');
+        }
+        
+        const data = await response.json();
+        console.log("Dados de serviços recebidos:", data);
+        return data;
+      } catch (error) {
+        console.error("Erro ao carregar serviços:", error);
+        return [];
       }
-      
-      const data = await response.json();
-      console.log("Dados de serviços recebidos:", data);
-      return data;
     }
   });
   
@@ -216,16 +251,30 @@ export default function Finances() {
     refetchOnWindowFocus: true,
     queryFn: async () => {
       console.log("Fazendo requisição GET para /api/expenses");
-      const response = await fetch('/api/expenses');
-      
-      if (!response.ok) {
-        console.error("Erro ao obter despesas:", response.statusText);
-        throw new Error('Erro ao obter lista de despesas');
+      try {
+        const response = await fetch('/api/expenses');
+        
+        console.log("Status da resposta de despesas:", response.status, response.statusText);
+        
+        if (response.status === 401) {
+          console.log("Usuário não autenticado. Redirecionando para login...");
+          // Redirecionar para login mantendo a página atual como retorno
+          window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+          return [];
+        }
+        
+        if (!response.ok) {
+          console.error("Erro ao obter despesas:", response.statusText);
+          throw new Error('Erro ao obter lista de despesas');
+        }
+        
+        const data = await response.json();
+        console.log("Dados de despesas recebidos:", data);
+        return data;
+      } catch (error) {
+        console.error("Erro ao carregar despesas:", error);
+        return [];
       }
-      
-      const data = await response.json();
-      console.log("Dados de despesas recebidos:", data);
-      return data;
     }
   });
   
@@ -266,16 +315,30 @@ export default function Finances() {
     refetchOnWindowFocus: true,
     queryFn: async () => {
       console.log("Fazendo requisição GET para /api/payment-requests");
-      const response = await fetch('/api/payment-requests');
-      
-      if (!response.ok) {
-        console.error("Erro ao obter requisições de pagamento:", response.statusText);
-        throw new Error('Erro ao obter lista de requisições de pagamento');
+      try {
+        const response = await fetch('/api/payment-requests');
+        
+        console.log("Status da resposta de pedidos de pagamento:", response.status, response.statusText);
+        
+        if (response.status === 401) {
+          console.log("Usuário não autenticado. Redirecionando para login...");
+          // Redirecionar para login mantendo a página atual como retorno
+          window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+          return [];
+        }
+        
+        if (!response.ok) {
+          console.error("Erro ao obter requisições de pagamento:", response.statusText);
+          throw new Error('Erro ao obter lista de requisições de pagamento');
+        }
+        
+        const data = await response.json();
+        console.log("Dados de requisições de pagamento recebidos:", data);
+        return data;
+      } catch (error) {
+        console.error("Erro ao carregar requisições de pagamento:", error);
+        return [];
       }
-      
-      const data = await response.json();
-      console.log("Dados de requisições de pagamento recebidos:", data);
-      return data;
     }
   });
   

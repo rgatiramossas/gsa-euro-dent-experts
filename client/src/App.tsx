@@ -22,6 +22,8 @@ import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { SplashScreen } from "@/components/ui/splash-screen";
 // WebSocket service para atualizações em tempo real
 import { initWebSocket, closeWebSocket } from "@/lib/websocketService";
+// Handler para sessões expiradas
+import SessionExpiredHandler from "@/components/auth/SessionExpiredHandler";
 
 // Import service related pages
 import ServicesList from "@/pages/services/index";
