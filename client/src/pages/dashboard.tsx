@@ -20,11 +20,44 @@ export default function Dashboard() {
   // Fetch dashboard stats
   const { 
     data: statsResponse, 
-    isLoading: isLoadingStats 
+    isLoading: isLoadingStats,
+    error: statsError
   } = useQuery<any>({
-    queryKey: ['/api/dashboard/stats', { enableOffline: true, offlineTableName: 'dashboard_stats' }],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryKey: ['/api/dashboard/stats'],
+    queryFn: async () => {
+      console.log("Fazendo requisição para dashboard stats");
+      try {
+        const response = await fetch('/api/dashboard/stats', {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        
+        console.log("Status da resposta dashboard stats:", response.status);
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.error("Erro de autenticação no dashboard");
+            // Aqui podemos tentar renovar a sessão antes de falhar
+            return { 
+              totalPendingServices: 0, 
+              totalInProgressServices: 0,
+              totalCompletedServices: 0,
+              totalRevenue: 0
+            };
+          }
+          throw new Error(`Erro ao buscar dados do dashboard: ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error("Erro ao buscar stats do dashboard:", error);
+        throw error;
+      }
+    },
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
   
   // Usar os dados do backend diretamente com os novos nomes
@@ -52,10 +85,38 @@ export default function Dashboard() {
     data: techPerformance, 
     isLoading: isLoadingPerformance 
   } = useQuery<TechnicianPerformanceType[]>({
-    queryKey: ['/api/dashboard/technician-performance', { enableOffline: true, offlineTableName: 'technician_performance' }],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryKey: ['/api/dashboard/technician-performance'],
+    queryFn: async () => {
+      if (!isAdmin) return [];
+      
+      console.log("Fazendo requisição para technician performance");
+      try {
+        const response = await fetch('/api/dashboard/technician-performance', {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        
+        console.log("Status da resposta technician performance:", response.status);
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.error("Erro de autenticação na requisição de performance de técnicos");
+            return [];
+          }
+          throw new Error(`Erro ao buscar performance de técnicos: ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error("Erro ao buscar performance de técnicos:", error);
+        return [];
+      }
+    },
     enabled: isAdmin, // Só busca os dados se for administrador
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch recent services
@@ -63,9 +124,35 @@ export default function Dashboard() {
     data: services, 
     isLoading: isLoadingServices 
   } = useQuery<ServiceListItem[]>({
-    queryKey: ['/api/services?limit=5', { enableOffline: true, offlineTableName: 'services' }],
-    queryFn: getQueryFn({ on401: "throw" }),
-    refetchOnMount: true, // Forçar refetch quando o componente montar
+    queryKey: ['/api/services'],
+    queryFn: async () => {
+      console.log("Fazendo requisição para serviços recentes");
+      try {
+        const response = await fetch('/api/services?limit=5', {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        
+        console.log("Status da resposta de serviços recentes:", response.status);
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.error("Erro de autenticação na requisição de serviços recentes");
+            return [];
+          }
+          throw new Error(`Erro ao buscar serviços recentes: ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error("Erro ao buscar serviços recentes:", error);
+        return [];
+      }
+    },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   return (

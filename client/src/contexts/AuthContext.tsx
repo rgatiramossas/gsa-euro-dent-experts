@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { AuthUser } from "@/types";
+import { AuthUser } from "@/types/index";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { postApi, getApi, setSessionRefreshFunction } from "@/lib/apiWrapper";
 
