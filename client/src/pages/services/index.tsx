@@ -45,6 +45,7 @@ export default function ServicesList() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [wsConnected, setWsConnected] = useState(false);
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   
@@ -90,6 +91,13 @@ export default function ServicesList() {
     // Manipulador para quando uma conexão WebSocket é estabelecida
     const handleConnectionOpen = () => {
       console.log('Conexão WebSocket estabelecida para a lista de serviços');
+      setWsConnected(true);
+    };
+    
+    // Manipulador para quando uma conexão WebSocket é fechada
+    const handleConnectionClose = () => {
+      console.log('Conexão WebSocket fechada para a lista de serviços');
+      setWsConnected(false);
     };
     
     // Manipulador para quando um serviço é criado
@@ -133,6 +141,7 @@ export default function ServicesList() {
     
     // Registrar manipuladores de eventos WebSocket
     const removeConnectionOpenListener = addEventListener('connection_open', handleConnectionOpen);
+    const removeConnectionCloseListener = addEventListener('connection_close', handleConnectionClose);
     const removeServiceCreatedListener = addEventListener('SERVICE_CREATED', handleServiceCreated);
     const removeServiceUpdatedListener = addEventListener('SERVICE_UPDATED', handleServiceUpdated);
     const removeServiceDeletedListener = addEventListener('SERVICE_DELETED', handleServiceDeleted);
@@ -140,6 +149,7 @@ export default function ServicesList() {
     // Limpar manipuladores de eventos quando o componente for desmontado
     return () => {
       removeConnectionOpenListener();
+      removeConnectionCloseListener();
       removeServiceCreatedListener();
       removeServiceUpdatedListener();
       removeServiceDeletedListener();
@@ -219,7 +229,18 @@ export default function ServicesList() {
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
         title={t("services.title", "Serviços")}
-        description={t("services.manage", "Gerencie os serviços de reparo")}
+        description={
+          <div className="flex items-center gap-2">
+            <span>{t("services.manage", "Gerencie os serviços de reparo")}</span>
+            <div className="flex items-center ml-2">
+              <span className="text-xs text-gray-500 mr-1">WS:</span>
+              <span 
+                className={`inline-block w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`} 
+                title={wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado'}
+              ></span>
+            </div>
+          </div>
+        }
         actions={
           <Link href="/services/new">
             <Button>
