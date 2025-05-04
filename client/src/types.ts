@@ -105,7 +105,7 @@ export interface DashboardStats {
   totalPendingServices: number;
   totalInProgressServices: number;
   totalCompletedServices: number;
-  totalRevenue: number;
+  totalRevenue?: number; // opcional para gestores
 }
 
 // Tipos para performance dos técnicos

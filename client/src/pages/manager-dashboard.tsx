@@ -50,19 +50,18 @@ export default function ManagerDashboard() {
         console.log("Manager dashboard stats received:", data);
         
         // Garantir que todos os valores sejam numéricos
+        // Gestores não devem ter acesso aos dados financeiros
         return {
           totalPendingServices: Number(data.totalPendingServices) || 0,
           totalInProgressServices: Number(data.totalInProgressServices) || 0,
-          totalCompletedServices: Number(data.totalCompletedServices) || 0,
-          totalRevenue: Number(data.totalRevenue) || 0
+          totalCompletedServices: Number(data.totalCompletedServices) || 0
         };
       } catch (error) {
         console.error("Error fetching manager stats:", error);
         return {
           totalPendingServices: 0,
           totalInProgressServices: 0,
-          totalCompletedServices: 0,
-          totalRevenue: 0
+          totalCompletedServices: 0
         };
       }
     },
