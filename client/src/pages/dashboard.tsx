@@ -41,7 +41,16 @@ export default function Dashboard() {
     }));
     
     try {
-      const response = await fetch('/api/dashboard/stats?debug=true&ts=' + Date.now(), {
+      // Construir a URL com parâmetros apropriados para o papel do usuário
+      let url = '/api/dashboard/stats?debug=true&ts=' + Date.now();
+      
+      // Para gestores, precisamos usar uma URL com parâmetros adicionais
+      if (isGestor && user?.id) {
+        url = `/api/dashboard/stats?debug=true&ts=${Date.now()}&gestor_id=${user.id}&role=gestor`;
+        console.log("Testando URL específica para gestor:", url);
+      }
+      
+      const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -94,13 +103,24 @@ export default function Dashboard() {
     try {
       // Adicionar um timestamp para evitar cache
       const timestamp = new Date().getTime();
-      console.log(`Fazendo requisição para /api/dashboard/stats?_t=${timestamp}`);
+      
+      // Construir a URL com base no papel do usuário
+      let url = `/api/dashboard/stats?_t=${timestamp}`;
+      
+      // Para gestores, precisamos usar uma URL diferente ou adicionar parâmetros específicos
+      if (isGestor) {
+        // Quando é um gestor, adicionamos um parâmetro especial para o backend identificar
+        url = `/api/dashboard/stats?_t=${timestamp}&gestor_id=${user?.id}&role=gestor`;
+        console.log(`URL especial para gestor: ${url}`);
+      }
+      
+      console.log(`Fazendo requisição para ${url}`);
       
       // Adicionar o cookie explicitamente
       const cookie = document.cookie;
       console.log("Cookie atual:", cookie);
       
-      const response = await fetch(`/api/dashboard/stats?_t=${timestamp}`, {
+      const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -136,7 +156,7 @@ export default function Dashboard() {
     } finally {
       setIsLoadingStats(false);
     }
-  }, []);
+  }, [user?.id, user?.role, isGestor]);
   
   // Usar useEffect para chamar a função quando o componente montar
   React.useEffect(() => {
@@ -148,8 +168,14 @@ export default function Dashboard() {
       console.log("Usuário atual:", user);
       console.log("Papel do usuário:", user?.role);
       
+      // Para gestores, precisamos parâmetros adicionais
+      let fetchUrl = '/api/dashboard/stats?_nocache=' + new Date().getTime();
+      if (isGestor) {
+        fetchUrl = `/api/dashboard/stats?_nocache=${new Date().getTime()}&gestor_id=${user?.id}&role=gestor`;
+      }
+      
       // Vamos fazer uma chamada manual
-      fetch('/api/dashboard/stats?_nocache=' + new Date().getTime(), {
+      fetch(fetchUrl, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -159,7 +185,7 @@ export default function Dashboard() {
         }
       })
       .then(response => {
-        console.log("Resposta manual stats:", response.status);
+        console.log(`Resposta manual stats (${fetchUrl}):`, response.status);
         if (response.ok) {
           return response.json();
         }
@@ -169,10 +195,10 @@ export default function Dashboard() {
       .then(data => {
         console.log("Dados obtidos manualmente:", data);
         setDashboardStats({
-          totalPendingServices: data.totalPendingServices || 0,
-          totalInProgressServices: data.totalInProgressServices || 0,
-          totalCompletedServices: data.totalCompletedServices || 0,
-          totalRevenue: data.totalRevenue || 0
+          totalPendingServices: Number(data.totalPendingServices) || 0,
+          totalInProgressServices: Number(data.totalInProgressServices) || 0,
+          totalCompletedServices: Number(data.totalCompletedServices) || 0,
+          totalRevenue: Number(data.totalRevenue) || 0
         });
         setIsLoadingStats(false);
       })
@@ -192,7 +218,7 @@ export default function Dashboard() {
     
     // Limpar o intervalo quando o componente desmontar
     return () => clearInterval(intervalId);
-  }, [fetchDashboardStats, user]);
+  }, [fetchDashboardStats, user, isGestor]);
   
   // Mantemos o useQuery apenas para manter o código compatível com o resto
   const { 

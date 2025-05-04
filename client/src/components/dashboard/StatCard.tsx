@@ -14,6 +14,12 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, value, icon, colorClass, actionUrl, actionLabel }: StatCardProps) {
+  // Adicionar log para depuração
+  React.useEffect(() => {
+    console.log(`StatCard "${title}" recebeu valor:`, value);
+    console.log(`Tipo do valor:`, typeof value);
+  }, [title, value]);
+  
   return (
     <Card className="bg-white p-5 relative">
       <div className="flex items-center">
