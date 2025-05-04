@@ -85,7 +85,48 @@ export default function Dashboard() {
   // Usar useEffect para chamar a função quando o componente montar
   React.useEffect(() => {
     console.log("Dashboard montado, buscando estatísticas...");
-    fetchDashboardStats();
+    
+    // Adicionar um pequeno atraso para garantir que os dados de autenticação estão completos
+    setTimeout(() => {
+      console.log("🚀 DISPARANDO FETCH DE ESTATÍSTICAS COM DELAY...");
+      console.log("Usuário atual:", user);
+      console.log("Papel do usuário:", user?.role);
+      
+      // Vamos fazer uma chamada manual
+      fetch('/api/dashboard/stats?_nocache=' + new Date().getTime(), {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
+      .then(response => {
+        console.log("Resposta manual stats:", response.status);
+        if (response.ok) {
+          return response.json();
+        }
+        console.error("Erro na resposta:", response.status, response.statusText);
+        throw new Error(`Erro ao obter estatísticas: ${response.status}`);
+      })
+      .then(data => {
+        console.log("Dados obtidos manualmente:", data);
+        setDashboardStats({
+          totalPendingServices: data.totalPendingServices || 0,
+          totalInProgressServices: data.totalInProgressServices || 0,
+          totalCompletedServices: data.totalCompletedServices || 0,
+          totalRevenue: data.totalRevenue || 0
+        });
+        setIsLoadingStats(false);
+      })
+      .catch(error => {
+        console.error("Erro ao buscar estatísticas manualmente:", error);
+      });
+      
+      // Também chama o método normal
+      fetchDashboardStats();
+    }, 1000);
     
     // Configurar um intervalo para atualizar as estatísticas
     const intervalId = setInterval(() => {
@@ -95,7 +136,7 @@ export default function Dashboard() {
     
     // Limpar o intervalo quando o componente desmontar
     return () => clearInterval(intervalId);
-  }, [fetchDashboardStats]);
+  }, [fetchDashboardStats, user]);
   
   // Mantemos o useQuery apenas para manter o código compatível com o resto
   const { 
