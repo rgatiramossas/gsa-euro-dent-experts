@@ -428,8 +428,8 @@ async function storePendingRequest(request) {
 async function openDatabase() {
   return new Promise((resolve, reject) => {
     try {
-      // Atualizamos a versão para 20 para resolver o erro "version (10) is less than the existing version (20)"
-      const request = indexedDB.open('EuroDentOfflineDB', 20);
+      // Atualizamos a versão para 30 para resolver o erro "version (20) is less than the existing version (30)"
+      const request = indexedDB.open('EuroDentOfflineDB', 30);
       
       request.onerror = (event) => {
         console.error('[SW] Erro ao abrir banco de dados:', event.target.error);
