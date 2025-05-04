@@ -22,7 +22,6 @@ interface TechnicianFinancialStats {
   monthlyData: Array<{
     month: string;
     value: number;
-    year: number;
   }>;
   [key: string]: any;
 }
@@ -34,30 +33,42 @@ type PieChartDataItem = {
 };
 
 // Componente para o gráfico de pizza dos pagamentos de técnico
-export function TechnicianPaymentsPieChart({ financialStats }: { financialStats: TechnicianFinancialStats }) {
+export function TechnicianPaymentsPieChart({ financialStats }: { financialStats: TechnicianFinancialStats | undefined | null }) {
   const { t } = useTranslation();
   
-  if (!financialStats) return <div>{t("common.noData")}</div>;
+  if (!financialStats) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-500">
+        {t("common.loading")}
+      </div>
+    );
+  }
+
+  // Garantir que todos os valores são números
+  const receivedValue = typeof financialStats.receivedValue === 'number' ? financialStats.receivedValue : 0;
+  const invoicedValue = typeof financialStats.invoicedValue === 'number' ? financialStats.invoicedValue : 0;
+  const pendingValue = typeof financialStats.pendingValue === 'number' ? financialStats.pendingValue : 0;
+  const unpaidCompletedValue = typeof financialStats.unpaidCompletedValue === 'number' ? financialStats.unpaidCompletedValue : 0;
 
   const data: PieChartDataItem[] = [
     { 
       name: t("finances.valoresRecebidos"), 
-      value: financialStats.receivedValue,
+      value: receivedValue,
       color: '#10B981' // verde
     },
     { 
       name: t("finances.valoresFaturados"), 
-      value: financialStats.invoicedValue,
+      value: invoicedValue,
       color: '#3B82F6' // azul
     },
     { 
       name: t("finances.emAprovacao"), 
-      value: financialStats.pendingValue,
+      value: pendingValue,
       color: '#F59E0B' // amarelo
     },
     { 
       name: t("finances.naoSolicitados"), 
-      value: financialStats.unpaidCompletedValue,
+      value: unpaidCompletedValue,
       color: '#6B7280' // cinza
     }
   ].filter(item => item.value > 0); // Filtrar valores zerados
