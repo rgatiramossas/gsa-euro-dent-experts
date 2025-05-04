@@ -1019,6 +1019,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vehicle routes
+  // NOTA: Rotas de veículos mantidas apenas para compatibilidade com dados existentes
+  // Os veículos são agora registrados diretamente nos formulários de serviço
+  
+  // Rota para listar veículos - mantida para exibir veículos existentes
   app.get("/api/clients/:clientId/vehicles", requireAuth, async (req, res) => {
     try {
       const clientId = parseInt(req.params.clientId);
@@ -1030,7 +1034,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // A rota de criação direta de veículos está descontinuada
+  // Os veículos são agora criados como parte do processo de criação de serviços
+  // Rota mantida com aviso de descontinuação para compatibilidade
   app.post("/api/vehicles", requireAuth, async (req, res) => {
+    console.warn("POST /api/vehicles chamado diretamente - este endpoint está descontinuado");
+    console.warn("Os veículos devem ser registrados através do formulário de serviço");
+    
     try {
       const vehicleInput = insertVehicleSchema.parse(req.body);
       const vehicle = await storage.createVehicle(vehicleInput);
