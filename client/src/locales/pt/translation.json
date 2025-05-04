@@ -30,7 +30,11 @@
     "processing": "Processando...",
     "sending": "Enviando...",
     "notSpecified": "Não especificado",
-    "noData": "Nenhum dado disponível"
+    "noData": "Nenhum dado disponível",
+    "close": "Fechar",
+    "cancelEdit": "Cancelar Edição",
+    "confirmDelete": "Confirmar Exclusão",
+    "saveOffline": "Salvar Offline"
   },
   "auth": {
     "login": "Entrar",
@@ -444,6 +448,12 @@
     "budgetUpdated": "Orçamento atualizado com sucesso",
     "budgetDeleted": "Orçamento excluído com sucesso",
     "confirmDelete": "Tem certeza que deseja excluir este orçamento?",
+    "deleteConfirmation": "Confirmar Exclusão",
+    "deleted": "Excluído",
+    "deleteSuccess": "Orçamento excluído com sucesso",
+    "viewDetails": "Ver Detalhes",
+    "selectNewStatus": "Selecione o Novo Status",
+    "selectStatus": "Selecione o Status",
     "backToBudgets": "Voltar para Orçamentos",
     "saveBudget": "Salvar Orçamento",
     "updateBudget": "Atualizar Orçamento",

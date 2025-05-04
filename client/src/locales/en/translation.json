@@ -21,7 +21,11 @@
     "success": "Success!",
     "error": "Error",
     "warning": "Warning",
-    "required": "Required"
+    "required": "Required",
+    "close": "Close",
+    "cancelEdit": "Cancel Edit",
+    "confirmDelete": "Confirm Delete",
+    "saveOffline": "Save Offline"
   },
   "auth": {
     "login": "Login",
