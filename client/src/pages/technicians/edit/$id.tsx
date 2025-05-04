@@ -4,7 +4,7 @@ import { useLocation, useParams } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, patchApi } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -101,7 +101,7 @@ export default function EditTechnician() {
   // Update technician mutation
   const updateTechnicianMutation = useMutation({
     mutationFn: async (data: Omit<FormData, "confirmPassword">) => {
-      const res = await apiRequest(`/api/users/${id}`, 'PATCH', data);
+      const res = await patchApi<any>(`/api/users/${id}`, data);
       return res;
     },
     onSuccess: () => {

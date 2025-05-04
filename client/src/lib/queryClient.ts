@@ -1,5 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { apiRequest as offlineApiRequest, getApi, postApi, putApi, deleteApi } from "./apiWrapper";
+import { apiRequest as offlineApiRequest, getApi, postApi, putApi, deleteApi, patchApi } from "./apiWrapper";
 
 // Classe de erro customizada que inclui detalhes da resposta
 export class ApiError extends Error {
@@ -43,6 +43,9 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Re-export de funções do apiWrapper para uso conveniente
+export { getApi, postApi, putApi, deleteApi, patchApi };
+
 export async function apiRequest(
   url: string,
   method: string = 'GET',
@@ -84,6 +87,8 @@ export async function apiRequest(
         return await putApi(finalUrl, data, offlineOptions);
       case 'DELETE':
         return await deleteApi(finalUrl, offlineOptions);
+      case 'PATCH':
+        return await patchApi(finalUrl, data, offlineOptions);
       default:
         // Para métodos não suportados, usar a implementação padrão
         const res = await fetch(finalUrl, {
