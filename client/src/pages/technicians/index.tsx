@@ -138,12 +138,14 @@ export default function TechniciansList() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                          >
-                            Editar
-                          </Button>
+                          <Link href={`/technicians/edit/${tech.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                            >
+                              Editar
+                            </Button>
+                          </Link>
                         </TableCell>
                       </TableRow>
                     ))
