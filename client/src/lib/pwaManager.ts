@@ -79,7 +79,7 @@ export const registerServiceWorker = async () => {
       // Esta é uma solução adicional para garantir que as imagens sejam cacheadas
       // além do cache inicial definido no Service Worker
       try {
-        const cache = await caches.open('eurodent-cache-v3');
+        const cache = await caches.open('eurodent-cache-v4');
         const imagesToCache = [
           '/eurodent-logo.png',
           '/images/logo.png'

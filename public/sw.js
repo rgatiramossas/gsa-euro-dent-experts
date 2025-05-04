@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eurodent-cache-v3';
+const CACHE_NAME = 'eurodent-cache-v4';
 const SYNC_TIMEOUT = 30000; // 30 segundos para timeout de sincronização
 
 // Recursos para cache inicial
@@ -428,7 +428,8 @@ async function storePendingRequest(request) {
 async function openDatabase() {
   return new Promise((resolve, reject) => {
     try {
-      const request = indexedDB.open('EuroDentOfflineDB', 10);
+      // Atualizamos a versão para 20 para resolver o erro "version (10) is less than the existing version (20)"
+      const request = indexedDB.open('EuroDentOfflineDB', 20);
       
       request.onerror = (event) => {
         console.error('[SW] Erro ao abrir banco de dados:', event.target.error);
@@ -483,12 +484,17 @@ async function openDatabase() {
       };
       
       request.onupgradeneeded = (event) => {
-        console.log('[SW] Atualizando estrutura do banco de dados');
+        console.log('[SW] Atualizando estrutura do banco de dados de versão', event.oldVersion, 'para', event.newVersion);
         const db = event.target.result;
+        
+        // Se não existir o objectStore para requisições pendentes, cria
         if (!db.objectStoreNames.contains('pendingRequests')) {
           console.log('[SW] Criando object store pendingRequests');
           db.createObjectStore('pendingRequests', { keyPath: 'id' });
         }
+        
+        // Se tiver outras atualizações estruturais futuras, pode fazer condicionais baseadas na versão
+        console.log('[SW] Estrutura do banco atualizada com sucesso');
       };
       
       request.onblocked = (event) => {
