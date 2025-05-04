@@ -60,6 +60,7 @@ export interface Client {
   phone?: string;
   address?: string;
   created_at?: string | Date;
+  deleted?: number; // Campo para indicar se o cliente está excluído (1 = excluído, 0 ou null = ativo)
 }
 
 // Tipos para veículos

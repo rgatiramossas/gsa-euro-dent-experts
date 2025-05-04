@@ -89,7 +89,8 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
         
         // Filtrar clientes com base no status
         return data.filter((client: Client) => {
-          const isDeleted = client.name?.includes('[EXCLUÍDO]');
+          // Verificar se o cliente está excluído pelo nome ou pelo campo deleted
+          const isDeleted = client.name?.includes('[EXCLUÍDO]') || client.deleted === 1;
           
           switch (statusFilter) {
             case 'active':
