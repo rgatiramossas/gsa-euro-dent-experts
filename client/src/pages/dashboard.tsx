@@ -236,8 +236,8 @@ export default function Dashboard() {
   
   // Usar os dados do backend diretamente com os novos nomes
   const stats = React.useMemo(() => {
-    if (!statsResponse) {
-      console.log("Não há statsResponse, retornando valores padrão");
+    if (!dashboardStats) {
+      console.log("Não há dashboardStats, retornando valores padrão");
       return {
         totalPendingServices: 0,
         totalInProgressServices: 0,
@@ -246,12 +246,12 @@ export default function Dashboard() {
       } as DashboardStats;
     }
     
-    console.log("Stats recebidos do backend:", statsResponse);
-    console.log("Tipo de statsResponse:", typeof statsResponse);
-    console.log("É um array?", Array.isArray(statsResponse));
+    console.log("Stats recebidos do backend:", dashboardStats);
+    console.log("Tipo de dashboardStats:", typeof dashboardStats);
+    console.log("É um array?", Array.isArray(dashboardStats));
     
-    if (typeof statsResponse !== 'object' || !statsResponse) {
-      console.error("statsResponse não é um objeto válido");
+    if (typeof dashboardStats !== 'object' || !dashboardStats) {
+      console.error("dashboardStats não é um objeto válido");
       return {
         totalPendingServices: 0,
         totalInProgressServices: 0,
@@ -262,15 +262,15 @@ export default function Dashboard() {
     
     // Converter valores numéricos explicitamente
     const result = {
-      totalPendingServices: Number(statsResponse.totalPendingServices) || 0,
-      totalInProgressServices: Number(statsResponse.totalInProgressServices) || 0,
-      totalCompletedServices: Number(statsResponse.totalCompletedServices) || 0,
-      totalRevenue: Number(statsResponse.totalRevenue) || 0
+      totalPendingServices: Number(dashboardStats.totalPendingServices) || 0,
+      totalInProgressServices: Number(dashboardStats.totalInProgressServices) || 0,
+      totalCompletedServices: Number(dashboardStats.totalCompletedServices) || 0,
+      totalRevenue: Number(dashboardStats.totalRevenue) || 0
     } as DashboardStats;
     
     console.log("Stats processados:", result);
     return result;
-  }, [statsResponse]);
+  }, [dashboardStats]);
 
   // Fetch technician performance (only for admins)
   const { 
@@ -401,7 +401,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           title={t("dashboard.pendingServices", "Serviços Pendentes")}
-          value={isLoadingStats ? "..." : stats?.totalPendingServices.toString() || "0"}
+          value={isLoadingStats ? "..." : dashboardStats.totalPendingServices.toString()}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -414,7 +414,7 @@ export default function Dashboard() {
         
         <StatCard
           title={t("dashboard.servicesByStatus", "Serviços em Andamento")}
-          value={isLoadingStats ? "..." : stats?.totalInProgressServices.toString() || "0"}
+          value={isLoadingStats ? "..." : dashboardStats.totalInProgressServices.toString()}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -427,7 +427,7 @@ export default function Dashboard() {
         
         <StatCard
           title={t("dashboard.completedServices", "Serviços Concluídos")}
-          value={isLoadingStats ? "..." : stats?.totalCompletedServices.toString() || "0"}
+          value={isLoadingStats ? "..." : dashboardStats.totalCompletedServices.toString()}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -442,7 +442,7 @@ export default function Dashboard() {
         {!isGestor && (
           <StatCard
             title={t("dashboard.revenue", "Faturamento")}
-            value={isLoadingStats ? "..." : formatCurrency(stats?.totalRevenue || 0)}
+            value={isLoadingStats ? "..." : formatCurrency(dashboardStats.totalRevenue || 0)}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
