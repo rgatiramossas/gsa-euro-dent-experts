@@ -437,7 +437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verificar se o gestor existe e tem a role correta
       const manager = await storage.getUser(Number(managerId));
-      if (!manager || manager.role !== "gestor") {
+      if (!manager || (manager.role !== "gestor" && manager.role !== "manager")) {
         return res.status(404).json({ message: "Gestor não encontrado" });
       }
       
@@ -673,7 +673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Se for um gestor, buscar também os clientes atribuídos
       let client_ids = undefined;
-      if (user.role === "gestor") {
+      if (user.role === "gestor" || user.role === "manager") {
         const clientsOfManager = await storage.getManagerClients(userId);
         client_ids = clientsOfManager.map(client => client.id);
       }
@@ -738,7 +738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedUser = await storage.updateUser(userId, userData);
       
       // Se for um gestor e temos client_ids, atualizar as atribuições de clientes
-      if (existingUser.role === "gestor" && Array.isArray(clientIds)) {
+      if ((existingUser.role === "gestor" || existingUser.role === "manager") && Array.isArray(clientIds)) {
         // Obter clientes atualmente atribuídos
         const currentClients = await storage.getManagerClients(userId);
         const currentClientIds = currentClients.map(client => client.id);
@@ -854,7 +854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Se for um gestor e houver client_ids, associar aos clientes
-      if (user.role === "gestor" && client_ids && Array.isArray(client_ids) && client_ids.length > 0) {
+      if ((user.role === "gestor" || user.role === "manager") && client_ids && Array.isArray(client_ids) && client_ids.length > 0) {
         console.log(`Associando gestor ${user.id} aos clientes:`, client_ids);
         
         // Associar cada cliente ao gestor
