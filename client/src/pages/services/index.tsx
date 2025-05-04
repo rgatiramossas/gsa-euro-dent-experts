@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
-import { checkNetworkStatus, triggerSyncIfNeeded } from "@/lib/pwaManager";
+import { checkNetworkStatus, triggerSyncIfNeeded } from "@/lib/offlineDb";
 import { offlineStatusStore } from "@/lib/stores";
 
 export default function ServicesList() {

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { getApi, postApi } from "@/lib/apiWrapper";
-import { checkNetworkStatus } from "@/lib/pwaManager";
+import { checkNetworkStatus } from "@/lib/offlineDb";
 import offlineDb from "@/lib/offlineDb";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -696,50 +696,44 @@ export default function NewServicePage() {
     };
   }, [offlineAttemptFailed, createServiceMutation]);
 
-  // Adicionar um listener para mensagens do service worker
+  // Gerenciamento de operações offline (sem dependência de service worker)
   useEffect(() => {
-    function handleServiceWorkerMessage(event: MessageEvent) {
-      if (!event.data || typeof event.data !== 'object') return;
+    // Lógica para lidar com salvamentos offline sem serviceWorker
+    console.log("Configurando gerenciamento de operações offline");
+    
+    function handleOfflineOperation() {
+      // Verificar se estamos em processo de salvamento
+      const isMutationPending = createServiceMutation.isPending || document.querySelector('button[type="submit"]:disabled');
       
-      console.log("[SW Message]", event.data.type, event.data);
-      
-      // Quando receber notificação de operação offline iniciada ou enfileirada
-      if (event.data.type === 'offline-operation-started' || event.data.type === 'operation-queued') {
-        console.log("Operação offline processada, ID:", event.data.tempId);
+      if (isMutationPending && !navigator.onLine) {
+        console.log("Formulário em estado de salvamento offline");
         
-        // Verificar se estamos em processo de salvamento
-        const isMutationPending = createServiceMutation.isPending || document.querySelector('button[type="submit"]:disabled');
+        // Marcar como salvo offline 
+        setServiceSavedOffline(true);
         
-        if (isMutationPending) {
-          console.log("Formulário em estado de salvamento, marcando como salvo offline");
-          
-          // Marcar como salvo offline 
-          setServiceSavedOffline(true);
-          
-          // Mostrar notificação para o usuário
-          toast({
-            title: t("offline.savedOffline"),
-            description: t("offline.serviceOfflineDescription"),
-          });
-          
-          // Forçar redefinição do estado de mutação para permitir o usuário continuar
-          createServiceMutation.reset();
-          
-          // Redirecionar para a lista após um pequeno tempo
-          setTimeout(() => {
-            setLocation('/services');
-          }, 500);
-        }
+        // Mostrar notificação para o usuário
+        toast({
+          title: t("offline.savedOffline"),
+          description: t("offline.serviceOfflineDescription"),
+        });
+        
+        // Forçar redefinição do estado de mutação para permitir o usuário continuar
+        createServiceMutation.reset();
+        
+        // Redirecionar para a lista após um pequeno tempo
+        setTimeout(() => {
+          setLocation('/services');
+        }, 500);
       }
     }
     
-    // Configurar timeout de segurança para o caso do service worker não responder
+    // Configurar timeout de segurança para operações
     let timeoutId: number | null = null;
     
     if (createServiceMutation.isPending) {
       console.log("Configurando timeout de segurança para a mutação");
       timeoutId = window.setTimeout(() => {
-        console.log("Timeout atingido! O service worker não respondeu em tempo hábil");
+        console.log("Timeout atingido! A operação não foi concluída em tempo hábil");
         if (createServiceMutation.isPending) {
           console.log("A mutação ainda está pendente, resetando-a para evitar bloqueio da UI");
           createServiceMutation.reset();
@@ -760,23 +754,14 @@ export default function NewServicePage() {
       }, 10000); // 10 segundos de timeout
     }
     
-    // Adicionar listener quando o componente for montado
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      console.log("Registrando listener para mensagens do service worker");
-      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
-    } else {
-      console.warn("Service worker não encontrado ou não ativo");
-    }
+    // Código relacionado a service worker removido (PWA desativado)
+    console.log("Componente de novo serviço montado");
     
     // Remover listener quando o componente for desmontado
     return () => {
       // Limpar o timeout se existir
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);
-      }
-      
-      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
       }
     };
   }, [toast, setLocation, createServiceMutation, t]);

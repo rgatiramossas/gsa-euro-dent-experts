@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthUser } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { postApi, getApi } from "@/lib/apiWrapper";
-import { checkNetworkStatus } from "@/lib/pwaManager";
-import { setSessionRefreshFunction } from "@/lib/apiWrapper";
+import { postApi, getApi, setSessionRefreshFunction } from "@/lib/apiWrapper";
+import { checkNetworkStatus } from "@/lib/offlineDb";
 
 interface AuthContextType {
   user: AuthUser | null;

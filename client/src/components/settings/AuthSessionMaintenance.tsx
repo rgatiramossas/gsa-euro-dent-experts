@@ -22,12 +22,9 @@ export function AuthSessionMaintenance() {
         return;
       }
 
-      // Notificar o Service Worker para que não intercepte requisições de autenticação
-      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'ENABLE_AUTH_SESSION_MAINTENANCE'
-        });
-      }
+      // Service Worker removido (PWA desativado)
+      // Esta funcionalidade anteriormente notificava o Service Worker
+      console.log("Limpando dados de autenticação...");
 
       // Limpar cookies (apenas os relacionados à sessão)
       document.cookie = 'eurodent.sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';

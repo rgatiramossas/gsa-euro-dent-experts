@@ -40,13 +40,8 @@ export default function Login() {
     }
     
     try {
-      // Ativar modo de manutenção de sessão para evitar interferências do Service Worker
-      import('@/lib/pwaManager').then(pwaManager => {
-        pwaManager.enableAuthSessionMaintenance();
-        console.log("Modo de manutenção de sessão ativado para login");
-      }).catch(err => {
-        console.warn("Não foi possível ativar modo de manutenção de sessão:", err);
-      });
+      // Removida ativação de modo de manutenção de sessão - PWA desativado
+      console.log("Iniciando processo de login");
       
       setIsSubmitting(true);
       await login(username, password, rememberMe);
@@ -60,14 +55,9 @@ export default function Login() {
         description: t("auth.welcomeBack", "Bem-vindo de volta!"),
       });
       
-      // Desativar modo de manutenção de sessão após login bem-sucedido
+      // Modo de manutenção de sessão removido (PWA desativado)
       setTimeout(() => {
-        import('@/lib/pwaManager').then(pwaManager => {
-          pwaManager.disableAuthSessionMaintenance();
-          console.log("Modo de manutenção de sessão desativado após login");
-        }).catch(err => {
-          console.warn("Não foi possível desativar modo de manutenção de sessão:", err);
-        });
+        console.log("Login processado com sucesso");
       }, 1000); // Pequeno delay para garantir que todas as requisições relacionadas ao login sejam processadas
       
       setLocation("/dashboard");
@@ -79,13 +69,8 @@ export default function Login() {
         variant: "destructive",
       });
       
-      // Desativar modo de manutenção de sessão em caso de erro
-      import('@/lib/pwaManager').then(pwaManager => {
-        pwaManager.disableAuthSessionMaintenance();
-        console.log("Modo de manutenção de sessão desativado após erro de login");
-      }).catch(err => {
-        console.warn("Não foi possível desativar modo de manutenção de sessão:", err);
-      });
+      // Modo de manutenção de sessão removido (PWA desativado)
+      console.log("Erro de login detectado e tratado");
     } finally {
       setIsSubmitting(false);
     }

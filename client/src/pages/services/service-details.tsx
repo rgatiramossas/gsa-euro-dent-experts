@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { ptBR, enUS, de } from "date-fns/locale";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { putApi, deleteApi } from "@/lib/apiWrapper";
-import { checkNetworkStatus } from "@/lib/pwaManager";
+import { checkNetworkStatus } from "@/lib/offlineDb";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";

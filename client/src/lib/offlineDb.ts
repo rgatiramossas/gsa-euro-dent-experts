@@ -1,7 +1,22 @@
 import Dexie from 'dexie';
 import { v4 as uuidv4 } from 'uuid';
-import { checkNetworkStatus, triggerSyncIfNeeded } from './pwaManager';
 import { queryClient } from "./queryClient";
+
+// Função para verificar o status da rede
+export const checkNetworkStatus = (): boolean => {
+  return navigator.onLine;
+};
+
+// Função para iniciar sincronização quando necessário
+export const triggerSyncIfNeeded = (): void => {
+  if (navigator.onLine) {
+    // Chama a função de sincronização real
+    console.log('Solicitando sincronização de dados pendentes...');
+    syncPendingRequests().catch(err => 
+      console.error('Erro ao sincronizar dados:', err)
+    );
+  }
+};
 
 // Eventos de sincronização para componentes
 export const SYNC_EVENTS = {
@@ -406,7 +421,7 @@ class OfflineDatabase extends Dexie {
   
   // Sincronizar dados com o servidor quando estiver online
   async syncWithServer() {
-    if (!checkNetworkStatus()) {
+    if (!navigator.onLine) {
       console.log('Offline - sincronização adiada');
       return false;
     }
@@ -567,7 +582,7 @@ class OfflineDatabase extends Dexie {
     
     try {
       // Se estiver online, tenta primeiro salvar no servidor
-      if (checkNetworkStatus()) {
+      if (navigator.onLine) {
         try {
           const response = await fetch(apiUrl, {
             method: 'POST',
@@ -632,7 +647,7 @@ class OfflineDatabase extends Dexie {
       );
       
       // Tenta sincronizar se online (background)
-      triggerSyncIfNeeded();
+      this.processPendingRequests();
       
       return tempId;
     } catch (error) {
@@ -755,7 +770,7 @@ class OfflineDatabase extends Dexie {
       );
       
       // Tenta sincronizar se online (background)
-      triggerSyncIfNeeded();
+      this.processPendingRequests();
       
       return id;
     } catch (error) {
@@ -827,7 +842,7 @@ class OfflineDatabase extends Dexie {
       await table.delete(id);
       
       // Tenta sincronizar se online (background)
-      triggerSyncIfNeeded();
+      this.processPendingRequests();
     } catch (error) {
       console.error(`Erro ao remover item da tabela ${tableName}:`, error);
       throw error;
@@ -867,7 +882,7 @@ class OfflineDatabase extends Dexie {
     
     try {
       // Se estiver online, tenta primeiro buscar do servidor
-      if (checkNetworkStatus()) {
+      if (navigator.onLine) {
         try {
           const response = await fetch(filteredUrl, {
             method: 'GET',
@@ -1054,6 +1069,21 @@ export async function storeOfflineRequest(request: PendingRequest): Promise<any>
 
 // Criar e exportar a instância do banco de dados
 const offlineDb = new OfflineDatabase();
+
+// Implementa a verdadeira funcionalidade de sincronização
+export const syncPendingRequests = () => {
+  if (navigator.onLine) {
+    console.log('Iniciando sincronização de dados pendentes...');
+    return offlineDb.processPendingRequests().then(stats => {
+      console.log(`Sincronização concluída: ${stats.success} com sucesso, ${stats.failed} falhas`);
+      return stats;
+    }).catch(error => {
+      console.error('Erro durante sincronização:', error);
+      throw error;
+    });
+  }
+  return Promise.resolve({ success: 0, failed: 0 });
+};
 
 // Inicializar status de sincronização
 offlineDb.initSyncStatus().catch(error => {

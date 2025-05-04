@@ -17,7 +17,7 @@ import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { RequireAdmin } from "@/components/auth/RequireAdmin";
 import { RequireTechnician } from "@/components/auth/RequireTechnician";
 import { RequireManager } from "@/components/auth/RequireManager";
-// PWA Componentes
+// Indicadores de status (originalmente componentes PWA)
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { SplashScreen } from "@/components/ui/splash-screen";
 // WebSocket service para atualizações em tempo real

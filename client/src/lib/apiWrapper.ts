@@ -1,5 +1,4 @@
-import offlineDb, { syncEvents, SYNC_EVENTS } from './offlineDb';
-import { checkNetworkStatus } from './pwaManager';
+import offlineDb, { syncEvents, SYNC_EVENTS, checkNetworkStatus } from './offlineDb';
 
 // Tipos de método HTTP
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';

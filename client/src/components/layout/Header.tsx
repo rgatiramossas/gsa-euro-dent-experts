@@ -15,7 +15,7 @@ import { getInitials } from "@/lib/utils";
 import { DollarSign, Calendar, Settings, LogIn, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { InstallPWAButton } from "@/components/ui/install-pwa-button";
+// PWA removido
 import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 
 // Componente de cabeçalho principal da aplicação
@@ -103,8 +103,7 @@ export function Header() {
               </button>
             )}
             
-            {/* Botão de instalação do PWA - aparece apenas quando disponível */}
-            {user && <InstallPWAButton className="bg-white text-primary hover:bg-gray-100 text-xs" />}
+            {/* Botão de instalação do PWA removido */}
           </div>
           
           {/* Recurso de notificações a ser implementado no futuro */}

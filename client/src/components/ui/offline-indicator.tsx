@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { WifiOff, RefreshCw } from 'lucide-react';
-import { checkNetworkStatus } from '@/lib/pwaManager';
+import { checkNetworkStatus } from '@/lib/offlineDb';
 
 interface OfflineIndicatorProps {
   className?: string;
