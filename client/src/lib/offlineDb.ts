@@ -4,6 +4,7 @@ import { queryClient } from "./queryClient";
 
 // Função para verificar o status da rede
 export const checkNetworkStatus = (): boolean => {
+  console.log(`[checkNetworkStatus] Status da rede: ${navigator.onLine ? 'Online' : 'Offline'}`);
   return navigator.onLine;
 };
 

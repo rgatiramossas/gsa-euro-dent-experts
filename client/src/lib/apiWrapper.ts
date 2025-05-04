@@ -86,12 +86,20 @@ export async function apiRequest<T>({
   enableOffline = true,
   offlineTableName
 }: ApiRequestConfig): Promise<T> {
-  // Determinar se estamos online
-  const isOnline = checkNetworkStatus();
+  // Determinar se estamos online - sempre verificar diretamente o status atual
+  const isOnline = navigator.onLine;
+  console.log(`[apiRequest] Status da rede para ${method} ${url}: ${isOnline ? 'Online' : 'Offline'}`);
   
   // Algumas operações não devem ser processadas offline
   const isAuthOperation = url.includes('/api/auth/');
   const offlineDisabled = !enableOffline || isAuthOperation;
+  
+  // Se o suporte offline foi explicitamente desativado e não é GET,
+  // lançar um erro se estivermos offline para evitar perda de dados
+  if (!enableOffline && !isOnline && method !== 'GET') {
+    console.error(`[apiRequest] Operação ${method} ${url} rejeitada: offline e sem suporte offline habilitado`);
+    throw new Error('Não é possível realizar esta operação sem conexão com a internet.');
+  }
   
   // Para operações de autenticação, sempre use a rede direta (bypass do mecanismo offline)
   if (isAuthOperation && isOnline) {
@@ -318,37 +326,48 @@ export async function apiRequest<T>({
   } catch (error) {
     // Se falhou online, mas temos suporte offline e não é uma operação de autenticação
     if (enableOffline && tableName && !isAuthOperation) {
-      // Tenta buscar do cache local
+      // Adicionar log para diagnóstico
+      console.log(`[apiRequest] Falha ao processar requisição online. Tentando modo offline para ${method} ${url}`);
+      console.log(`[apiRequest] Status atual da rede: ${navigator.onLine ? 'Online' : 'Offline'}`);
+      
+      // Tenta buscar do cache local para GETs
       if (method === 'GET' && resourceId !== null) {
         try {
           const cachedItem = await offlineDb.getTableByName(tableName).get(resourceId);
           if (cachedItem) {
-            console.log(`Usando dados em cache para ${url}`);
+            console.log(`[apiRequest] Usando dados em cache para ${url}`);
             return cachedItem as unknown as T;
           }
         } catch (e) {
-          console.error("Erro ao buscar do cache local:", e);
+          console.error("[apiRequest] Erro ao buscar do cache local:", e);
         }
       }
       
       // Se não for GET, registra a operação para execução posterior
-      if (method !== 'GET') {
+      // IMPORTANTE: Só executamos isto se realmente estivermos offline
+      if (method !== 'GET' && !navigator.onLine) {
+        console.log(`[apiRequest] Salvar operação ${method} para execução posterior quando estiver offline`);
         try {
           if (method === 'POST') {
             const id = await offlineDb.addItem(tableName, data, url);
+            console.log(`[apiRequest] Operação POST armazenada offline com ID temporário ${id}`);
             return { id, ...data, _offline: true } as unknown as T;
           } 
           else if (method === 'PUT' && resourceId !== null) {
             await offlineDb.updateItem(tableName, resourceId, data, url);
+            console.log(`[apiRequest] Operação PUT armazenada offline para recurso ${resourceId}`);
             return { id: resourceId, ...data, _offline: true } as unknown as T;
           } 
           else if (method === 'DELETE' && resourceId !== null) {
             await offlineDb.deleteItem(tableName, resourceId, url);
+            console.log(`[apiRequest] Operação DELETE armazenada offline para recurso ${resourceId}`);
             return { success: true, _offline: true } as unknown as T;
           }
         } catch (e) {
-          console.error("Erro ao processar operação para modo offline:", e);
+          console.error("[apiRequest] Erro ao processar operação para modo offline:", e);
         }
+      } else if (method !== 'GET') {
+        console.log(`[apiRequest] Rejeitando armazenamento offline para operação ${method} porque estamos online`);
       }
     }
     
