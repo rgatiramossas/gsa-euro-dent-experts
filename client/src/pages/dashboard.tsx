@@ -28,7 +28,11 @@ export default function Dashboard() {
 
   // Função para buscar as estatísticas manualmente
   const fetchDashboardStats = React.useCallback(async () => {
+    console.log("======================================");
+    console.log("⚠️ INICIANDO FETCH DO DASHBOARD STATS");
     console.log("Buscando estatísticas do dashboard manualmente...");
+    console.log("Role do usuário:", user?.role);
+    console.log("ID do usuário:", user?.id);
     setIsLoadingStats(true);
     
     try {
@@ -36,13 +40,18 @@ export default function Dashboard() {
       const timestamp = new Date().getTime();
       console.log(`Fazendo requisição para /api/dashboard/stats?_t=${timestamp}`);
       
+      // Adicionar o cookie explicitamente
+      const cookie = document.cookie;
+      console.log("Cookie atual:", cookie);
+      
       const response = await fetch(`/api/dashboard/stats?_t=${timestamp}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
+          'Pragma': 'no-cache',
+          'Cookie': cookie
         }
       });
       

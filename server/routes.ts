@@ -610,9 +610,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
       
       console.log('=====================================================================');
+      console.log('🚨 DASHBOARD STATS REQUEST 🚨');
       console.log('Dashboard Stats Request - Role:', userRole, 'User ID:', userId);
       console.log('Timestamp:', new Date().toISOString());
       console.log('Query params:', req.query);
+      console.log('Headers:', req.headers);
+      console.log('Cookies:', req.headers.cookie);
+      console.log('URL completa:', req.protocol + '://' + req.get('host') + req.originalUrl);
+      console.log('Session:', req.session);
       console.log('=====================================================================');
       
       // Se for um gestor, retornar estatísticas baseadas nos clientes associados

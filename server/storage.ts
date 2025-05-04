@@ -290,6 +290,11 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   sessionStore: any; // Corrigir erro de tipagem do session.SessionStore
   
+  // Adicionar getConnection para uso na função getDashboardStatsForManager
+  async getConnection() {
+    return pool;
+  }
+  
   constructor() {
     // Inicialmente usar MemoryStore para sessões até que o pool MySQL esteja disponível
     this.sessionStore = new MemoryStore({
