@@ -620,13 +620,69 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      console.log("Imagem carregada com tamanho:", base64String.length);
-      setVehicleImage(base64String);
+    // Comprimir a imagem antes de convertê-la para base64
+    const compressImage = (file: File): Promise<string> => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            // Calcular dimensões para reduzir a imagem
+            // Tentar manter a imagem em torno de 400-500px para diminuir o tamanho
+            const MAX_WIDTH = 400;
+            const MAX_HEIGHT = 400;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height = Math.round(height * (MAX_WIDTH / width));
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width = Math.round(width * (MAX_HEIGHT / height));
+                height = MAX_HEIGHT;
+              }
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, width, height);
+            
+            // Reduzir a qualidade para diminuir o tamanho
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+            resolve(compressedDataUrl);
+          };
+          img.src = event.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      });
     };
-    reader.readAsDataURL(file);
+    
+    compressImage(file).then((compressedImage) => {
+      console.log("Imagem comprimida com tamanho:", compressedImage.length);
+      // Verificar se a imagem ainda é muito grande
+      if (compressedImage.length > 65000) {
+        // Se ainda for muito grande, comprimir mais
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 300; // Reduzir mais
+          canvas.height = 300;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, 300, 300);
+          const finalImage = canvas.toDataURL('image/jpeg', 0.3);
+          console.log("Imagem recomprimida com tamanho:", finalImage.length);
+          setVehicleImage(finalImage);
+        };
+        img.src = compressedImage;
+      } else {
+        setVehicleImage(compressedImage);
+      }
+    });
   };
 
   // Renderizar o grid de danos do veículo
