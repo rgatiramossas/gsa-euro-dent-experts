@@ -29,10 +29,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { insertUserSchema } from "@shared/schema.mysql";
 import { User } from "@/types";
 
-// Extend the schema with more validations, but make password optional for editing
-const formSchema = insertUserSchema.extend({
+// Esquema de validação simplificado para edição de técnico
+const formSchema = z.object({
   id: z.number().optional(),
-  email: z.string().email("Email inválido"),
+  username: z.string().min(1, "Nome de usuário é obrigatório"),
+  name: z.string().min(1, "Nome é obrigatório"),
+  email: z.string().email("Email inválido").optional().nullable(),
+  phone: z.string().optional().nullable(),
+  role: z.string().default("technician"),
   password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres").optional().or(z.literal('')),
   confirmPassword: z.string().optional().or(z.literal('')),
   active: z.boolean().default(true),
@@ -101,15 +105,18 @@ export default function EditTechnician() {
   // Update technician mutation
   const updateTechnicianMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log(`Enviando PATCH para /api/users/${id} com dados:`, data);
+      console.log(`[DEBUG] Enviando PATCH para /api/users/${id} com dados:`, data);
+      console.log(`[DEBUG] URL completa: /api/users/${id}`);
+      console.log(`[DEBUG] Método: PATCH`);
+      console.log(`[DEBUG] Dados convertidos para JSON:`, JSON.stringify(data));
       
       try {
         // Usar a função apiRequest para garantir o envio correto dos cookies de autenticação
         const res = await apiRequest(`/api/users/${id}`, 'PATCH', data);
-        console.log("Resultado da atualização:", res);
+        console.log("[DEBUG] Resultado da atualização:", res);
         return res;
       } catch (error) {
-        console.error("Erro ao enviar requisição PATCH:", error);
+        console.error("[DEBUG] Erro ao enviar requisição PATCH:", error);
         throw error;
       }
     },
@@ -134,15 +141,20 @@ export default function EditTechnician() {
   });
   
   const onSubmit = async (data: FormData) => {
+    console.log("[DEBUG] INÍCIO - onSubmit chamado com dados:", data);
+    console.log("[DEBUG] Estado do formulário:", form.formState);
+    console.log("[DEBUG] Erros do formulário:", form.formState.errors);
+    
     try {
-      console.log("Formulário submetido com dados:", data);
-      
       // Remove confirmPassword from the data before sending to the API
       const { confirmPassword, ...technicianDataRaw } = data;
+      
+      console.log("[DEBUG] Dados após remover confirmPassword:", technicianDataRaw);
       
       // Se a senha estiver vazia, não enviar esse campo para o servidor
       if (!technicianDataRaw.password) {
         delete technicianDataRaw.password;
+        console.log("[DEBUG] Senha vazia removida dos dados");
       }
       
       // Converter o campo active de boolean para número (0/1) para compatibilidade com o MySQL
@@ -151,17 +163,21 @@ export default function EditTechnician() {
         active: technicianDataRaw.active ? 1 : 0 // Converte boolean para 0/1
       };
       
-      console.log("Enviando dados para atualização:", technicianData);
+      console.log("[DEBUG] Dados finais para envio:", technicianData);
+      console.log(`[DEBUG] Chamando mutação para atualizar técnico ID ${id}`);
       
       // Chamar a mutação para atualizar os dados
       updateTechnicianMutation.mutate(technicianData);
     } catch (error) {
-      console.error("Erro ao processar formulário:", error);
+      console.error("[DEBUG] ERRO ao processar formulário:", error);
+      console.error("[DEBUG] Stack trace:", (error as Error).stack);
       toast({
         title: "Erro ao processar formulário",
         description: "Ocorreu um erro ao processar os dados do formulário. Por favor, tente novamente.",
         variant: "destructive",
       });
+    } finally {
+      console.log("[DEBUG] FIM - onSubmit finalizado");
     }
   };
   
@@ -360,9 +376,19 @@ export default function EditTechnician() {
               Cancelar
             </Button>
             <Button 
-              type="submit" 
+              type="button" 
               className="flex-1"
               disabled={updateTechnicianMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                console.log("[DEBUG] Botão Atualizar Técnico clicado");
+                console.log("[DEBUG] Valores atuais do formulário:", form.getValues());
+                // Validar o formulário manualmente
+                form.handleSubmit((data) => {
+                  console.log("[DEBUG] Validação bem-sucedida, chamando onSubmit", data);
+                  onSubmit(data);
+                })();
+              }}
             >
               {updateTechnicianMutation.isPending ? "Salvando..." : "Atualizar Técnico"}
             </Button>
