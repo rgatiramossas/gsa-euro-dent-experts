@@ -368,26 +368,11 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>Nenhum veículo cadastrado para este cliente.</p>
-                    <Button 
-                      variant="outline" 
-                      className="mt-4"
-                      onClick={() => setLocation(`/clients/${client.id}/vehicle/new`)}
-                    >
-                      Cadastrar Veículo
-                    </Button>
+                    <p className="text-sm mt-2">Os veículos agora são registrados diretamente no formulário de serviço.</p>
                   </div>
                 )}
 
-                {vehicles.length > 0 && (
-                  <div className="flex justify-end mt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => setLocation(`/clients/${client.id}/vehicle/new`)}
-                    >
-                      Cadastrar Novo Veículo
-                    </Button>
-                  </div>
-                )}
+                {/* Os veículos agora são registrados diretamente nas ordens de serviço */}
               </TabsContent>
 
               {/* Tab de Serviços */}
