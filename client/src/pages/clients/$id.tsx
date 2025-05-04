@@ -255,6 +255,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
               <ul className="list-disc pl-5 my-2">
                 {vehicles.length > 0 && <li>{vehicles.length} veículo(s) registrado(s)</li>}
                 {services.length > 0 && <li>{services.length} serviço(s) registrado(s)</li>}
+                {budgets.length > 0 && <li>{budgets.length} orçamento(s) registrado(s)</li>}
               </ul>
               <br />
               Os serviços e orçamentos associados a este cliente serão mantidos no sistema para fins de histórico, mas o cliente será marcado como excluído.
