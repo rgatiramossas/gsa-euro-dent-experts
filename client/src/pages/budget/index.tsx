@@ -240,7 +240,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <CardTitle className="text-2xl">{t("budget.editBudget", { id })}</CardTitle>
+              <CardTitle className="text-2xl">{t("budget.editBudget")}</CardTitle>
             </div>
             <CardDescription>
               {t("common.inDevelopment")}
