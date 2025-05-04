@@ -24,6 +24,55 @@ export default function Dashboard() {
   console.log("- ID:", user?.id);
   console.log("- isGestor:", isGestor);
   
+  // Estado para armazenar erros e mensagens de depuração
+  const [debugInfo, setDebugInfo] = React.useState<any>({
+    error: null,
+    result: null,
+    attempts: 0,
+    lastAttempt: null
+  });
+  
+  // Função para testar diretamente a API de dashboard stats
+  const testDashboardAPI = async () => {
+    setDebugInfo(prev => ({
+      ...prev,
+      attempts: prev.attempts + 1,
+      lastAttempt: new Date().toISOString()
+    }));
+    
+    try {
+      const response = await fetch('/api/dashboard/stats?debug=true&ts=' + Date.now(), {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      const status = response.status;
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        data = { parseError: true, text };
+      }
+      
+      setDebugInfo(prev => ({
+        ...prev,
+        result: { status, data },
+        error: null
+      }));
+    } catch (error) {
+      setDebugInfo(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : String(error),
+        result: null
+      }));
+    }
+  };
+  
   // Adicionar useEffect para forçar fetch manual das estatísticas do dashboard
   const [dashboardStats, setDashboardStats] = React.useState<DashboardStats>({
     totalPendingServices: 0,
@@ -278,6 +327,49 @@ export default function Dashboard() {
         title={t("dashboard.title", "Painel de Controle")} 
         description={t("dashboard.description", "Visão geral do sistema")} 
       />
+      
+      {/* Debug Panel for Gestor */}
+      {isGestor && (
+        <div className="mb-6 p-4 border border-orange-200 bg-orange-50 rounded-md">
+          <h3 className="text-lg font-medium mb-2">Debug Panel (Somente Gestor)</h3>
+          <div className="flex flex-col gap-2">
+            <div className="text-sm">
+              <strong>Status:</strong> {debugInfo.attempts > 0 ? 
+                (debugInfo.result ? 'Sucesso' : 'Erro') : 
+                'Não testado'}
+            </div>
+            <div className="text-sm">
+              <strong>Última tentativa:</strong> {debugInfo.lastAttempt || 'Nenhuma'}
+            </div>
+            <div className="text-sm">
+              <strong>Tentativas:</strong> {debugInfo.attempts}
+            </div>
+            
+            <button 
+              onClick={testDashboardAPI}
+              className="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm"
+            >
+              Testar API Dashboard Stats
+            </button>
+            
+            {debugInfo.error && (
+              <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded-md text-sm text-red-800">
+                <strong>Erro:</strong> {debugInfo.error}
+              </div>
+            )}
+            
+            {debugInfo.result && (
+              <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded-md text-sm">
+                <strong>Status:</strong> {debugInfo.result.status}<br />
+                <strong>Dados:</strong>
+                <pre className="mt-1 p-2 bg-white rounded-md overflow-auto max-h-40 text-xs">
+                  {JSON.stringify(debugInfo.result.data, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       
       {/* Statistics Cards - Com ações rápidas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
