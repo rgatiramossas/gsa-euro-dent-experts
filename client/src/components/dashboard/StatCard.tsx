@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
@@ -14,10 +14,28 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, value, icon, colorClass, actionUrl, actionLabel }: StatCardProps) {
-  // Adicionar log para depuração
-  React.useEffect(() => {
+  // State para armazenar o valor processado
+  const [displayValue, setDisplayValue] = useState<string | number>(value);
+  
+  // Processar o valor recebido
+  useEffect(() => {
     console.log(`StatCard "${title}" recebeu valor:`, value);
     console.log(`Tipo do valor:`, typeof value);
+    
+    // Se o valor for "..." (carregando), manter como está
+    if (value === "...") {
+      setDisplayValue(value);
+      return;
+    }
+    
+    // Converter para número se for uma string numérica
+    let processedValue = value;
+    if (typeof value === "string" && /^\d+$/.test(value)) {
+      processedValue = parseInt(value, 10);
+    }
+    
+    console.log(`Valor processado para "${title}":`, processedValue);
+    setDisplayValue(processedValue);
   }, [title, value]);
   
   return (
@@ -28,7 +46,7 @@ export function StatCard({ title, value, icon, colorClass, actionUrl, actionLabe
         </div>
         <div className="ml-4">
           <h2 className="text-sm font-medium text-gray-500">{title}</h2>
-          <p className="text-xl font-bold">{value}</p>
+          <p className="text-xl font-bold">{displayValue}</p>
         </div>
       </div>
       

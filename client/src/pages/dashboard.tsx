@@ -220,18 +220,18 @@ export default function Dashboard() {
     return () => clearInterval(intervalId);
   }, [fetchDashboardStats, user, isGestor]);
   
-  // Mantemos o useQuery apenas para manter o código compatível com o resto
+  // Mantemos o useQuery mas vamos garantir que ele use os dados atualizados
   const { 
     data: statsResponse, 
     error: statsError
   } = useQuery<any>({
     queryKey: ['/api/dashboard/stats'],
     queryFn: async () => {
-      // Não precisamos fazer nada aqui, pois estamos fazendo a chamada manualmente
+      console.log("[useQuery stats] Usando os dados do dashboardStats:", dashboardStats);
       return dashboardStats;
     },
     initialData: dashboardStats,
-    enabled: false, // Desabilita a consulta automática
+    enabled: true, // Habilitamos a consulta automática
   });
   
   // Usar os dados do backend diretamente com os novos nomes

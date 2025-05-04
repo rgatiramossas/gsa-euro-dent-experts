@@ -27,6 +27,45 @@ export default function ManagerDashboard() {
   // Obter estatísticas do dashboard
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],
+    queryFn: async () => {
+      try {
+        // Construir URL com parâmetros específicos para gestor
+        const url = `/api/dashboard/stats?gestor_id=${user?.id}&role=gestor&_t=${new Date().getTime()}`;
+        console.log("Fetching manager stats with URL:", url);
+        
+        const response = await fetch(url, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error fetching stats: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log("Manager dashboard stats received:", data);
+        
+        // Garantir que todos os valores sejam numéricos
+        return {
+          totalPendingServices: Number(data.totalPendingServices) || 0,
+          totalInProgressServices: Number(data.totalInProgressServices) || 0,
+          totalCompletedServices: Number(data.totalCompletedServices) || 0,
+          totalRevenue: Number(data.totalRevenue) || 0
+        };
+      } catch (error) {
+        console.error("Error fetching manager stats:", error);
+        return {
+          totalPendingServices: 0,
+          totalInProgressServices: 0,
+          totalCompletedServices: 0,
+          totalRevenue: 0
+        };
+      }
+    },
   });
   
   // Obter clientes do gestor
