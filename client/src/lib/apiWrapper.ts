@@ -131,7 +131,8 @@ export async function apiRequest<T>({
   const tableName = offlineTableName || mapApiUrlToTable(url);
   const resourceId = extractResourceId(url);
   
-  // Se offline e o suporte offline está habilitado para esta operação
+  // Verificar se estamos realmente offline antes de usar o modo offline
+  // Isso vai tentar usar o modo online sempre que possível
   if (!isOnline && !offlineDisabled && tableName) {
     try {
       console.log(`Operação offline: ${method} ${url}`);
