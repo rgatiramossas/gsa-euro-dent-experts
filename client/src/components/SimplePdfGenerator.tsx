@@ -222,10 +222,10 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
         
         <!-- Conteúdo principal -->
         <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
-          <!-- Barra azul com título ORÇAMENTO e número -->
+          <!-- Barra azul com título ORÇAMENTO -->
           <div style="background-color: #2563EB; color: white; padding: 6px 10px; display: flex; justify-content: space-between; border-radius: 6px;">
             <div style="font-size: 15px; font-weight: bold;">${t('budget.budgetTitle').toUpperCase()}</div>
-            <div style="font-size: 15px; font-weight: bold;">#${budget.id}</div>
+            <div style="font-size: 15px; font-weight: bold;">${formatDate(budget.date)}</div>
           </div>
           
           <!-- Informações do cliente e veículo -->
@@ -311,8 +311,10 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
         heightLeft -= pdfHeight;
       }
 
-      // Fazer o download do PDF
-      const fileName = `${t('budget.budgetTitle')}_${budget.id}_${budget.client_name.replace(/[^\w\s]/gi, '')}.pdf`;
+      // Fazer o download do PDF com nome seguro (sem ID e com apenas parte do nome)
+      const clientNameSafe = budget.client_name.split(' ')[0]; // Apenas o primeiro nome para maior privacidade
+      const formattedDate = budget.date.split('T')[0].replace(/-/g, '');
+      const fileName = `${t('budget.budgetTitle')}_${formattedDate}_${clientNameSafe}.pdf`;
       pdf.save(fileName);
 
       // Limpar o elemento temporário
