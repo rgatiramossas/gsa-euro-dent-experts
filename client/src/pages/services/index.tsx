@@ -35,8 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
-import { checkNetworkStatus, triggerSyncIfNeeded } from "@/lib/offlineDb";
-import { offlineStatusStore } from "@/lib/stores";
+import { checkNetworkStatus } from "@/lib/offlineDb";
 
 export default function ServicesList() {
   const [_, setLocation] = useLocation();
@@ -62,27 +61,19 @@ export default function ServicesList() {
       setIsOnline(navigator.onLine);
     }
     
-    // Subscribe to offline status store
-    function handleOfflineStoreUpdate() {
-      setIsOnline(offlineStatusStore.getOnlineStatus());
-      setIsSyncing(offlineStatusStore.getSyncingStatus());
-      setPendingCount(offlineStatusStore.getPendingCount());
-    }
+    // Simplificando para usar apenas o status nativo do navegador
+    // em vez de depender do offlineStatusStore
     
     // Initial status
-    handleOfflineStoreUpdate();
+    updateOnlineStatus();
     
-    // Set up event listeners
+    // Set up event listeners for online/offline status
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
-    
-    // Set up custom event listener for store updates
-    const unsubscribe = offlineStatusStore.subscribe(handleOfflineStoreUpdate);
     
     return () => {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
-      unsubscribe();
     };
   }, []);
   
@@ -181,8 +172,8 @@ export default function ServicesList() {
       description: t("offline.syncingData", "Sincronizando dados com o servidor")
     });
     
-    // Trigger sync and refresh data
-    triggerSyncIfNeeded();
+    // Apenas fazer o refetch dos dados em vez de usar triggerSyncIfNeeded
+    // que dependia do serviceWorker
     
     // After a short delay, refresh the data
     setTimeout(() => {
