@@ -32,6 +32,10 @@ export default function TechniciansList() {
   
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['/api/users?role=technician'],
+    queryFn: () => fetch('/api/users?role=technician').then(res => {
+      if (!res.ok) throw new Error('Falha ao carregar técnicos');
+      return res.json();
+    }),
   });
 
   // Filter technicians based on search term
