@@ -390,6 +390,9 @@ function App() {
           {/* Tela de splash */}
           {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
           
+          {/* Detector de sessões expiradas */}
+          <SessionExpiredHandler />
+          
           {/* Rotas da aplicação */}
           <AppRoutes />
         </TooltipProvider>

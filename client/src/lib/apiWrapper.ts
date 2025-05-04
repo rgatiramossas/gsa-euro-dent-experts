@@ -85,6 +85,8 @@ export async function apiRequest<T>({
     
     // Verificar se é erro de autenticação
     if (response.status === 401 && !isAuthOperation) {
+      console.log("[apiWrapper] Erro de autenticação detectado (401). Tentando renovar sessão...");
+      
       // Tentar renovar a sessão e tentar novamente
       await tryRefreshSession();
       
@@ -99,6 +101,17 @@ export async function apiRequest<T>({
         body: method !== 'GET' && data ? JSON.stringify(data) : undefined,
         credentials: 'include'
       });
+      
+      if (retryResponse.status === 401) {
+        console.log("[apiWrapper] Sessão inválida mesmo após tentativa de renovação. Redirecionando para login...");
+        
+        // Se mesmo após o refresh ainda estamos tendo erro 401,
+        // significa que a sessão expirou completamente e precisa fazer login novamente
+        const currentPath = window.location.pathname;
+        window.location.href = `/login?returnTo=${encodeURIComponent(currentPath)}`;
+        
+        throw new Error('Sessão expirada. Redirecionando para página de login...');
+      }
       
       if (!retryResponse.ok) {
         throw new Error(`API error: ${retryResponse.status} ${retryResponse.statusText}`);

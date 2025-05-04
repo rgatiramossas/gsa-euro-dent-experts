@@ -81,25 +81,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSession = async (): Promise<void> => {
     if (isSessionRefreshing) return;
     
+    console.log("[AuthContext] Iniciando renovação de sessão...");
     setIsSessionRefreshing(true);
+    
     try {
-      // Tentar obter dados atualizados do usuário do servidor
-      const result = await refetch();
+      // Tentar obter dados atualizados do usuário do servidor com uma nova requisição direta
+      // ao invés de usar refetch, para garantir que estamos fazendo um novo request
+      console.log("[AuthContext] Enviando requisição para /api/auth/me");
       
-      if (result.error) {
-        throw result.error;
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      console.log("[AuthContext] Resposta recebida:", response.status);
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log("[AuthContext] Sessão inválida (401)");
+          throw new Error("Sessão expirada");
+        } else {
+          console.log("[AuthContext] Erro na resposta:", response.statusText);
+          throw new Error(`Erro ao renovar sessão: ${response.statusText}`);
+        }
       }
       
-      if (!result.data) {
-        throw new Error("Sessão expirada");
+      const userData = await response.json();
+      console.log("[AuthContext] Dados do usuário recebidos:", userData);
+      
+      if (!userData || !userData.id) {
+        console.log("[AuthContext] Dados do usuário inválidos");
+        throw new Error("Dados do usuário inválidos");
       }
+      
+      // Atualizar o cache do React Query
+      queryClient.setQueryData(['/api/auth/me'], userData);
+      // E também atualizar o estado local
+      setUser(userData);
+      console.log("[AuthContext] Sessão renovada com sucesso");
+      
     } catch (error) {
-      console.error("Erro ao renovar sessão:", error);
+      console.error("[AuthContext] Erro ao renovar sessão:", error);
       
       // Limpar a sessão em caso de erro
       setUser(null);
       localStorage.removeItem('user');
       queryClient.setQueryData(['/api/auth/me'], null);
+      
+      // Se estivermos em uma página que requer autenticação,
+      // vamos redirecionar para o login
+      if (window.location.pathname !== '/login') {
+        console.log("[AuthContext] Redirecionando para login após falha na renovação da sessão");
+        window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+      }
     } finally {
       setIsSessionRefreshing(false);
     }
