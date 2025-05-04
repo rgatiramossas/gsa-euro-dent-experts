@@ -100,11 +100,21 @@ export default function EditTechnician() {
   
   // Update technician mutation
   const updateTechnicianMutation = useMutation({
-    mutationFn: async (data: Omit<FormData, "confirmPassword">) => {
-      const res = await patchApi<any>(`/api/users/${id}`, data);
-      return res;
+    mutationFn: async (data: any) => {
+      console.log(`Enviando PATCH para /api/users/${id} com dados:`, data);
+      
+      try {
+        // Usar a função apiRequest para garantir o envio correto dos cookies de autenticação
+        const res = await apiRequest(`/api/users/${id}`, 'PATCH', data);
+        console.log("Resultado da atualização:", res);
+        return res;
+      } catch (error) {
+        console.error("Erro ao enviar requisição PATCH:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      console.log("Técnico atualizado com sucesso");
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       queryClient.invalidateQueries({ queryKey: [`/api/users/${id}`] });
       toast({
@@ -113,32 +123,46 @@ export default function EditTechnician() {
       });
       setLocation('/technicians');
     },
-    onError: (error) => {
-      console.error('Error updating technician:', error);
+    onError: (error: any) => {
+      console.error('Erro ao atualizar técnico:', error);
       toast({
         title: "Erro ao atualizar técnico",
-        description: "Ocorreu um erro ao atualizar os dados do técnico. Verifique os dados e tente novamente.",
+        description: error?.message || "Ocorreu um erro ao atualizar os dados do técnico. Verifique os dados e tente novamente.",
         variant: "destructive",
       });
     }
   });
   
-  const onSubmit = (data: FormData) => {
-    // Remove confirmPassword from the data before sending to the API
-    const { confirmPassword, ...technicianDataRaw } = data;
-    
-    // Se a senha estiver vazia, não enviar esse campo para o servidor
-    if (!technicianDataRaw.password) {
-      delete technicianDataRaw.password;
+  const onSubmit = async (data: FormData) => {
+    try {
+      console.log("Formulário submetido com dados:", data);
+      
+      // Remove confirmPassword from the data before sending to the API
+      const { confirmPassword, ...technicianDataRaw } = data;
+      
+      // Se a senha estiver vazia, não enviar esse campo para o servidor
+      if (!technicianDataRaw.password) {
+        delete technicianDataRaw.password;
+      }
+      
+      // Converter o campo active de boolean para número (0/1) para compatibilidade com o MySQL
+      const technicianData = {
+        ...technicianDataRaw,
+        active: technicianDataRaw.active ? 1 : 0 // Converte boolean para 0/1
+      };
+      
+      console.log("Enviando dados para atualização:", technicianData);
+      
+      // Chamar a mutação para atualizar os dados
+      updateTechnicianMutation.mutate(technicianData);
+    } catch (error) {
+      console.error("Erro ao processar formulário:", error);
+      toast({
+        title: "Erro ao processar formulário",
+        description: "Ocorreu um erro ao processar os dados do formulário. Por favor, tente novamente.",
+        variant: "destructive",
+      });
     }
-    
-    // Converter o campo active de boolean para número (0/1) para compatibilidade com o MySQL
-    const technicianData = {
-      ...technicianDataRaw,
-      active: technicianDataRaw.active ? 1 : 0 // Converte boolean para 0/1
-    };
-    
-    updateTechnicianMutation.mutate(technicianData);
   };
   
   if (!isAdmin) {

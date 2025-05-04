@@ -39,11 +39,13 @@ export default function TechniciansList() {
   });
 
   // Filter technicians based on search term
-  const filteredTechnicians = users?.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.phone && user.phone.includes(searchTerm))
-  );
+  const filteredTechnicians = users?.filter(user => {
+    const emailMatch = user.email ? user.email.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const nameMatch = user.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const phoneMatch = user.phone ? user.phone.includes(searchTerm) : false;
+    
+    return nameMatch || emailMatch || phoneMatch;
+  });
 
   if (!isAdmin) {
     return (
