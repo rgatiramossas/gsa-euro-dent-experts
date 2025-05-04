@@ -111,10 +111,28 @@ export default function EditTechnician() {
       console.log(`[DEBUG] Dados convertidos para JSON:`, JSON.stringify(data));
       
       try {
-        // Usar a função apiRequest para garantir o envio correto dos cookies de autenticação
-        const res = await apiRequest(`/api/users/${id}`, 'PATCH', data);
-        console.log("[DEBUG] Resultado da atualização:", res);
-        return res;
+        // Tentar usar fetch diretamente com todos os parâmetros necessários
+        const response = await fetch(`/api/users/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(data),
+          credentials: 'include'
+        });
+        
+        console.log("[DEBUG] Status da resposta:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("[DEBUG] Erro na resposta:", errorText);
+          throw new Error(`API error: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log("[DEBUG] Resultado da atualização:", result);
+        return result;
       } catch (error) {
         console.error("[DEBUG] Erro ao enviar requisição PATCH:", error);
         throw error;
@@ -383,11 +401,29 @@ export default function EditTechnician() {
                 e.preventDefault();
                 console.log("[DEBUG] Botão Atualizar Técnico clicado");
                 console.log("[DEBUG] Valores atuais do formulário:", form.getValues());
-                // Validar o formulário manualmente
-                form.handleSubmit((data) => {
-                  console.log("[DEBUG] Validação bem-sucedida, chamando onSubmit", data);
-                  onSubmit(data);
-                })();
+                
+                // Forçar submissão direta para testar
+                const formData = form.getValues();
+                console.log("[DEBUG] Chamando onSubmit diretamente com dados:", formData);
+                
+                // Remover confirmPassword
+                const { confirmPassword, ...userData } = formData;
+                
+                // Se a senha estiver vazia, não enviar
+                if (!userData.password) {
+                  delete userData.password;
+                }
+                
+                // Converter active para 0/1
+                const finalData = {
+                  ...userData,
+                  active: userData.active ? 1 : 0
+                };
+                
+                console.log("[DEBUG] Dados finais processados:", finalData);
+                
+                // Chamar mutação diretamente
+                updateTechnicianMutation.mutate(finalData);
               }}
             >
               {updateTechnicianMutation.isPending ? "Salvando..." : "Atualizar Técnico"}
