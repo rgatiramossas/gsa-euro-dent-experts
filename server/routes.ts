@@ -2674,5 +2674,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Configurar servidor WebSocket
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Evento disparado quando um cliente se conecta ao WebSocket
+  wss.on('connection', (ws) => {
+    console.log('Nova conexão WebSocket estabelecida');
+    
+    // Adicionar cliente ao conjunto de conexões ativas
+    clients.add(ws);
+    
+    // Enviar mensagem de confirmação para o cliente
+    ws.send(JSON.stringify({
+      type: 'CONNECTION_ESTABLISHED',
+      message: 'Conexão WebSocket estabelecida com sucesso',
+      timestamp: new Date().toISOString()
+    }));
+    
+    // Lidar com mensagens recebidas dos clientes
+    ws.on('message', (message) => {
+      try {
+        const parsedMessage = JSON.parse(message.toString());
+        console.log('Mensagem recebida do cliente:', parsedMessage);
+        
+        // Aqui você pode adicionar lógica para lidar com diferentes tipos de mensagens
+        // Por exemplo, um cliente pode solicitar uma atualização forçada
+        if (parsedMessage.type === 'REQUEST_REFRESH') {
+          ws.send(JSON.stringify({
+            type: 'REFRESH_COMMAND',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      } catch (error) {
+        console.error('Erro ao processar mensagem WebSocket:', error);
+      }
+    });
+    
+    // Lidar com o fechamento da conexão
+    ws.on('close', () => {
+      console.log('Conexão WebSocket fechada');
+      clients.delete(ws);
+    });
+    
+    // Lidar com erros na conexão
+    ws.on('error', (error) => {
+      console.error('Erro na conexão WebSocket:', error);
+      clients.delete(ws);
+    });
+  });
+  
   return httpServer;
 }
