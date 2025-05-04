@@ -36,6 +36,8 @@ const ManagerClientsList: React.FC = () => {
     return null;
   }
   
+  console.log("ManagerClientsList: Usuário autenticado", { userId: user?.id, role: user?.role });
+  
   return (
     <div className="flex flex-col min-h-screen">
       <Header />

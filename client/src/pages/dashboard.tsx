@@ -64,22 +64,40 @@ export default function Dashboard() {
   
   // Usar os dados do backend diretamente com os novos nomes
   const stats = React.useMemo(() => {
-    if (!statsResponse) return {
-      totalPendingServices: 0,
-      totalInProgressServices: 0,
-      totalCompletedServices: 0,
-      totalRevenue: 0
-    } as DashboardStats;
+    if (!statsResponse) {
+      console.log("Não há statsResponse, retornando valores padrão");
+      return {
+        totalPendingServices: 0,
+        totalInProgressServices: 0,
+        totalCompletedServices: 0,
+        totalRevenue: 0
+      } as DashboardStats;
+    }
     
     console.log("Stats recebidos do backend:", statsResponse);
+    console.log("Tipo de statsResponse:", typeof statsResponse);
+    console.log("É um array?", Array.isArray(statsResponse));
     
-    // Usar diretamente os dados que recebemos do backend
-    return {
-      totalPendingServices: statsResponse.totalPendingServices || 0,
-      totalInProgressServices: statsResponse.totalInProgressServices || 0,
-      totalCompletedServices: statsResponse.totalCompletedServices || 0,
-      totalRevenue: statsResponse.totalRevenue || 0
+    if (typeof statsResponse !== 'object' || !statsResponse) {
+      console.error("statsResponse não é um objeto válido");
+      return {
+        totalPendingServices: 0,
+        totalInProgressServices: 0,
+        totalCompletedServices: 0,
+        totalRevenue: 0
+      } as DashboardStats;
+    }
+    
+    // Converter valores numéricos explicitamente
+    const result = {
+      totalPendingServices: Number(statsResponse.totalPendingServices) || 0,
+      totalInProgressServices: Number(statsResponse.totalInProgressServices) || 0,
+      totalCompletedServices: Number(statsResponse.totalCompletedServices) || 0,
+      totalRevenue: Number(statsResponse.totalRevenue) || 0
     } as DashboardStats;
+    
+    console.log("Stats processados:", result);
+    return result;
   }, [statsResponse]);
 
   // Fetch technician performance (only for admins)

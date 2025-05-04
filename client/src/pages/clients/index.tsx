@@ -41,13 +41,16 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
   
-  // Extrai o ID do gerente da URL se estivermos no modo gestor
+  // Obter o ID do usuário atual para modo gestor
+  const { user } = require('@/contexts/AuthContext').useAuth();
+  
+  // Se estamos no modo gestor, usar o ID do usuário atual
   useEffect(() => {
-    if (managerMode) {
-      const id = location.split('/')[2];
-      setManagerId(id);
+    if (managerMode && user?.id) {
+      console.log("Definindo ID do gestor:", user.id);
+      setManagerId(String(user.id));
     }
-  }, [managerMode, location]);
+  }, [managerMode, user?.id]);
   
   // Query para buscar os clientes
   const { data: clients = [], isLoading, refetch } = useQuery<Client[]>({
