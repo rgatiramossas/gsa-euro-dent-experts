@@ -173,11 +173,59 @@ async function syncPendingRequests() {
   const timeoutId = setTimeout(() => controller.abort(), SYNC_TIMEOUT);
   
   try {
-    const db = await openDatabase();
-    if (!db) throw new Error('Database not available');
+    console.log('[SW] Iniciando sincronização de requisições pendentes');
     
-    const pendingRequests = await db.getAll('pendingRequests');
-    if (pendingRequests.length === 0) return;
+    // Verificar se IndexedDB está disponível e acessível
+    if (!('indexedDB' in self)) {
+      console.error('[SW] IndexedDB não está disponível neste ambiente');
+      notifyClients({ 
+        type: 'sync-status',
+        status: 'error',
+        error: 'IndexedDB não disponível'
+      });
+      return;
+    }
+    
+    // Tentar abrir o banco com tratamento de erro melhorado
+    let db;
+    try {
+      db = await openDatabase();
+      if (!db) throw new Error('Database not available');
+      console.log('[SW] Banco aberto com sucesso para sincronização');
+    } catch (dbError) {
+      console.error('[SW] Erro ao abrir database para sincronização:', dbError);
+      notifyClients({ 
+        type: 'sync-status',
+        status: 'error',
+        error: 'Falha ao abrir banco de dados: ' + dbError.message
+      });
+      return;
+    }
+    
+    // Buscar requisições pendentes
+    let pendingRequests;
+    try {
+      pendingRequests = await db.getAll('pendingRequests');
+      console.log(`[SW] Encontradas ${pendingRequests.length} requisições pendentes para sincronizar`);
+    } catch (getError) {
+      console.error('[SW] Erro ao buscar requisições pendentes:', getError);
+      notifyClients({ 
+        type: 'sync-status',
+        status: 'error',
+        error: 'Falha ao ler dados pendentes: ' + getError.message
+      });
+      return;
+    }
+    
+    if (pendingRequests.length === 0) {
+      console.log('[SW] Nenhuma requisição pendente para sincronizar');
+      notifyClients({ 
+        type: 'sync-status',
+        status: 'completed',
+        message: 'Nenhuma operação pendente'
+      });
+      return;
+    }
     
     // Agrupar requisições por tabela para notificação posterior
     const affectedTables = new Set();
@@ -335,55 +383,130 @@ function getTableNameFromUrl(pathname) {
 
 // Armazena requisição no IndexedDB
 async function storePendingRequest(request) {
-  const db = await openDatabase();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('pendingRequests', 'readwrite');
-    const store = transaction.objectStore('pendingRequests');
-    const operation = store.put(request);
-    
-    operation.onsuccess = () => resolve();
-    operation.onerror = () => reject(operation.error);
-  });
+  try {
+    console.log('[SW] Tentando armazenar requisição pendente:', request.id);
+    const db = await openDatabase();
+    if (!db) {
+      console.error('[SW] Banco de dados não disponível para armazenar requisição');
+      throw new Error('Database not available');
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = db.transaction('pendingRequests', 'readwrite');
+        
+        transaction.onerror = (event) => {
+          console.error('[SW] Erro na transação de armazenamento:', event.target.error);
+          reject(event.target.error);
+        };
+        
+        const store = transaction.objectStore('pendingRequests');
+        const operation = store.put(request);
+        
+        operation.onsuccess = () => {
+          console.log('[SW] Requisição armazenada com sucesso:', request.id);
+          resolve();
+        };
+        
+        operation.onerror = (event) => {
+          console.error('[SW] Erro ao armazenar requisição:', event.target.error);
+          reject(event.target.error);
+        };
+      } catch (error) {
+        console.error('[SW] Erro crítico ao tentar armazenar requisição:', error);
+        reject(error);
+      }
+    });
+  } catch (outerError) {
+    console.error('[SW] Falha geral ao tentar armazenar requisição:', outerError);
+    // Falhar silenciosamente para o usuário, mas registrar erro no console
+    return Promise.resolve(); // Não rejeitar para evitar erro visível ao usuário
+  }
 }
 
 // Conexão com IndexedDB
 async function openDatabase() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('EuroDentOfflineDB', 10);
-    
-    request.onerror = () => reject('Failed to open DB');
-    request.onsuccess = () => {
-      const db = request.result;
+    try {
+      const request = indexedDB.open('EuroDentOfflineDB', 10);
       
-      // Adiciona métodos úteis
-      db.getAll = (storeName) => new Promise((res, rej) => {
-        const tx = db.transaction(storeName, 'readonly');
-        tx.objectStore(storeName).getAll().onsuccess = e => res(e.target.result);
-        tx.onerror = () => rej(tx.error);
-      });
+      request.onerror = (event) => {
+        console.error('[SW] Erro ao abrir banco de dados:', event.target.error);
+        reject('Failed to open DB: ' + (event.target.error ? event.target.error.message : 'Unknown error'));
+      };
       
-      db.delete = (storeName, key) => new Promise((res, rej) => {
-        const tx = db.transaction(storeName, 'readwrite');
-        tx.objectStore(storeName).delete(key).onsuccess = () => res();
-        tx.onerror = () => rej(tx.error);
-      });
+      request.onsuccess = () => {
+        const db = request.result;
+        
+        // Adiciona métodos úteis
+        db.getAll = (storeName) => new Promise((res, rej) => {
+          try {
+            const tx = db.transaction(storeName, 'readonly');
+            const request = tx.objectStore(storeName).getAll();
+            request.onsuccess = e => res(e.target.result);
+            request.onerror = e => rej(e.target.error);
+            tx.onerror = e => rej(e.target.error);
+          } catch (error) {
+            console.error(`[SW] Erro em getAll(${storeName}):`, error);
+            rej(error);
+          }
+        });
+        
+        db.delete = (storeName, key) => new Promise((res, rej) => {
+          try {
+            const tx = db.transaction(storeName, 'readwrite');
+            const request = tx.objectStore(storeName).delete(key);
+            request.onsuccess = () => res();
+            request.onerror = e => rej(e.target.error);
+            tx.onerror = e => rej(e.target.error);
+          } catch (error) {
+            console.error(`[SW] Erro em delete(${storeName}, ${key}):`, error);
+            rej(error);
+          }
+        });
+        
+        db.put = (storeName, value) => new Promise((res, rej) => {
+          try {
+            const tx = db.transaction(storeName, 'readwrite');
+            const request = tx.objectStore(storeName).put(value);
+            request.onsuccess = () => res();
+            request.onerror = e => rej(e.target.error);
+            tx.onerror = e => rej(e.target.error);
+          } catch (error) {
+            console.error(`[SW] Erro em put(${storeName}):`, error);
+            rej(error);
+          }
+        });
+        
+        console.log('[SW] Banco de dados aberto com sucesso');
+        resolve(db);
+      };
       
-      db.put = (storeName, value) => new Promise((res, rej) => {
-        const tx = db.transaction(storeName, 'readwrite');
-        const request = tx.objectStore(storeName).put(value);
-        request.onsuccess = () => res();
-        tx.onerror = () => rej(tx.error);
-      });
+      request.onupgradeneeded = (event) => {
+        console.log('[SW] Atualizando estrutura do banco de dados');
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('pendingRequests')) {
+          console.log('[SW] Criando object store pendingRequests');
+          db.createObjectStore('pendingRequests', { keyPath: 'id' });
+        }
+      };
       
-      resolve(db);
-    };
-    
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains('pendingRequests')) {
-        db.createObjectStore('pendingRequests', { keyPath: 'id' });
-      }
-    };
+      request.onblocked = (event) => {
+        console.warn('[SW] Abertura do banco bloqueada, fechando conexões...');
+        // Tentar fechar outras conexões que possam estar bloqueando
+        indexedDB.databases().then(dbs => {
+          dbs.forEach(db => {
+            if (db.name === 'EuroDentOfflineDB') {
+              console.log('[SW] Tentando fechar conexão bloqueadora');
+              indexedDB.deleteDatabase('EuroDentOfflineDB');
+            }
+          });
+        });
+      };
+    } catch (error) {
+      console.error('[SW] Erro crítico ao configurar IndexedDB:', error);
+      reject('Critical error setting up IndexedDB: ' + error.message);
+    }
   });
 }
 
