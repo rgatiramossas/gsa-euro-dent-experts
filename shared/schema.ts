@@ -71,7 +71,12 @@ export const insertServiceTypeSchema = createInsertSchema(serviceTypes).omit({
 export const services = pgTable("services", {
   id: serial("id").primaryKey(),
   client_id: integer("client_id").notNull().references(() => clients.id),
-  vehicle_id: integer("vehicle_id").notNull().references(() => vehicles.id),
+  vehicle_id: integer("vehicle_id").references(() => vehicles.id), // Não mais obrigatório
+  // Novos campos para veículo manual
+  vehicle_make: text("vehicle_make"),
+  vehicle_model: text("vehicle_model"),
+  vehicle_plate: text("vehicle_plate"),
+  vehicle_vin: text("vehicle_vin"),  // Chassi
   service_type_id: integer("service_type_id").notNull().references(() => serviceTypes.id),
   technician_id: integer("technician_id").references(() => users.id),
   status: text("status").notNull().default("pending"),

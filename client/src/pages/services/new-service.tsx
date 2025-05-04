@@ -64,9 +64,12 @@ const formSchema = z.object({
   client_id: z.number({
     required_error: "Selecione um cliente", // Será substituído dinamicamente usando o t()
   }),
-  vehicle_id: z.number({
-    required_error: "Selecione um veículo", // Será substituído dinamicamente usando o t()
-  }),
+  // Campos de veículo
+  vehicle_id: z.number().optional().nullable(),
+  vehicle_make: z.string().optional(),
+  vehicle_model: z.string().optional(),
+  vehicle_plate: z.string().optional(),
+  vehicle_vin: z.string().optional(), // Chassi
   service_type_id: z.number({
     required_error: "Selecione o tipo de serviço", // Será substituído dinamicamente usando o t()
   }),
@@ -83,7 +86,19 @@ const formSchema = z.object({
   administrative_fee: z.number().default(0),
   total: z.number().optional(),
   notes: z.string().optional().nullable(),
-});
+}).refine(
+  // Validação que exige ao menos placa OU chassi quando não há veículo selecionado
+  (data) => {
+    // Se temos um vehicle_id, não precisamos de mais nada
+    if (data.vehicle_id) return true;
+    // Caso contrário, exigimos placa OU chassi
+    return !!(data.vehicle_plate || data.vehicle_vin)
+  },
+  {
+    message: "Preencha ao menos a placa ou o chassi do veículo",
+    path: ["vehicle_plate"], // Campo onde será exibida a mensagem de erro
+  }
+);
 
 // Tipos
 type FormData = z.infer<typeof formSchema>;
@@ -627,6 +642,10 @@ export default function NewServicePage() {
     defaultValues: {
       client_id: undefined,
       vehicle_id: undefined,
+      vehicle_make: "",
+      vehicle_model: "",
+      vehicle_plate: "",
+      vehicle_vin: "",
       service_type_id: undefined,
       technician_id: undefined,
       status: "pending",
@@ -779,7 +798,11 @@ export default function NewServicePage() {
     // Log detalhado para depuração
     console.log("Enviando para criação, detalhes:", {
       client: clients?.find(c => c.id === data.client_id)?.name,
-      vehicle: vehicles?.find(v => v.id === data.vehicle_id)?.make,
+      vehicle_id: data.vehicle_id,
+      vehicle_make: data.vehicle_make,
+      vehicle_model: data.vehicle_model,
+      vehicle_plate: data.vehicle_plate,
+      vehicle_vin: data.vehicle_vin,
       serviceType: serviceTypes?.find(t => t.id === data.service_type_id)?.name,
     });
 
@@ -870,7 +893,13 @@ export default function NewServicePage() {
             _pendingSync: true,
             // Adicionar dados relacionados para UI
             client: clients?.find(c => c.id === data.client_id),
-            vehicle: vehicles?.find(v => v.id === data.vehicle_id),
+            vehicle: data.vehicle_id ? vehicles?.find(v => v.id === data.vehicle_id) : {
+              make: data.vehicle_make,
+              model: data.vehicle_model,
+              plate: data.vehicle_plate,
+              vin: data.vehicle_vin,
+              _isManualEntry: true
+            },
             service_type: serviceTypes?.find(t => t.id === data.service_type_id),
             technician: technicians?.find(t => t.id === data.technician_id)
           }
@@ -989,52 +1018,90 @@ export default function NewServicePage() {
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="vehicle_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("clients.vehicle", "Veículo")} <span className="text-red-500">*</span></FormLabel>
-                    <Select
-                      onValueChange={(value) => form.setValue('vehicle_id', parseInt(value))}
-                      value={field.value?.toString()}
-                      disabled={!selectedClientId}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={selectedClientId ? t("services.selectVehicle", "Selecione o veículo") : t("services.selectClientFirst", "Selecione um cliente primeiro")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {vehicles?.map((vehicle) => (
-                          <SelectItem 
-                            key={vehicle.id} 
-                            value={vehicle.id.toString()}
-                            className={vehicle._isOffline ? "text-blue-600 font-medium" : ""}
-                          >
-                            {vehicle.make} {vehicle.model}
-                            {vehicle._isOffline && " [Offline]"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    {selectedClientId && (
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="px-0 text-sm"
-                        onClick={() => setLocation(`/clients/${selectedClientId}/vehicle/new`)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        {t("vehicles.registerVehicle", "Cadastrar Veículo")}
-                      </Button>
+              {/* Campos de veículo digitados manualmente */}
+              <div className="mt-4">
+                <h3 className="font-medium text-sm mb-2">{t("clients.vehicle", "Informações do Veículo")}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Marca do veículo */}
+                  <FormField
+                    control={form.control}
+                    name="vehicle_make"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("vehicles.make", "Marca")}</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder={t("vehicles.makeExample", "Ex: Toyota, Honda, etc.")}
+                            disabled={!selectedClientId}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </FormItem>
-                )}
-              />
+                  />
+                  
+                  {/* Modelo do veículo */}
+                  <FormField
+                    control={form.control}
+                    name="vehicle_model"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("vehicles.model", "Modelo")}</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder={t("vehicles.modelExample", "Ex: Corolla, Civic, etc.")}
+                            disabled={!selectedClientId}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* Placa do veículo */}
+                  <FormField
+                    control={form.control}
+                    name="vehicle_plate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("vehicles.plate", "Placa")}</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder={t("vehicles.platePlaceholder", "ABC-1234")}
+                            disabled={!selectedClientId}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* Chassi do veículo */}
+                  <FormField
+                    control={form.control}
+                    name="vehicle_vin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("vehicles.vin", "Chassi")}</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder={t("vehicles.vinExample", "Número do chassi")}
+                            disabled={!selectedClientId}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("vehicles.requiredPlateOrVin", "Informe ao menos um dos campos: Placa ou Chassi")}
+                </p>
+              </div>
             </CardContent>
           </Card>
           
