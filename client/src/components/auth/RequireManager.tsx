@@ -7,12 +7,12 @@ export function RequireManager({ children }: { children: React.ReactNode }) {
   const [_, setLocation] = useLocation();
 
   useEffect(() => {
-    if (user && user.role !== 'gestor') {
+    if (user && user.role !== 'gestor' && user.role !== 'manager') {
       setLocation('/dashboard');
     }
   }, [user, setLocation]);
 
-  if (!user || user.role !== 'gestor') {
+  if (!user || (user.role !== 'gestor' && user.role !== 'manager')) {
     return null;
   }
 

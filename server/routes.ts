@@ -407,7 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verificar se o gestor existe e tem a role correta
       const manager = await storage.getUser(Number(managerId));
-      if (!manager || manager.role !== "gestor") {
+      if (!manager || (manager.role !== "gestor" && manager.role !== "manager")) {
         return res.status(404).json({ message: "Gestor não encontrado" });
       }
       
@@ -488,7 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
       
       // Verificar se o usuário é um gestor
-      if (userRole !== "gestor") {
+      if (userRole !== "gestor" && userRole !== "manager") {
         return res.status(403).json({ message: "Apenas gestores podem acessar esta rota" });
       }
       

@@ -18,8 +18,8 @@ const ManagerClientsList: React.FC = () => {
       return;
     }
     
-    // Verificar se o usuário é admin
-    if (!isLoading && isAuthenticated && user?.role !== "admin") {
+    // Verificar se o usuário é admin ou gestor
+    if (!isLoading && isAuthenticated && user?.role !== "admin" && user?.role !== "gestor" && user?.role !== "manager") {
       setLocation("/dashboard");
     }
   }, [isAuthenticated, isLoading, user, setLocation]);
@@ -32,7 +32,7 @@ const ManagerClientsList: React.FC = () => {
     );
   }
   
-  if (!isAuthenticated || user?.role !== "admin") {
+  if (!isAuthenticated || (user?.role !== "admin" && user?.role !== "gestor" && user?.role !== "manager")) {
     return null;
   }
   
