@@ -823,14 +823,21 @@ export default function NewServicePage() {
             
             // Converter para ISO string para envio ao servidor
             console.log("Data processada:", dateToUse);
-            formattedData.scheduled_date = dateToUse.toISOString();
+            // Converter para ISO string para API, mas manter a propriedade como Date para o TypeScript
+            const isoString = dateToUse.toISOString();
+            // @ts-ignore - necessário para compatibilidade com a API
+            formattedData.scheduled_date = isoString;
           } catch (error) {
             console.error("Erro ao processar data:", error);
-            formattedData.scheduled_date = new Date().toISOString();
+            const fallbackDate = new Date().toISOString();
+            // @ts-ignore - necessário para compatibilidade com a API
+            formattedData.scheduled_date = fallbackDate;
           }
         } else {
           console.log("Sem data agendada, usando data atual");
-          formattedData.scheduled_date = new Date().toISOString();
+          const currentDate = new Date().toISOString();
+          // @ts-ignore - necessário para compatibilidade com a API
+          formattedData.scheduled_date = currentDate;
         }
         
         // Calcular total

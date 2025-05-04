@@ -1097,4 +1097,43 @@ export const getAllFromTable = async (tableName: string): Promise<any[]> => {
   return await _getAllFromTable(tableName);
 };
 
+/**
+ * Adiciona um registro diretamente a uma tabela no IndexedDB
+ * Útil para armazenar dados offline que precisam estar disponíveis imediatamente
+ * @param tableName Nome da tabela no IndexedDB
+ * @param data Dados a serem armazenados
+ * @returns Promise com o ID do registro adicionado
+ */
+export const addToOfflineTable = async (tableName: string, data: any): Promise<any> => {
+  try {
+    console.log(`[offlineDb] Adicionando registro diretamente à tabela '${tableName}'`);
+    
+    // Verificar se a tabela existe
+    if (!Object.prototype.hasOwnProperty.call(offlineDb, tableName)) {
+      console.error(`[offlineDb] Tabela '${tableName}' não existe. Tabelas disponíveis:`, 
+        Object.keys(offlineDb).filter(key => typeof (offlineDb as any)[key]?.add === 'function'));
+      throw new Error(`Tabela '${tableName}' não existe no banco de dados offline`);
+    }
+    
+    // Adicionar marca de timestamp se não existir
+    const dataToStore = {
+      ...data,
+      _timestamp: data._timestamp || new Date().getTime(),
+      _isOffline: true
+    };
+    
+    // Adicionar à tabela usando casting seguro para TypeScript
+    const id = await (offlineDb as any)[tableName].add(dataToStore);
+    console.log(`[offlineDb] Registro adicionado com sucesso à tabela '${tableName}', ID:`, id);
+    
+    // Emitir evento para notificar componentes
+    syncEvents.emit(SYNC_EVENTS.DATA_ADDED, tableName, { ...dataToStore, id });
+    
+    return id;
+  } catch (error) {
+    console.error(`[offlineDb] Erro ao adicionar registro à tabela '${tableName}':`, error);
+    throw error;
+  }
+};
+
 export default offlineDb;
