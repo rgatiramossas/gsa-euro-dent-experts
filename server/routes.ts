@@ -589,13 +589,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Obter IDs dos clientes
         const clientIds = clientesGestor.map(c => c.id);
         
+        console.log('Clientes do gestor encontrados:', clientesGestor);
+        console.log('IDs dos clientes do gestor:', clientIds);
+        
         // Obter estatísticas para esses clientes
         const stats = await storage.getDashboardStatsForManager(clientIds);
+        
+        console.log('Estatísticas brutas recebidas do storage:', stats);
         
         // Remover informações financeiras
         const { totalRevenue, ...filteredStats } = stats;
         
-        console.log('Stats do gestor:', filteredStats);
+        console.log('Stats do gestor após filtro:', filteredStats);
         return res.json(filteredStats);
       }
       
