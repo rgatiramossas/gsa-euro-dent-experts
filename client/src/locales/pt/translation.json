@@ -126,6 +126,11 @@
     "searchPlaceholder": "Buscar por cliente, veículo ou placa...",
     "serviceStatus": "Status do Serviço",
     "statusLabel": "Status",
+    "selectNewStatus": "Selecione o Novo Status",
+    "newStatus": "Novo Status",
+    "selectStatus": "Selecione o Status",
+    "notesOptional": "Observações (Opcional)",
+    "addStatusNotes": "Adicionar observações sobre a mudança de status",
     "status": {
       "pending": "Pendente",
       "in_progress": "Em andamento",

@@ -91,6 +91,13 @@
     "details": "Details",
     "searchPlaceholder": "Search by client, vehicle or license plate...",
     "serviceStatus": "Service Status",
+    "statusLabel": "Status",
+    "selectNewStatus": "Select New Status",
+    "newStatus": "New Status",
+    "selectStatus": "Select Status",
+    "notesOptional": "Notes (Optional)",
+    "addStatusNotes": "Add notes about status change",
+    "changeStatus": "Change Status",
     "status": {
       "pending": "Pending",
       "in_progress": "In Progress",
