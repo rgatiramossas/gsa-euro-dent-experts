@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
-import { checkNetworkStatus } from "@/lib/offlineDb";
+import { checkNetworkStatus, syncPendingRequests } from "@/lib/offlineDb";
 
 export default function ServicesList() {
   const [_, setLocation] = useLocation();
@@ -58,11 +58,31 @@ export default function ServicesList() {
   // Monitor online status and sync state
   useEffect(() => {
     function updateOnlineStatus() {
-      setIsOnline(navigator.onLine);
+      const newOnlineStatus = navigator.onLine;
+      setIsOnline(newOnlineStatus);
+      
+      // Se voltou a ficar online, tentar sincronizar dados pendentes
+      if (newOnlineStatus) {
+        console.log("Conexão online detectada, sincronizando dados pendentes...");
+        syncPendingRequests()
+          .then(stats => {
+            console.log(`Sincronização automática: ${stats.success} operações com sucesso, ${stats.failed} falhas`);
+            if (stats.success > 0) {
+              // Se sincronizou algo com sucesso, atualizar a interface
+              refetch();
+              
+              // Notificar o usuário
+              toast({
+                title: t("offline.syncComplete", "Sincronização Concluída"),
+                description: t("offline.autoSyncSuccess", "Dados offline enviados ao servidor com sucesso")
+              });
+            }
+          })
+          .catch(error => {
+            console.error("Erro na sincronização automática:", error);
+          });
+      }
     }
-    
-    // Simplificando para usar apenas o status nativo do navegador
-    // em vez de depender do offlineStatusStore
     
     // Initial status
     updateOnlineStatus();
@@ -75,7 +95,7 @@ export default function ServicesList() {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
     };
-  }, []);
+  }, [toast, t, refetch]);
   
   // Configurar eventos para atualização em tempo real
   useEffect(() => {
@@ -156,26 +176,34 @@ export default function ServicesList() {
       description: t("offline.syncingData", "Sincronizando dados com o servidor")
     });
     
-    // Apenas fazer o refetch dos dados em vez de usar triggerSyncIfNeeded
-    // que dependia do serviceWorker
+    // Primeiro, chamar syncPendingRequests para sincronizar dados offline
+    // depois fazer o refetch para atualizar a interface
     
-    // After a short delay, refresh the data
     setTimeout(() => {
-      refetch().then(() => {
-        setIsSyncing(false);
-        toast({
-          title: t("offline.syncComplete", "Sincronização Concluída"),
-          description: t("offline.dataUpdated", "Dados atualizados com sucesso")
+      // Primeiro, sincronizar os dados pendentes
+      syncPendingRequests()
+        .then((stats) => {
+          console.log(`Sincronização: ${stats.success} operações com sucesso, ${stats.failed} falhas`);
+          
+          // Depois atualizar a interface
+          return refetch();
+        })
+        .then(() => {
+          setIsSyncing(false);
+          toast({
+            title: t("offline.syncComplete", "Sincronização Concluída"),
+            description: t("offline.dataUpdated", "Dados atualizados com sucesso")
+          });
+        })
+        .catch(error => {
+          console.error("Erro ao sincronizar dados:", error);
+          setIsSyncing(false);
+          toast({
+            title: t("offline.syncError", "Erro na Sincronização"),
+            description: t("offline.syncErrorDesc", "Houve um problema ao sincronizar os dados"),
+            variant: "destructive"
+          });
         });
-      }).catch(error => {
-        console.error("Erro ao atualizar dados:", error);
-        setIsSyncing(false);
-        toast({
-          title: t("offline.syncError", "Erro na Sincronização"),
-          description: t("offline.syncErrorDesc", "Houve um problema ao sincronizar os dados"),
-          variant: "destructive"
-        });
-      });
     }, 1500);
   };
 
