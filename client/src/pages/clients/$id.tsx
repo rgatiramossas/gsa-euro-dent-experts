@@ -353,13 +353,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                           <TableCell>{vehicle.license_plate || "N/A"}</TableCell>
                           <TableCell>{vehicle.color || "N/A"}</TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setLocation(`/vehicles/${vehicle.id}`)}
-                            >
-                              Detalhes
-                            </Button>
+                            {/* Botão de detalhes do veículo removido - veículos são gerenciados no contexto dos serviços */}
                           </TableCell>
                         </TableRow>
                       ))}
