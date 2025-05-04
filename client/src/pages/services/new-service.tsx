@@ -308,17 +308,28 @@ export default function NewServicePage() {
           // Cria uma promessa que busca os veículos com tratamento de erros
           try {
             console.log("Buscando veículos salvos na tabela offline...");
-            // Usar a função interna _getAllFromTable que evita o loop infinito
+            // Usar a função para obter todos os veículos da tabela
             const storedVehicles = await getAllFromTable('vehicles') || [];
             console.log(`Veículos na tabela offline: ${storedVehicles.length}`);
             
             if (storedVehicles && storedVehicles.length > 0) {
-              // Filtrar apenas os deste cliente
+              // Debug para verificar o conteúdo completo
+              console.log("Conteúdo de todos os veículos offline:", JSON.stringify(storedVehicles).slice(0, 200) + "...");
+              
+              // Filtrar apenas os deste cliente com verificação mais robusta
               const filteredStoredVehicles = storedVehicles
                 .filter(v => {
                   // Verificação segura dos tipos (aceita string e número)
-                  const vClientId = typeof v.client_id === 'string' ? parseInt(v.client_id) : v.client_id;
-                  return vClientId === Number(selectedClientId);
+                  try {
+                    const vClientId = typeof v.client_id === 'string' ? parseInt(v.client_id) : v.client_id;
+                    const selectedId = Number(selectedClientId);
+                    const matches = vClientId === selectedId;
+                    console.log(`Comparando client_id do veículo ${v.id}: ${vClientId} === ${selectedId}: ${matches}`);
+                    return matches;
+                  } catch (e) {
+                    console.error("Erro ao comparar client_id do veículo:", e, v);
+                    return false;
+                  }
                 })
                 .map(v => ({
                   ...v,
@@ -332,6 +343,7 @@ export default function NewServicePage() {
               filteredStoredVehicles.forEach(storedVehicle => {
                 if (!pendingVehicles.some(v => v.id === storedVehicle.id)) {
                   pendingVehicles.push(storedVehicle);
+                  console.log(`Adicionado veículo offline: ${storedVehicle.make} ${storedVehicle.model} (ID: ${storedVehicle.id})`);
                 }
               });
             }
