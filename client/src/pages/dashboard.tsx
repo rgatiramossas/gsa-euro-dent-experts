@@ -17,6 +17,13 @@ export default function Dashboard() {
   const isAdmin = user?.role === "admin";
   const isGestor = user?.role === "gestor" || user?.role === "manager";
   
+  // Debug para o problema com gestores
+  console.log("DASHBOARD RENDERIZANDO:");
+  console.log("- Usuário:", user?.username);
+  console.log("- Role:", user?.role);
+  console.log("- ID:", user?.id);
+  console.log("- isGestor:", isGestor);
+  
   // Adicionar useEffect para forçar fetch manual das estatísticas do dashboard
   const [dashboardStats, setDashboardStats] = React.useState<DashboardStats>({
     totalPendingServices: 0,
