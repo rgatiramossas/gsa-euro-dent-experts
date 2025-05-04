@@ -77,8 +77,8 @@ class OfflineDatabase extends Dexie {
   technicians: Dexie.Table<any, number>;
   service_types: Dexie.Table<any, number>;
   vehicles: Dexie.Table<any, number>; // Adicionado tabela de veículos
-  technician_performance: Dexie.Table<any, number>; // Tabela para desempenho dos técnicos
-  dashboard_stats: Dexie.Table<any, number>; // Tabela para estatísticas do dashboard
+  technician_performance!: Dexie.Table<any, number>; // Tabela para desempenho dos técnicos (definida na v3)
+  dashboard_stats!: Dexie.Table<any, number>; // Tabela para estatísticas do dashboard (definida na v3)
   
   // Tabelas para sistema de sincronização
   pendingRequests: Dexie.Table<PendingRequest, string>;
@@ -119,8 +119,15 @@ class OfflineDatabase extends Dexie {
     this.technicians = this.table('technicians');
     this.service_types = this.table('service_types');
     this.vehicles = this.table('vehicles');
-    this.technician_performance = this.table('technician_performance');
-    this.dashboard_stats = this.table('dashboard_stats');
+    
+    // Inicializar tabelas de dashboard adicionadas na v3
+    try {
+      this.technician_performance = this.table('technician_performance');
+      this.dashboard_stats = this.table('dashboard_stats');
+    } catch (e) {
+      console.log("[offlineDb] Tabelas de dashboard serão inicializadas durante a verificação de estrutura");
+    }
+    
     this.pendingRequests = this.table('pendingRequests');
     this.syncStatus = this.table('syncStatus');
 
@@ -184,7 +191,10 @@ class OfflineDatabase extends Dexie {
   
   // Inicializar status de sincronização para todas as tabelas se necessário
   async initSyncStatus() {
-    const tables = ['clients', 'services', 'budgets', 'technicians', 'service_types'];
+    const tables = [
+      'clients', 'services', 'budgets', 'technicians', 'service_types', 'vehicles',
+      'technician_performance', 'dashboard_stats'
+    ];
     
     for (const tableName of tables) {
       const existingStatus = await this.syncStatus.get(tableName);
@@ -512,7 +522,10 @@ class OfflineDatabase extends Dexie {
       }
       
       // Atualizar o status de sincronização de todas as tabelas
-      const tables = ['clients', 'services', 'budgets', 'technicians', 'service_types', 'vehicles'];
+      const tables = [
+        'clients', 'services', 'budgets', 'technicians', 'service_types', 'vehicles',
+        'technician_performance', 'dashboard_stats'
+      ];
       const now = Date.now();
       
       for (const tableName of tables) {
