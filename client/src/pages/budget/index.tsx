@@ -302,7 +302,6 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
                     <TableHead>{t("common.client")}</TableHead>
                     <TableHead>{t("common.vehicle")}</TableHead>
                     <TableHead>{t("common.date")}</TableHead>
@@ -313,9 +312,6 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                 <TableBody>
                   {filteredBudgets.map((budget) => (
                     <TableRow key={budget.id}>
-                      <TableCell className="font-medium">
-                        {budget.id}
-                      </TableCell>
                       <TableCell>{budget.client_name}</TableCell>
                       <TableCell>{budget.vehicle_info}</TableCell>
                       <TableCell>{formatDisplayDate(budget.date)}</TableCell>
@@ -372,7 +368,7 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
         }}>
         <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6">
-            <DialogTitle>{t("budget.budgetDetails", { id: selectedBudget?.id })}</DialogTitle>
+            <DialogTitle>{t("budget.budgetDetails")}</DialogTitle>
             <DialogDescription>
               {t("budget.completeInfo")}
             </DialogDescription>
