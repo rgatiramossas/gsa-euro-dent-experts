@@ -260,6 +260,7 @@ export default function Finances() {
     console.log("ID do técnico atual:", currentUser?.id);
     console.log("É o mesmo técnico?", service.technician?.id === currentUser?.id);
     console.log("Status é completed?", service.status === "completed");
+    console.log("completedTechnicianServices será:", service.status === "completed" && service.technician?.id === currentUser?.id);
     return service.status === "completed" && service.technician?.id === currentUser?.id;
   });
   
@@ -649,10 +650,10 @@ export default function Finances() {
                       />
                       <div className="flex-1">
                         <div className="font-medium">
-                          {service.client.name} - {service.serviceType?.name}
+                          {service.client.name} - {service.service_type?.name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {formatDate(service.completion_date || service.created_at)} - OS #{service.id}
+                          {formatDate(service.created_at)} - OS #{service.id}
                         </div>
                       </div>
                       <div className="font-semibold">
@@ -907,7 +908,7 @@ export default function Finances() {
     const serviceTypes: {[key: string]: number} = {};
     
     financiallyRelevantServices.forEach(service => {
-      const typeName = service.serviceType?.name || "Desconhecido";
+      const typeName = service.service_type?.name || "Desconhecido";
       if (serviceTypes[typeName]) {
         serviceTypes[typeName]++;
       } else {
@@ -1296,9 +1297,9 @@ export default function Finances() {
                   ) : (
                     financiallyRelevantServices?.slice(0, 10).map((service) => (
                       <TableRow key={service.id} className="hover:bg-gray-50">
-                        <TableCell>{formatDate(service.completion_date || service.created_at)}</TableCell>
+                        <TableCell>{formatDate(service.created_at)}</TableCell>
                         <TableCell>{service.client.name}</TableCell>
-                        <TableCell>{service.serviceType?.name || "Serviço não especificado"}</TableCell>
+                        <TableCell>{service.service_type?.name || "Serviço não especificado"}</TableCell>
                         <TableCell>
                           <ServiceStatusBadge status={service.status} />
                         </TableCell>
