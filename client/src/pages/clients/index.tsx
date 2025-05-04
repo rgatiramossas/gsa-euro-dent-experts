@@ -234,20 +234,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
                               </svg>
                               <span>{t("clients.details")}</span>
                             </Button>
-                            <Link href={`/clients/${client.id}/vehicle/new`}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-2 text-green-600 border-green-200 hover:bg-green-50"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-car">
-                                  <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/>
-                                  <circle cx="6.5" cy="16.5" r="2.5"/>
-                                  <circle cx="16.5" cy="16.5" r="2.5"/>
-                                </svg>
-                                <span>{t("clients.vehicle")}</span>
-                              </Button>
-                            </Link>
+                            {/* Botão de adicionar veículo removido - veículos são registrados diretamente no formulário de serviço */}
                           </div>
                         </TableCell>
                       </TableRow>
