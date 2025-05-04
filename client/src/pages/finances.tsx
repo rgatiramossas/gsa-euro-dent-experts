@@ -140,15 +140,21 @@ export default function Finances() {
   
   // Obter dados financeiros do técnico com auto-refresh
   const { data: techFinanceStats, isLoading: isLoadingFinanceStats, error: techFinanceError } = useQuery({
-    queryKey: ['/api/technician/financial-stats'],
-    enabled: !isAdmin && currentUser?.role === 'technician',
+    queryKey: ['/api/technician/financial-stats', currentUser?.id],
+    enabled: !isAdmin && currentUser?.role === 'technician' && !!currentUser?.id,
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
-    queryFn: () => fetch('/api/technician/financial-stats').then(res => {
-      if (!res.ok) throw new Error('Erro ao obter dados financeiros');
-      return res.json();
-    })
+    queryFn: () => {
+      // Garantir que temos um ID válido
+      if (!currentUser?.id) {
+        throw new Error('ID do técnico não disponível');
+      }
+      return fetch(`/api/technician/financial-stats?technician_id=${currentUser.id}`).then(res => {
+        if (!res.ok) throw new Error('Erro ao obter dados financeiros');
+        return res.json();
+      });
+    }
   });
   
   // Formulário de despesas
