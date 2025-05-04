@@ -112,10 +112,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obter as configurações das variáveis de ambiente
   // -------------------------------------------------------
   // NOVA CONFIGURAÇÃO DE SESSÃO:
-  // - Sessões online: 30 minutos de inatividade (1800000 ms)
+  // - Sessões online: 24 horas de inatividade (86400000 ms)
   // - Sessões offline: 48 horas (gerenciado pelo frontend)
   // -------------------------------------------------------
-  const cookieMaxAge = parseInt(process.env.COOKIE_MAX_AGE || '1800000'); // 30 minutos (padrão)
+  const cookieMaxAge = parseInt(process.env.COOKIE_MAX_AGE || '86400000'); // 24 horas (atualizado)
   const cookieSecure = process.env.COOKIE_SECURE === 'true' ? true : false;
   const cookieSameSite = (process.env.COOKIE_SAME_SITE || 'lax') as 'lax' | 'strict' | 'none' | false;
   
@@ -224,8 +224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Configurar o cookie corretamente
         if (req.session.cookie) {
-          req.session.cookie.maxAge = 30 * 60 * 1000; // 30 minutos para sessões online
+          req.session.cookie.maxAge = 24 * 60 * 60 * 1000; // 24 horas para sessões online (aumentado de 30 minutos)
           req.session.cookie.sameSite = 'lax';
+          console.log("Cookie configurado com maxAge:", req.session.cookie.maxAge, "ms");
         }
           
         // Salvar a sessão explicitamente
@@ -308,7 +309,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Renovar o cookie da sessão
       if (req.session.cookie) {
-        req.session.cookie.maxAge = 30 * 60 * 1000; // 30 minutos para sessões online
+        req.session.cookie.maxAge = 24 * 60 * 60 * 1000; // 24 horas para sessões online (atualizado)
+        console.log("Cookie da sessão /api/auth/me renovado com maxAge:", req.session.cookie.maxAge, "ms");
       }
       
       // Responder imediatamente
