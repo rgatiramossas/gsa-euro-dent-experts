@@ -27,10 +27,14 @@ export default function Dashboard() {
     queryFn: async () => {
       console.log("Fazendo requisição para dashboard stats");
       try {
-        const response = await fetch('/api/dashboard/stats', {
+        // Adicionar timestamp ao URL para evitar caching
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/dashboard/stats?_t=${timestamp}`, {
           credentials: 'include',
           headers: {
             'Accept': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
           }
         });
         
@@ -39,7 +43,6 @@ export default function Dashboard() {
         if (!response.ok) {
           if (response.status === 401) {
             console.error("Erro de autenticação no dashboard");
-            // Aqui podemos tentar renovar a sessão antes de falhar
             return { 
               totalPendingServices: 0, 
               totalInProgressServices: 0,
@@ -52,14 +55,31 @@ export default function Dashboard() {
         
         const data = await response.json();
         console.log("Dados recebidos do dashboard API:", data);
-        return data;
+        
+        // Garantir que todos os campos existam, mesmo que vazios
+        const processedData = {
+          totalPendingServices: data.totalPendingServices || 0,
+          totalInProgressServices: data.totalInProgressServices || 0,
+          totalCompletedServices: data.totalCompletedServices || 0,
+          totalRevenue: data.totalRevenue || 0
+        };
+        
+        console.log("Dados processados do dashboard:", processedData);
+        return processedData;
       } catch (error) {
         console.error("Erro ao buscar stats do dashboard:", error);
-        throw error;
+        // Retornar dados padrão em caso de erro para evitar quebra da UI
+        return { 
+          totalPendingServices: 0, 
+          totalInProgressServices: 0,
+          totalCompletedServices: 0,
+          totalRevenue: 0
+        };
       }
     },
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 30000, // Recarregar a cada 30 segundos
   });
   
   // Usar os dados do backend diretamente com os novos nomes
