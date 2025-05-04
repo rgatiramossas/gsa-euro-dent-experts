@@ -916,16 +916,22 @@ export default function NewServicePage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {clients?.map((client) => (
-                          <SelectItem 
-                            key={client.id} 
-                            value={client.id.toString()}
-                            className={client._isOffline ? "text-blue-600 font-medium" : ""}
-                          >
-                            {client.name} - {client.phone} 
-                            {client._isOffline && " [Offline]"}
-                          </SelectItem>
-                        ))}
+                        {clients
+                          ?.filter(client => 
+                            // Filtrar clientes excluídos (que contêm '[EXCLUÍDO]' no nome)
+                            !client.name.includes('[EXCLUÍDO]') && 
+                            !client.name.includes('[EXCLUIDO]')
+                          )
+                          .map((client) => (
+                            <SelectItem 
+                              key={client.id} 
+                              value={client.id.toString()}
+                              className={client._isOffline ? "text-blue-600 font-medium" : ""}
+                            >
+                              {client.name} - {client.phone} 
+                              {client._isOffline && " [Offline]"}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
