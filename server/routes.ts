@@ -9,9 +9,13 @@ import fs from "fs";
 import multer from "multer";
 import { fileURLToPath } from "url";
 import { addClearSessionsEndpoint } from "./clearSessions";
+import { WebSocketServer, WebSocket } from 'ws';
 // import { db } from "./db"; // PostgreSQL
 // MySQL connection (que será obtida mais tarde)
 let pool: any;
+
+// Array para armazenar as conexões WebSocket ativas
+const clients: Set<WebSocket> = new Set();
 import { desc } from "drizzle-orm";
 import { 
   insertUserSchema, 
@@ -102,6 +106,21 @@ const upload = multer({
     }
   }
 });
+
+// Função para enviar notificações via WebSocket
+function notifyClients(type: string, data?: any) {
+  const message = JSON.stringify({
+    type,
+    data,
+    timestamp: new Date().toISOString()
+  });
+  
+  clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configurar uma chave de sessão forte
