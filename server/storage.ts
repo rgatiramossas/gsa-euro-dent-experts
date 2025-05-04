@@ -2231,27 +2231,63 @@ export class DatabaseStorage implements IStorage {
       console.log('Resultado query concluídas:', completedResult);
       const totalCompletedServices = completedResult[0]?.count || 0;
       
-      // 4. Total de faturamento
-      const revenueQuery = `
-        SELECT SUM(final_price) as total 
+      // 4. Total de faturamento - tente usar price primeiro, senão final_price
+      let revenueQuery = `
+        SELECT SUM(price) as total 
         FROM services 
         WHERE client_id IN (${clientIds.join(',')}) 
         AND status IN ('completed', 'concluido', 'pago', 'faturado')
         AND status != 'deleted'
       `;
-      const [revenueResult] = await conn.query(revenueQuery);
-      console.log('Resultado query faturamento:', revenueResult);
-      const totalRevenue = revenueResult[0]?.total || 0;
       
-      const stats = {
-        totalPendingServices,
-        totalInProgressServices,
-        totalCompletedServices,
-        totalRevenue
-      };
-      
-      console.log('Estatísticas calculadas para o gestor:', stats);
-      return stats;
+      try {
+        const [revenueResult] = await conn.query(revenueQuery);
+        console.log('Resultado query faturamento:', revenueResult);
+        const totalRevenue = revenueResult[0]?.total || 0;
+        return {
+          totalPendingServices,
+          totalInProgressServices,
+          totalCompletedServices,
+          totalRevenue
+        };
+      } catch (error) {
+        console.error('Erro na primeira tentativa de query de faturamento:', error);
+        // Tente a segunda opção com total ou total_price
+        try {
+          revenueQuery = `
+            SELECT SUM(total) as total_sum 
+            FROM services 
+            WHERE client_id IN (${clientIds.join(',')}) 
+            AND status IN ('completed', 'concluido', 'pago', 'faturado')
+            AND status != 'deleted'
+          `;
+          const [revenueResult2] = await conn.query(revenueQuery);
+          console.log('Resultado query faturamento (segunda tentativa):', revenueResult2);
+          const totalRevenue = revenueResult2[0]?.total_sum || 0;
+          
+          const stats = {
+            totalPendingServices,
+            totalInProgressServices,
+            totalCompletedServices,
+            totalRevenue
+          };
+          
+          console.log('Estatísticas calculadas para o gestor (segunda tentativa):', stats);
+          return stats;
+        } catch (error) {
+          console.error('Erro na segunda tentativa de query de faturamento:', error);
+          // Se ambas as tentativas falharem, retorne sem o faturamento
+          const stats = {
+            totalPendingServices,
+            totalInProgressServices,
+            totalCompletedServices,
+            totalRevenue: 0
+          };
+          
+          console.log('Estatísticas calculadas para o gestor (sem faturamento):', stats);
+          return stats;
+        }
+      }
     } catch (error) {
       console.error('Erro ao obter estatísticas do dashboard para o gestor:', error);
       return {
