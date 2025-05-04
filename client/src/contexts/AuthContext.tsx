@@ -2,7 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthUser } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { postApi, getApi, setSessionRefreshFunction } from "@/lib/apiWrapper";
-import { checkNetworkStatus } from "@/lib/offlineDb";
+
+// Simple function to check if we're online
+const checkNetworkStatus = () => navigator.onLine;
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -57,19 +59,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [data, isLoading, error]);
 
-  // Verificar localStorage ao inicializar
+  // Verificar localStorage ao inicializar (usado apenas para re-hidratar estado, não para login offline)
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser && !user) {
       try {
         const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
+        // Não definimos o usuário diretamente, apenas usamos para refetch
         queryClient.setQueryData(['/api/auth/me'], parsedUser);
-
-        // Se estiver online, tentar validar a sessão imediatamente
-        if (checkNetworkStatus()) {
-          refetch();
-        }
+        
+        // Sempre validar a sessão no servidor
+        refetch();
       } catch (err) {
         console.error('Erro ao recuperar usuário do localStorage:', err);
         localStorage.removeItem('user');
@@ -96,28 +96,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Erro ao renovar sessão:", error);
       
-      // Verificar se há um usuário armazenado no localStorage
-      const savedUser = localStorage.getItem('user');
-      
-      if (savedUser && !checkNetworkStatus()) {
-        // Se estiver offline e tiver dados no localStorage, continuar com o usuário atual
-        console.log("Usando usuário do localStorage para modo offline");
-        try {
-          const parsedUser = JSON.parse(savedUser);
-          setUser(parsedUser);
-          queryClient.setQueryData(['/api/auth/me'], parsedUser);
-        } catch (err) {
-          console.error("Erro ao processar usuário do localStorage:", err);
-          // Limpar dados em caso de erro de parsing
-          setUser(null);
-          localStorage.removeItem('user');
-        }
-      } else {
-        // Se online ou sem dados no localStorage, limpar a sessão
-        setUser(null);
-        localStorage.removeItem('user');
-        queryClient.setQueryData(['/api/auth/me'], null);
-      }
+      // Limpar a sessão em caso de erro
+      setUser(null);
+      localStorage.removeItem('user');
+      queryClient.setQueryData(['/api/auth/me'], null);
     } finally {
       setIsSessionRefreshing(false);
     }
@@ -140,23 +122,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string;
       rememberMe?: boolean;
     }) => {
-      // Usar postApi que é a versão correta para requisições POST com suporte offline
-      const result = await postApi<AuthUser>('/api/auth/login', credentials, { enableOffline: false });
+      // Enviar requisição de login para o servidor
+      const result = await postApi<AuthUser>('/api/auth/login', credentials);
       return result;
     },
     onSuccess: (userData: AuthUser, variables) => {
       setUser(userData);
       queryClient.setQueryData(['/api/auth/me'], userData);
       
-      // Sempre salvar no localStorage para permitir funcionamento offline
-      // Configurar expiração para 48 horas (modo offline) conforme solicitado
-      // Se rememberMe estiver ativado, usar 30 dias
-      const expiry = variables.rememberMe ? 30 * 24 * 60 * 60 * 1000 : 48 * 60 * 60 * 1000; // 48 horas
-      const userWithExpiry = {
-        ...userData,
-        expiry: Date.now() + expiry
-      };
-      localStorage.setItem('user', JSON.stringify(userWithExpiry));
+      // Salvar no localStorage apenas para manter a sessão entre recarregamentos de página
+      // não para uso offline
+      localStorage.setItem('user', JSON.stringify(userData));
       
       // Invalidar caches para recarregar dados com a nova sessão
       queryClient.invalidateQueries();
@@ -166,13 +142,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      if (!navigator.onLine) {
-        // Se estiver offline, não enviar requisição para o servidor
-        console.log("Logout realizado em modo offline");
-        return;
-      }
-      // Se estiver online, enviar requisição normalmente
-      await postApi('/api/auth/logout', {}, { enableOffline: false });
+      // Sempre enviar requisição ao servidor
+      await postApi('/api/auth/logout', {});
     },
     onSuccess: () => {
       setUser(null);
@@ -192,33 +163,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const login = async (username: string, password: string, rememberMe: boolean = false): Promise<AuthUser> => {
-    // Se estiver offline, verificar se temos dados no localStorage
-    if (!checkNetworkStatus()) {
-      const savedUser = localStorage.getItem('user');
-      if (savedUser) {
-        try {
-          const parsedUser = JSON.parse(savedUser);
-          
-          // Verificar se o usuário no localStorage corresponde às credenciais
-          if (parsedUser.username === username) {
-            // Verificar se não está expirado
-            if (parsedUser.expiry && Date.now() < parsedUser.expiry) {
-              console.log("Login offline bem-sucedido usando dados armazenados");
-              setUser(parsedUser);
-              queryClient.setQueryData(['/api/auth/me'], parsedUser);
-              return parsedUser;
-            } else {
-              console.log("Dados armazenados expirados");
-            }
-          }
-        } catch (err) {
-          console.error("Erro ao processar dados de usuário armazenados:", err);
-        }
-      }
-      throw new Error("Não é possível fazer login no modo offline");
+    // Modo offline não suportado mais - sempre requer conexão
+    if (!navigator.onLine) {
+      throw new Error("Não é possível fazer login sem conexão à internet. Verifique sua conexão e tente novamente.");
     }
     
-    // Se estiver online, usar a mutação normal
+    // Usar a mutação normal para login online
     const userData = await loginMutation.mutateAsync({ username, password, rememberMe }) as AuthUser;
     
     // Garantir que a sessão foi estabelecida verificando novamente após 1 segundo
@@ -238,19 +188,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(updatedUser);
     queryClient.setQueryData(['/api/auth/me'], updatedUser);
     
-    // Atualizar o localStorage também
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        localStorage.setItem('user', JSON.stringify({
-          ...updatedUser,
-          expiry: parsedUser.expiry
-        }));
-      } catch (err) {
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      }
-    }
+    // Atualizar o localStorage apenas para persistência entre recarregamentos
+    localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
   // Adicionar interceptor global para erros 401
@@ -281,7 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return; // Não verificar se não houver usuário logado
     
     const checkInterval = setInterval(() => {
-      if (checkNetworkStatus() && !isSessionRefreshing) {
+      if (!isSessionRefreshing) {
         console.log("Verificando sessão periodicamente...");
         refreshSession().catch(err => {
           console.error("Erro na verificação periódica de sessão:", err);

@@ -23,7 +23,7 @@ import { ServiceListItem, ServiceStatus } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { CloudOff, RotateCw, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { addEventListener, WebSocketEventType } from "@/lib/websocketService";
 import {
   Select,
@@ -35,67 +35,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
-import { checkNetworkStatus, syncPendingRequests } from "@/lib/offlineDb";
 
 export default function ServicesList() {
   const [_, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<ServiceStatus | "all">("all");
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
-  // O indicador de WebSocket foi removido, então não precisamos mais deste estado
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   
-  // Fetch services with offline support
+  // Fetch services
   const { data: services, isLoading, refetch } = useQuery<ServiceListItem[]>({
-    queryKey: ['/api/services', { enableOffline: true, offlineTableName: 'services' }],
+    queryKey: ['/api/services'],
     queryFn: getQueryFn({ on401: "throw" }),
     refetchOnMount: true, // Forçar refetch quando o componente montar
   });
-  
-  // Monitor online status and sync state
-  useEffect(() => {
-    function updateOnlineStatus() {
-      const newOnlineStatus = navigator.onLine;
-      setIsOnline(newOnlineStatus);
-      
-      // Se voltou a ficar online, tentar sincronizar dados pendentes
-      if (newOnlineStatus) {
-        console.log("Conexão online detectada, sincronizando dados pendentes...");
-        syncPendingRequests()
-          .then(stats => {
-            console.log(`Sincronização automática: ${stats.success} operações com sucesso, ${stats.failed} falhas`);
-            if (stats.success > 0) {
-              // Se sincronizou algo com sucesso, atualizar a interface
-              refetch();
-              
-              // Notificar o usuário
-              toast({
-                title: t("offline.syncComplete", "Sincronização Concluída"),
-                description: t("offline.autoSyncSuccess", "Dados offline enviados ao servidor com sucesso")
-              });
-            }
-          })
-          .catch(error => {
-            console.error("Erro na sincronização automática:", error);
-          });
-      }
-    }
-    
-    // Initial status
-    updateOnlineStatus();
-    
-    // Set up event listeners for online/offline status
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    
-    return () => {
-      window.removeEventListener('online', updateOnlineStatus);
-      window.removeEventListener('offline', updateOnlineStatus);
-    };
-  }, [toast, t, refetch]);
   
   // Configurar eventos para atualização em tempo real
   useEffect(() => {
@@ -151,60 +104,33 @@ export default function ServicesList() {
     };
   }, [refetch, toast, t]);
   
-  // Function to manually trigger sync
-  const handleSync = () => {
-    if (!isOnline) {
-      toast({
-        title: t("offline.offlineMode"),
-        description: t("offline.cannotSyncOffline"),
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (isSyncing) {
-      toast({
-        title: t("offline.syncInProgress", "Sincronização em Andamento"),
-        description: t("offline.pleaseWait", "Aguarde enquanto sincronizamos os dados")
-      });
-      return;
-    }
-    
-    setIsSyncing(true);
+  // Function to refresh data
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const handleRefresh = () => {
+    setIsRefreshing(true);
     toast({
-      title: t("offline.syncStarted", "Sincronização Iniciada"),
-      description: t("offline.syncingData", "Sincronizando dados com o servidor")
+      title: t("services.refreshing", "Atualizando"),
+      description: t("services.refreshingList", "Atualizando lista de serviços")
     });
     
-    // Primeiro, chamar syncPendingRequests para sincronizar dados offline
-    // depois fazer o refetch para atualizar a interface
-    
-    setTimeout(() => {
-      // Primeiro, sincronizar os dados pendentes
-      syncPendingRequests()
-        .then((stats) => {
-          console.log(`Sincronização: ${stats.success} operações com sucesso, ${stats.failed} falhas`);
-          
-          // Depois atualizar a interface
-          return refetch();
-        })
-        .then(() => {
-          setIsSyncing(false);
-          toast({
-            title: t("offline.syncComplete", "Sincronização Concluída"),
-            description: t("offline.dataUpdated", "Dados atualizados com sucesso")
-          });
-        })
-        .catch(error => {
-          console.error("Erro ao sincronizar dados:", error);
-          setIsSyncing(false);
-          toast({
-            title: t("offline.syncError", "Erro na Sincronização"),
-            description: t("offline.syncErrorDesc", "Houve um problema ao sincronizar os dados"),
-            variant: "destructive"
-          });
+    refetch()
+      .then(() => {
+        toast({
+          title: t("services.refreshComplete", "Atualização Concluída"),
+          description: t("services.listUpdated", "Lista de serviços atualizada com sucesso")
         });
-    }, 1500);
+        setIsRefreshing(false);
+      })
+      .catch(error => {
+        console.error("Erro ao atualizar lista:", error);
+        toast({
+          title: t("services.refreshError", "Erro na Atualização"),
+          description: t("services.refreshErrorDesc", "Houve um problema ao atualizar a lista"),
+          variant: "destructive"
+        });
+        setIsRefreshing(false);
+      });
   };
 
   // Filter services based on search term and active tab
@@ -234,14 +160,25 @@ export default function ServicesList() {
         title={t("services.title", "Serviços")}
         description={t("services.manage", "Gerencie todos os serviços de martelinho de ouro")}
         actions={
-          <Link href="/services/new">
-            <Button>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              {t("services.newService", "Novo Serviço")}
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title={t("services.refresh", "Atualizar lista")}
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
-          </Link>
+            <Link href="/services/new">
+              <Button>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {t("services.newService", "Novo Serviço")}
+              </Button>
+            </Link>
+          </div>
         }
       />
       

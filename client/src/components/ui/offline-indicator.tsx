@@ -1,27 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { WifiOff, RefreshCw } from 'lucide-react';
-import { checkNetworkStatus } from '@/lib/offlineDb';
+// Arquivo mantido como stub vazio para não quebrar importações existentes
+// Será removido completamente em uma refatoração futura
 
 interface OfflineIndicatorProps {
   className?: string;
 }
 
 /**
- * Componente que mostra uma indicação quando o aplicativo está offline
- * e também indica quando está sincronizando dados com o servidor
+ * Componente completamente removido - PWA desabilitado
  */
 export function OfflineIndicator({ className }: OfflineIndicatorProps) {
-  // O cliente pediu para remover as notificações de modo offline completamente
-  // Esse componente agora não renderiza nada, mas mantemos ele para não quebrar
-  // outras partes da aplicação que o utilizam
   return null;
 }
 
 /**
- * Componente que adiciona uma marcação visual para itens criados/modificados offline
- * O cliente pediu para remover todos os indicadores de sincronização, então este
- * componente agora não mostra nada, independente do estado offline/online
+ * Componente completamente removido - PWA desabilitado
  */
 export function OfflineItemIndicator({ 
   className,
@@ -32,6 +24,5 @@ export function OfflineItemIndicator({
   createdOffline?: boolean,
   modifiedOffline?: boolean
 }) {
-  // Não mostra nenhum indicador, conforme solicitado pelo cliente
   return null;
 }

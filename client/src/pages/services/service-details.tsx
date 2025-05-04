@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { ptBR, enUS, de } from "date-fns/locale";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { putApi, deleteApi } from "@/lib/apiWrapper";
-import { checkNetworkStatus } from "@/lib/offlineDb";
+// Online-only version (removed offline import)
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
@@ -131,13 +131,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   ];
   
   const { data: service, isLoading, error } = useQuery<ServiceWithDetails>({
-    queryKey: [`/api/services/${id}`, { enableOffline: true, offlineTableName: 'services' }],
+    queryKey: [`/api/services/${id}`],
     queryFn: getQueryFn({ on401: "throw" }),
     refetchOnMount: true
   });
   
   const { data: serviceTypes } = useQuery<ServiceType[]>({
-    queryKey: ['/api/service-types', { enableOffline: true, offlineTableName: 'service_types' }],
+    queryKey: ['/api/service-types'],
     queryFn: getQueryFn({ on401: "throw" }),
     refetchOnMount: true,
   });
@@ -184,21 +184,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data: { status: ServiceStatus; notes?: string }) => {
-      // Verificar status da rede
-      const isOnline = checkNetworkStatus();
+      // Versão apenas online
+      const isOnline = navigator.onLine;
       console.log("Status da rede:", isOnline ? "Online" : "Offline");
       
+      if (!isOnline) {
+        throw new Error("Esta operação requer conexão com a internet");
+      }
+      
       try {
-        // Usar apiWrapper para suporte offline
-        const result = await putApi(`/api/services/${id}`, data, {
-          enableOffline: true,
-          offlineTableName: 'services'
-        });
-        
-        if (!isOnline) {
-          return { ...result, _offline: true };
-        }
-        
+        // Usar API sem suporte offline
+        const result = await putApi(`/api/services/${id}`, data);
         return result;
       } catch (error) {
         console.error("Erro na atualização de status:", error);
@@ -206,18 +202,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       }
     },
     onSuccess: (data) => {
-      // Verificar se foi atualizado offline
-      const isOfflineData = data && data._offline === true;
-      
+      // Versão online-only
       queryClient.invalidateQueries({queryKey: [`/api/services/${id}`]});
       queryClient.invalidateQueries({queryKey: ['/api/services']});
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
       
       toast({
         title: t("services.statusUpdated"),
-        description: isOfflineData 
-          ? t("offline.serviceOfflineDescription") 
-          : t("services.statusUpdatedSuccess"),
+        description: t("services.statusUpdatedSuccess"),
       });
       
       setShowStatusDialog(false);
@@ -236,40 +228,18 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const updateServiceMutation = useMutation({
     mutationFn: async (formData: FormData | Record<string, any>) => {
-      // Verificar status da rede
-      const isOnline = checkNetworkStatus();
+      // Versão apenas online
+      const isOnline = navigator.onLine;
       console.log("Status da rede:", isOnline ? "Online" : "Offline");
       
+      if (!isOnline) {
+        throw new Error("Esta operação requer conexão com a internet");
+      }
+      
       try {
-        // Se for um objeto comum, usamos o apiRequest com suporte offline
+        // Se for um objeto comum, usamos o apiRequest normal
         if (!(formData instanceof FormData)) {
-          return await putApi(`/api/services/${id}`, formData, {
-            enableOffline: true,
-            offlineTableName: 'services'
-          });
-        }
-        
-        // Para FormData em modo offline, precisamos converter para JSON
-        if (!isOnline) {
-          console.log("Modo offline: convertendo FormData para JSON");
-          const jsonData: Record<string, any> = {};
-          
-          for (const [key, value] of formData.entries()) {
-            if (key === 'photos_to_remove') {
-              jsonData[key] = JSON.parse(value as string);
-            } else if (!key.startsWith('photos_')) { // Ignorar campos de foto em modo offline
-              jsonData[key] = value;
-            }
-          }
-          
-          // Usar putApi com suporte offline
-          const result = await putApi(`/api/services/${id}`, jsonData, {
-            enableOffline: true,
-            offlineTableName: 'services'
-          });
-          
-          console.log("Serviço atualizado offline:", result);
-          return { ...result, _offline: true };
+          return await putApi(`/api/services/${id}`, formData);
         }
         
         // Para FormData em modo online, fazer tratamento normal
@@ -292,18 +262,14 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       }
     },
     onSuccess: (data) => {
-      // Verificar se foi atualizado offline
-      const isOfflineData = data && data._offline === true;
-      
+      // Versão online-only
       queryClient.invalidateQueries({queryKey: [`/api/services/${id}`]});
       queryClient.invalidateQueries({queryKey: ['/api/services']});
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
       
       toast({
         title: t("services.serviceUpdated"),
-        description: isOfflineData 
-          ? t("offline.serviceOfflineDescription") 
-          : t("services.serviceUpdatedSuccess"),
+        description: t("services.serviceUpdatedSuccess"),
       });
       
       // Resetar o estado de edição
@@ -479,20 +445,17 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const deleteServiceMutation = useMutation({
     mutationFn: async () => {
-      // Verificar status da rede
-      const isOnline = checkNetworkStatus();
+      // Versão apenas online
+      const isOnline = navigator.onLine;
       console.log("Status da rede:", isOnline ? "Online" : "Offline");
       
+      if (!isOnline) {
+        throw new Error("Esta operação requer conexão com a internet");
+      }
+      
       try {
-        // Usar deleteApi com suporte offline
-        const result = await deleteApi(`/api/services/${id}`, {
-          offlineTableName: 'services'
-        });
-        
-        if (!isOnline) {
-          return { _offline: true, id: Number(id) };
-        }
-        
+        // Usar deleteApi sem suporte offline
+        const result = await deleteApi(`/api/services/${id}`);
         return result;
       } catch (error) {
         console.error("Erro na exclusão:", error);
@@ -500,17 +463,13 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       }
     },
     onSuccess: (data) => {
-      // Verificar se foi excluído offline
-      const isOfflineData = data && data._offline === true;
-      
+      // Versão online-only
       queryClient.invalidateQueries({queryKey: ['/api/services']});
       queryClient.invalidateQueries({queryKey: ['/api/dashboard/stats']});
       
       toast({
         title: t("services.serviceDeleted"),
-        description: isOfflineData 
-          ? t("offline.serviceOfflineDescription") 
-          : t("services.serviceDeletedSuccess", "O serviço foi excluído com sucesso"),
+        description: t("services.serviceDeletedSuccess", "O serviço foi excluído com sucesso"),
       });
       
       setLocation('/services');

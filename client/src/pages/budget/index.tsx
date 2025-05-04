@@ -53,10 +53,6 @@ interface Budget {
   chassis_number?: string;
   damaged_parts?: any;
   created_at: string;
-  // Propriedades para offline
-  _isOffline?: boolean;
-  _offlineId?: string;
-  _syncedWithServer?: boolean;
 }
 
 interface BudgetPageProps {
@@ -84,12 +80,9 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
     isLoading: isLoadingBudgets,
     error: budgetsError,
   } = useQuery<Budget[]>({
-    queryKey: ["/api/budgets", { enableOffline: true, offlineTableName: 'budgets' }],
+    queryKey: ["/api/budgets"],
     queryFn: async ({ queryKey }) => {
-      return await getApi<Budget[]>("/api/budgets", { 
-        enableOffline: true, 
-        offlineTableName: 'budgets' 
-      });
+      return await getApi<Budget[]>("/api/budgets");
     },
     retry: 1,
   });
@@ -153,39 +146,9 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
   const handleDelete = async () => {
     if (!selectedBudget) return;
     
-    // Se o orçamento for offline (criado localmente)
-    if (selectedBudget._isOffline) {
-      try {
-        // Importar a biblioteca
-        const { default: offlineDb } = await import("@/lib/offlineDb");
-        
-        // Remover do IndexedDB
-        await offlineDb.budgets.delete(selectedBudget.id);
-        
-        // Atualizar o cache
-        const currentBudgets = queryClient.getQueryData(["/api/budgets"]) || [];
-        const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];
-        const updatedBudgets = budgetsArray.filter(b => b.id !== selectedBudget.id);
-        queryClient.setQueryData(["/api/budgets"], updatedBudgets);
-        
-        toast({
-          title: t("budget.deleted"),
-          description: t("budget.deleteSuccess"),
-        });
-        
-        setShowDeleteDialog(false);
-      } catch (error) {
-        console.error("Erro ao excluir orçamento offline:", error);
-        toast({
-          title: t("common.error"),
-          description: t("budget.deleteError", { error: "Falha ao excluir orçamento offline" }),
-          variant: "destructive",
-        });
-      }
-    } else {
-      // Orçamento normal (online)
-      deleteMutation.mutate(selectedBudget.id);
-    }
+    // PWA e modo offline removidos
+    // Todos os orçamentos são tratados como online
+    deleteMutation.mutate(selectedBudget.id);
   };
 
   // Handle printing a budget usando o SimplePdfGenerator
@@ -349,14 +312,9 @@ const BudgetPage: React.FC<BudgetPageProps> = ({ isNewMode, isEditMode, id }) =>
                 </TableHeader>
                 <TableBody>
                   {filteredBudgets.map((budget) => (
-                    <TableRow key={budget.id} className={budget._isOffline ? "bg-blue-50" : ""}>
+                    <TableRow key={budget.id}>
                       <TableCell className="font-medium">
                         {budget.id}
-                        {budget._isOffline && (
-                          <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                            {t("offline.pendingSync")}
-                          </span>
-                        )}
                       </TableCell>
                       <TableCell>{budget.client_name}</TableCell>
                       <TableCell>{budget.vehicle_info}</TableCell>

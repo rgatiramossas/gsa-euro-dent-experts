@@ -6,8 +6,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { getApi, postApi } from "@/lib/apiWrapper";
-import { checkNetworkStatus } from "@/lib/offlineDb";
-import offlineDb from "@/lib/offlineDb";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -148,247 +146,52 @@ export default function NewServicePage() {
   const [serviceSavedOffline, setServiceSavedOffline] = useState(false);
   const { translateServiceType } = useTranslateServiceType();
   
-  // Carregar dados do cliente - estratégia completamente revisada
+  // Carregar dados do cliente - versão simplificada sem suporte offline
   const { data: clients } = useQuery<Client[]>({
-    queryKey: ['/api/clients', { enableOffline: true, offlineTableName: 'clients' }],
+    queryKey: ['/api/clients'],
     queryFn: async () => {
-      // Array para armazenar todos os clientes (online + offline)
-      let allClients: Client[] = [];
-      const isOfflineNow = !navigator.onLine;
-      
-      console.log("Estado da rede ao buscar clientes:", isOfflineNow ? "OFFLINE" : "ONLINE");
-      
-      // 1. Primeiro tentar buscar do servidor/cache
       try {
-        const clientsFromServer = await getApi<Client[]>('/api/clients', {
-          enableOffline: true,
-          offlineTableName: 'clients'
-        });
+        const clientsFromServer = await getApi<Client[]>('/api/clients');
         
         if (Array.isArray(clientsFromServer)) {
-          console.log(`Clientes obtidos do servidor/cache: ${clientsFromServer.length}`);
-          allClients = [...clientsFromServer];
+          console.log(`Clientes obtidos do servidor: ${clientsFromServer.length}`);
+          return clientsFromServer;
         } else {
           console.warn("Resposta do servidor não é um array, usando array vazio");
+          return [];
         }
       } catch (serverError) {
         console.error("Erro ao buscar clientes do servidor:", serverError);
+        return [];
       }
-      
-      // 2. Buscar clientes pendentes no armazenamento offline (independente do estado da rede)
-      try {
-        // Buscar todas as requisições pendentes
-        const { getPendingRequests, getAllFromTable } = await import('@/lib/offlineDb');
-        const pendingClientsRequests = await getPendingRequests({
-          tableName: 'clients',
-          operationType: 'create'
-        });
-        
-        console.log(`Requisições de clientes pendentes: ${pendingClientsRequests.length}`);
-        
-        // Converter requisições pendentes em objetos de cliente
-        const pendingClients = pendingClientsRequests.map(item => {
-          try {
-            // ID temporário negativo para evitar conflitos
-            const offlineId = typeof item.body.id === 'number' 
-              ? item.body.id 
-              : -(new Date(item.timestamp).getTime());
-            
-            return {
-              ...item.body,
-              id: offlineId,
-              _isOffline: true,
-              _pendingSync: true
-            };
-          } catch (e) {
-            console.error("Erro ao processar cliente pendente:", e);
-            return null;
-          }
-        }).filter(Boolean) as Client[];
-        
-        // 3. Também buscar clientes armazenados diretamente no IndexedDB
-        try {
-          const storedClients = await getAllFromTable('clients') || [];
-          console.log(`Clientes na tabela offline: ${storedClients.length}`);
-          
-          // Mapear para o formato de cliente com flag offline
-          const clientsFromStorage = storedClients.map(client => ({
-            ...client,
-            _isOffline: true,
-            _fromStorage: true
-          }));
-          
-          // Adicionar ao array de pendentes se não existirem
-          clientsFromStorage.forEach(storedClient => {
-            if (!pendingClients.some(c => c.id === storedClient.id)) {
-              pendingClients.push(storedClient);
-            }
-          });
-        } catch (storageError) {
-          console.error("Erro ao buscar clientes do armazenamento:", storageError);
-        }
-        
-        // 4. Adicionar clientes pendentes à lista principal, evitando duplicatas
-        pendingClients.forEach(offlineClient => {
-          if (!allClients.some(c => c.id === offlineClient.id)) {
-            allClients.push(offlineClient);
-          }
-        });
-      } catch (offlineError) {
-        console.error("Erro ao buscar clientes offline:", offlineError);
-      }
-      
-      // Log do resultado final
-      console.log(`RESULTADO FINAL - Total de clientes: ${allClients.length}`);
-      allClients.forEach((client, index) => {
-        const status = client._isOffline ? "OFFLINE" : "ONLINE";
-        console.log(`${index + 1}. Cliente ${client.id}: ${client.name} [${status}]`);
-      });
-      
-      return allClients;
     },
     refetchOnWindowFocus: true, // Recarregar quando a janela receber foco
     refetchOnMount: true        // Sempre recarregar ao montar o componente
   });
   
-  // Carregar veículos para o cliente selecionado - otimizado para garantir exibição dos veículos offline
+  // Carregar veículos para o cliente selecionado - versão simplificada
   const { data: vehicles, refetch: refetchVehicles } = useQuery<Vehicle[]>({
-    queryKey: ['/api/clients', selectedClientId, 'vehicles', { enableOffline: true, offlineTableName: 'vehicles' }],
+    queryKey: ['/api/clients', selectedClientId, 'vehicles'],
     queryFn: async () => {
       console.log("Buscando veículos para cliente:", selectedClientId);
       if (!selectedClientId) return [];
       
       const url = `/api/clients/${selectedClientId}/vehicles`;
-      const isOfflineNow = !navigator.onLine;
       
       try {
-        console.log("Estado da rede:", isOfflineNow ? "OFFLINE" : "ONLINE");
-        
-        // 1. Buscar dados da API/cache
-        let vehiclesData: Vehicle[] = [];
-        try {
-          // Usar getApi com suporte a modo offline
-          vehiclesData = await getApi<Vehicle[]>(url, {
-            enableOffline: true,
-            offlineTableName: 'vehicles'
-          });
-          console.log("Veículos obtidos da API/cache:", vehiclesData?.length || 0);
-        } catch (apiError) {
-          console.error("Erro ao buscar veículos da API:", apiError);
-        }
+        // Buscar dados da API
+        const vehiclesData = await getApi<Vehicle[]>(url);
+        console.log("Veículos obtidos da API:", vehiclesData?.length || 0);
         
         // Verificação de segurança para garantir que temos um array
         if (!Array.isArray(vehiclesData)) {
-          vehiclesData = [];
+          return [];
         }
         
-        // 2. Buscar TODAS as requisições offline pendentes (veículos criados recentemente)
-        // Importante: Buscar sempre, não apenas no modo offline
-        let pendingVehicles: any[] = [];
-        try {
-          const { getPendingRequests, getAllFromTable } = await import('@/lib/offlineDb');
-          const offlineRequests = await getPendingRequests({
-            tableName: 'vehicles',
-            operationType: 'create'
-          });
-          
-          console.log("Total de requisições veículos pendentes:", offlineRequests.length);
-          
-          // Filtrar apenas os veículos do cliente selecionado
-          pendingVehicles = offlineRequests
-            .filter(item => item.body && Number(item.body.client_id) === Number(selectedClientId))
-            .map(item => {
-              try {
-                // ID temporário negativo para evitar conflitos
-                const offlineId = typeof item.body.id === 'number' 
-                  ? item.body.id 
-                  : -(new Date(item.timestamp).getTime());
-                
-                return {
-                  ...item.body,
-                  id: offlineId,
-                  _isOffline: true,
-                  _pendingSync: true
-                };
-              } catch (e) {
-                console.error("Erro ao processar veículo offline:", e);
-                return null;
-              }
-            })
-            .filter(Boolean);
-          
-          console.log("Veículos pendentes (filtrados):", pendingVehicles.length);
-          
-          // 3. Buscar registros diretamente da tabela offline
-          // Cria uma promessa que busca os veículos com tratamento de erros
-          try {
-            console.log("Buscando veículos salvos na tabela offline...");
-            // Usar a função para obter todos os veículos da tabela
-            const storedVehicles = await getAllFromTable('vehicles') || [];
-            console.log(`Veículos na tabela offline: ${storedVehicles.length}`);
-            
-            if (storedVehicles && storedVehicles.length > 0) {
-              // Debug para verificar o conteúdo completo
-              console.log("Conteúdo de todos os veículos offline:", JSON.stringify(storedVehicles).slice(0, 200) + "...");
-              
-              // Filtrar apenas os deste cliente com verificação mais robusta
-              const filteredStoredVehicles = storedVehicles
-                .filter(v => {
-                  // Verificação segura dos tipos (aceita string e número)
-                  try {
-                    const vClientId = typeof v.client_id === 'string' ? parseInt(v.client_id) : v.client_id;
-                    const selectedId = Number(selectedClientId);
-                    const matches = vClientId === selectedId;
-                    console.log(`Comparando client_id do veículo ${v.id}: ${vClientId} === ${selectedId}: ${matches}`);
-                    return matches;
-                  } catch (e) {
-                    console.error("Erro ao comparar client_id do veículo:", e, v);
-                    return false;
-                  }
-                })
-                .map(v => ({
-                  ...v,
-                  _isOffline: true,
-                  _fromStorage: true
-                }));
-              
-              console.log(`Veículos armazenados (filtrados): ${filteredStoredVehicles.length}`);
-              
-              // Adicionar veículos armazenados com segurança
-              filteredStoredVehicles.forEach(storedVehicle => {
-                if (!pendingVehicles.some(v => v.id === storedVehicle.id)) {
-                  pendingVehicles.push(storedVehicle);
-                  console.log(`Adicionado veículo offline: ${storedVehicle.make} ${storedVehicle.model} (ID: ${storedVehicle.id})`);
-                }
-              });
-            }
-          } catch (storageError) {
-            console.error("Erro ao buscar veículos do armazenamento:", storageError);
-          }
-        } catch (offlineError) {
-          console.error("Erro ao buscar veículos offline:", offlineError);
-        }
-        
-        // 4. Combinar resultados, removendo duplicatas
-        const allVehicles: Vehicle[] = [...vehiclesData];
-        
-        // Adicionar veículos offline que não estão na lista (pelos IDs)
-        pendingVehicles.forEach(offlineVehicle => {
-          if (!allVehicles.some(v => v.id === offlineVehicle.id)) {
-            allVehicles.push(offlineVehicle);
-          }
-        });
-        
-        console.log("RESULTADO FINAL - Veículos disponíveis:", allVehicles.length);
-        allVehicles.forEach(v => {
-          const status = v._isOffline ? "OFFLINE" : "ONLINE";
-          console.log(`- Veículo ${v.id}: ${v.make} ${v.model} [${status}]`);
-        });
-        
-        return allVehicles;
+        return vehiclesData;
       } catch (error) {
-        console.error("Erro crítico ao carregar veículos:", error);
-        return []; // Último recurso: array vazio
+        console.error("Erro ao carregar veículos:", error);
+        return []; // Retornar array vazio em caso de erro
       }
     },
     enabled: !!selectedClientId,
@@ -400,10 +203,7 @@ export default function NewServicePage() {
     queryKey: ['/api/service-types'],
     queryFn: async () => {
       try {
-        return await getApi<ServiceType[]>('/api/service-types', {
-          enableOffline: true,
-          offlineTableName: 'serviceTypes'
-        });
+        return await getApi<ServiceType[]>('/api/service-types');
       } catch (error) {
         console.error("Erro ao carregar tipos de serviço:", error);
         return [];
@@ -415,10 +215,7 @@ export default function NewServicePage() {
     queryKey: ['/api/users?role=technician'],
     queryFn: async () => {
       try {
-        return await getApi<User[]>('/api/users?role=technician', {
-          enableOffline: true,
-          offlineTableName: 'users'
-        });
+        return await getApi<User[]>('/api/users?role=technician');
       } catch (error) {
         console.error("Erro ao carregar técnicos:", error);
         return [];
@@ -434,8 +231,8 @@ export default function NewServicePage() {
     mutationFn: async (data: FormData) => {
       try {
         // Verificar se estamos offline antes de tentar a requisição
-        if (!navigator.onLine || !checkNetworkStatus()) {
-          console.log("Detectada operação offline. Iniciando processamento offline...");
+        if (!navigator.onLine) {
+          console.log("Detectada operação offline. Não é possível salvar sem conexão.");
           setOfflineAttemptFailed(true);
           throw new Error("OFFLINE_MODE");
         }
@@ -780,137 +577,20 @@ export default function NewServicePage() {
     });
 
     // Verificar se estamos offline antes de tentar a requisição
-    if (!navigator.onLine || !checkNetworkStatus()) {
+    if (!navigator.onLine) {
       console.log("Detectada operação offline durante envio do formulário.");
       
-      try {
-        // Log para depuração offline
-        console.log("Iniciando processamento offline para criação de serviço");
-        
-        // Formatar a data para ser consistente com a API
-        let formattedData = { ...data };
-        
-        // Tratamento para a data agendada
-        if (formattedData.scheduled_date) {
-          try {
-            // Tratamento mais seguro para a data
-            let dateToUse: Date;
-            
-            if (formattedData.scheduled_date instanceof Date) {
-              dateToUse = new Date(formattedData.scheduled_date.getTime()); // Clone da data
-            } else if (typeof formattedData.scheduled_date === 'string') {
-              dateToUse = new Date(formattedData.scheduled_date);
-              if (isNaN(dateToUse.getTime())) {
-                console.warn("Data inválida recebida:", formattedData.scheduled_date);
-                dateToUse = new Date(); // Fallback para data atual
-              }
-            } else {
-              console.warn("Tipo de data inesperado:", typeof formattedData.scheduled_date);
-              dateToUse = new Date(); // Fallback para data atual
-            }
-            
-            // Define meio-dia como horário padrão ou usa o horário específico
-            if (data.scheduled_time) {
-              const [hours, minutes] = data.scheduled_time.split(':');
-              dateToUse.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-            } else {
-              dateToUse.setHours(12, 0, 0, 0);
-            }
-            
-            // Converter para ISO string para envio ao servidor
-            console.log("Data processada:", dateToUse);
-            // Converter para ISO string para API, mas manter a propriedade como Date para o TypeScript
-            const isoString = dateToUse.toISOString();
-            // @ts-ignore - necessário para compatibilidade com a API
-            formattedData.scheduled_date = isoString;
-          } catch (error) {
-            console.error("Erro ao processar data:", error);
-            const fallbackDate = new Date().toISOString();
-            // @ts-ignore - necessário para compatibilidade com a API
-            formattedData.scheduled_date = fallbackDate;
-          }
-        } else {
-          console.log("Sem data agendada, usando data atual");
-          const currentDate = new Date().toISOString();
-          // @ts-ignore - necessário para compatibilidade com a API
-          formattedData.scheduled_date = currentDate;
-        }
-        
-        // Calcular total
-        const price = formattedData.price !== undefined && formattedData.price !== null 
-          ? formattedData.price : 0;
-        const administrativeFee = formattedData.administrative_fee !== undefined && formattedData.administrative_fee !== null 
-          ? formattedData.administrative_fee : 0;
-        formattedData.total = price + administrativeFee;
-        
-        // Remover parâmetros desnecessários
-        const { scheduled_time, ...serviceData } = formattedData;
-        
-        console.log("Dados formatados para salvamento offline:", serviceData);
-        
-        // 1. Salvar no IndexedDB usando o apiWrapper
-        const createdService = await postApi('/api/services', serviceData, {
-          enableOffline: true,
-          offlineTableName: 'services'
-        });
-        
-        // 2. Atualizar diretamente o cache do React Query
-        const currentServices = queryClient.getQueryData<any[]>(['/api/services', { enableOffline: true, offlineTableName: 'services' }]) || [];
-        
-        // Adicionar o serviço recém-criado à lista
-        queryClient.setQueryData(['/api/services', { enableOffline: true, offlineTableName: 'services' }], [
-          ...currentServices,
-          {
-            ...createdService,
-            _isOffline: true,
-            _pendingSync: true,
-            // Adicionar dados relacionados para UI
-            client: clients?.find(c => c.id === data.client_id),
-            vehicle: data.vehicle_id ? vehicles?.find(v => v.id === data.vehicle_id) : {
-              make: data.vehicle_make,
-              model: data.vehicle_model,
-              plate: data.vehicle_plate,
-              vin: data.vehicle_vin,
-              _isManualEntry: true
-            },
-            service_type: serviceTypes?.find(t => t.id === data.service_type_id),
-            technician: technicians?.find(t => t.id === data.technician_id)
-          }
-        ]);
-        
-        // Atualizar também a query simplificada
-        queryClient.invalidateQueries({ queryKey: ['/api/services'] });
-        
-        // Mostrar notificação e marcar como salvo offline
-        toast({
-          title: t("offline.savedOffline"),
-          description: t("offline.serviceOfflineDescription"),
-        });
-        
-        // Resetar estado para permitir mais envios
-        setOfflineAttemptFailed(false);
-        
-        // Redirecionar para a lista
-        setTimeout(() => {
-          setLocation('/services');
-        }, 500);
-        
-        return;
-      } catch (error) {
-        console.error("Erro ao salvar offline:", error);
-        setOfflineAttemptFailed(false);
-        
-        toast({
-          title: t("errors.createService"),
-          description: t("offline.errorSavingOffline"),
-          variant: "destructive",
-        });
-        
-        return;
-      }
+      // Mostrar notificação que não é possível criar serviços offline
+      toast({
+        title: t("errors.networkError", "Erro de conexão"),
+        description: t("errors.needConnectionToSave", "É necessário conexão com a internet para salvar serviços."),
+        variant: "destructive"
+      });
+      
+      return;
     }
     
-    // Se online, iniciar a operação de criação do serviço normalmente
+    // Se online, iniciar a operação de criação do serviço
     createServiceMutation.mutate(data);
   };
   
