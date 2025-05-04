@@ -96,7 +96,7 @@ const EditBudgetPage: React.FC<EditBudgetPageProps> = ({ id }) => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="text-2xl">Editar Orçamento #{id}</CardTitle>
+            <CardTitle className="text-2xl">Editar Orçamento</CardTitle>
           </div>
           <CardDescription>
             Atualize as informações do orçamento

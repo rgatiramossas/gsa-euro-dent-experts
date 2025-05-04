@@ -618,7 +618,6 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                             <SelectItem value="no-clients">{t("budget.noClientsFound")}</SelectItem>
                           ) : (
                             <>
-                              {console.log("Total de clientes para renderizar:", clients?.length || 0)}
                               {clients && clients
                                 .filter(client => 
                                   // Filtrar clientes excluídos (que contêm '[EXCLUÍDO]' no nome)
@@ -632,11 +631,6 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                                     ? `${client.name || 'Cliente sem nome'} (Offline)` 
                                     : client.name || 'Cliente sem nome';
                                   
-                                  console.log("Renderizando cliente:", {
-                                    id: client.id,
-                                    name: clientName,
-                                    isOffline: isOffline
-                                  });
                                   
                                   return (
                                     <SelectItem key={client.id} value={String(client.id)}>
