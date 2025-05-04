@@ -131,6 +131,8 @@
     "selectStatus": "Selecione o Status",
     "notesOptional": "Observações (Opcional)",
     "addStatusNotes": "Adicionar observações sobre a mudança de status",
+    "statusUpdated": "Status atualizado",
+    "statusUpdatedSuccess": "Status do serviço atualizado com sucesso",
     "status": {
       "pending": "Pendente",
       "in_progress": "Em andamento",

@@ -803,9 +803,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">{formatStatus("pending")}</SelectItem>
-                        <SelectItem value="in_progress">{formatStatus("in_progress")}</SelectItem>
                         <SelectItem value="completed">{formatStatus("completed")}</SelectItem>
-                        <SelectItem value="canceled">{formatStatus("canceled")}</SelectItem>
+                        <SelectItem value="faturado">{formatStatus("faturado")}</SelectItem>
                         <SelectItem value="pago">{formatStatus("pago")}</SelectItem>
                       </SelectContent>
                     </Select>

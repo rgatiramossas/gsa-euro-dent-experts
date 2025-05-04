@@ -97,6 +97,8 @@
     "selectStatus": "Select Status",
     "notesOptional": "Notes (Optional)",
     "addStatusNotes": "Add notes about status change",
+    "statusUpdated": "Status updated",
+    "statusUpdatedSuccess": "Service status updated successfully",
     "changeStatus": "Change Status",
     "status": {
       "pending": "Pending",
