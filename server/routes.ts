@@ -9,7 +9,8 @@ import fs from "fs";
 import multer from "multer";
 import { fileURLToPath } from "url";
 import { addClearSessionsEndpoint } from "./clearSessions";
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer } from 'ws';
+import WebSocket from 'ws';
 // import { db } from "./db"; // PostgreSQL
 // MySQL connection (que será obtida mais tarde)
 let pool: any;
@@ -114,6 +115,9 @@ function notifyClients(type: string, data?: any) {
     data,
     timestamp: new Date().toISOString()
   });
+  
+  // Obter referência ao WebSocket importado para verificação
+  const { WebSocket } = require('ws');
   
   clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
