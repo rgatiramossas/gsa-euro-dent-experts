@@ -15,7 +15,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const isAdmin = user?.role === "admin";
-  const isGestor = user?.role === "manager";
+  const isGestor = user?.role === "gestor" || user?.role === "manager";
   
   // Fetch dashboard stats
   const { 
