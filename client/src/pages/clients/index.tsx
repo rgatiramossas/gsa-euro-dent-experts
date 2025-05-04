@@ -55,18 +55,32 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
   
   // Query para buscar os clientes
   const { data: clients = [], isLoading, refetch } = useQuery<Client[]>({
-    queryKey: managerMode && managerId 
-      ? ['/api/managers', managerId, 'clients'] 
+    queryKey: managerMode 
+      ? ['/api/my-clients'] // Usar a rota /api/my-clients para gestores 
       : ['/api/clients', statusFilter, { enableOffline: true, offlineTableName: 'clients' }], // Suporte a offline
     queryFn: async ({ queryKey }) => {
-      if (managerMode && managerId) {
+      if (managerMode) {
+        console.log("Modo gestor: Buscando clientes com /api/my-clients");
         try {
-          const response = await fetch(`/api/managers/${managerId}/clients`);
+          // Usando timestamp para evitar cache
+          const timestamp = new Date().getTime();
+          const response = await fetch(`/api/my-clients?_t=${timestamp}`, {
+            credentials: 'include',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          });
+          
           if (!response.ok) {
             throw new Error('Erro ao carregar clientes do gestor');
           }
-          return response.json();
+          
+          const data = await response.json();
+          console.log("Clientes do gestor recebidos:", data);
+          return data;
         } catch (error: any) {
+          console.error("Erro ao buscar clientes do gestor:", error);
           toast({
             title: "Erro",
             description: `Erro ao carregar clientes: ${error.message}`,
