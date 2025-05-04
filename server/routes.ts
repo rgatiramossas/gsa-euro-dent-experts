@@ -399,22 +399,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rota para obter os clientes de um gestor específico
   app.get("/api/managers/:managerId/clients", requireAuth, async (req, res) => {
     try {
+      // Log para debug
+      console.log(`GET /api/managers/${req.params.managerId}/clients - Usuário: ${req.session.userId}, Papel: ${req.session.userRole}`);
+      
+      // Verificar autorização: apenas admin ou o próprio gestor podem ver seus clientes
       if (req.session.userRole !== "admin" && Number(req.session.userId) !== Number(req.params.managerId)) {
+        console.log(`Acesso negado para usuário ${req.session.userId} tentando ver clientes do gestor ${req.params.managerId}`);
         return res.status(403).json({ message: "Acesso não autorizado" });
       }
       
       const { managerId } = req.params;
+      console.log(`Buscando dados do gestor ${managerId}`);
       
       // Verificar se o gestor existe e tem a role correta
       const manager = await storage.getUser(Number(managerId));
-      if (!manager || (manager.role !== "gestor" && manager.role !== "manager")) {
+      if (!manager) {
+        console.log(`Gestor ${managerId} não encontrado`);
         return res.status(404).json({ message: "Gestor não encontrado" });
       }
       
+      if (manager.role !== "gestor" && manager.role !== "manager") {
+        console.log(`Usuário ${managerId} não é um gestor. Papel atual: ${manager.role}`);
+        return res.status(400).json({ message: "O usuário não é um gestor" });
+      }
+      
+      console.log(`Obtendo clientes para o gestor ${managerId} (${manager.username})`);
+      
       // Obter a lista de clientes do gestor
       const clients = await storage.getManagerClients(Number(managerId));
+      console.log(`Encontrados ${clients.length} clientes para o gestor ${managerId}`);
       
-      res.json(clients);
+      if (clients.length > 0) {
+        console.log('Exemplo de cliente encontrado:', clients[0].name);
+      } else {
+        console.log('Nenhum cliente encontrado para este gestor');
+      }
+      
+      return res.json(clients);
     } catch (error) {
       console.error("Erro ao buscar clientes do gestor:", error);
       res.status(500).json({ message: "Erro ao buscar clientes do gestor" });
@@ -487,15 +508,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = req.session.userRole;
       const userId = req.session.userId;
       
+      console.log(`GET /api/my-clients - Usuário ID: ${userId}, Papel: ${userRole}`);
+      
       // Verificar se o usuário é um gestor
       if (userRole !== "gestor" && userRole !== "manager") {
+        console.log(`Acesso negado: usuário ${userId} com papel ${userRole} não é um gestor`);
         return res.status(403).json({ message: "Apenas gestores podem acessar esta rota" });
       }
       
+      // Obter o usuário para confirmar a existência
+      const user = await storage.getUser(Number(userId));
+      if (!user) {
+        console.log(`Usuário ${userId} não encontrado`);
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      console.log(`Buscando clientes para o gestor ${userId} (${user.username})`);
+      
       // Obter clientes do gestor atual
       const clients = await storage.getManagerClients(Number(userId));
+      console.log(`Encontrados ${clients.length} clientes para o gestor ${userId}`);
       
-      res.status(200).json(clients);
+      if (clients.length > 0) {
+        console.log('Exemplo de cliente encontrado:', { id: clients[0].id, name: clients[0].name });
+      } else {
+        console.log('Nenhum cliente encontrado para este gestor');
+      }
+      
+      return res.status(200).json(clients);
     } catch (error) {
       console.error("Erro ao obter clientes do gestor atual:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
@@ -573,34 +613,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Se for um gestor, retornar estatísticas baseadas nos clientes associados
       if (userRole === "manager" || userRole === "gestor") {
+        console.log(`Obtendo estatísticas para o gestor ID ${userId} (papel: ${userRole})`);
+        
         // Obter clientes do gestor
         const clientesGestor = await storage.getManagerClients(Number(userId));
+        console.log(`Encontrados ${clientesGestor.length} clientes para o gestor ${userId}`);
         
         if (clientesGestor.length === 0) {
           // Se não tiver clientes atribuídos, retornar estatísticas vazias
-          return res.json({
+          console.log(`Gestor ${userId} não tem clientes atribuídos, retornando estatísticas vazias`);
+          const emptyStats = {
             totalPendingServices: 0,
             totalInProgressServices: 0,
             totalCompletedServices: 0,
-            // Não enviamos totalRevenue para gestores
-          });
+          };
+          console.log('Retornando dados vazios:', emptyStats);
+          return res.json(emptyStats);
         }
         
         // Obter IDs dos clientes
         const clientIds = clientesGestor.map(c => c.id);
         
-        console.log('Clientes do gestor encontrados:', clientesGestor);
-        console.log('IDs dos clientes do gestor:', clientIds);
+        console.log(`Clientes do gestor ${userId} encontrados:`, 
+          clientesGestor.map(c => ({id: c.id, name: c.name})));
+        console.log(`IDs dos clientes do gestor ${userId}:`, clientIds);
         
         // Obter estatísticas para esses clientes
         const stats = await storage.getDashboardStatsForManager(clientIds);
         
         console.log('Estatísticas brutas recebidas do storage:', stats);
         
+        // Verificar se as estatísticas são válidas
+        if (!stats || typeof stats !== 'object') {
+          console.error('Estatísticas inválidas recebidas do storage:', stats);
+          // Fornecer estatísticas padrão para evitar erros no frontend
+          const defaultStats = {
+            totalPendingServices: 0,
+            totalInProgressServices: 0,
+            totalCompletedServices: 0,
+          };
+          console.log('Retornando estatísticas padrão:', defaultStats);
+          return res.json(defaultStats);
+        }
+        
         // Remover informações financeiras
         const { totalRevenue, ...filteredStats } = stats;
         
         console.log('Stats do gestor após filtro:', filteredStats);
+        console.log('Enviando resposta da rota /api/dashboard/stats com stats do gestor');
+        
         return res.json(filteredStats);
       }
       
