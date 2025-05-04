@@ -105,17 +105,30 @@ export function TechnicianPaymentsPieChart({ financialStats }: { financialStats:
 }
 
 // Componente para o gráfico de barras dos pagamentos mensais
-export function MonthlyPaymentsChart({ monthlyData }: { monthlyData: TechnicianFinancialStats['monthlyData'] }) {
+export function MonthlyPaymentsChart({ monthlyData }: { monthlyData: TechnicianFinancialStats['monthlyData'] | undefined | null }) {
   const { t } = useTranslation();
 
-  if (!monthlyData || monthlyData.length === 0) {
+  if (!monthlyData) {
+    return <div className="flex items-center justify-center h-full text-gray-500">{t("common.loading")}</div>;
+  }
+  
+  // Garantir que os dados mensais são válidos
+  const validData = Array.isArray(monthlyData) ? monthlyData : [];
+  
+  if (validData.length === 0) {
     return <div className="flex items-center justify-center h-full text-gray-500">{t("finances.noMonthlyData")}</div>;
   }
+  
+  // Verificar se todos os valores são números
+  const cleanData = validData.map(item => ({
+    month: item.month || '',
+    value: typeof item.value === 'number' ? item.value : 0
+  }));
 
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
-        data={monthlyData}
+        data={cleanData}
         margin={{
           top: 5,
           right: 30,
