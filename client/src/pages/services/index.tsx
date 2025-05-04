@@ -44,7 +44,7 @@ export default function ServicesList() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-  const [wsConnected, setWsConnected] = useState(false);
+  // O indicador de WebSocket foi removido, então não precisamos mais deste estado
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   
@@ -77,20 +77,8 @@ export default function ServicesList() {
     };
   }, []);
   
-  // Configurar WebSocket para atualização em tempo real
+  // Configurar eventos para atualização em tempo real
   useEffect(() => {
-    // Manipulador para quando uma conexão WebSocket é estabelecida
-    const handleConnectionOpen = () => {
-      console.log('Conexão WebSocket estabelecida para a lista de serviços');
-      setWsConnected(true);
-    };
-    
-    // Manipulador para quando uma conexão WebSocket é fechada
-    const handleConnectionClose = () => {
-      console.log('Conexão WebSocket fechada para a lista de serviços');
-      setWsConnected(false);
-    };
-    
     // Manipulador para quando um serviço é criado
     const handleServiceCreated = (data: any) => {
       console.log('Novo serviço criado:', data);
@@ -99,8 +87,8 @@ export default function ServicesList() {
       
       // Mostrar notificação toast
       toast({
-        title: 'Novo serviço criado',
-        description: 'A lista de serviços foi atualizada',
+        title: t("services.created", "Novo serviço criado"),
+        description: t("services.listUpdated", "A lista de serviços foi atualizada"),
       });
     };
     
@@ -112,8 +100,8 @@ export default function ServicesList() {
       
       // Mostrar notificação toast
       toast({
-        title: 'Serviço atualizado',
-        description: 'A lista de serviços foi atualizada',
+        title: t("services.updated", "Serviço atualizado"),
+        description: t("services.listUpdated", "A lista de serviços foi atualizada"),
       });
     };
     
@@ -125,22 +113,18 @@ export default function ServicesList() {
       
       // Mostrar notificação toast
       toast({
-        title: 'Serviço excluído',
-        description: 'A lista de serviços foi atualizada',
+        title: t("services.deleted", "Serviço excluído"),
+        description: t("services.listUpdated", "A lista de serviços foi atualizada"),
       });
     };
     
-    // Registrar manipuladores de eventos WebSocket
-    const removeConnectionOpenListener = addEventListener('connection_open', handleConnectionOpen);
-    const removeConnectionCloseListener = addEventListener('connection_close', handleConnectionClose);
+    // Registrar manipuladores de eventos
     const removeServiceCreatedListener = addEventListener('SERVICE_CREATED', handleServiceCreated);
     const removeServiceUpdatedListener = addEventListener('SERVICE_UPDATED', handleServiceUpdated);
     const removeServiceDeletedListener = addEventListener('SERVICE_DELETED', handleServiceDeleted);
     
     // Limpar manipuladores de eventos quando o componente for desmontado
     return () => {
-      removeConnectionOpenListener();
-      removeConnectionCloseListener();
       removeServiceCreatedListener();
       removeServiceUpdatedListener();
       removeServiceDeletedListener();
@@ -220,18 +204,7 @@ export default function ServicesList() {
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <PageHeader
         title={t("services.title", "Serviços")}
-        description={
-          <div className="flex items-center gap-2">
-            <span>{t("services.manage", "Gerencie os serviços de reparo")}</span>
-            <div className="flex items-center ml-2">
-              <span className="text-xs text-gray-500 mr-1">WS:</span>
-              <span 
-                className={`inline-block w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`} 
-                title={wsConnected ? 'WebSocket conectado' : 'WebSocket desconectado'}
-              ></span>
-            </div>
-          </div>
-        }
+        description={t("services.manage", "Gerencie todos os serviços de martelinho de ouro")}
         actions={
           <Link href="/services/new">
             <Button>
