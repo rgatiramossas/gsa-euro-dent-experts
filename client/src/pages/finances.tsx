@@ -253,9 +253,15 @@ export default function Finances() {
   );
   
   // Serviços do técnico logado com status "completed" (para pedidos de pagamento)
-  const completedTechnicianServices = services?.filter(service => 
-    service.status === "completed" && service.technician?.id === currentUser?.id
-  );
+  const completedTechnicianServices = services?.filter(service => {
+    console.log("Verificando serviço:", service);
+    console.log("Status do serviço:", service.status);
+    console.log("ID do técnico no serviço:", service.technician?.id);
+    console.log("ID do técnico atual:", currentUser?.id);
+    console.log("É o mesmo técnico?", service.technician?.id === currentUser?.id);
+    console.log("Status é completed?", service.status === "completed");
+    return service.status === "completed" && service.technician?.id === currentUser?.id;
+  });
   
   // Mutation para criar pedido de pagamento
   const createPaymentRequestMutation = useMutation({
@@ -402,6 +408,12 @@ export default function Finances() {
     Array.isArray(paymentRequests) && 
     paymentRequests.some(req => req.technician_id === currentUser?.id);
     
+  // Logs adicionais para diagnóstico
+  console.log("completedTechnicianServices:", completedTechnicianServices);
+  console.log("hasTechnicianPaymentRequests:", hasTechnicianPaymentRequests);
+  console.log("isAdmin:", isAdmin);
+  console.log("currentUser completo:", currentUser);
+  
   // Mostrar mensagem somente se não houver serviços completados E não houver pedidos
   if (!isAdmin && !completedTechnicianServices?.length && !hasTechnicianPaymentRequests) {
     return (
