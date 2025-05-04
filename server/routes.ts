@@ -2199,18 +2199,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else {
         // Admin e técnicos veem todos os orçamentos
-        console.log("Buscando todos os orçamentos");
+        // Verificar se há um parâmetro de clientId na query
+        const clientId = req.query.clientId ? parseInt(req.query.clientId as string) : null;
+        
+        console.log(clientId ? `Buscando orçamentos para o cliente ID ${clientId}` : "Buscando todos os orçamentos");
         
         try {
-          // Query para buscar todos os orçamentos com nomes de clientes
-          const query = `
+          // Preparar a query base
+          let query = `
             SELECT b.*, c.name as client_name 
             FROM budgets b 
             LEFT JOIN clients c ON b.client_id = c.id
-            ORDER BY b.id DESC
           `;
           
-          const [budgets] = await pool.query(query);
+          let queryParams = [];
+          
+          // Adicionar filtro por cliente se o clientId for fornecido
+          if (clientId) {
+            query += ` WHERE b.client_id = ?`;
+            queryParams.push(clientId);
+          }
+          
+          // Adicionar ordenação
+          query += ` ORDER BY b.id DESC`;
+          
+          // Executar a query
+          const [budgets] = await pool.query(query, queryParams);
           
           console.log(`Total de orçamentos encontrados: ${budgets.length}`);
           
