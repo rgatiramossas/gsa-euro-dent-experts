@@ -116,9 +116,7 @@ function notifyClients(type: string, data?: any) {
     timestamp: new Date().toISOString()
   });
   
-  // Obter referência ao WebSocket importado para verificação
-  const { WebSocket } = require('ws');
-  
+  // Usando a referência WebSocket já importada no topo do arquivo
   clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
