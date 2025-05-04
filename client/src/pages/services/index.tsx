@@ -23,7 +23,8 @@ import { ServiceListItem, ServiceStatus } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { CloudOff, RotateCw } from "lucide-react";
+import { CloudOff, RotateCw, RefreshCw } from "lucide-react";
+import { addEventListener, WebSocketEventType } from "@/lib/websocketService";
 import {
   Select,
   SelectContent,

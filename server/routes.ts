@@ -1298,6 +1298,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         console.log("Serviço criado com sucesso:", service);
+        
+        // Notificar todos os clientes conectados via WebSocket sobre o novo serviço
+        notifyClients('SERVICE_CREATED', {
+          service: service,
+          message: 'Nova ordem de serviço criada com sucesso'
+        });
+        
         res.status(201).json(service);
       } catch (validationError) {
         if (validationError instanceof z.ZodError) {
@@ -1576,6 +1583,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const updatedService = await storage.updateService(id, filteredUpdates);
+      
+      // Notificar todos os clientes conectados via WebSocket sobre a atualização do serviço
+      notifyClients('SERVICE_UPDATED', {
+        service: updatedService,
+        message: 'Ordem de serviço atualizada com sucesso'
+      });
+      
       res.json(updatedService);
     } catch (error) {
       console.error("Error updating service:", error);
@@ -1610,6 +1624,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Em uma implementação real, você implementaria um método de exclusão no storage
       // Por enquanto, vamos simular a exclusão usando o updateService com um status "deleted"
       const updatedService = await storage.updateService(id, { status: "deleted" });
+      
+      // Notificar todos os clientes conectados via WebSocket sobre a exclusão do serviço
+      notifyClients('SERVICE_DELETED', {
+        serviceId: id,
+        message: 'Ordem de serviço excluída com sucesso'
+      });
+      
       res.status(200).json({ message: "Service deleted successfully" });
     } catch (error) {
       console.error("Error deleting service:", error);

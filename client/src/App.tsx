@@ -20,6 +20,8 @@ import { RequireManager } from "@/components/auth/RequireManager";
 // PWA Componentes
 import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { SplashScreen } from "@/components/ui/splash-screen";
+// WebSocket service para atualizações em tempo real
+import { initWebSocket, closeWebSocket } from "@/lib/websocketService";
 
 // Import service related pages
 import ServicesList from "@/pages/services/index";
@@ -55,9 +57,19 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const [_, setLocation] = useLocation();
 
+  // Inicializar WebSocket quando o usuário está autenticado
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setLocation("/login");
+    if (!isLoading) {
+      if (isAuthenticated) {
+        // Inicializar WebSocket quando o usuário estiver autenticado
+        console.log("Usuário autenticado, inicializando WebSocket...");
+        initWebSocket();
+      } else {
+        // Fechar WebSocket quando o usuário não estiver autenticado
+        console.log("Usuário não autenticado, fechando WebSocket...");
+        closeWebSocket();
+        setLocation("/login");
+      }
     }
   }, [isAuthenticated, isLoading, setLocation]);
 
