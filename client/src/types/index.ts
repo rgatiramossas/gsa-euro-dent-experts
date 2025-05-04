@@ -57,7 +57,7 @@ export interface ServiceType {
   base_price?: number;
 }
 
-export type ServiceStatus = 'pending' | 'in_progress' | 'completed' | 'canceled' | 'aguardando_aprovacao' | 'faturado' | 'pago';
+export type ServiceStatus = 'pending' | 'in_progress' | 'completed' | 'canceled' | 'aguardando_aprovacao' | 'aguardando_pagamento' | 'faturado' | 'pago';
 export type LocationType = 'client_location' | 'workshop';
 
 export interface Service {

@@ -710,9 +710,9 @@ export default function Finances() {
     );
   }
   
-  // Filter financially relevant services (completed, awaiting approval, invoiced, paid)
+  // Filter financially relevant services (completed, awaiting approval/payment, invoiced, paid)
   const financiallyRelevantServices = services?.filter(service => 
-    ["completed", "aguardando_aprovacao", "faturado", "pago"].includes(service.status)
+    ["completed", "aguardando_aprovacao", "aguardando_pagamento", "faturado", "pago"].includes(service.status)
   );
   
   // Calculate stats

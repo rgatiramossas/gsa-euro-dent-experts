@@ -24,6 +24,7 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
         "completed": "Abgeschlossen",
         "canceled": "Storniert",
         "aguardando_aprovacao": "Genehmigung ausstehend",
+        "aguardando_pagamento": "Zahlung ausstehend",
         "faturado": "In Rechnung gestellt",
         "pago": "Bezahlt"
       };
@@ -42,6 +43,7 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
         "completed": "Completado",
         "canceled": "Cancelado",
         "aguardando_aprovacao": "Esperando Aprobación",
+        "aguardando_pagamento": "Esperando Pago",
         "faturado": "Facturado",
         "pago": "Pagado"
       };
@@ -60,6 +62,7 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
         "completed": "Terminé",
         "canceled": "Annulé",
         "aguardando_aprovacao": "En attente d'approbation",
+        "aguardando_pagamento": "En attente de paiement",
         "faturado": "Facturé",
         "pago": "Payé"
       };
@@ -78,6 +81,7 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
         "completed": "Completato",
         "canceled": "Annullato",
         "aguardando_aprovacao": "In attesa di approvazione",
+        "aguardando_pagamento": "In attesa di pagamento",
         "faturado": "Fatturato",
         "pago": "Pagato"
       };
@@ -96,6 +100,7 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
         "completed": "Completed",
         "canceled": "Canceled",
         "aguardando_aprovacao": "Waiting for Approval",
+        "aguardando_pagamento": "Waiting for Payment",
         "faturado": "Invoiced",
         "pago": "Paid"
       };
@@ -113,6 +118,7 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
       "completed": "services.status.completed",
       "canceled": "services.status.canceled",
       "aguardando_aprovacao": "services.status.aguardando_aprovacao",
+      "aguardando_pagamento": "services.status.aguardando_pagamento",
       "faturado": "services.status.faturado",
       "pago": "services.status.pago"
     };
@@ -169,6 +175,11 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
         return {
           label: translatedLabel,
           variant: "bg-yellow-100 text-yellow-800",
+        };
+      case "aguardando_pagamento":
+        return {
+          label: translatedLabel,
+          variant: "bg-amber-100 text-amber-800",
         };
       case "faturado":
         return {

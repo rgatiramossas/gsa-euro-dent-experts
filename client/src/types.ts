@@ -1,5 +1,5 @@
 // Tipos para serviços
-export type ServiceStatus = 'pending' | 'in_progress' | 'completed' | 'canceled' | 'aguardando_aprovacao' | 'faturado' | 'pago';
+export type ServiceStatus = 'pending' | 'in_progress' | 'completed' | 'canceled' | 'aguardando_aprovacao' | 'aguardando_pagamento' | 'faturado' | 'pago';
 
 export interface ServiceListItem {
   id: number;
