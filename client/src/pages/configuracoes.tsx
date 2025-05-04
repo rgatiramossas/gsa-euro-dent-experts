@@ -15,6 +15,7 @@ import { Link } from "wouter";
 import { UserPlusIcon, Users, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { DatabaseMaintenance } from "@/components/settings/DatabaseMaintenance";
+import { AuthSessionMaintenance } from "@/components/settings/AuthSessionMaintenance";
 
 // Schema para validação do formulário de perfil
 const createProfileFormSchema = (t: any, language: string) => {
@@ -325,6 +326,7 @@ export default function ConfiguracoesPage() {
         {/* Conteúdo da aba Sincronização */}
         <TabsContent value="sync">
           <DatabaseMaintenance />
+          <AuthSessionMaintenance />
         </TabsContent>
 
         {/* Conteúdo da aba Gestor */}
