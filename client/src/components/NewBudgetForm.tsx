@@ -109,10 +109,22 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   const { t } = useTranslation();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   
-  // Efeito para detectar mudanças no estado da conexão
+  // Efeito para detectar mudanças no estado da conexão - aprimorado
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
+    // Verificar inicialmente se estamos online
+    console.log("Verificação inicial de rede:", navigator.onLine ? "ONLINE" : "OFFLINE");
+    setIsOffline(!navigator.onLine);
+    
+    // Funções para atualizar o estado
+    const handleOnline = () => {
+      console.log("Evento online detectado");
+      setIsOffline(false);
+    };
+    
+    const handleOffline = () => {
+      console.log("Evento offline detectado");
+      setIsOffline(true);
+    };
     
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -976,18 +988,27 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                         operationType: 'create' as const
                       };
                       
-                      // Importar a função de armazenamento offline
-                      const { storeOfflineRequest } = await import('@/lib/offlineDb');
+                      // Importar as funções de armazenamento offline
+                      const { storeOfflineRequest, addToOfflineTable } = await import('@/lib/offlineDb');
+                      
+                      // 1. Armazenar o request para sincronização futura
+                      console.log("Armazenando orçamento para sincronização futura:", pendingRequest);
                       await storeOfflineRequest(pendingRequest);
                       
-                      // Criar objeto com ID temporário para referência local
+                      // 2. Criar objeto com ID temporário para referência local
                       const tempBudget = { 
                         id: -timestamp, 
                         ...budgetData,
-                        _isOffline: true
+                        _isOffline: true,
+                        _pendingSync: true,
+                        created_at: new Date().toISOString()
                       };
                       
-                      // Atualizar o cache para mostrar o novo orçamento
+                      // 3. Armazenar diretamente na tabela offline de orçamentos
+                      console.log("Adicionando orçamento à tabela offline:", tempBudget);
+                      await addToOfflineTable('budgets', tempBudget);
+                      
+                      // 4. Atualizar o cache para mostrar o novo orçamento
                       try {
                         const currentBudgets = queryClient.getQueryData(['/api/budgets']) || [];
                         const budgetsArray = Array.isArray(currentBudgets) ? currentBudgets : [];

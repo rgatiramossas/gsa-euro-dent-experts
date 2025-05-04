@@ -784,19 +784,34 @@ export default function NewServicePage() {
     });
 
     // Verificar se estamos offline antes de tentar a requisição
-    if (!navigator.onLine) {
+    if (!navigator.onLine || !checkNetworkStatus()) {
       console.log("Detectada operação offline durante envio do formulário.");
       
       try {
+        // Log para depuração offline
+        console.log("Iniciando processamento offline para criação de serviço");
+        
         // Formatar a data para ser consistente com a API
         let formattedData = { ...data };
         
         // Tratamento para a data agendada
         if (formattedData.scheduled_date) {
           try {
-            const dateToUse = formattedData.scheduled_date instanceof Date 
-              ? formattedData.scheduled_date 
-              : new Date(formattedData.scheduled_date as string);
+            // Tratamento mais seguro para a data
+            let dateToUse: Date;
+            
+            if (formattedData.scheduled_date instanceof Date) {
+              dateToUse = new Date(formattedData.scheduled_date.getTime()); // Clone da data
+            } else if (typeof formattedData.scheduled_date === 'string') {
+              dateToUse = new Date(formattedData.scheduled_date);
+              if (isNaN(dateToUse.getTime())) {
+                console.warn("Data inválida recebida:", formattedData.scheduled_date);
+                dateToUse = new Date(); // Fallback para data atual
+              }
+            } else {
+              console.warn("Tipo de data inesperado:", typeof formattedData.scheduled_date);
+              dateToUse = new Date(); // Fallback para data atual
+            }
             
             // Define meio-dia como horário padrão ou usa o horário específico
             if (data.scheduled_time) {
@@ -806,12 +821,15 @@ export default function NewServicePage() {
               dateToUse.setHours(12, 0, 0, 0);
             }
             
+            // Converter para ISO string para envio ao servidor
+            console.log("Data processada:", dateToUse);
             formattedData.scheduled_date = dateToUse.toISOString();
           } catch (error) {
             console.error("Erro ao processar data:", error);
             formattedData.scheduled_date = new Date().toISOString();
           }
         } else {
+          console.log("Sem data agendada, usando data atual");
           formattedData.scheduled_date = new Date().toISOString();
         }
         
@@ -824,6 +842,8 @@ export default function NewServicePage() {
         
         // Remover parâmetros desnecessários
         const { scheduled_time, ...serviceData } = formattedData;
+        
+        console.log("Dados formatados para salvamento offline:", serviceData);
         
         // 1. Salvar no IndexedDB usando o apiWrapper
         const createdService = await postApi('/api/services', serviceData, {
