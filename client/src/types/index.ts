@@ -95,7 +95,7 @@ export interface ServicePhoto {
 export interface ServiceWithDetails extends Service {
   client?: Client;
   vehicle?: Vehicle;
-  serviceType?: ServiceType;
+  service_type?: ServiceType;
   technician?: User;
   photos?: {
     before: ServicePhoto[];
@@ -113,10 +113,9 @@ export interface ServiceListItem {
   status: ServiceStatus;
   client: { id: number; name: string };
   vehicle: { id: number; make: string; model: string; year: number; license_plate?: string };
-  serviceType: { id: number; name: string };
+  service_type: { id: number; name: string };
   technician?: { id: number; name: string };
   scheduled_date?: string;
-  completion_date?: string;
   price?: number;
   administrative_fee?: number;
   total?: number;
