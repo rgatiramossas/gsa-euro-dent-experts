@@ -152,7 +152,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
     data: budgets = [], 
     isLoading: isLoadingBudgets 
   } = useQuery({
-    queryKey: ['/api/clients', clientId, 'budgets', { enableOffline: true, offlineTableName: 'budgets' }],
+    queryKey: ['/api/budgets', 'client', clientId, { enableOffline: true, offlineTableName: 'budgets' }],
     queryFn: async () => {
       try {
         return await getApi(`/api/budgets?clientId=${clientId}`, {
