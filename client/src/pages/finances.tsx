@@ -190,6 +190,19 @@ export default function Finances() {
     refetchIntervalInBackground: true,
     // Refetch when window regains focus
     refetchOnWindowFocus: true,
+    queryFn: async () => {
+      console.log("Fazendo requisição GET para /api/services");
+      const response = await fetch('/api/services');
+      
+      if (!response.ok) {
+        console.error("Erro ao obter serviços:", response.statusText);
+        throw new Error('Erro ao obter lista de serviços');
+      }
+      
+      const data = await response.json();
+      console.log("Dados de serviços recebidos:", data);
+      return data;
+    }
   });
   
   // Get all expenses with auto-refresh
@@ -201,6 +214,19 @@ export default function Finances() {
     refetchIntervalInBackground: true,
     // Refetch when window regains focus
     refetchOnWindowFocus: true,
+    queryFn: async () => {
+      console.log("Fazendo requisição GET para /api/expenses");
+      const response = await fetch('/api/expenses');
+      
+      if (!response.ok) {
+        console.error("Erro ao obter despesas:", response.statusText);
+        throw new Error('Erro ao obter lista de despesas');
+      }
+      
+      const data = await response.json();
+      console.log("Dados de despesas recebidos:", data);
+      return data;
+    }
   });
   
   interface Expense {
@@ -238,6 +264,19 @@ export default function Finances() {
     refetchIntervalInBackground: true,
     // Refetch when window regains focus
     refetchOnWindowFocus: true,
+    queryFn: async () => {
+      console.log("Fazendo requisição GET para /api/payment-requests");
+      const response = await fetch('/api/payment-requests');
+      
+      if (!response.ok) {
+        console.error("Erro ao obter requisições de pagamento:", response.statusText);
+        throw new Error('Erro ao obter lista de requisições de pagamento');
+      }
+      
+      const data = await response.json();
+      console.log("Dados de requisições de pagamento recebidos:", data);
+      return data;
+    }
   });
   
   // Get all technicians for admin payment request selection
