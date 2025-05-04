@@ -50,7 +50,9 @@ export default function Dashboard() {
           throw new Error(`Erro ao buscar dados do dashboard: ${response.statusText}`);
         }
         
-        return await response.json();
+        const data = await response.json();
+        console.log("Dados recebidos do dashboard API:", data);
+        return data;
       } catch (error) {
         console.error("Erro ao buscar stats do dashboard:", error);
         throw error;
