@@ -754,25 +754,31 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
                           ) : (
                             <>
                               {console.log("Total de clientes para renderizar:", clients?.length || 0)}
-                              {clients && clients.map((client) => {
-                                // Determinar se o cliente está offline para mostrar no rótulo
-                                const isOffline = client._isOffline === true;
-                                const clientName = isOffline 
-                                  ? `${client.name || 'Cliente sem nome'} (Offline)` 
-                                  : client.name || 'Cliente sem nome';
-                                
-                                console.log("Renderizando cliente:", {
-                                  id: client.id,
-                                  name: clientName,
-                                  isOffline: isOffline
-                                });
-                                
-                                return (
-                                  <SelectItem key={client.id} value={String(client.id)}>
-                                    {clientName}
-                                  </SelectItem>
-                                );
-                              })}
+                              {clients && clients
+                                .filter(client => 
+                                  // Filtrar clientes excluídos (que contêm '[EXCLUÍDO]' no nome)
+                                  !client.name?.includes('[EXCLUÍDO]') && 
+                                  !client.name?.includes('[EXCLUIDO]')
+                                )
+                                .map((client) => {
+                                  // Determinar se o cliente está offline para mostrar no rótulo
+                                  const isOffline = client._isOffline === true;
+                                  const clientName = isOffline 
+                                    ? `${client.name || 'Cliente sem nome'} (Offline)` 
+                                    : client.name || 'Cliente sem nome';
+                                  
+                                  console.log("Renderizando cliente:", {
+                                    id: client.id,
+                                    name: clientName,
+                                    isOffline: isOffline
+                                  });
+                                  
+                                  return (
+                                    <SelectItem key={client.id} value={String(client.id)}>
+                                      {clientName}
+                                    </SelectItem>
+                                  );
+                                })}
                             </>
                           )}
                         </SelectContent>
