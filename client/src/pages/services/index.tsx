@@ -85,6 +85,67 @@ export default function ServicesList() {
     };
   }, []);
   
+  // Configurar WebSocket para atualização em tempo real
+  useEffect(() => {
+    // Manipulador para quando uma conexão WebSocket é estabelecida
+    const handleConnectionOpen = () => {
+      console.log('Conexão WebSocket estabelecida para a lista de serviços');
+    };
+    
+    // Manipulador para quando um serviço é criado
+    const handleServiceCreated = (data: any) => {
+      console.log('Novo serviço criado:', data);
+      // Atualizar a lista de serviços
+      refetch();
+      
+      // Mostrar notificação toast
+      toast({
+        title: 'Novo serviço criado',
+        description: 'A lista de serviços foi atualizada',
+      });
+    };
+    
+    // Manipulador para quando um serviço é atualizado
+    const handleServiceUpdated = (data: any) => {
+      console.log('Serviço atualizado:', data);
+      // Atualizar a lista de serviços
+      refetch();
+      
+      // Mostrar notificação toast
+      toast({
+        title: 'Serviço atualizado',
+        description: 'A lista de serviços foi atualizada',
+      });
+    };
+    
+    // Manipulador para quando um serviço é excluído
+    const handleServiceDeleted = (data: any) => {
+      console.log('Serviço excluído:', data);
+      // Atualizar a lista de serviços
+      refetch();
+      
+      // Mostrar notificação toast
+      toast({
+        title: 'Serviço excluído',
+        description: 'A lista de serviços foi atualizada',
+      });
+    };
+    
+    // Registrar manipuladores de eventos WebSocket
+    const removeConnectionOpenListener = addEventListener('connection_open', handleConnectionOpen);
+    const removeServiceCreatedListener = addEventListener('SERVICE_CREATED', handleServiceCreated);
+    const removeServiceUpdatedListener = addEventListener('SERVICE_UPDATED', handleServiceUpdated);
+    const removeServiceDeletedListener = addEventListener('SERVICE_DELETED', handleServiceDeleted);
+    
+    // Limpar manipuladores de eventos quando o componente for desmontado
+    return () => {
+      removeConnectionOpenListener();
+      removeServiceCreatedListener();
+      removeServiceUpdatedListener();
+      removeServiceDeletedListener();
+    };
+  }, [refetch, toast, t]);
+  
   // Function to manually trigger sync
   const handleSync = () => {
     if (!isOnline) {
