@@ -77,6 +77,8 @@ class OfflineDatabase extends Dexie {
   technicians: Dexie.Table<any, number>;
   service_types: Dexie.Table<any, number>;
   vehicles: Dexie.Table<any, number>; // Adicionado tabela de veículos
+  technician_performance: Dexie.Table<any, number>; // Tabela para desempenho dos técnicos
+  dashboard_stats: Dexie.Table<any, number>; // Tabela para estatísticas do dashboard
   
   // Tabelas para sistema de sincronização
   pendingRequests: Dexie.Table<PendingRequest, string>;
@@ -104,6 +106,12 @@ class OfflineDatabase extends Dexie {
       vehicles: '++id, client_id, make, model, year, license_plate, color, created_at, modified_at'
     });
     
+    // Adicionar tabelas para dashboard e desempenho dos técnicos na versão 3
+    this.version(3).stores({
+      technician_performance: '++id, name, completionRate, servicesCount, completedCount',
+      dashboard_stats: '++id, totalPendingServices, totalInProgressServices, totalCompletedServices, totalRevenue'
+    });
+    
     // Inicializar referências das tabelas
     this.clients = this.table('clients');
     this.services = this.table('services');
@@ -111,6 +119,8 @@ class OfflineDatabase extends Dexie {
     this.technicians = this.table('technicians');
     this.service_types = this.table('service_types');
     this.vehicles = this.table('vehicles');
+    this.technician_performance = this.table('technician_performance');
+    this.dashboard_stats = this.table('dashboard_stats');
     this.pendingRequests = this.table('pendingRequests');
     this.syncStatus = this.table('syncStatus');
 
@@ -126,7 +136,10 @@ class OfflineDatabase extends Dexie {
     
     try {
       // Verificar se todas as tabelas principais existem
-      const tables = ['clients', 'services', 'budgets', 'technicians', 'service_types', 'vehicles'];
+      const tables = [
+        'clients', 'services', 'budgets', 'technicians', 'service_types', 'vehicles',
+        'technician_performance', 'dashboard_stats'
+      ];
       
       for (const tableName of tables) {
         try {
@@ -146,6 +159,17 @@ class OfflineDatabase extends Dexie {
             // Força atualização do banco para a versão 2
             await this.version(2).stores({
               vehicles: '++id, client_id, make, model, year, license_plate, color, created_at, modified_at'
+            });
+          }
+          
+          // Se for a versão 2 e as tabelas de dashboard não existem, atualizar para v3
+          if (tableName === 'technician_performance' || tableName === 'dashboard_stats') {
+            console.log("[offlineDb] Atualizando para versão 3 do schema para adicionar tabelas de dashboard");
+            
+            // Força atualização do banco para a versão 3
+            await this.version(3).stores({
+              technician_performance: '++id, name, completionRate, servicesCount, completedCount',
+              dashboard_stats: '++id, totalPendingServices, totalInProgressServices, totalCompletedServices, totalRevenue'
             });
           }
         }
@@ -174,7 +198,7 @@ class OfflineDatabase extends Dexie {
     }
   }
   
-  // Obter tabela com base no nome - versão aprimorada com suporte a veículos
+  // Obter tabela com base no nome - versão aprimorada com suporte a todas as tabelas
   getTableByName(tableName: string): Dexie.Table<any, any> {
     const tables: Record<string, Dexie.Table<any, any>> = {
       'clients': this.clients,
@@ -182,7 +206,9 @@ class OfflineDatabase extends Dexie {
       'budgets': this.budgets,
       'technicians': this.technicians,
       'service_types': this.service_types,
-      'vehicles': this.vehicles
+      'vehicles': this.vehicles,
+      'technician_performance': this.technician_performance,
+      'dashboard_stats': this.dashboard_stats
     };
     
     const table = tables[tableName];
