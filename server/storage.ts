@@ -1347,6 +1347,45 @@ export class DatabaseStorage implements IStorage {
       // Clone o objeto para não modificar o original
       const serviceData = { ...insertService };
       
+      // Verificar se temos um vehicle_id ou precisamos criar um veículo temporário
+      if (!serviceData.vehicle_id && serviceData.vehicle_make && serviceData.vehicle_model) {
+        console.log("Criando veículo temporário com os dados fornecidos...");
+        
+        try {
+          // Criar um veículo temporário
+          const vehicleData = {
+            client_id: serviceData.client_id,
+            make: serviceData.vehicle_make,
+            model: serviceData.vehicle_model,
+            license_plate: serviceData.vehicle_plate || '',
+            vin: serviceData.vehicle_vin || '',
+            year: null,
+            color: null
+          };
+          
+          // Inserir o veículo no banco de dados
+          const [vehicleResult] = await pool.query(
+            "INSERT INTO vehicles (client_id, make, model, license_plate, vin, created_at) VALUES (?, ?, ?, ?, ?, NOW())",
+            [vehicleData.client_id, vehicleData.make, vehicleData.model, vehicleData.license_plate, vehicleData.vin]
+          );
+          
+          const vehicleId = (vehicleResult as any).insertId;
+          console.log(`Veículo temporário criado com ID: ${vehicleId}`);
+          
+          // Atualizar o vehicle_id no objeto de serviço
+          serviceData.vehicle_id = vehicleId;
+          
+          // Remover os campos de veículo usados apenas para criação temporária
+          delete serviceData.vehicle_make;
+          delete serviceData.vehicle_model;
+          delete serviceData.vehicle_plate;
+          delete serviceData.vehicle_vin;
+        } catch (vehicleError) {
+          console.error("Erro ao criar veículo temporário:", vehicleError);
+          throw new Error("Falha ao criar veículo temporário para o serviço");
+        }
+      }
+      
       // Converter campos de data de string para Date para o MySQL
       if (serviceData.scheduled_date && typeof serviceData.scheduled_date === 'string') {
         serviceData.scheduled_date = new Date(serviceData.scheduled_date);

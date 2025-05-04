@@ -119,6 +119,13 @@ export const insertServiceSchema = createInsertSchema(services)
     scheduled_date: z.string().or(z.date()).nullable().optional(),
     start_date: z.string().or(z.date()).nullable().optional(),
     completion_date: z.string().or(z.date()).nullable().optional(),
+    // Tornar vehicle_id opcional quando os detalhes do veículo são fornecidos
+    vehicle_id: z.number().nullable().optional(),
+    // Campos para veículos temporários
+    vehicle_make: z.string().optional(),
+    vehicle_model: z.string().optional(),
+    vehicle_plate: z.string().optional(),
+    vehicle_vin: z.string().optional(),
   });
 
 // Service Photos

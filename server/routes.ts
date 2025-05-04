@@ -1263,9 +1263,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.body.client_id) {
         return res.status(400).json({ message: "Client ID is required" });
       }
-      if (!req.body.vehicle_id) {
-        return res.status(400).json({ message: "Vehicle ID is required" });
+      
+      // Verificar se temos informações do veículo (ID ou dados manuais)
+      if (!req.body.vehicle_id && !(req.body.vehicle_make && req.body.vehicle_model)) {
+        return res.status(400).json({ message: "Vehicle details are required (either vehicle_id or vehicle_make and vehicle_model)" });
       }
+      
       if (!req.body.service_type_id) {
         return res.status(400).json({ message: "Service Type ID is required" });
       }
