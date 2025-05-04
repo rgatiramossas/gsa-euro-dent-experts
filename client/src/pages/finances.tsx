@@ -711,15 +711,26 @@ export default function Finances() {
   }
   
   // Filter financially relevant services (completed, awaiting approval/payment, invoiced, paid)
+  console.log("Todos os serviços:", services);
+  
   const financiallyRelevantServices = services?.filter(service => 
     ["completed", "aguardando_aprovacao", "aguardando_pagamento", "faturado", "pago"].includes(service.status)
   );
   
+  console.log("Serviços financeiramente relevantes:", financiallyRelevantServices);
+  
   // Calculate stats
   const calculateStats = () => {
+    console.log("Chamando calculateStats");
+    console.log("isAdmin:", isAdmin);
+    console.log("period:", period);
+    
     if (!financiallyRelevantServices || financiallyRelevantServices.length === 0) {
+      console.log("Sem serviços financeiramente relevantes para calcular estatísticas");
       return {
         totalRevenue: 0,
+        totalExpenses: 0,
+        profit: 0,
         servicesCount: 0,
         averageTicket: 0,
       };
