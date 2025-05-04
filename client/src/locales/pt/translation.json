@@ -131,7 +131,6 @@
       "in_progress": "Em andamento",
       "completed": "Concluído",
       "canceled": "Cancelado",
-      "aguardando_aprovacao": "Aguardando Aprovação",
       "faturado": "Faturado",
       "pago": "Pago"
     },

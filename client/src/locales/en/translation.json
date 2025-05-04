@@ -96,7 +96,6 @@
       "in_progress": "In Progress",
       "completed": "Completed",
       "canceled": "Canceled",
-      "aguardando_aprovacao": "Waiting for Approval",
       "faturado": "Invoiced",
       "pago": "Paid"
     }
