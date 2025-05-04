@@ -17,69 +17,89 @@ export default function Dashboard() {
   const isAdmin = user?.role === "admin";
   const isGestor = user?.role === "gestor" || user?.role === "manager";
   
-  // Fetch dashboard stats
+  // Adicionar useEffect para forçar fetch manual das estatísticas do dashboard
+  const [dashboardStats, setDashboardStats] = React.useState<DashboardStats>({
+    totalPendingServices: 0,
+    totalInProgressServices: 0,
+    totalCompletedServices: 0,
+    totalRevenue: 0
+  });
+  const [isLoadingStats, setIsLoadingStats] = React.useState(true);
+
+  // Função para buscar as estatísticas manualmente
+  const fetchDashboardStats = React.useCallback(async () => {
+    console.log("Buscando estatísticas do dashboard manualmente...");
+    setIsLoadingStats(true);
+    
+    try {
+      // Adicionar um timestamp para evitar cache
+      const timestamp = new Date().getTime();
+      console.log(`Fazendo requisição para /api/dashboard/stats?_t=${timestamp}`);
+      
+      const response = await fetch(`/api/dashboard/stats?_t=${timestamp}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      console.log("Status da resposta:", response.status, response.statusText);
+      
+      if (!response.ok) {
+        throw new Error(`Erro na resposta: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log("Dados recebidos:", data);
+      
+      // Processar os dados para garantir que todas as propriedades existam
+      const processedData: DashboardStats = {
+        totalPendingServices: Number(data.totalPendingServices) || 0,
+        totalInProgressServices: Number(data.totalInProgressServices) || 0,
+        totalCompletedServices: Number(data.totalCompletedServices) || 0,
+        totalRevenue: Number(data.totalRevenue) || 0
+      };
+      
+      console.log("Dados processados:", processedData);
+      setDashboardStats(processedData);
+    } catch (error) {
+      console.error("Erro ao buscar estatísticas:", error);
+      // Manter os valores padrão em caso de erro
+    } finally {
+      setIsLoadingStats(false);
+    }
+  }, []);
+  
+  // Usar useEffect para chamar a função quando o componente montar
+  React.useEffect(() => {
+    console.log("Dashboard montado, buscando estatísticas...");
+    fetchDashboardStats();
+    
+    // Configurar um intervalo para atualizar as estatísticas
+    const intervalId = setInterval(() => {
+      console.log("Intervalo de atualização disparado");
+      fetchDashboardStats();
+    }, 30000);
+    
+    // Limpar o intervalo quando o componente desmontar
+    return () => clearInterval(intervalId);
+  }, [fetchDashboardStats]);
+  
+  // Mantemos o useQuery apenas para manter o código compatível com o resto
   const { 
     data: statsResponse, 
-    isLoading: isLoadingStats,
     error: statsError
   } = useQuery<any>({
     queryKey: ['/api/dashboard/stats'],
     queryFn: async () => {
-      console.log("Fazendo requisição para dashboard stats");
-      try {
-        // Adicionar timestamp ao URL para evitar caching
-        const timestamp = new Date().getTime();
-        const response = await fetch(`/api/dashboard/stats?_t=${timestamp}`, {
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        console.log("Status da resposta dashboard stats:", response.status);
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            console.error("Erro de autenticação no dashboard");
-            return { 
-              totalPendingServices: 0, 
-              totalInProgressServices: 0,
-              totalCompletedServices: 0,
-              totalRevenue: 0
-            };
-          }
-          throw new Error(`Erro ao buscar dados do dashboard: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log("Dados recebidos do dashboard API:", data);
-        
-        // Garantir que todos os campos existam, mesmo que vazios
-        const processedData = {
-          totalPendingServices: data.totalPendingServices || 0,
-          totalInProgressServices: data.totalInProgressServices || 0,
-          totalCompletedServices: data.totalCompletedServices || 0,
-          totalRevenue: data.totalRevenue || 0
-        };
-        
-        console.log("Dados processados do dashboard:", processedData);
-        return processedData;
-      } catch (error) {
-        console.error("Erro ao buscar stats do dashboard:", error);
-        // Retornar dados padrão em caso de erro para evitar quebra da UI
-        return { 
-          totalPendingServices: 0, 
-          totalInProgressServices: 0,
-          totalCompletedServices: 0,
-          totalRevenue: 0
-        };
-      }
+      // Não precisamos fazer nada aqui, pois estamos fazendo a chamada manualmente
+      return dashboardStats;
     },
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30000, // Recarregar a cada 30 segundos
+    initialData: dashboardStats,
+    enabled: false, // Desabilita a consulta automática
   });
   
   // Usar os dados do backend diretamente com os novos nomes

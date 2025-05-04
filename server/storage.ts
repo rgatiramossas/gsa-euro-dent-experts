@@ -2175,6 +2175,92 @@ export class DatabaseStorage implements IStorage {
   // Método específico para obter estatísticas para gestores
   async getDashboardStatsForManager(clientIds: number[]): Promise<any> {
     if (!clientIds || clientIds.length === 0) {
+      console.log('getDashboardStatsForManager: lista de clientIds vazia ou inválida');
+      return {
+        totalPendingServices: 0,
+        totalInProgressServices: 0,
+        totalCompletedServices: 0,
+        totalRevenue: 0
+      };
+    }
+    
+    console.log('getDashboardStatsForManager: Obtendo estatísticas para gestor com clientes:', clientIds);
+    
+    try {
+      // Usar abordagem mais simples e direta com SQL bruto para evitar problemas
+      const conn = await this.getConnection();
+      
+      // 1. Total de OS pendentes
+      const pendingQuery = `
+        SELECT COUNT(*) as count 
+        FROM services 
+        WHERE client_id IN (${clientIds.join(',')}) 
+        AND status IN ('pending', 'pendente', 'aguardando') 
+        AND status != 'deleted'
+      `;
+      const [pendingResult] = await conn.query(pendingQuery);
+      console.log('Resultado query pendentes:', pendingResult);
+      const totalPendingServices = pendingResult[0]?.count || 0;
+      
+      // 2. Total de OS em andamento
+      const inProgressQuery = `
+        SELECT COUNT(*) as count 
+        FROM services 
+        WHERE client_id IN (${clientIds.join(',')}) 
+        AND status IN ('in_progress', 'aguardando_pagamento', 'aguardando_aprovacao') 
+        AND status != 'deleted'
+      `;
+      const [inProgressResult] = await conn.query(inProgressQuery);
+      console.log('Resultado query em andamento:', inProgressResult);
+      const totalInProgressServices = inProgressResult[0]?.count || 0;
+      
+      // 3. Total de OS concluídas
+      const completedQuery = `
+        SELECT COUNT(*) as count 
+        FROM services 
+        WHERE client_id IN (${clientIds.join(',')}) 
+        AND status IN ('completed', 'concluido', 'pago', 'faturado') 
+        AND status != 'deleted'
+      `;
+      const [completedResult] = await conn.query(completedQuery);
+      console.log('Resultado query concluídas:', completedResult);
+      const totalCompletedServices = completedResult[0]?.count || 0;
+      
+      // 4. Total de faturamento
+      const revenueQuery = `
+        SELECT SUM(final_price) as total 
+        FROM services 
+        WHERE client_id IN (${clientIds.join(',')}) 
+        AND status IN ('completed', 'concluido', 'pago', 'faturado')
+        AND status != 'deleted'
+      `;
+      const [revenueResult] = await conn.query(revenueQuery);
+      console.log('Resultado query faturamento:', revenueResult);
+      const totalRevenue = revenueResult[0]?.total || 0;
+      
+      const stats = {
+        totalPendingServices,
+        totalInProgressServices,
+        totalCompletedServices,
+        totalRevenue
+      };
+      
+      console.log('Estatísticas calculadas para o gestor:', stats);
+      return stats;
+    } catch (error) {
+      console.error('Erro ao obter estatísticas do dashboard para o gestor:', error);
+      return {
+        totalPendingServices: 0,
+        totalInProgressServices: 0,
+        totalCompletedServices: 0,
+        totalRevenue: 0
+      };
+    }
+  }
+  
+  // Implementação antiga usando Drizzle ORM, movida para baixo
+  async _getDashboardStatsForManager_deprecatedDrizzle(clientIds: number[]): Promise<any> {
+    if (!clientIds || clientIds.length === 0) {
       return {
         totalPendingServices: 0,
         totalInProgressServices: 0,

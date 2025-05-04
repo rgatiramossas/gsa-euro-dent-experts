@@ -609,7 +609,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = req.session.userRole;
       const userId = req.session.userId;
       
+      console.log('=====================================================================');
       console.log('Dashboard Stats Request - Role:', userRole, 'User ID:', userId);
+      console.log('Timestamp:', new Date().toISOString());
+      console.log('Query params:', req.query);
+      console.log('=====================================================================');
       
       // Se for um gestor, retornar estatísticas baseadas nos clientes associados
       if (userRole === "manager" || userRole === "gestor") {
@@ -628,7 +632,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             totalCompletedServices: 0,
           };
           console.log('Retornando dados vazios:', emptyStats);
-          return res.json(emptyStats);
+          
+          // Forçar status 200 e garantir que o Content-Type seja application/json
+          res.status(200).json(emptyStats);
+          return;
         }
         
         // Obter IDs dos clientes
@@ -638,31 +645,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           clientesGestor.map(c => ({id: c.id, name: c.name})));
         console.log(`IDs dos clientes do gestor ${userId}:`, clientIds);
         
-        // Obter estatísticas para esses clientes
-        const stats = await storage.getDashboardStatsForManager(clientIds);
-        
-        console.log('Estatísticas brutas recebidas do storage:', stats);
-        
-        // Verificar se as estatísticas são válidas
-        if (!stats || typeof stats !== 'object') {
-          console.error('Estatísticas inválidas recebidas do storage:', stats);
-          // Fornecer estatísticas padrão para evitar erros no frontend
+        try {
+          // Obter estatísticas para esses clientes
+          const stats = await storage.getDashboardStatsForManager(clientIds);
+          
+          console.log('Estatísticas brutas recebidas do storage:', stats);
+          
+          // Verificar se as estatísticas são válidas
+          if (!stats || typeof stats !== 'object') {
+            console.error('Estatísticas inválidas recebidas do storage:', stats);
+            // Fornecer estatísticas padrão para evitar erros no frontend
+            const defaultStats = {
+              totalPendingServices: 0,
+              totalInProgressServices: 0,
+              totalCompletedServices: 0,
+            };
+            console.log('Retornando estatísticas padrão:', defaultStats);
+            
+            // Forçar status 200 e garantir que o Content-Type seja application/json
+            res.status(200).json(defaultStats);
+            return;
+          }
+          
+          // Remover informações financeiras
+          const { totalRevenue, ...filteredStats } = stats;
+          
+          console.log('Stats do gestor após filtro:', filteredStats);
+          console.log('Enviando resposta da rota /api/dashboard/stats com stats do gestor');
+          
+          // Forçar status 200 e garantir que o Content-Type seja application/json
+          res.status(200).json(filteredStats);
+          return;
+        } catch (statsError) {
+          console.error('Erro ao obter estatísticas para o gestor:', statsError);
           const defaultStats = {
             totalPendingServices: 0,
             totalInProgressServices: 0,
             totalCompletedServices: 0,
           };
-          console.log('Retornando estatísticas padrão:', defaultStats);
-          return res.json(defaultStats);
+          
+          // Forçar status 200 e garantir que o Content-Type seja application/json
+          res.status(200).json(defaultStats);
+          return;
         }
-        
-        // Remover informações financeiras
-        const { totalRevenue, ...filteredStats } = stats;
-        
-        console.log('Stats do gestor após filtro:', filteredStats);
-        console.log('Enviando resposta da rota /api/dashboard/stats com stats do gestor');
-        
-        return res.json(filteredStats);
       }
       
       // Para técnicos, filtrar por ID
