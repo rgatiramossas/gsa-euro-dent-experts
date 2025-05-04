@@ -1457,7 +1457,7 @@ export default function Finances() {
                                 <TableRow key={service.id}>
                                   <TableCell>#{service.id}</TableCell>
                                   <TableCell>{service.client?.name}</TableCell>
-                                  <TableCell>{service.serviceType?.name}</TableCell>
+                                  <TableCell>{service.service_type?.name}</TableCell>
                                   <TableCell className="text-right">{formatCurrency(service.price || 0)}</TableCell>
                                 </TableRow>
                               ))}
@@ -1693,10 +1693,10 @@ export default function Finances() {
                           />
                           <div className="flex-1">
                             <div className="font-medium">
-                              {service.client?.name} - {service.serviceType?.name}
+                              {service.client?.name} - {service.service_type?.name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {formatDate(service.completion_date || service.created_at)} - {t("finances.serviceOrder")} #{service.id}
+                              {formatDate(service.created_at)} - {t("finances.serviceOrder")} #{service.id}
                               {service.technician ? ` - ${t("finances.payment.technician")}: ${service.technician.name}` : ` - ${t("finances.payment.noTechnician")}`}
                             </div>
                           </div>

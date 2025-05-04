@@ -17,10 +17,10 @@ export function formatCurrency(value: number | undefined): string {
   }).format(value);
 }
 
-export function formatDate(dateString: string | undefined): string {
-  if (!dateString) return "";
+export function formatDate(dateInput: string | Date | undefined): string {
+  if (!dateInput) return "";
   
-  const date = new Date(dateString);
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
   
   if (isToday(date)) {
     return `Hoje, ${format(date, "HH:mm", { locale: ptBR })}`;
@@ -34,24 +34,25 @@ export function formatDate(dateString: string | undefined): string {
 }
 
 // Função separada para exibir sempre a data completa (sem "Hoje" ou "Ontem")
-export function formatCompleteDateOnly(dateString: string | undefined): string {
-  if (!dateString) return "";
+export function formatCompleteDateOnly(dateInput: string | Date | undefined): string {
+  if (!dateInput) return "";
   
-  const date = new Date(dateString);
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
   return format(date, "dd/MM/yyyy", { locale: ptBR });
 }
 
-export function formatDateTime(dateString: string | undefined): string {
-  if (!dateString) return "";
+export function formatDateTime(dateInput: string | Date | undefined): string {
+  if (!dateInput) return "";
   
-  const date = new Date(dateString);
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
   return format(date, "dd/MM/yyyy HH:mm", { locale: ptBR });
 }
 
-export function formatRelativeDate(dateString: string | undefined): string {
-  if (!dateString) return "";
+export function formatRelativeDate(dateInput: string | Date | undefined): string {
+  if (!dateInput) return "";
   
-  return formatDistanceToNow(new Date(dateString), {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  return formatDistanceToNow(date, {
     addSuffix: true,
     locale: ptBR,
   });
