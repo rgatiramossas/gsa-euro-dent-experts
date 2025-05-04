@@ -30,7 +30,7 @@ import NewService from "@/pages/services/new-service";
 import ClientsList from "@/pages/clients/index";
 import NewClient from "@/pages/clients/new-client";
 import ClientDetail from "@/pages/clients/$id";
-import NewVehicle from "@/pages/clients/new-vehicle";
+// Importação de NewVehicle removida (agora os veículos são registrados diretamente no formulário de serviço)
 import ManagerClientsList from "@/pages/managers/manager-clients-list";
 
 // Import technician related pages
@@ -199,17 +199,7 @@ function AppRoutes() {
         )}
       </Route>
       
-      <Route path="/clients/:id/vehicle/new">
-        {(params) => (
-          <RequireAuth>
-            <RequireTechnician>
-              <MainLayout>
-                <NewVehicle clientId={params.id} />
-              </MainLayout>
-            </RequireTechnician>
-          </RequireAuth>
-        )}
-      </Route>
+      {/* Rota de cadastro de veículos removida - Agora os veículos são registrados diretamente nos serviços */}
       
       {/* Technicians routes - apenas administradores podem gerenciar técnicos */}
       <Route path="/technicians">
