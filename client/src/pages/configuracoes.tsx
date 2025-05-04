@@ -11,10 +11,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { apiRequest } from "@/lib/queryClient";
-import { AuthUser } from "@/types";
 import { Link } from "wouter";
 import { UserPlusIcon, Users, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { DatabaseMaintenance } from "@/components/settings/DatabaseMaintenance";
 
 // Schema para validação do formulário de perfil
 const createProfileFormSchema = (t: any, language: string) => {
@@ -159,6 +159,7 @@ export default function ConfiguracoesPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="profile">{currentLanguage === 'en' ? t("settings.profile") : "Perfil"}</TabsTrigger>
           <TabsTrigger value="password">{currentLanguage === 'en' ? t("settings.security") : "Segurança"}</TabsTrigger>
+          <TabsTrigger value="sync">{currentLanguage === 'en' ? "Sync & Storage" : "Sincronização"}</TabsTrigger>
           {user?.role === "technician" && (
             <TabsTrigger value="technician">{currentLanguage === 'en' ? t("settings.technician") : "Técnico"}</TabsTrigger>
           )}
@@ -319,6 +320,11 @@ export default function ConfiguracoesPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Conteúdo da aba Sincronização */}
+        <TabsContent value="sync">
+          <DatabaseMaintenance />
         </TabsContent>
 
         {/* Conteúdo da aba Gestor */}
