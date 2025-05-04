@@ -111,6 +111,22 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
       }
     }
     
+    // Para português (idioma padrão)
+    const portugueseStatusMap: Record<ServiceStatus, string> = {
+      "pending": "Pendente",
+      "in_progress": "Em Andamento",
+      "completed": "Concluído",
+      "canceled": "Cancelado",
+      "aguardando_aprovacao": "Aguardando Aprovação",
+      "aguardando_pagamento": "Aguardando Pagamento",
+      "faturado": "Faturado",
+      "pago": "Pago"
+    };
+    
+    if (i18n.language === 'pt' || i18n.language === 'pt-BR') {
+      return portugueseStatusMap[status] || status;
+    }
+    
     // Para outros idiomas, usar o mapeamento normal
     const statusKeyMap: Record<ServiceStatus, string> = {
       "pending": "services.status.pending",
@@ -118,7 +134,7 @@ export function ServiceStatusBadge({ status, className }: ServiceStatusBadgeProp
       "completed": "services.status.completed",
       "canceled": "services.status.canceled",
       "aguardando_aprovacao": "services.status.aguardando_aprovacao",
-      "aguardando_pagamento": "services.status.aguardando_pagamento",
+      "aguardando_pagamento": "Aguardando Pagamento", // Valor fixo para evitar problemas de tradução
       "faturado": "services.status.faturado",
       "pago": "services.status.pago"
     };
