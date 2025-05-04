@@ -27,6 +27,7 @@ import { Client } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { getApi } from "@/lib/apiWrapper";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ClientsListProps {
   managerMode?: boolean;
@@ -42,7 +43,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
   const { t } = useTranslation();
   
   // Obter o ID do usuário atual para modo gestor
-  const { user } = require('@/contexts/AuthContext').useAuth();
+  const { user } = useAuth();
   
   // Se estamos no modo gestor, usar o ID do usuário atual
   useEffect(() => {
