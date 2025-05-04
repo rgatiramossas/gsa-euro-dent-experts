@@ -311,10 +311,12 @@ export const generateSimplePdf = async (budget: Budget, isGestor = false): Promi
         heightLeft -= pdfHeight;
       }
 
-      // Fazer o download do PDF com nome seguro (sem ID e com apenas parte do nome)
-      const clientNameSafe = budget.client_name.split(' ')[0]; // Apenas o primeiro nome para maior privacidade
+      // Fazer o download do PDF com nome seguro (sem ID, sem nome do cliente)
       const formattedDate = budget.date.split('T')[0].replace(/-/g, '');
-      const fileName = `${t('budget.budgetTitle')}_${formattedDate}_${clientNameSafe}.pdf`;
+      // Gerando um código aleatório para maior privacidade
+      const randomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+      // Nome do arquivo sem informações sensíveis
+      const fileName = `${t('budget.budgetTitle')}_${formattedDate}_${randomCode}.pdf`;
       pdf.save(fileName);
 
       // Limpar o elemento temporário
