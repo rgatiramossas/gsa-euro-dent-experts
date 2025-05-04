@@ -146,6 +146,26 @@ export default function ClientDetail({ id }: ClientDetailProps) {
     },
     enabled: !!clientId,
   });
+  
+  // Query para obter orçamentos do cliente
+  const { 
+    data: budgets = [], 
+    isLoading: isLoadingBudgets 
+  } = useQuery({
+    queryKey: ['/api/clients', clientId, 'budgets', { enableOffline: true, offlineTableName: 'budgets' }],
+    queryFn: async () => {
+      try {
+        return await getApi(`/api/budgets?clientId=${clientId}`, {
+          enableOffline: true,
+          offlineTableName: 'budgets'
+        });
+      } catch (error) {
+        console.error('Erro ao carregar orçamentos:', error);
+        return [];
+      }
+    },
+    enabled: !!clientId,
+  });
 
   // Handler para voltar à lista de clientes
   const handleBack = () => {
@@ -311,11 +331,11 @@ export default function ClientDetail({ id }: ClientDetailProps) {
           </CardContent>
         </Card>
 
-        {/* Tabs para veículos e serviços */}
+        {/* Tabs para veículos, serviços e orçamentos */}
         <Card className="md:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle>Informações Relacionadas</CardTitle>
-            <CardDescription>Veículos e serviços relacionados a este cliente</CardDescription>
+            <CardDescription>Veículos, serviços e orçamentos relacionados a este cliente</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="vehicles">
@@ -325,6 +345,9 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                 </TabsTrigger>
                 <TabsTrigger value="services">
                   Serviços ({services.length})
+                </TabsTrigger>
+                <TabsTrigger value="budgets">
+                  Orçamentos ({budgets.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -436,6 +459,89 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                       onClick={() => setLocation(`/services/new?clientId=${client.id}`)}
                     >
                       Cadastrar Novo Serviço
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Tab de Orçamentos */}
+              <TabsContent value="budgets">
+                {isLoadingBudgets ? (
+                  <div className="flex justify-center py-6">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                  </div>
+                ) : budgets.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Veículo</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {budgets.map((budget) => (
+                        <TableRow key={budget.id}>
+                          <TableCell className="font-medium">
+                            {budget.vehicle_info || "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            {budget.created_at ? 
+                              new Date(budget.created_at).toLocaleDateString('pt-BR') : 
+                              "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            {budget.total_price ? 
+                              new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              }).format(budget.total_price) : 
+                              "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              budget.status === 'aprovado' ? 'bg-green-100 text-green-800' : 
+                              budget.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' : 
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {budget.status ? budget.status.charAt(0).toUpperCase() + budget.status.slice(1) : "Pendente"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setLocation(`/budgets/${budget.id}/edit`)}
+                            >
+                              Detalhes
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Nenhum orçamento cadastrado para este cliente.</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setLocation(`/budgets/new?clientId=${client.id}`)}
+                    >
+                      Criar Orçamento
+                    </Button>
+                  </div>
+                )}
+                
+                {budgets.length > 0 && (
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setLocation(`/budgets/new?clientId=${client.id}`)}
+                    >
+                      Criar Novo Orçamento
                     </Button>
                   </div>
                 )}
