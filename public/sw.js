@@ -1,5 +1,5 @@
 const CACHE_NAME = 'eurodent-cache-v4';
-const SYNC_TIMEOUT = 30000; // 30 segundos para timeout de sincronização
+const SYNC_TIMEOUT = 20000; // 20 segundos para timeout de sincronização (reduzido para evitar CPU excessivo)
 
 // Recursos para cache inicial
 const INITIAL_CACHED_RESOURCES = [
@@ -248,13 +248,13 @@ async function syncPendingRequests() {
           // Remover a requisição do banco para não tentar novamente
           await db.delete('pendingRequests', request.id);
           
-          // Notificar sobre a falha permanente
+          // Notificar sobre a falha permanente, mas com mensagem simplificada
+          // para economizar recursos de memória e processamento
           notifyClients({
             type: 'operation-failed',
             status: 'abandoned',
             tempId: request.id,
-            tableName: request.tableName,
-            message: 'Falha permanente após múltiplas tentativas'
+            tableName: request.tableName
           });
           
           continue; // Pular para a próxima requisição

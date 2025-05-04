@@ -178,19 +178,34 @@ declare global {
   }
 }
 
-// Controle para evitar mensagens repetitivas no console
+// Controle para evitar mensagens repetitivas no console e sobrecarga de sincronização
 let syncLogShown = false;
 let lastSyncAttempt = 0;
+let lastSyncMessageTime = 0;
+let syncAttemptCount = 0;
+let syncThrottled = false;
 
 // Solicitar sincronização quando online
 export const triggerSyncIfNeeded = async () => {
   if (!navigator.onLine) return;
   
-  // Limitar tentativas de registro para no máximo uma a cada 30 segundos
   const now = Date.now();
-  if (now - lastSyncAttempt < 30000) {
-    // Executar sincronização silenciosa sem logging
-    if (navigator.serviceWorker.controller) {
+  
+  // Implementação de limitação progressiva (exponential backoff)
+  // Se tivermos muitas tentativas seguidas, aumentamos o intervalo mínimo entre elas
+  const minTimeBetweenAttempts = Math.min(
+    60000, // Máximo de 1 minuto entre tentativas
+    syncAttemptCount > 10 ? 30000 : // Mais de 10 tentativas: 30 segundos
+    syncAttemptCount > 5 ? 15000 : // Mais de 5 tentativas: 15 segundos
+    syncAttemptCount > 2 ? 10000 : // Mais de 2 tentativas: 10 segundos
+    5000 // Intervalo padrão: 5 segundos
+  );
+  
+  // Verificar se estamos tentando sincronizar com muita frequência
+  if (now - lastSyncAttempt < minTimeBetweenAttempts) {
+    // Evitar enviar muitas mensagens para o service worker (no máximo uma a cada 2 segundos)
+    if (now - lastSyncMessageTime > 2000 && navigator.serviceWorker.controller && !syncThrottled) {
+      lastSyncMessageTime = now;
       navigator.serviceWorker.controller.postMessage({
         type: 'SYNC_REQUEST'
       });
@@ -198,8 +213,9 @@ export const triggerSyncIfNeeded = async () => {
     return;
   }
   
-  // Atualizar timestamp da última tentativa
+  // Atualizar timestamp da última tentativa e incrementar contador de tentativas
   lastSyncAttempt = now;
+  syncAttemptCount++;
   
   try {
     const registration = await navigator.serviceWorker.ready;
@@ -329,13 +345,24 @@ const processServiceWorkerMessage = async (event: MessageEvent) => {
       } else if (data.status === 'completed' || data.status === 'error') {
         offlineStatusStore.setSyncing(false);
         
+        // Resetar contador de tentativas de sincronização quando completado com sucesso
+        if (data.status === 'completed') {
+          syncAttemptCount = 0;
+          syncThrottled = false;
+        } else if (data.status === 'error') {
+          // Marcar como throttled para reduzir frequência se estiver tendo erros
+          syncThrottled = syncAttemptCount > 5;
+        }
+        
         // Atualizar contador interno de requisições pendentes
         offlineDb.countPendingRequests().then(count => {
           offlineStatusStore.setPendingCount(count);
         });
         
-        // Atualizar dados sem mostrar indicadores visuais
-        queryClient.invalidateQueries();
+        // Atualizar dados sem mostrar indicadores visuais apenas se bem-sucedido
+        if (data.status === 'completed') {
+          queryClient.invalidateQueries();
+        }
       }
       break;
       
@@ -410,17 +437,23 @@ export const initPWA = () => {
   let syncIntervalCount = 0;
   
   // Configurar verificação periódica para sincronização
-  // Tenta sincronizar a cada 5 minutos, silenciosamente em segundo plano
+  // Tenta sincronizar a cada 10 minutos, silenciosamente em segundo plano
+  // Aumentamos de 5 para 10 minutos para evitar sobrecarga de recursos
   setInterval(() => {
-    if (navigator.onLine) {
-      // Mostrar mensagem apenas a cada 5 execuções (25 minutos)
+    if (navigator.onLine && !syncThrottled) {
+      // Mostrar mensagem apenas a cada 5 execuções (50 minutos)
       if (syncIntervalCount % 5 === 0) {
         console.log('Tentativa periódica de sincronização em segundo plano');
       }
       syncIntervalCount++;
-      triggerSyncIfNeeded();
+      
+      // Se tivermos mais de 10 tentativas seguidas com erro, sincronizamos apenas
+      // a cada 3 verificações para dar tempo de recuperação
+      if (syncAttemptCount <= 10 || syncIntervalCount % 3 === 0) {
+        triggerSyncIfNeeded();
+      }
     }
-  }, 300000); // 5 minutos
+  }, 600000); // 10 minutos
 };
 
 // Estender a interface Window para incluir deferredPrompt
