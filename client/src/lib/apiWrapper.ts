@@ -1,7 +1,7 @@
 // Versão online-only - PWA removido
 
 // Tipos de método HTTP
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 // Objeto de configuração para requisições
 interface ApiRequestConfig {
@@ -157,4 +157,9 @@ export function putApi<T>(url: string, data: any, config: Omit<ApiRequestConfig,
 export function deleteApi<T>(url: string, config: Omit<ApiRequestConfig, 'url' | 'method'> = {}): Promise<T> {
   // Parâmetros de offline ignorados mas mantidos para compatibilidade
   return apiRequest<T>({ ...config, url, method: 'DELETE' });
+}
+
+export function patchApi<T>(url: string, data: any, config: Omit<ApiRequestConfig, 'url' | 'method' | 'data'> = {}): Promise<T> {
+  // Parâmetros de offline ignorados mas mantidos para compatibilidade
+  return apiRequest<T>({ ...config, url, method: 'PATCH', data });
 }

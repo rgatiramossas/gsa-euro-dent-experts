@@ -9,14 +9,14 @@ import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { ptBR, enUS, de } from "date-fns/locale";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
-import { putApi, deleteApi } from "@/lib/apiWrapper";
+import { putApi, deleteApi, patchApi } from "@/lib/apiWrapper";
 // Online-only version (removed offline import)
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useTranslateServiceType } from "@/hooks/useTranslateServiceType";
-import { ServiceType, ServiceStatus, ServiceWithDetails } from "@/types";
+import { ServiceType, ServiceStatus, ServiceWithDetails, ServicePhoto } from "@/types";
 import {
   Clipboard,
   Clock,
@@ -193,8 +193,9 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       }
       
       try {
-        // Usar API sem suporte offline
-        const result = await putApi(`/api/services/${id}`, data);
+        // Usar API sem suporte offline com método PATCH em vez de PUT
+        console.log("Enviando atualização de status via PATCH:", data);
+        const result = await patchApi(`/api/services/${id}`, data);
         return result;
       } catch (error) {
         console.error("Erro na atualização de status:", error);
@@ -237,9 +238,10 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
       }
       
       try {
-        // Se for um objeto comum, usamos o apiRequest normal
+        // Se for um objeto comum, usamos patchApi em vez de putApi
         if (!(formData instanceof FormData)) {
-          return await putApi(`/api/services/${id}`, formData);
+          console.log("Enviando atualização de serviço via PATCH:", formData);
+          return await patchApi(`/api/services/${id}`, formData);
         }
         
         // Para FormData em modo online, fazer tratamento normal
