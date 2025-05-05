@@ -149,7 +149,14 @@ export default function ManagerDashboard() {
                 {statsLoading ? (
                   <Skeleton className="h-8 w-20" />
                 ) : (
-                  <div className="text-2xl font-bold">{stats?.totalPendingServices || 0}</div>
+                  <>
+                    <div className="text-2xl font-bold" data-testid="pending-services-count">
+                      {stats?.totalPendingServices ?? 0}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Stats carregado: {JSON.stringify(stats)}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -165,7 +172,14 @@ export default function ManagerDashboard() {
                 {statsLoading ? (
                   <Skeleton className="h-8 w-20" />
                 ) : (
-                  <div className="text-2xl font-bold">{stats?.totalInProgressServices || 0}</div>
+                  <>
+                    <div className="text-2xl font-bold" data-testid="in-progress-services-count">
+                      {stats?.totalInProgressServices ?? 0}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Stats carregado: {JSON.stringify(stats)}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -181,7 +195,14 @@ export default function ManagerDashboard() {
                 {statsLoading ? (
                   <Skeleton className="h-8 w-20" />
                 ) : (
-                  <div className="text-2xl font-bold">{stats?.totalCompletedServices || 0}</div>
+                  <>
+                    <div className="text-2xl font-bold" data-testid="completed-services-count">
+                      {stats?.totalCompletedServices ?? 0}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Stats carregado: {JSON.stringify(stats)}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
