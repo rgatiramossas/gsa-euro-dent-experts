@@ -116,12 +116,88 @@ export default function ManagerDashboard() {
   const { data: services = [], isLoading: servicesLoading } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services', { clientId: clientFilter !== "all" ? clientFilter : undefined }, user?.id],
     enabled: !!user, // Somente realizar a consulta se o usuário estiver autenticado
+    queryFn: async () => {
+      if (!user?.id) {
+        console.error("ID do usuário não disponível para buscar serviços");
+        return [];
+      }
+      try {
+        const timestamp = new Date().getTime();
+        // Construir a URL com base no filtro de cliente
+        let url = `/api/services?_t=${timestamp}`;
+        if (clientFilter !== "all") {
+          url += `&clientId=${clientFilter}`;
+        }
+        
+        console.log(`Buscando serviços do gestor com URL: ${url}`);
+        
+        const response = await fetch(url, {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Erro ao carregar serviços do gestor');
+        }
+        
+        const data = await response.json();
+        console.log("Serviços do gestor recebidos:", data);
+        return data;
+      } catch (error) {
+        console.error("Erro ao buscar serviços do gestor:", error);
+        toast({
+          title: "Erro",
+          description: error instanceof Error ? error.message : "Erro ao carregar serviços",
+          variant: "destructive",
+        });
+        return [];
+      }
+    }
   });
   
   // Obter orçamentos
   const { data: budgets = [], isLoading: budgetsLoading } = useQuery<any[]>({
     queryKey: ['/api/budgets', user?.id],
     enabled: !!user, // Somente realizar a consulta se o usuário estiver autenticado
+    queryFn: async () => {
+      if (!user?.id) {
+        console.error("ID do usuário não disponível para buscar orçamentos");
+        return [];
+      }
+      try {
+        const timestamp = new Date().getTime();
+        const url = `/api/budgets?_t=${timestamp}`;
+        
+        console.log(`Buscando orçamentos do gestor com URL: ${url}`);
+        
+        const response = await fetch(url, {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Erro ao carregar orçamentos do gestor');
+        }
+        
+        const data = await response.json();
+        console.log("Orçamentos do gestor recebidos:", data);
+        return data;
+      } catch (error) {
+        console.error("Erro ao buscar orçamentos do gestor:", error);
+        toast({
+          title: "Erro",
+          description: error instanceof Error ? error.message : "Erro ao carregar orçamentos",
+          variant: "destructive",
+        });
+        return [];
+      }
+    }
   });
   
   // Função para selecionar a cor do status
