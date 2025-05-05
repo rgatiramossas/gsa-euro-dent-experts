@@ -56,15 +56,22 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
   // Query para buscar os clientes
   const { data: clients = [], isLoading, refetch } = useQuery<Client[]>({
     queryKey: managerMode 
-      ? ['/api/my-clients'] // Usar a rota /api/my-clients para gestores 
+      ? [`/api/managers/${user?.id}/clients`, user?.id] // Usar a rota correta para gestores
       : ['/api/clients', statusFilter, { enableOffline: true, offlineTableName: 'clients' }], // Suporte a offline
+    enabled: !managerMode || !!user?.id, // Só habilitar no modo gestor se o ID do usuário estiver disponível
     queryFn: async ({ queryKey }) => {
       if (managerMode) {
-        console.log("Modo gestor: Buscando clientes com /api/my-clients");
+        console.log(`Modo gestor: Buscando clientes com /api/managers/${user?.id}/clients`);
         try {
           // Usando timestamp para evitar cache
           const timestamp = new Date().getTime();
-          const response = await fetch(`/api/my-clients?_t=${timestamp}`, {
+          
+          if (!user?.id) {
+            console.error("ID do usuário não disponível para buscar clientes do gestor");
+            return [];
+          }
+          
+          const response = await fetch(`/api/managers/${user.id}/clients?_t=${timestamp}`, {
             credentials: 'include',
             headers: {
               'Cache-Control': 'no-cache, no-store, must-revalidate',

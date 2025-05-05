@@ -81,8 +81,14 @@ export default function ManagerDashboard() {
   
   // Obter clientes do gestor
   const { data: clients = [], isLoading: clientsLoading } = useQuery<any[]>({
-    queryKey: ['/api/my-clients', user?.id],
+    queryKey: [`/api/managers/${user?.id}/clients`, user?.id],
     enabled: !!user, // Somente realizar a consulta se o usuário estiver autenticado
+    onSuccess: (data) => {
+      console.log("Clientes do gestor obtidos com sucesso:", data);
+    },
+    onError: (error) => {
+      console.error("Erro ao obter clientes do gestor:", error);
+    }
   });
   
   // Obter serviços dos clientes do gestor
