@@ -58,7 +58,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
     queryKey: managerMode 
       ? [`/api/managers/${user?.id}/clients`, user?.id] // Usar a rota correta para gestores
       : ['/api/clients', statusFilter, { enableOffline: true, offlineTableName: 'clients' }], // Suporte a offline
-    enabled: !managerMode || !!user?.id, // Só habilitar no modo gestor se o ID do usuário estiver disponível
+    // Só habilitar no modo gestor se o ID do usuário estiver disponível
     queryFn: async ({ queryKey }) => {
       if (managerMode) {
         console.log(`Modo gestor: Buscando clientes com /api/managers/${user?.id}/clients`);
@@ -138,7 +138,7 @@ export default function ClientsList({ managerMode = false }: ClientsListProps) {
       }
     },
     // Incluir statusFilter como dependência para atualizar quando mudar
-    enabled: !managerMode || !!managerId,
+    enabled: managerMode ? !!user?.id : true,
   });
 
   // Filter clients based on search term

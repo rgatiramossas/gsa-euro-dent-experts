@@ -83,11 +83,32 @@ export default function ManagerDashboard() {
   const { data: clients = [], isLoading: clientsLoading } = useQuery<any[]>({
     queryKey: [`/api/managers/${user?.id}/clients`, user?.id],
     enabled: !!user, // Somente realizar a consulta se o usuário estiver autenticado
-    onSuccess: (data) => {
-      console.log("Clientes do gestor obtidos com sucesso:", data);
-    },
-    onError: (error) => {
-      console.error("Erro ao obter clientes do gestor:", error);
+    queryFn: async () => {
+      if (!user?.id) {
+        console.error("ID do usuário não disponível");
+        return [];
+      }
+      try {
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/managers/${user.id}/clients?_t=${timestamp}`, {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Erro ao carregar clientes do gestor');
+        }
+        
+        const data = await response.json();
+        console.log("Clientes do gestor obtidos com sucesso:", data);
+        return data;
+      } catch (error) {
+        console.error("Erro ao obter clientes do gestor:", error);
+        return [];
+      }
     }
   });
   
