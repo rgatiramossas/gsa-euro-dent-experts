@@ -17,12 +17,7 @@ export default function Dashboard() {
   const isAdmin = user?.role === "admin";
   const isGestor = user?.role === "gestor" || user?.role === "manager";
   
-  // Debug para o problema com gestores
-  console.log("DASHBOARD RENDERIZANDO:");
-  console.log("- Usuário:", user?.username);
-  console.log("- Role:", user?.role);
-  console.log("- ID:", user?.id);
-  console.log("- isGestor:", isGestor);
+  // Identificação do papel do usuário
   
   // Estado para armazenar erros e mensagens de depuração
   const [debugInfo, setDebugInfo] = React.useState<any>({
@@ -354,48 +349,7 @@ export default function Dashboard() {
         description={t("dashboard.description", "Visão geral do sistema")} 
       />
       
-      {/* Debug Panel for Gestor */}
-      {isGestor && (
-        <div className="mb-6 p-4 border border-orange-200 bg-orange-50 rounded-md">
-          <h3 className="text-lg font-medium mb-2">Debug Panel (Somente Gestor)</h3>
-          <div className="flex flex-col gap-2">
-            <div className="text-sm">
-              <strong>Status:</strong> {debugInfo.attempts > 0 ? 
-                (debugInfo.result ? 'Sucesso' : 'Erro') : 
-                'Não testado'}
-            </div>
-            <div className="text-sm">
-              <strong>Última tentativa:</strong> {debugInfo.lastAttempt || 'Nenhuma'}
-            </div>
-            <div className="text-sm">
-              <strong>Tentativas:</strong> {debugInfo.attempts}
-            </div>
-            
-            <button 
-              onClick={testDashboardAPI}
-              className="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm"
-            >
-              Testar API Dashboard Stats
-            </button>
-            
-            {debugInfo.error && (
-              <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded-md text-sm text-red-800">
-                <strong>Erro:</strong> {debugInfo.error}
-              </div>
-            )}
-            
-            {debugInfo.result && (
-              <div className="mt-2 p-2 bg-green-100 border border-green-300 rounded-md text-sm">
-                <strong>Status:</strong> {debugInfo.result.status}<br />
-                <strong>Dados:</strong>
-                <pre className="mt-1 p-2 bg-white rounded-md overflow-auto max-h-40 text-xs">
-                  {JSON.stringify(debugInfo.result.data, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+
       
       {/* Statistics Cards - Com ações rápidas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
