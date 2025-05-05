@@ -19,63 +19,7 @@ export default function Dashboard() {
   
   // Identificação do papel do usuário
   
-  // Estado para armazenar erros e mensagens de depuração
-  const [debugInfo, setDebugInfo] = React.useState<any>({
-    error: null,
-    result: null,
-    attempts: 0,
-    lastAttempt: null
-  });
-  
-  // Função para testar diretamente a API de dashboard stats
-  const testDashboardAPI = async () => {
-    setDebugInfo(prev => ({
-      ...prev,
-      attempts: prev.attempts + 1,
-      lastAttempt: new Date().toISOString()
-    }));
-    
-    try {
-      // Construir a URL com parâmetros apropriados para o papel do usuário
-      let url = '/api/dashboard/stats?debug=true&ts=' + Date.now();
-      
-      // Para gestores, precisamos usar uma URL com parâmetros adicionais
-      if (isGestor && user?.id) {
-        url = `/api/dashboard/stats?debug=true&ts=${Date.now()}&gestor_id=${user.id}&role=gestor`;
-        console.log("Testando URL específica para gestor:", url);
-      }
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
-      });
-      
-      const status = response.status;
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        data = { parseError: true, text };
-      }
-      
-      setDebugInfo(prev => ({
-        ...prev,
-        result: { status, data },
-        error: null
-      }));
-    } catch (error) {
-      setDebugInfo(prev => ({
-        ...prev,
-        error: error instanceof Error ? error.message : String(error),
-        result: null
-      }));
-    }
-  };
+
   
   // Adicionar useEffect para forçar fetch manual das estatísticas do dashboard
   const [dashboardStats, setDashboardStats] = React.useState<DashboardStats>({
@@ -88,11 +32,6 @@ export default function Dashboard() {
 
   // Função para buscar as estatísticas manualmente
   const fetchDashboardStats = React.useCallback(async () => {
-    console.log("======================================");
-    console.log("⚠️ INICIANDO FETCH DO DASHBOARD STATS");
-    console.log("Buscando estatísticas do dashboard manualmente...");
-    console.log("Role do usuário:", user?.role);
-    console.log("ID do usuário:", user?.id);
     setIsLoadingStats(true);
     
     try {
@@ -106,14 +45,10 @@ export default function Dashboard() {
       if (isGestor) {
         // Quando é um gestor, adicionamos um parâmetro especial para o backend identificar
         url = `/api/dashboard/stats?_t=${timestamp}&gestor_id=${user?.id}&role=gestor`;
-        console.log(`URL especial para gestor: ${url}`);
       }
-      
-      console.log(`Fazendo requisição para ${url}`);
       
       // Adicionar o cookie explicitamente
       const cookie = document.cookie;
-      console.log("Cookie atual:", cookie);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -126,14 +61,11 @@ export default function Dashboard() {
         }
       });
       
-      console.log("Status da resposta:", response.status, response.statusText);
-      
       if (!response.ok) {
         throw new Error(`Erro na resposta: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log("Dados recebidos:", data);
       
       // Processar os dados para garantir que todas as propriedades existam
       const processedData: DashboardStats = {
@@ -142,8 +74,6 @@ export default function Dashboard() {
         totalCompletedServices: Number(data.totalCompletedServices) || 0,
         totalRevenue: Number(data.totalRevenue) || 0
       };
-      
-      console.log("Dados processados:", processedData);
       setDashboardStats(processedData);
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
@@ -155,59 +85,14 @@ export default function Dashboard() {
   
   // Usar useEffect para chamar a função quando o componente montar
   React.useEffect(() => {
-    console.log("Dashboard montado, buscando estatísticas...");
-    
     // Adicionar um pequeno atraso para garantir que os dados de autenticação estão completos
     setTimeout(() => {
-      console.log("🚀 DISPARANDO FETCH DE ESTATÍSTICAS COM DELAY...");
-      console.log("Usuário atual:", user);
-      console.log("Papel do usuário:", user?.role);
-      
-      // Para gestores, precisamos parâmetros adicionais
-      let fetchUrl = '/api/dashboard/stats?_nocache=' + new Date().getTime();
-      if (isGestor) {
-        fetchUrl = `/api/dashboard/stats?_nocache=${new Date().getTime()}&gestor_id=${user?.id}&role=gestor`;
-      }
-      
-      // Vamos fazer uma chamada manual
-      fetch(fetchUrl, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      })
-      .then(response => {
-        console.log(`Resposta manual stats (${fetchUrl}):`, response.status);
-        if (response.ok) {
-          return response.json();
-        }
-        console.error("Erro na resposta:", response.status, response.statusText);
-        throw new Error(`Erro ao obter estatísticas: ${response.status}`);
-      })
-      .then(data => {
-        console.log("Dados obtidos manualmente:", data);
-        setDashboardStats({
-          totalPendingServices: Number(data.totalPendingServices) || 0,
-          totalInProgressServices: Number(data.totalInProgressServices) || 0,
-          totalCompletedServices: Number(data.totalCompletedServices) || 0,
-          totalRevenue: Number(data.totalRevenue) || 0
-        });
-        setIsLoadingStats(false);
-      })
-      .catch(error => {
-        console.error("Erro ao buscar estatísticas manualmente:", error);
-      });
-      
-      // Também chama o método normal
+      // Buscar estatísticas iniciais
       fetchDashboardStats();
     }, 1000);
     
     // Configurar um intervalo para atualizar as estatísticas
     const intervalId = setInterval(() => {
-      console.log("Intervalo de atualização disparado");
       fetchDashboardStats();
     }, 30000);
     
@@ -215,57 +100,16 @@ export default function Dashboard() {
     return () => clearInterval(intervalId);
   }, [fetchDashboardStats, user, isGestor]);
   
-  // Mantemos o useQuery mas vamos garantir que ele use os dados atualizados
+  // Usar useQuery para manter a compatibilidade com o restante do código
   const { 
     data: statsResponse, 
     error: statsError
-  } = useQuery<any>({
+  } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats'],
-    queryFn: async () => {
-      console.log("[useQuery stats] Usando os dados do dashboardStats:", dashboardStats);
-      return dashboardStats;
-    },
+    queryFn: async () => dashboardStats,
     initialData: dashboardStats,
-    enabled: true, // Habilitamos a consulta automática
+    enabled: true,
   });
-  
-  // Usar os dados do backend diretamente com os novos nomes
-  const stats = React.useMemo(() => {
-    if (!dashboardStats) {
-      console.log("Não há dashboardStats, retornando valores padrão");
-      return {
-        totalPendingServices: 0,
-        totalInProgressServices: 0,
-        totalCompletedServices: 0,
-        totalRevenue: 0
-      } as DashboardStats;
-    }
-    
-    console.log("Stats recebidos do backend:", dashboardStats);
-    console.log("Tipo de dashboardStats:", typeof dashboardStats);
-    console.log("É um array?", Array.isArray(dashboardStats));
-    
-    if (typeof dashboardStats !== 'object' || !dashboardStats) {
-      console.error("dashboardStats não é um objeto válido");
-      return {
-        totalPendingServices: 0,
-        totalInProgressServices: 0,
-        totalCompletedServices: 0,
-        totalRevenue: 0
-      } as DashboardStats;
-    }
-    
-    // Converter valores numéricos explicitamente
-    const result = {
-      totalPendingServices: Number(dashboardStats.totalPendingServices) || 0,
-      totalInProgressServices: Number(dashboardStats.totalInProgressServices) || 0,
-      totalCompletedServices: Number(dashboardStats.totalCompletedServices) || 0,
-      totalRevenue: Number(dashboardStats.totalRevenue) || 0
-    } as DashboardStats;
-    
-    console.log("Stats processados:", result);
-    return result;
-  }, [dashboardStats]);
 
   // Fetch technician performance (only for admins)
   const { 
@@ -276,7 +120,6 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!isAdmin) return [];
       
-      console.log("Fazendo requisição para technician performance");
       try {
         const response = await fetch('/api/dashboard/technician-performance', {
           credentials: 'include',
@@ -285,11 +128,8 @@ export default function Dashboard() {
           }
         });
         
-        console.log("Status da resposta technician performance:", response.status);
-        
         if (!response.ok) {
           if (response.status === 401) {
-            console.error("Erro de autenticação na requisição de performance de técnicos");
             return [];
           }
           throw new Error(`Erro ao buscar performance de técnicos: ${response.statusText}`);
@@ -313,7 +153,6 @@ export default function Dashboard() {
   } = useQuery<ServiceListItem[]>({
     queryKey: ['/api/services'],
     queryFn: async () => {
-      console.log("Fazendo requisição para serviços recentes");
       try {
         const response = await fetch('/api/services?limit=5', {
           credentials: 'include',
@@ -322,11 +161,8 @@ export default function Dashboard() {
           }
         });
         
-        console.log("Status da resposta de serviços recentes:", response.status);
-        
         if (!response.ok) {
           if (response.status === 401) {
-            console.error("Erro de autenticação na requisição de serviços recentes");
             return [];
           }
           throw new Error(`Erro ao buscar serviços recentes: ${response.statusText}`);
