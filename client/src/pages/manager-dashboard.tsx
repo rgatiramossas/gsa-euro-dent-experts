@@ -18,6 +18,7 @@ import { ServiceListItem, DashboardStats } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ManagerDashboard() {
   const { user } = useAuth();
@@ -93,6 +94,7 @@ export default function ManagerDashboard() {
         const response = await fetch(`/api/managers/${user.id}/clients?_t=${timestamp}`, {
           credentials: 'include',
           headers: {
+            'Accept': 'application/json',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache'
           }
@@ -134,6 +136,7 @@ export default function ManagerDashboard() {
         const response = await fetch(url, {
           credentials: 'include',
           headers: {
+            'Accept': 'application/json',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache'
           }
@@ -148,6 +151,7 @@ export default function ManagerDashboard() {
         return data;
       } catch (error) {
         console.error("Erro ao buscar serviços do gestor:", error);
+        const { toast } = useToast();
         toast({
           title: "Erro",
           description: error instanceof Error ? error.message : "Erro ao carregar serviços",
@@ -176,6 +180,7 @@ export default function ManagerDashboard() {
         const response = await fetch(url, {
           credentials: 'include',
           headers: {
+            'Accept': 'application/json',
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache'
           }
