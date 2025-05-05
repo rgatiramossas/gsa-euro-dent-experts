@@ -24,6 +24,7 @@ export default function ManagerDashboard() {
   const { user } = useAuth();
   const [clientFilter, setClientFilter] = useState<string>("all");
   const { t } = useTranslation();
+  const { toast } = useToast();
   
   // Obter estatísticas do dashboard
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
@@ -151,7 +152,6 @@ export default function ManagerDashboard() {
         return data;
       } catch (error) {
         console.error("Erro ao buscar serviços do gestor:", error);
-        const { toast } = useToast();
         toast({
           title: "Erro",
           description: error instanceof Error ? error.message : "Erro ao carregar serviços",
