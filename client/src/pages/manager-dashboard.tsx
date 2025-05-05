@@ -32,6 +32,7 @@ export default function ManagerDashboard() {
         // Construir URL com parâmetros específicos para gestor
         const url = `/api/dashboard/stats?gestor_id=${user?.id}&role=gestor&_t=${new Date().getTime()}`;
         console.log("Fetching manager stats with URL:", url);
+        console.log("User data:", user);
         
         const response = await fetch(url, {
           credentials: 'include',
@@ -49,13 +50,18 @@ export default function ManagerDashboard() {
         const data = await response.json();
         console.log("Manager dashboard stats received:", data);
         
-        // Garantir que todos os valores sejam numéricos
-        // Gestores não devem ter acesso aos dados financeiros
-        return {
+        // Adicionar logs explícitos para depuração
+        const result = {
           totalPendingServices: Number(data.totalPendingServices) || 0,
           totalInProgressServices: Number(data.totalInProgressServices) || 0,
           totalCompletedServices: Number(data.totalCompletedServices) || 0
         };
+        
+        console.log("Stats processados para exibição:", result);
+        
+        // Garantir que todos os valores sejam numéricos
+        // Gestores não devem ter acesso aos dados financeiros
+        return result;
       } catch (error) {
         console.error("Error fetching manager stats:", error);
         return {
