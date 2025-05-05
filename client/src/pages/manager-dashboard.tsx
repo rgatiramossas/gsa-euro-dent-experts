@@ -26,11 +26,17 @@ export default function ManagerDashboard() {
   
   // Obter estatísticas do dashboard
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: ['/api/dashboard/stats'],
+    queryKey: ['/api/dashboard/stats', user?.id],
     queryFn: async () => {
       try {
+        // Verificar se o usuário está autenticado antes de fazer a requisição
+        if (!user || !user.id) {
+          console.error("Usuário não autenticado ou ID do usuário indefinido");
+          throw new Error("Usuário não autenticado");
+        }
+        
         // Construir URL com parâmetros específicos para gestor
-        const url = `/api/dashboard/stats?gestor_id=${user?.id}&role=gestor&_t=${new Date().getTime()}`;
+        const url = `/api/dashboard/stats?gestor_id=${user.id}&role=gestor&_t=${new Date().getTime()}`;
         console.log("Fetching manager stats with URL:", url);
         console.log("User data:", user);
         
@@ -75,17 +81,20 @@ export default function ManagerDashboard() {
   
   // Obter clientes do gestor
   const { data: clients = [], isLoading: clientsLoading } = useQuery<any[]>({
-    queryKey: ['/api/my-clients'],
+    queryKey: ['/api/my-clients', user?.id],
+    enabled: !!user, // Somente realizar a consulta se o usuário estiver autenticado
   });
   
   // Obter serviços dos clientes do gestor
   const { data: services = [], isLoading: servicesLoading } = useQuery<ServiceListItem[]>({
-    queryKey: ['/api/services', { clientId: clientFilter !== "all" ? clientFilter : undefined }],
+    queryKey: ['/api/services', { clientId: clientFilter !== "all" ? clientFilter : undefined }, user?.id],
+    enabled: !!user, // Somente realizar a consulta se o usuário estiver autenticado
   });
   
   // Obter orçamentos
   const { data: budgets = [], isLoading: budgetsLoading } = useQuery<any[]>({
-    queryKey: ['/api/budgets'],
+    queryKey: ['/api/budgets', user?.id],
+    enabled: !!user, // Somente realizar a consulta se o usuário estiver autenticado
   });
   
   // Função para selecionar a cor do status
