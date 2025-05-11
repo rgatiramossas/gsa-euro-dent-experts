@@ -121,6 +121,7 @@
     "selectStatus": "Status auswählen",
     "notesOptional": "Notizen (optional)",
     "addStatusNotes": "Zusätzliche Informationen zur Statusänderung hinzufügen",
+    "createServiceForClient": "Dienstleistung für diesen Kunden erstellen",
     "errors": {
       "selectClient": "Wählen Sie einen Kunden aus",
       "selectVehicle": "Wählen Sie ein Fahrzeug aus",
@@ -247,7 +248,14 @@
     "getting": "Abrufen...",
     "location": "Standort",
     "registerClient": "Kunden registrieren",
-    "newClientDesc": "Einen neuen Kunden registrieren (vereinfachtes Formular)"
+    "newClientDesc": "Einen neuen Kunden registrieren (vereinfachtes Formular)",
+    "noVehicles": "Keine Fahrzeuge für diesen Kunden registriert",
+    "vehiclesRegisteredInService": "Fahrzeuge werden jetzt direkt im Serviceformular registriert",
+    "noServices": "Keine Dienstleistungen für diesen Kunden registriert",
+    "noBudgets": "Keine Kostenvoranschläge für diesen Kunden registriert",
+    "backToList": "Zurück zur Kundenliste",
+    "relatedInfoDescription": "Fahrzeuge, Dienstleistungen und Kostenvoranschläge dieses Kunden",
+    "associatedServicesWillBeKept": "Dienstleistungen und Kostenvoranschläge dieses Kunden werden für historische Zwecke im System gespeichert, aber der Kunde wird als gelöscht markiert"
   },
   "vehicles": {
     "title": "Fahrzeuge",
