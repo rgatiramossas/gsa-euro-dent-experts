@@ -1,20 +1,13 @@
-// Store para gerenciar o estado offline da aplicação
+// Este arquivo continha código para gerenciar estado offline, removido para evitar problemas com Windows Defender
+// Módulo simplificado para compatibilidade
 
 type Listener = () => void;
 
-// Store simples para gerenciar estado offline
-class OfflineStatusStore {
-  private _isOnline: boolean = navigator.onLine;
-  private _isSyncing: boolean = false;
-  private _pendingCount: number = 0;
+// Implementação de store simplificada - sempre retorna como online
+class OnlineStatusStore {
   private listeners: Listener[] = [];
 
-  constructor() {
-    // Verificar estado inicial
-    this._isOnline = navigator.onLine;
-  }
-
-  // Adicionar um listener para mudanças de estado
+  // Adicionar um listener para mudanças de estado (mantido para compatibilidade)
   subscribe(listener: Listener): () => void {
     this.listeners.push(listener);
     return () => {
@@ -22,77 +15,48 @@ class OfflineStatusStore {
     };
   }
 
-  // Notificar todos os listeners de mudanças
+  // Notificar todos os listeners de mudanças (sem uso, mantido para compatibilidade)
   private notify(): void {
     this.listeners.forEach(listener => listener());
   }
 
-  // Obter o estado atual
+  // Obter o estado atual - sempre retorna online
   getState(): { isOnline: boolean; isSyncing: boolean; pendingCount: number } {
     return {
-      isOnline: this._isOnline,
-      isSyncing: this._isSyncing,
-      pendingCount: this._pendingCount
+      isOnline: true,  // Sempre online
+      isSyncing: false,
+      pendingCount: 0
     };
   }
   
-  // Método público para verificar se está online
+  // Método público para verificar se está online - sempre retorna true
   getOnlineStatus(): boolean {
-    return this._isOnline;
+    return true;
   }
   
-  // Método público para verificar se está sincronizando
+  // Método público para verificar se está sincronizando - sempre false
   getSyncingStatus(): boolean {
-    return this._isSyncing;
+    return false;
   }
   
-  // Método público para obter a contagem de requisições pendentes
+  // Método público para obter a contagem de requisições pendentes - sempre 0
   getPendingCount(): number {
-    return this._pendingCount;
+    return 0;
   }
 
-  // Atualizar status online
+  // Métodos de atualização mantidos por compatibilidade, mas sem efeito
   setOnline(status: boolean): void {
-    if (this._isOnline !== status) {
-      this._isOnline = status;
-      this.notify();
-    }
+    // Sem efeito, sempre online
   }
 
-  // Atualizar status de sincronização
   setSyncing(status: boolean): void {
-    if (this._isSyncing !== status) {
-      this._isSyncing = status;
-      this.notify();
-    }
+    // Sem efeito
   }
 
-  // Atualizar contagem de requisições pendentes
   setPendingCount(count: number): void {
-    if (this._pendingCount !== count) {
-      this._pendingCount = count;
-      this.notify();
-    }
+    // Sem efeito
   }
 }
 
 // Criar e exportar a instância da store
-export const offlineStatusStore = new OfflineStatusStore();
-
-// Hook React para usar o estado offline (importado no componente)
-// O uso seria assim:
-/*
-import { useOfflineStatus } from '@/lib/stores';
-
-function Component() {
-  const { isOnline, isSyncing, pendingCount } = useOfflineStatus();
-  
-  return (
-    <div>
-      {isOnline ? 'Online' : 'Offline'}
-      {isSyncing && 'Sincronizando...'}
-      {pendingCount > 0 && `${pendingCount} requisições pendentes`}
-    </div>
-  );
-}
-*/
+export const offlineStatusStore = new OnlineStatusStore();

@@ -60,14 +60,10 @@ export async function apiRequest<T>({
   enableOffline = false, 
   offlineTableName
 }: ApiRequestConfig): Promise<T> {
-  // Verificação simplificada de conexão
-  const isOnline = navigator.onLine;
-  console.log(`[apiRequest] Status da rede para ${method} ${url}: ${isOnline ? 'Online' : 'Offline'}`);
+  // Verificação de conexão removida - assumindo sempre online
+  console.log(`[apiRequest] Executando ${method} ${url}`);
   
-  if (!isOnline) {
-    console.error(`[apiRequest] Operação ${method} ${url} rejeitada: aplicação requer conexão com a internet`);
-    throw new Error('Esta operação requer conexão com a internet.');
-  }
+  // Não verificamos mais o status da rede
   
   const isAuthOperation = url.includes('/api/auth/');
   

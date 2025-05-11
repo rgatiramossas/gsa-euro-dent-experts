@@ -3,8 +3,8 @@ import { AuthUser } from "@/types/index";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { postApi, getApi, setSessionRefreshFunction } from "@/lib/apiWrapper";
 
-// Simple function to check if we're online
-const checkNetworkStatus = () => navigator.onLine;
+// Função simplificada - removido detector de status online
+const checkNetworkStatus = () => true; // Sempre retorna online
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -200,12 +200,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const login = async (username: string, password: string, rememberMe: boolean = false): Promise<AuthUser> => {
-    // Modo offline não suportado mais - sempre requer conexão
-    if (!navigator.onLine) {
-      throw new Error("Não é possível fazer login sem conexão à internet. Verifique sua conexão e tente novamente.");
-    }
+    // Verificação de conexão removida - sempre online
     
-    // Usar a mutação normal para login online
+    // Usar a mutação para login
     const userData = await loginMutation.mutateAsync({ username, password, rememberMe }) as AuthUser;
     
     // Garantir que a sessão foi estabelecida verificando novamente após 1 segundo
