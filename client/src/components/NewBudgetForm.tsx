@@ -107,32 +107,13 @@ const NewBudgetForm: React.FC<NewBudgetFormProps> = ({
   const [vehicleImage, setVehicleImage] = useState<string | null>(initialData?.vehicle_image || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  // Sempre online - funcionalidade offline removida
+  const [isOffline, setIsOffline] = useState(false);
   
-  // Efeito para detectar mudanças no estado da conexão - aprimorado
+  // Sem detecção de conexão - sempre online
   useEffect(() => {
-    // Verificar inicialmente se estamos online
-    console.log("Verificação inicial de rede:", navigator.onLine ? "ONLINE" : "OFFLINE");
-    setIsOffline(!navigator.onLine);
-    
-    // Funções para atualizar o estado
-    const handleOnline = () => {
-      console.log("Evento online detectado");
-      setIsOffline(false);
-    };
-    
-    const handleOffline = () => {
-      console.log("Evento offline detectado");
-      setIsOffline(true);
-    };
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    console.log("Modo sempre online: Funcionalidade offline desativada");
+    // Não adicionamos listeners de eventos de rede
   }, []);
   
   // Buscar a lista de clientes do banco de dados - versão apenas online

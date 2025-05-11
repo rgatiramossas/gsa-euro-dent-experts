@@ -48,20 +48,13 @@ export default function NewClient() {
   const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const [saveTimeout, setSaveTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  // Funcionalidade offline removida - sempre online
+  const [isOffline, setIsOffline] = useState(false);
   
-  // Efeito para detectar mudanças no estado da conexão
+  // Sem detecção de conexão
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    console.log("Modo sempre online: Funcionalidade offline desativada");
+    // Não adicionamos listeners de eventos de rede
   }, []);
   
   // Efeito para limpar timeout quando componente for desmontado
