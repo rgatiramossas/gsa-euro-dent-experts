@@ -34,15 +34,29 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-// Adicionar cabeçalhos de segurança para evitar bloqueios de segurança
+// Adicionar cabeçalhos de segurança aprimorados para evitar bloqueios de segurança
 app.use((req, res, next) => {
-  // Desativar Content-Security-Policy para desenvolvimento
+  // Definir cabeçalhos de segurança mais robustos
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  // Remover cabeçalhos que possam identificar tecnologias 
+  
+  // Adicionar Permissions-Policy para limitar funcionalidades sensíveis
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  
+  // Adicionar Feature-Policy para desativar recursos que podem ser considerados arriscados
+  res.setHeader('Feature-Policy', 'camera none; microphone none; geolocation none;');
+  
+  // Adicionar uma Content-Security-Policy básica, mas permissiva para desenvolvimento
+  res.setHeader('Content-Security-Policy', "default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval';");
+  
+  // Remover cabeçalhos que possam identificar tecnologias
   res.removeHeader('X-Powered-By');
+  
+  // Adicionar cabeçalho personalizado que pode ajudar a evitar bloqueios
+  res.setHeader('X-Site-Type', 'Dashboard Application');
+  
   next();
 });
 
