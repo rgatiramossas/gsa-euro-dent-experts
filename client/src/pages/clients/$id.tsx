@@ -186,25 +186,25 @@ export default function ClientDetail({ id }: ClientDetailProps) {
     return (
       <div className="py-6 px-4 sm:px-6 lg:px-8">
         <PageHeader
-          title="Detalhes do Cliente"
+          title={t("clients.clientDetails")}
           actions={
             <Button variant="outline" onClick={handleBack}>
-              Voltar
+              {t("common.back")}
             </Button>
           }
         />
         <Card className="mt-6">
           <CardContent className="py-10 text-center">
-            <h3 className="text-lg font-medium text-red-600">Erro ao carregar detalhes do cliente</h3>
+            <h3 className="text-lg font-medium text-red-600">{t("services.errors.loadingDetails")}</h3>
             <p className="mt-2 text-muted-foreground">
-              Não foi possível obter as informações do cliente. Tente novamente mais tarde.
+              {t("services.errors.loadingDetailsDescription")}
             </p>
             <Button 
               variant="default" 
               className="mt-4" 
               onClick={handleBack}
             >
-              Voltar para a lista de clientes
+              {t("clients.backToList")}
             </Button>
           </CardContent>
         </Card>
@@ -248,29 +248,29 @@ export default function ClientDetail({ id }: ClientDetailProps) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogTitle>{t("common.confirmDelete")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Você está prestes a excluir o cliente <strong>{client.name}</strong>.<br /><br />
-              Este cliente possui:
+              {t("clients.confirmDelete")} <strong>{client.name}</strong>.<br /><br />
+              {t("common.thisItemHas")}:
               <ul className="list-disc pl-5 my-2">
-                {vehicles.length > 0 && <li>{vehicles.length} veículo(s) registrado(s)</li>}
-                {services.length > 0 && <li>{services.length} serviço(s) registrado(s)</li>}
-                {budgets.length > 0 && <li>{budgets.length} orçamento(s) registrado(s)</li>}
+                {vehicles.length > 0 && <li>{vehicles.length} {t("vehicles.title").toLowerCase()}</li>}
+                {services.length > 0 && <li>{services.length} {t("services.title").toLowerCase()}</li>}
+                {budgets.length > 0 && <li>{budgets.length} {t("budget.title").toLowerCase()}</li>}
               </ul>
               <br />
-              Os serviços e orçamentos associados a este cliente serão mantidos no sistema para fins de histórico, mas o cliente será marcado como excluído.
+              {t("clients.associatedServicesWillBeKept")}
               <br /><br />
-              Esta ação não pode ser desfeita.
+              {t("common.actionCannotBeUndone")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteClientMutation.mutate()}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteClientMutation.isPending}
             >
-              {deleteClientMutation.isPending ? "Excluindo..." : "Confirmar Exclusão"}
+              {deleteClientMutation.isPending ? t("common.deleting") : t("common.confirmDelete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -303,29 +303,29 @@ export default function ClientDetail({ id }: ClientDetailProps) {
               </div>
 
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">Telefone</dt>
+                <dt className="text-sm font-medium text-muted-foreground">{t("clients.phone")}</dt>
                 <dd className="mt-1 text-base">
                   {client.phone ? (
                     <a href={`tel:${client.phone}`} className="text-blue-600 hover:underline">
                       {client.phone}
                     </a>
                   ) : (
-                    <span className="text-muted-foreground italic">Não informado</span>
+                    <span className="text-muted-foreground italic">{t("common.notSpecified")}</span>
                   )}
                 </dd>
               </div>
 
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">Endereço</dt>
+                <dt className="text-sm font-medium text-muted-foreground">{t("clients.address")}</dt>
                 <dd className="mt-1 text-base">
-                  {client.address || <span className="text-muted-foreground italic">Não informado</span>}
+                  {client.address || <span className="text-muted-foreground italic">{t("common.notSpecified")}</span>}
                 </dd>
               </div>
 
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">Data de Cadastro</dt>
+                <dt className="text-sm font-medium text-muted-foreground">{t("common.registrationDate")}</dt>
                 <dd className="mt-1 text-base">
-                  {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : 'N/A'}
+                  {client.created_at ? new Date(client.created_at).toLocaleDateString() : 'N/A'}
                 </dd>
               </div>
             </dl>
@@ -335,20 +335,20 @@ export default function ClientDetail({ id }: ClientDetailProps) {
         {/* Tabs para veículos, serviços e orçamentos */}
         <Card className="md:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle>Informações Relacionadas</CardTitle>
-            <CardDescription>Veículos, serviços e orçamentos relacionados a este cliente</CardDescription>
+            <CardTitle>{t("common.relatedInformation")}</CardTitle>
+            <CardDescription>{t("clients.relatedInfoDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="vehicles">
               <TabsList className="mb-4">
                 <TabsTrigger value="vehicles">
-                  Veículos ({vehicles.length})
+                  {t("vehicles.title")} ({vehicles.length})
                 </TabsTrigger>
                 <TabsTrigger value="services">
-                  Serviços ({services.length})
+                  {t("services.title")} ({services.length})
                 </TabsTrigger>
                 <TabsTrigger value="budgets">
-                  Orçamentos ({budgets.length})
+                  {t("budget.title")} ({budgets.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -362,10 +362,10 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Marca/Modelo</TableHead>
-                        <TableHead>Placa</TableHead>
-                        <TableHead>Cor</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
+                        <TableHead>{t("vehicles.make")}/{t("vehicles.model")}</TableHead>
+                        <TableHead>{t("vehicles.licensePlate")}</TableHead>
+                        <TableHead>{t("vehicles.color")}</TableHead>
+                        <TableHead className="text-right">{t("common.actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -385,8 +385,8 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                   </Table>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p>Nenhum veículo cadastrado para este cliente.</p>
-                    <p className="text-sm mt-2">Os veículos agora são registrados diretamente no formulário de serviço.</p>
+                    <p>{t("clients.noVehicles")}</p>
+                    <p className="text-sm mt-2">{t("clients.vehiclesRegisteredInService")}</p>
                   </div>
                 )}
 
@@ -403,11 +403,11 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Veículo</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
+                        <TableHead>{t("services.serviceType")}</TableHead>
+                        <TableHead>{t("services.vehicle")}</TableHead>
+                        <TableHead>{t("services.status")}</TableHead>
+                        <TableHead>{t("common.date")}</TableHead>
+                        <TableHead className="text-right">{t("common.actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -424,7 +424,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                           </TableCell>
                           <TableCell>
                             {service.scheduled_date ? 
-                              new Date(service.scheduled_date).toLocaleDateString('pt-BR') : 
+                              new Date(service.scheduled_date).toLocaleDateString() : 
                               "N/A"}
                           </TableCell>
                           <TableCell className="text-right">
@@ -433,7 +433,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                               size="sm"
                               onClick={() => setLocation(`/services/${service.id}`)}
                             >
-                              Detalhes
+                              {t("common.details")}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -442,7 +442,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                   </Table>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p>Nenhum serviço cadastrado para este cliente.</p>
+                    <p>{t("clients.noServices")}</p>
                     <Button 
                       variant="outline" 
                       className="mt-4"
