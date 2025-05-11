@@ -1835,20 +1835,45 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getServicePhotos(serviceId: number, type?: string): Promise<ServicePhoto[]> {
-    if (type) {
+    try {
+      // Verificar se a tabela service_photos existe
+      const [tableResult] = await pool.query("SHOW TABLES LIKE 'service_photos'");
+      if (!tableResult.length) {
+        console.log("Tabela service_photos não existe ao buscar fotos. Criando tabela...");
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS service_photos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            service_id INT NOT NULL,
+            photo_url VARCHAR(255) NOT NULL,
+            photo_type VARCHAR(50),
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+          )
+        `);
+        console.log("Tabela service_photos criada com sucesso");
+        return []; // Retorna array vazio já que a tabela acabou de ser criada
+      }
+      
+      // Se a tabela existe, prossegue normalmente
+      if (type) {
+        return db.select()
+          .from(servicePhotos)
+          .where(
+            and(
+              eq(servicePhotos.service_id, serviceId),
+              eq(servicePhotos.photo_type, type)
+            )
+          );
+      }
+      
       return db.select()
         .from(servicePhotos)
-        .where(
-          and(
-            eq(servicePhotos.service_id, serviceId),
-            eq(servicePhotos.photo_type, type)
-          )
-        );
+        .where(eq(servicePhotos.service_id, serviceId));
+    } catch (error) {
+      console.error("Erro ao buscar fotos do serviço:", error);
+      return []; // Retorna array vazio em caso de erro
     }
-    
-    return db.select()
-      .from(servicePhotos)
-      .where(eq(servicePhotos.service_id, serviceId));
   }
   
   async removeServicePhoto(photoId: number): Promise<boolean> {
