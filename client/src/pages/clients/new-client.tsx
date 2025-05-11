@@ -280,17 +280,7 @@ export default function NewClient() {
     
     console.log("Enviando dados limpos:", cleanData);
     
-    // Verificar o estado da conexão
-    if (!navigator.onLine) {
-      // Informar ao usuário que está offline e não é possível salvar
-      toast({
-        title: "Sem conexão",
-        description: "Você está sem conexão à internet. Verifique sua conexão e tente novamente.",
-        variant: "destructive",
-      });
-      setIsSaving(false);
-      return;
-    }
+    // Verificação de conexão removida - sempre online
     
     // Processamento online normal
     createClientMutation.mutate(cleanData);

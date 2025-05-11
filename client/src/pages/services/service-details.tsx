@@ -184,13 +184,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data: { status: ServiceStatus; notes?: string }) => {
-      // Versão apenas online
-      const isOnline = navigator.onLine;
-      console.log("Status da rede:", isOnline ? "Online" : "Offline");
-      
-      if (!isOnline) {
-        throw new Error("Esta operação requer conexão com a internet");
-      }
+      // Verificação de conexão removida - sempre online
+      console.log("Executando atualização de status");
       
       try {
         // Usar API sem suporte offline com método PATCH em vez de PUT
@@ -229,13 +224,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const updateServiceMutation = useMutation({
     mutationFn: async (formData: FormData | Record<string, any>) => {
-      // Versão apenas online
-      const isOnline = navigator.onLine;
-      console.log("Status da rede:", isOnline ? "Online" : "Offline");
-      
-      if (!isOnline) {
-        throw new Error("Esta operação requer conexão com a internet");
-      }
+      // Verificação de conexão removida - sempre online
+      console.log("Executando atualização de serviço");
       
       try {
         // Se for um objeto comum, usamos patchApi em vez de putApi
