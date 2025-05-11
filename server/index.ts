@@ -34,6 +34,18 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+// Adicionar cabeçalhos de segurança para evitar bloqueios de segurança
+app.use((req, res, next) => {
+  // Desativar Content-Security-Policy para desenvolvimento
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Remover cabeçalhos que possam identificar tecnologias 
+  res.removeHeader('X-Powered-By');
+  next();
+});
+
 // Importante: Configurar rota para servir arquivos estáticos de uploads ANTES do Vite
 app.use('/uploads', (req, res, next) => {
   console.log(`Requisição de arquivo estático: ${req.path}`);
