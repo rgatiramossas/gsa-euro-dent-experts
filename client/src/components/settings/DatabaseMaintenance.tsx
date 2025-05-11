@@ -29,7 +29,7 @@ export function DatabaseMaintenance() {
       
       // Simplesmente recarregar a página para atualizar os recursos
       setTimeout(() => {
-        window.location.reload(); // Recarrega a página
+        window.location.reload();
       }, 2000);
       
     } catch (error) {

@@ -481,37 +481,8 @@ export default function NewServicePage() {
     };
   }, [offlineAttemptFailed, createServiceMutation]);
 
-  // Gerenciamento de operações offline (sem dependência de service worker)
+  // Timeout de segurança para requisições de API
   useEffect(() => {
-    // Lógica para lidar com salvamentos offline sem serviceWorker
-    console.log("Configurando gerenciamento de operações offline");
-    
-    function handleOfflineOperation() {
-      // Verificar se estamos em processo de salvamento
-      const isMutationPending = createServiceMutation.isPending || document.querySelector('button[type="submit"]:disabled');
-      
-      if (isMutationPending && !navigator.onLine) {
-        console.log("Formulário em estado de salvamento offline");
-        
-        // Marcar como salvo offline 
-        setServiceSavedOffline(true);
-        
-        // Mostrar notificação para o usuário
-        toast({
-          title: t("offline.savedOffline"),
-          description: t("offline.serviceOfflineDescription"),
-        });
-        
-        // Forçar redefinição do estado de mutação para permitir o usuário continuar
-        createServiceMutation.reset();
-        
-        // Redirecionar para a lista após um pequeno tempo
-        setTimeout(() => {
-          setLocation('/services');
-        }, 500);
-      }
-    }
-    
     // Configurar timeout de segurança para operações
     let timeoutId: number | null = null;
     
@@ -523,23 +494,15 @@ export default function NewServicePage() {
           console.log("A mutação ainda está pendente, resetando-a para evitar bloqueio da UI");
           createServiceMutation.reset();
           
-          // Verificar se estamos offline
-          if (!navigator.onLine) {
-            toast({
-              title: t("offline.savedOffline"),
-              description: t("offline.serviceOfflineDescription"),
-            });
-            
-            // Redirecionar para evitar que o usuário fique preso
-            setTimeout(() => {
-              setLocation('/services');
-            }, 500);
-          }
+          toast({
+            title: t("errors.timeout"),
+            description: t("errors.operationTimeout"),
+            variant: "destructive"
+          });
         }
       }, 10000); // 10 segundos de timeout
     }
     
-    // Código relacionado a service worker removido (PWA desativado)
     console.log("Componente de novo serviço montado");
     
     // Remover listener quando o componente for desmontado
@@ -549,7 +512,7 @@ export default function NewServicePage() {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [toast, setLocation, createServiceMutation, t]);
+  }, [toast, createServiceMutation, t]);
   
   // Função que é chamada quando o formulário é enviado
   const onSubmit = async (data: FormData) => {
