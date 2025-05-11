@@ -67,20 +67,18 @@ const NewBudgetPage: React.FC = () => {
         console.log("[NewBudget] Buscando clientes ativos...");
         
         // Variáveis para armazenar clientes online e offline
-        let onlineClients: Client[] = [];
-        let offlineClients: Client[] = [];
+        let clients: Client[] = [];
         
-        // Buscar clientes online se estiver conectado
-        if (navigator.onLine) {
-          try {
-            const response = await fetch('/api/clients?filterMode=active&enableOffline=true');
-            if (!response.ok) {
-              throw new Error('Erro ao carregar clientes do servidor');
-            }
-            onlineClients = await response.json();
-            console.log(`[NewBudget] ${onlineClients.length} clientes carregados do servidor`);
-          } catch (onlineError) {
-            console.error("[NewBudget] Erro ao buscar clientes online:", onlineError);
+        // Buscar clientes do servidor - sempre online
+        try {
+          const response = await fetch('/api/clients?filterMode=active');
+          if (!response.ok) {
+            throw new Error('Erro ao carregar clientes do servidor');
+          }
+          clients = await response.json();
+            console.log(`[NewBudget] ${clients.length} clientes carregados do servidor`);
+          } catch (error) {
+            console.error("[NewBudget] Erro ao buscar clientes:", error);
           }
         }
         

@@ -988,9 +988,7 @@ export default function NewServicePage() {
             >
               {createServiceMutation.isPending || serviceSavedOffline 
                 ? t("common.saving", "Salvando...") 
-                : !navigator.onLine 
-                  ? t("offline.saveOffline", "Salvar Offline") 
-                  : t("common.save", "Salvar")
+                : t("common.save", "Salvar")
               }
             </Button>
           </div>

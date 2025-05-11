@@ -437,13 +437,8 @@ export default function ServiceDetails({ id }: ServiceDetailsProps) {
   
   const deleteServiceMutation = useMutation({
     mutationFn: async () => {
-      // Versão apenas online
-      const isOnline = navigator.onLine;
-      console.log("Status da rede:", isOnline ? "Online" : "Offline");
-      
-      if (!isOnline) {
-        throw new Error("Esta operação requer conexão com a internet");
-      }
+      // Verificação de conexão removida - sempre online
+      console.log("Executando exclusão de serviço");
       
       try {
         // Usar deleteApi sem suporte offline
