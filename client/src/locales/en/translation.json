@@ -19,7 +19,6 @@
     "yes": "Yes",
     "no": "No",
     "success": "Success!",
-    "error": "Error",
     "warning": "Warning",
     "required": "Required",
     "close": "Close",
@@ -105,6 +104,7 @@
       "in_progress": "In Progress",
       "completed": "Completed",
       "canceled": "Canceled",
+      "aguardando_aprovacao": "Awaiting Approval",
       "faturado": "Invoiced",
       "pago": "Paid"
     }
@@ -169,7 +169,7 @@
     "myServices": "My Services",
     "myCalendar": "My Calendar",
     "manager": "Manager",
-    "managerSettings": "Manager Settings", 
+    "managerSettings": "Manager Settings",
     "manageManagerSettings": "Manage your specific settings as a manager",
     "assignedClients": "Assigned Clients",
     "viewClients": "View and manage clients under your supervision",
