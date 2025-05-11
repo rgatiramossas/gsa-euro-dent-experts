@@ -230,13 +230,6 @@ export default function NewServicePage() {
   const createServiceMutation = useMutation({
     mutationFn: async (data: FormData) => {
       try {
-        // Verificar se estamos offline antes de tentar a requisição
-        if (!navigator.onLine) {
-          console.log("Detectada operação offline. Não é possível salvar sem conexão.");
-          setOfflineAttemptFailed(true);
-          throw new Error("OFFLINE_MODE");
-        }
-        
         // Format the datetime properly
         let formattedData = { ...data };
         
@@ -456,30 +449,13 @@ export default function NewServicePage() {
     }
   }, [user, technicians, form]);
   
-  // Verificar regularmente o status da rede para atualizar o texto do botão
+  // Gerenciamento de estado de mutação - simplificado (sem detecção de offline)
   useEffect(() => {
-    // Verificar se estamos offline e resetar o estado da mutação se necessário
-    const checkNetworkAndReset = () => {
-      if (!navigator.onLine && offlineAttemptFailed) {
-        console.log("Detectado offline e tentativa anterior falhou, resetando mutação");
-        createServiceMutation.reset();
-        setOfflineAttemptFailed(false);
-      }
-    };
-    
-    // Verificar status da rede inicial
-    checkNetworkAndReset();
-    
-    // Adicionar listeners para eventos de online/offline
-    window.addEventListener('online', checkNetworkAndReset);
-    window.addEventListener('offline', checkNetworkAndReset);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('online', checkNetworkAndReset);
-      window.removeEventListener('offline', checkNetworkAndReset);
-    };
-  }, [offlineAttemptFailed, createServiceMutation]);
+    if (offlineAttemptFailed) {
+      // Apenas resetamos o estado de falha de tentativa
+      setOfflineAttemptFailed(false);
+    }
+  }, [offlineAttemptFailed]);
 
   // Timeout de segurança para requisições de API
   useEffect(() => {
@@ -539,21 +515,7 @@ export default function NewServicePage() {
       serviceType: serviceTypes?.find(t => t.id === data.service_type_id)?.name,
     });
 
-    // Verificar se estamos offline antes de tentar a requisição
-    if (!navigator.onLine) {
-      console.log("Detectada operação offline durante envio do formulário.");
-      
-      // Mostrar notificação que não é possível criar serviços offline
-      toast({
-        title: t("errors.networkError", "Erro de conexão"),
-        description: t("errors.needConnectionToSave", "É necessário conexão com a internet para salvar serviços."),
-        variant: "destructive"
-      });
-      
-      return;
-    }
-    
-    // Se online, iniciar a operação de criação do serviço
+    // Iniciar a operação de criação do serviço
     createServiceMutation.mutate(data);
   };
   
