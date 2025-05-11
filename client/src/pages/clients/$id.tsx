@@ -405,7 +405,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                       <TableRow>
                         <TableHead>{t("services.serviceType")}</TableHead>
                         <TableHead>{t("services.vehicle")}</TableHead>
-                        <TableHead>{t("services.status")}</TableHead>
+                        <TableHead>{t("services.serviceStatus")}</TableHead>
                         <TableHead>{t("common.date")}</TableHead>
                         <TableHead className="text-right">{t("common.actions")}</TableHead>
                       </TableRow>
@@ -478,7 +478,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                         <TableHead>{t("services.vehicle")}</TableHead>
                         <TableHead>{t("common.date")}</TableHead>
                         <TableHead>{t("common.value")}</TableHead>
-                        <TableHead>{t("services.status")}</TableHead>
+                        <TableHead>{t("services.serviceStatus")}</TableHead>
                         <TableHead className="text-right">{t("common.actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -507,7 +507,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                               budget.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' : 
                               'bg-gray-100 text-gray-800'
                             }`}>
-                              {budget.status ? budget.status.charAt(0).toUpperCase() + budget.status.slice(1) : t("services.status.pending")}
+                              {budget.status ? budget.status.charAt(0).toUpperCase() + budget.status.slice(1) : t("services.statusLabels.pending")}
                             </span>
                           </TableCell>
                           <TableCell className="text-right">

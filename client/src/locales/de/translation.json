@@ -160,6 +160,15 @@
     "details": "Details",
     "searchPlaceholder": "Nach Kunde, Fahrzeug oder Kennzeichen suchen...",
     "serviceStatus": "Servicestatus",
+    "statusLabels": {
+      "pending": "Ausstehend",
+      "in_progress": "In Bearbeitung",
+      "completed": "Abgeschlossen",
+      "canceled": "Storniert",
+      "approved": "Genehmigt",
+      "paid": "Bezahlt",
+      "rejected": "Abgelehnt"
+    },
     "status": {
       "pending": "Ausstehend",
       "in_progress": "In Bearbeitung",
