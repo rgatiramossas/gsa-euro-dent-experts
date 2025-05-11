@@ -285,19 +285,19 @@ export default function ClientDetail({ id }: ClientDetailProps) {
           <CardContent>
             <dl className="space-y-4">
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">{t("common.name")}</dt>
+                <dt className="text-sm font-medium text-muted-foreground">{t("clients.name")}</dt>
                 <dd className="mt-1 text-base">{client.name}</dd>
               </div>
 
               <div>
-                <dt className="text-sm font-medium text-muted-foreground">{t("common.email")}</dt>
+                <dt className="text-sm font-medium text-muted-foreground">{t("clients.email")}</dt>
                 <dd className="mt-1 text-base">
                   {client.email ? (
                     <a href={`mailto:${client.email}`} className="text-blue-600 hover:underline">
                       {client.email}
                     </a>
                   ) : (
-                    <span className="text-muted-foreground italic">{t("common.notProvided")}</span>
+                    <span className="text-muted-foreground italic">{t("common.notSpecified")}</span>
                   )}
                 </dd>
               </div>
