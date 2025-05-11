@@ -448,7 +448,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                       className="mt-4"
                       onClick={() => setLocation(`/services/new?clientId=${client.id}`)}
                     >
-                      Cadastrar Serviço
+                      {t("services.newService")}
                     </Button>
                   </div>
                 )}
@@ -459,7 +459,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                       variant="outline"
                       onClick={() => setLocation(`/services/new?clientId=${client.id}`)}
                     >
-                      Cadastrar Novo Serviço
+                      {t("services.newService")}
                     </Button>
                   </div>
                 )}
@@ -475,11 +475,11 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Veículo</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
+                        <TableHead>{t("services.vehicle")}</TableHead>
+                        <TableHead>{t("common.date")}</TableHead>
+                        <TableHead>{t("common.value")}</TableHead>
+                        <TableHead>{t("services.status")}</TableHead>
+                        <TableHead className="text-right">{t("common.actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -490,14 +490,14 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                           </TableCell>
                           <TableCell>
                             {budget.created_at ? 
-                              new Date(budget.created_at).toLocaleDateString('pt-BR') : 
+                              new Date(budget.created_at).toLocaleDateString() : 
                               "N/A"}
                           </TableCell>
                           <TableCell>
                             {budget.total_price ? 
-                              new Intl.NumberFormat('pt-BR', {
+                              new Intl.NumberFormat(undefined, {
                                 style: 'currency',
-                                currency: 'BRL'
+                                currency: 'EUR'
                               }).format(budget.total_price) : 
                               "N/A"}
                           </TableCell>
@@ -507,7 +507,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                               budget.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' : 
                               'bg-gray-100 text-gray-800'
                             }`}>
-                              {budget.status ? budget.status.charAt(0).toUpperCase() + budget.status.slice(1) : "Pendente"}
+                              {budget.status ? budget.status.charAt(0).toUpperCase() + budget.status.slice(1) : t("services.status.pending")}
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
@@ -516,7 +516,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                               size="sm"
                               onClick={() => setLocation(`/budgets/${budget.id}/edit`)}
                             >
-                              Detalhes
+                              {t("common.details")}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -525,13 +525,13 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                   </Table>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p>Nenhum orçamento cadastrado para este cliente.</p>
+                    <p>{t("clients.noBudgets")}</p>
                     <Button 
                       variant="outline" 
                       className="mt-4"
                       onClick={() => setLocation(`/budgets/new?clientId=${client.id}`)}
                     >
-                      Criar Orçamento
+                      {t("budget.newBudget")}
                     </Button>
                   </div>
                 )}
@@ -542,7 +542,7 @@ export default function ClientDetail({ id }: ClientDetailProps) {
                       variant="outline"
                       onClick={() => setLocation(`/budgets/new?clientId=${client.id}`)}
                     >
-                      Criar Novo Orçamento
+                      {t("budget.newBudget")}
                     </Button>
                   </div>
                 )}

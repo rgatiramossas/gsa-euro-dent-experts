@@ -41,7 +41,12 @@
     "vehicle": "Fahrzeug",
     "value": "Wert",
     "featureImplementing": "Diese Funktion wird gerade implementiert.",
-    "inDevelopment": "In Entwicklung"
+    "inDevelopment": "In Entwicklung",
+    "details": "Details",
+    "registrationDate": "Registrierungsdatum",
+    "relatedInformation": "Verwandte Informationen",
+    "thisItemHas": "Dieser Eintrag hat",
+    "actionCannotBeUndone": "Diese Aktion kann nicht rückgängig gemacht werden"
   },
   "auth": {
     "login": "Anmelden",
